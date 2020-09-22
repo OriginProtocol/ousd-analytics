@@ -8,9 +8,6 @@
 {% block content %}
 
 <style>
-    body{
-        font-family: Iosevka;
-    }
     table.table th{ border-left: 1px solid;padding:4px 8px;}
     table.table-right td{ text-align: right;}
 </style>
@@ -83,8 +80,14 @@
             </td>
             <td>{{log.address|contract_name}}</td>
             <td>
+                {% if log.topic_0 == "0x222838db2794d11532d940e8dec38ae307ed0b63cd97c233322e221f998767a6" %}
+                    🚮
+                {% endif %}
+                {% if log.topic_0 == "0x0f6798a560793a54c3bcfe86a93cde1e73087d944c0ea20544137d4121396885" %}
+                    ❇️
+                {% endif %}
                 {% if log.topic_0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" and log.address == "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86" %}
-                    <strong>Transfer</strong>
+                    🔆 <strong>Transfer</strong>
                     {{log.data|dec_18|floatformat:2}}
                     from
                     <strong>{{log.topic_1|long_address_name}}</strong> to

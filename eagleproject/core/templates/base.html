@@ -1,11 +1,22 @@
 <html>
 
 <head>
-    <title></title>
+    <title>{% block title %}{% endblock %}</title>
 
     <style>
         body {
-            font-family: Iosevka;
+            font-family: "Open Sans", system-ui ;
+            margin: 0px 0px;
+            padding: 0px 0px;
+        }
+        .topnav {
+            padding: 3px 32px;
+            border-bottom: dashed 1px #eee;
+        }
+        .topnav a { color: black; }
+        .content{
+            
+            margin: 0px 32px;
         }
         table.table th{ border-left: 1px solid;padding:4px 8px;}
         table.table td{ padding: 2px 8px; vertical-align: top; border-top: 1px solid #eee;}
@@ -16,11 +27,13 @@
 </head>
 
 <body>
-    <div>
-        Vault Eagle 🦅
+    <div class="topnav">
+        <a href="/">Vault Eagle 🦅</a>
     </div>
+    <div class="content">
     {% block content %}
     {% endblock %}
+    </div>
 </body>
 
 </html>

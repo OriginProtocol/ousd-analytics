@@ -28,7 +28,7 @@ ${{current_balance|floatformat:6}}
         <td>{{log.address|contract_name}}</td>
         <td>
             {% if log.topic_0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" and log.address == "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86" %}
-                <strong>Transfer</strong>
+                🔆  <strong>Transfer</strong>
                 {{log.data|dec_18|floatformat:2}}
                 from
                 <strong>{{log.topic_1|long_address_name}}</strong> to
