@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Vault Eagle{% endblock %}
+
+
+{% block content %}
+
+<style>
+    body{
+        font-family: Iosevka;
+    }
+    table.table th{ border-left: 1px solid;padding:4px 8px;}
+    table.table-right td{ text-align: right;}
+</style>
+
+<h2>
+    Block Number: {{block_number}}
+</h2>
+
+<h2>Holdings</h2>
+<table class="table table-right no-wrap">
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Vault</th>
+            <th>Compound</th>
+            <th>Mint Price</th>
+            <th>Redeem Price</th>
+            <th>Basis diff</th>
+        </tr>
+    </thead>
+    <tr>
+        <td>{{dai.symbol}}</td>
+        <td>{{dai.vault_holding|floatformat:2}}</td>
+        <td>{{dai.compstrat_holding|floatformat:2}}</td>
+        <td>${{dai.ora_tok_usd_min|floatformat:4}}</td>
+        <td>${{dai.ora_tok_usd_max|floatformat:4}}</td>
+        <td>{{dai.ora_diff_basis|floatformat:1}}</td>
+    </tr>
+    <tr>
+        <td>{{usdc.symbol}}</td>
+        <td>{{usdc.vault_holding|floatformat:2}}</td>
+        <td>{{usdc.compstrat_holding|floatformat:2}}</td>
+        <td>${{usdc.ora_tok_usd_min|floatformat:4}}</td>
+        <td>${{usdc.ora_tok_usd_max|floatformat:4}}</td>
+        <td>{{usdc.ora_diff_basis|floatformat:1}}</td>
+    </tr>
+    <tr>
+        <td>{{usdt.symbol}}</td>
+        <td>{{usdt.vault_holding|floatformat:2}}</td>
+        <td>{{usdt.compstrat_holding|floatformat:2}}</td>
+        <td>${{usdt.ora_tok_usd_min|floatformat:4}}</td>
+        <td>${{usdt.ora_tok_usd_max|floatformat:4}}</td>
+        <td>{{usdt.ora_diff_basis|floatformat:1}}</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td>${{total_vault|floatformat:2}}</td>
+        <td>${{total_compstrat|floatformat:2}}</td>
+    </tr>
+    <tr>
+        <td></td>
+        <td></td>
+        <td>${{total_assets|floatformat:2}}</td>
+    </tr>
+</table>
+
+<h2>Logs</h2>
+
+<div>
+    <table class="table">
+        {% for log in latest_logs %}
+        <tr>
+
+            <td>
+                {% ifchanged %}<a href="/tx/debug/{{log.transaction_hash}}">{{log.transaction_hash|truncatechars:14}}</a>{% endifchanged %}
+                {% ifchanged %}{{log.block_number}}{% endifchanged %}
+            </td>
+            <td>
+                →
+            </td>
+            <td>{{log.address|contract_name}}</td>
+            <td>
+                {% if log.topic_0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" and log.address == "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86" %}
+                    <strong>Transfer</strong>
+                    {{log.data|dec_18|floatformat:2}}
+                    from
+                    <strong>{{log.topic_1|long_address_name}}</strong> to
+                    <strong>{{log.topic_2|long_address_name}}</strong>
+                {% else %}
+                    <strong>{{log.topic_0|event_name}}</strong><br>
+                    {% if log.topic_1 %}
+                        {{log.topic_1}}<br>
+                    {% endif %}
+                    {% if log.topic_2 %}
+                        {{log.topic_2}}<br>
+                    {% endif %}
+                    {{log.data}}
+                {% endif %}
+                
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    
+
+</div>
+
+
+
+{% endblock %}

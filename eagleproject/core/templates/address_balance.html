@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}{{address}} Balance History{% endblock %}
+
+
+{% block content %}
+<h1>{{address}} Balance History</h1>
+
+${{current_balance|floatformat:6}}
+
+<table class="table">
+    {% for log in all_logs %}
+    <tr>
+        <td style="text-align: right">
+            {% if log.account_balance %}
+                {{ log.account_balance|floatformat:6 }}
+            {% endif %}
+        </td>
+        <td>
+            {% ifchanged %}<a href="/tx/debug/{{log.transaction_hash}}">{{log.transaction_hash|truncatechars:14}}</a>{% endifchanged %}
+            {% ifchanged %}{{log.block_number}}{% endifchanged %}
+        </td>
+        <td>
+            →
+        </td>
+        <td>{{log.address|contract_name}}</td>
+        <td>
+            {% if log.topic_0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" and log.address == "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86" %}
+                <strong>Transfer</strong>
+                {{log.data|dec_18|floatformat:2}}
+                from
+                <strong>{{log.topic_1|long_address_name}}</strong> to
+                <strong>{{log.topic_2|long_address_name}}</strong>
+            {% else %}
+                <strong>{{log.topic_0|event_name}}</strong><br>
+                {% if log.topic_1 %}
+                    {{log.topic_1}}<br>
+                {% endif %}
+                {% if log.topic_2 %}
+                    {{log.topic_2}}<br>
+                {% endif %}
+                {{log.data}}
+            {% endif %}
+            
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+{% endblock %}

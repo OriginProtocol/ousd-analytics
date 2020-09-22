@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Debug transaction{% endblock %}
+
+
+{% block content %}
+<h1>Debug Transaction</h1>
+
+<style>
+    .no-wrap td { white-space: nowrap; }
+</style>
+
+<table class="table no-wrap">
+    <thead>
+        <tr>
+            <th>-</th>
+            <th>From</th>
+            <th>To</th>
+            <th>GasIn</th>
+            <th>GasUsed</th>
+            <th>Method</th>
+            <th>Input</th>
+            <th>Output</th>
+        </tr>
+    </thead>
+    {% for row in debug_tx.data %}
+    <tr>
+        <td class="grey">
+            {% for t in row.traceAddress %}{{t}}>{% endfor %}
+        </td>
+        <td>{{row.action.from|contract_name}}</td>
+        <td>{{row.action.to|contract_name}}</td>
+        <td class="l">{{row.action.gas|hextoint|intcomma}}</td>
+        <td class="l">{{row.result.gasUsed|hextoint|intcomma}}</td>
+        <td>{{row.action.input|method_name}}</td>
+        <td>{{row.action.input}}</td>
+        <td>{{row.result.output}}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
