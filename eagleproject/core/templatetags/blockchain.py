@@ -46,6 +46,7 @@ CONTRACT_NAMES = {
 SIGNATURES = {
     "0x07ea5477": "mintMultiple(address[],uint256[])",
     "0x23b872dd": "transferFrom(address,address,uint256)",
+    "0xa9059cbb": "transfer(address,uint256)",
     "0x95d89b41": "symbol()",
     "0xfeaf968c": "latestRoundData()",
     "0x668a0f02": "latestRound()",
@@ -66,8 +67,9 @@ SIGNATURES = {
     "0x2d9ff296": "tokEthPrice(string)",
     "0xaa388af6": "supportsAsset(address)",
     "0xc92aecc4": "chi()",
-    "": "",
-    "": "",
+    "0x2f4350c2": "redeemAll()",
+    "0x7ff36ab5": "swapExactETHForTokens(uint256,address[],address,uint256)",
+    "0xbc25cf77": "skim(address)",
     "": "",
     "": "",
 }
