@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Address{% endblock %}
+
+
+{% block content %}
+<h1>Address Details</h1>
+<pre style="font-size:12px">{{address}}</pre>
+
+<style>
+    .card {
+        border: solid 1px #eee;
+        border-radius: 2px;
+        width: 300px;
+        height: 300px;
+        float: left;
+        text-align: center;
+        padding-top: 20px;
+        text-align:right;
+        padding-right: 20px;
+        font-family: ioseveka, monospace;
+    }
+</style>
+
+<h2>Balance: {{now.current_balance|floatformat:6}}</h2>
+
+<h2>Before and After Comparison <form method="GET"><input name="blocks" value="{{blocks}}"></form></h2>
+
+<div class="card">
+    <div>{{ block_number }}</div>
+    <div>{{ past_block_number }}</div>
+    <div>{{ block_number|sub:past_block_number }}</div>
+    <div>Block Numbers</div>
+</div>
+
+<div class="card">
+    <div>{{ before.current_balance }}</div>
+    <div>{{ now.current_balance }}</div>
+    <div>{{ now.current_balance|sub:before.current_balance }}</div>
+    <div>My OUSD</div>
+</div>
+
+<div class="card">
+    <div>{{ before.my.DAI }}</div>
+    <div>{{ now.my.DAI }}</div>
+    <div><strong>{{ now.my.DAI|sub:before.my.DAI }}</strong></div>
+    <div>DAI</div>
+</div>
+
+<div class="card">
+    <div>{{ before.my.USDC }}</div>
+    <div>{{ now.my.USDC }}</div>
+    <div><strong>{{ now.my.USDC|sub:before.my.USDC }}</strong></div>
+    <div>USDC</div>
+</div>
+
+<div class="card">
+    <div>{{ before.my.USDT }}</div>
+    <div>{{ now.my.USDT }}</div>
+    <div><strong>{{ now.my.USDT|sub:before.my.USDT }}</strong></div>
+    <div>USDT</div>
+</div>
+
+<div class="card">
+    <div>{{ before.total_supply }}</div>
+    <div>{{ now.total_supply }}</div>
+    <div>{{ now.total_supply|sub:before.total_supply }}</div>
+    <div>OUSD Supply</div>
+</div>
+
+<div style="clear: both"></div>
+
+
+
+
+{% endblock %}

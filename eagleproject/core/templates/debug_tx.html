@@ -16,6 +16,7 @@
     <thead>
         <tr>
             <th>-</th>
+            <th>-</th>
             <th>From</th>
             <th>To</th>
             <th>GasIn</th>
@@ -27,6 +28,7 @@
     </thead>
     {% for row in debug_tx.data %}
     <tr>
+        <td>{{row|trace_annotation}}</td>
         <td class="grey">
             {% for t in row.traceAddress %}{{t}}>{% endfor %}
         </td>

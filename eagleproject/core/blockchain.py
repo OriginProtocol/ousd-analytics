@@ -78,6 +78,15 @@ def balanceOf(coin_contract, holder, decimals, block="latest"):
     )
 
 
+def totalSupply(coin_contract, decimals, block="latest"):
+    signature = "0x18160ddd"
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+        math.pow(10, decimals)
+    )
+
+
 def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
     signature = "0x3af9e669"
     try:
@@ -110,13 +119,19 @@ def build_asset_block(symbol, block_number):
     return AssetBlock(
         symbol=symbol,
         block_number=block_number,
-        ora_tok_usd_min=priceUSDMint(VAULT, symbol),
-        ora_tok_usd_max=priceUSDRedeem(VAULT, symbol),
+        ora_tok_usd_min=priceUSDMint(VAULT, symbol, block_number),
+        ora_tok_usd_max=priceUSDRedeem(VAULT, symbol, block_number),
         vault_holding=balanceOf(
-            CONTRACT_FOR_SYMBOL[symbol], VAULT, DECIMALS_FOR_SYMBOL[symbol]
+            CONTRACT_FOR_SYMBOL[symbol],
+            VAULT,
+            DECIMALS_FOR_SYMBOL[symbol],
+            block_number,
         ),
         compstrat_holding=balanceOfUnderlying(
-            COMPOUND_FOR_SYMBOL[symbol], COMPSTRAT, DECIMALS_FOR_SYMBOL[symbol]
+            COMPOUND_FOR_SYMBOL[symbol],
+            COMPSTRAT,
+            DECIMALS_FOR_SYMBOL[symbol],
+            block_number,
         ),
     )
 
@@ -155,37 +170,35 @@ def download_logs_from_contract(contract, start_block, end_block):
             }
         ],
     )
-    for raw_log in data['result']:
+    for raw_log in data["result"]:
         ensure_log_record(raw_log)
 
 
 def ensure_log_record(raw_log):
-    block_number = int(raw_log['blockNumber'],16)
-    log_index =  int(raw_log['logIndex'],16)
+    block_number = int(raw_log["blockNumber"], 16)
+    log_index = int(raw_log["logIndex"], 16)
     log = Log.objects.filter(block_number=block_number, log_index=log_index)
     if log:
         return log
     log = Log(
-        address = raw_log['address'],
+        address=raw_log["address"],
         block_number=block_number,
         log_index=log_index,
-        transaction_hash=raw_log['transactionHash'],
-        transaction_index=int(raw_log['transactionIndex'],16),
-        data = raw_log['data'],
+        transaction_hash=raw_log["transactionHash"],
+        transaction_index=int(raw_log["transactionIndex"], 16),
+        data=raw_log["data"],
         event_name="",
         topic_0="",
         topic_1="",
         topic_2="",
-        )
-    if len(raw_log['data']) >= 10:
-        signature = raw_log['data'][0:10]
-    if len(raw_log['topics'])>=1:
-        log.topic_0 = raw_log['topics'][0]
-    if len(raw_log['topics'])>=2:
-        log.topic_1 = raw_log['topics'][1]
-    if len(raw_log['topics'])>=3:
-        log.topic_2 = raw_log['topics'][2]
+    )
+    if len(raw_log["data"]) >= 10:
+        signature = raw_log["data"][0:10]
+    if len(raw_log["topics"]) >= 1:
+        log.topic_0 = raw_log["topics"][0]
+    if len(raw_log["topics"]) >= 2:
+        log.topic_1 = raw_log["topics"][1]
+    if len(raw_log["topics"]) >= 3:
+        log.topic_2 = raw_log["topics"][2]
     log.save()
     return log
-
-    

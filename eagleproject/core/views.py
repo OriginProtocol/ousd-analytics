@@ -6,6 +6,7 @@ from core.blockchain import (
     lastest_block,
     ensure_latest_logs,
     download_logs_from_contract,
+    totalSupply,
 )
 from core.models import AssetBlock, DebugTx, LogPointer, Log
 
@@ -27,9 +28,52 @@ def dashboard(request):
 
     ensure_latest_logs(block_number)
 
-    latest_logs = Log.objects.all()[:99]
+    logs_q = Log.objects.all()
+    if request.GET.get("topic_0"):
+        logs_q = logs_q.filter(topic_0=request.GET.get("topic_0"))
+    latest_logs = logs_q[:100]
 
     return render(request, "dashboard.html", locals())
+
+
+def address(request, address):
+    block_number = lastest_block() - 2
+    if request.GET.get("blocks"):
+        blocks = int(request.GET.get("blocks"))
+    else:
+        blocks = 200
+    past_block_number = block_number - blocks
+
+    now = _my_assets(address, block_number)
+    before = _my_assets(address, past_block_number)
+    return render(request, "address.html", locals())
+
+
+def _my_assets(address, block_number):
+    dai = ensure_asset("DAI", block_number)
+    usdt = ensure_asset("USDT", block_number)
+    usdc = ensure_asset("USDC", block_number)
+    total_supply = totalSupply(blockchain.OUSD, 18, block_number)
+
+    current_balance = blockchain.balanceOf(blockchain.OUSD, address, 18, block_number)
+    total_supply = totalSupply(blockchain.OUSD, 18, block_number)
+    print(block_number, current_balance, total_supply)
+
+    return {
+        "my": {
+            "DAI": (dai.vault_holding + dai.compstrat_holding)
+            * current_balance
+            / total_supply,
+            "USDC": (usdc.vault_holding + usdc.compstrat_holding)
+            * current_balance
+            / total_supply,
+            "USDT": (usdt.vault_holding + usdt.compstrat_holding)
+            * current_balance
+            / total_supply,
+        },
+        "current_balance": current_balance,
+        "total_supply": total_supply,
+    }
 
 
 def tx_debug(request, tx_hash):
