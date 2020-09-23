@@ -86,12 +86,20 @@
                 {% if log.topic_0 == "0x0f6798a560793a54c3bcfe86a93cde1e73087d944c0ea20544137d4121396885" %}
                     ❇️
                 {% endif %}
+
+                
                 {% if log.topic_0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" and log.address == "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86" %}
                     🔆 <strong>Transfer</strong>
                     {{log.data|dec_18|floatformat:2}}
                     from
                     <strong>{{log.topic_1|long_address_name}}</strong> to
                     <strong>{{log.topic_2|long_address_name}}</strong>
+                {% elif log.topic_0 == "0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1" %}
+                    🉑 <strong>TotalSupplyUpdated</strong>
+                    {% for v in log.data|explode_data %}
+                        {{v}}
+                    {% endfor %}
+                    
                 {% else %}
                     <strong>{{log.topic_0|event_name}}</strong><br>
                     {% if log.topic_1 %}

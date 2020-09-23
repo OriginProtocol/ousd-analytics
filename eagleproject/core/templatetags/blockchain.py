@@ -1,5 +1,7 @@
 from django import template
 from django.template.defaultfilters import stringfilter
+from binascii import unhexlify
+from decimal import Decimal
 
 register = template.Library()
 
@@ -127,12 +129,44 @@ def event_name(value):
 @register.filter
 @stringfilter
 def long_address_name(value):
-    address = "0x"+value[-40:]
+    address = "0x" + value[-40:]
     return contract_name(address)
 
-    
 
 @register.filter
 def dec_18(value):
     if isinstance(value, str):
         return int(value, 16) / 1e18
+
+
+@register.filter
+def explode_data(value):
+    count = len(value) // 64
+    out = []
+    for i in range(0, count):
+        out.append(dec_18(value[2 + i * 64 : 2 + i * 64 + 64]))
+    return out
+
+
+def _snarf_input_symbol(trace):
+    s = trace["action"]["input"][64 + 10 + 64 :]
+    out = unhexlify(s).decode("utf-8")
+    return out
+
+
+@register.filter
+def sub(v, arg):
+    return v - arg
+
+
+@register.filter
+def trace_annotation(trace):
+    # mixOracle, priceMin
+    to = trace["action"]["to"]
+    signature = trace["action"]["input"][0:10]
+    # print(to, signature)
+    if to == "0xcf67e56965ad7cec05ebf88bad798a875e0460eb" and signature == "0x19af6bf0":
+        symbol = _snarf_input_symbol(trace)
+        value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e8)
+        return "🏛 %s at $%s" % (symbol, value)
+    return "."
