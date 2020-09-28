@@ -8,6 +8,7 @@ register = template.Library()
 CONTRACT_NAMES = {
     "0x277e80f3e14e7fb3fc40a9d6184088e0241034bd": "Vault",
     "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86": "OUSD",
+    "0xb72b3f5523851c2eb0ca14137803ca4ac7295f3f": "OUSD Internal",
     "0x3c09b440f9e46c0e4a665539aeca80fcaa92c36e": "OUSD Internal",
     "0xa7f26e9aeeea4fe16d9c4a6a0464af8258f437bb": "Vault Internal",
     "0xf251cb9129fdb7e9ca5cad097de3ea70cab9d8f9": "Vault Internal",
@@ -42,7 +43,10 @@ CONTRACT_NAMES = {
     "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae": "Open Price Feed",
     "0x197e90f9fad81970ba7976f33cbd77088e5d7cf7": "Mkr MCD  Pot",
     "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71": "OUSD/USDT Uniswap",
+    "0x7a250d5630b4cf539739df2c5dacb4c659f2488d": "Uniswap V2 Router",
     "0x0000000000000000000000000000000000000000": "The Void",
+    "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7": "Curve 3pool vault",
+    "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490": "Curve 3pool token",
 }
 
 SIGNATURES = {
@@ -72,8 +76,10 @@ SIGNATURES = {
     "0x2f4350c2": "redeemAll()",
     "0x7ff36ab5": "swapExactETHForTokens(uint256,address[],address,uint256)",
     "0xbc25cf77": "skim(address)",
-    "": "",
-    "": "",
+    "0x022c0d9f": "swap(uint256,uint256,address,bytes)",
+    "0x0902f1ac": "getReserves()",
+    "0x38ed1739": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
+    "0x4515cef3":"add_liquidity(uint256[3],uint256)"
 }
 
 EVENT_NAMES = {
@@ -86,7 +92,13 @@ EVENT_NAMES = {
     "0xef6485b84315f9b1483beffa32aae9a0596890395e3d7521f1c5fbb51790e765": "PTokenAdded(address,address)",
     "0x5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62": "Deposit(address,address,uint256)",
     "0x2717ead6b9200dd235aad468c9809ea400fe33ac69b5bfaa6d3e90fc922b6398": "Withdrawal(address,address,uint256)",
-    "0x": "",
+    "0x79236a0cb516e4a8800fe3ac58e17c1eeb924b29658a461c9e65ed41d7db88f4": "Approval(address,address,uint)",
+    "0x930a61a57a70a73c2a503615b87e2e54fe5b9cdeacda518270b852296ab1a377": "Transfer(address,address,uint)",
+    "66c66224810ae56fadced079f9b31b994b686b0fab399bc95e32e55813d6d0b4":"Mint(address,amount0,amount1)",
+    "0xd28e94e5f38ffc345d5364aefeee37a38ca95e1fb8101ca4a0c17abe86df9226": "Burn(address,amount0,amount1,address)",
+    "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822": "Swap(address,uint256,uint256,uint256,uint256,address)",
+    "0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1": "Sync(uint112,uint112)",
+    "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925":"Approval(address,address,uint256)",
 }
 
 
@@ -165,6 +177,8 @@ def trace_annotation(trace):
     to = trace["action"]["to"]
     signature = trace["action"]["input"][0:10]
     # print(to, signature)
+    if not "result" in trace:
+        return "❌"
     if to == "0xcf67e56965ad7cec05ebf88bad798a875e0460eb" and signature == "0x19af6bf0":
         symbol = _snarf_input_symbol(trace)
         value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e8)
