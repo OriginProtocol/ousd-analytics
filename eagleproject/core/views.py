@@ -25,6 +25,7 @@ def dashboard(request):
     total_vault = sum(x.vault_holding * x.ora_tok_usd_min for x in assets)
     total_compstrat = sum(x.compstrat_holding * x.ora_tok_usd_min for x in assets)
     total_assets = total_vault + total_compstrat
+    total_supply = totalSupply(blockchain.OUSD, 18, block_number)
 
     ensure_latest_logs(block_number)
 
