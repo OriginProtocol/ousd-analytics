@@ -47,6 +47,11 @@ CONTRACT_NAMES = {
     "0x0000000000000000000000000000000000000000": "The Void",
     "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7": "Curve 3pool vault",
     "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490": "Curve 3pool token",
+    "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a": "Curve 3pool gauge",
+    "0xd533a949740bb3306d119cc777fa900ba034cd52": "Curve CRV token",
+    "0x2f50d538606fa9edd2b11e2446beb18c9d5846bb": "Curve gauge controller",
+    "0x5f3b5dfeb7b28cdbd7faba78963ee202a494e2a2": "Curve veCRV",
+    "0x013188853751f9c8d3984dcfb442a8b697205d12f4a9c7e4fd1ca9a1ccbf396f": "Curve Token Minter",
 }
 
 SIGNATURES = {
@@ -79,7 +84,14 @@ SIGNATURES = {
     "0x022c0d9f": "swap(uint256,uint256,address,bytes)",
     "0x0902f1ac": "getReserves()",
     "0x38ed1739": "swapExactTokensForTokens(uint256,uint256,address[],address,uint256)",
-    "0x4515cef3":"add_liquidity(uint256[3],uint256)"
+    "0x4515cef3":"add_liquidity(uint256[3],uint256)",
+    "0xb6b55f25":"deposit(uint256)",
+    "0x6a627842":"mint(address)",
+    "0x2c4e722e":"rate()",
+    "0xb26b238e":"future_epoch_time_write()",
+    "0x615e5237":"checkpoint_gauge(address)",
+    "0xd3078c945":"gauge_relative_weight(address,uint256)",
+    "0x6a627842":"withdraw(uint256)",
 }
 
 EVENT_NAMES = {
