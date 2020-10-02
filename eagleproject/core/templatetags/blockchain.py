@@ -91,7 +91,7 @@ SIGNATURES = {
     "0xb26b238e":"future_epoch_time_write()",
     "0x615e5237":"checkpoint_gauge(address)",
     "0xd3078c945":"gauge_relative_weight(address,uint256)",
-    "0x6a627842":"withdraw(uint256)",
+    "0x2e1a7d4d":"withdraw(uint256)",
 }
 
 EVENT_NAMES = {
