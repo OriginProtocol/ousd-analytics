@@ -51,7 +51,7 @@ CONTRACT_NAMES = {
     "0xd533a949740bb3306d119cc777fa900ba034cd52": "Curve CRV token",
     "0x2f50d538606fa9edd2b11e2446beb18c9d5846bb": "Curve gauge controller",
     "0x5f3b5dfeb7b28cdbd7faba78963ee202a494e2a2": "Curve veCRV",
-    "0x013188853751f9c8d3984dcfb442a8b697205d12f4a9c7e4fd1ca9a1ccbf396f": "Curve Token Minter",
+    "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a": "Curve Token Minter",
 }
 
 SIGNATURES = {
