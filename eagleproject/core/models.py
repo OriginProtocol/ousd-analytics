@@ -23,9 +23,11 @@ class DebugTx(models.Model):
     notes = models.TextField()
     data = models.JSONField()
 
+
 class LogPointer(models.Model):
     contract = models.CharField(max_length=256, db_index=True)
     last_block = models.IntegerField(db_index=True)
+
 
 class Log(models.Model):
     address = models.CharField(max_length=255, db_index=True)
@@ -41,7 +43,8 @@ class Log(models.Model):
     account_balance = Decimal(0)
 
     class Meta:
-        ordering = ['-block_number','-log_index']
+        ordering = ["-block_number", "-log_index"]
+
 
 class SupplySnapshot(models.Model):
     block_number = models.IntegerField(db_index=True)
@@ -49,7 +52,7 @@ class SupplySnapshot(models.Model):
     computed_supply = models.DecimalField(max_digits=64, decimal_places=18)
     credits = models.DecimalField(max_digits=64, decimal_places=18)
     credits_ratio = models.DecimalField(max_digits=64, decimal_places=18)
-    apr = Decimal(0) # Not persisted
+    apr = Decimal(0)  # Not persisted
 
     class Meta:
-            ordering = ['-block_number']
+        ordering = ["-block_number"]

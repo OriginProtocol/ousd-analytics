@@ -7,20 +7,39 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='AssetBlock',
+            name="AssetBlock",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('token', models.CharField(db_index=True, max_length=8)),
-                ('block_number', models.IntegerField(db_index=True)),
-                ('ora_tok_usd_min', models.DecimalField(decimal_places=18, max_digits=64)),
-                ('ora_tok_usd_max', models.DecimalField(decimal_places=18, max_digits=64)),
-                ('vault_holding', models.DecimalField(decimal_places=18, max_digits=64)),
-                ('compstrat_holding', models.DecimalField(decimal_places=18, max_digits=64)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("token", models.CharField(db_index=True, max_length=8)),
+                ("block_number", models.IntegerField(db_index=True)),
+                (
+                    "ora_tok_usd_min",
+                    models.DecimalField(decimal_places=18, max_digits=64),
+                ),
+                (
+                    "ora_tok_usd_max",
+                    models.DecimalField(decimal_places=18, max_digits=64),
+                ),
+                (
+                    "vault_holding",
+                    models.DecimalField(decimal_places=18, max_digits=64),
+                ),
+                (
+                    "compstrat_holding",
+                    models.DecimalField(decimal_places=18, max_digits=64),
+                ),
             ],
         ),
     ]

@@ -40,6 +40,7 @@ def dashboard(request):
 
     return render(request, "dashboard.html", locals())
 
+
 def apr_index(request):
     STEP = 6400
     NUM_STEPS = 14
@@ -48,16 +49,25 @@ def apr_index(request):
     end_block_number = end_block_number - end_block_number % STEP
     rows = []
     last_snapshot = None
-    for block_number in range(end_block_number - (NUM_STEPS-1)*STEP, end_block_number + 1,  STEP):
+    for block_number in range(
+        end_block_number - (NUM_STEPS - 1) * STEP, end_block_number + 1, STEP
+    ):
         s = ensure_supply_snapshot(block_number)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
-            change = (s.credits_ratio / last_snapshot.credits_ratio)
-            s.apr = Decimal(100)*(change - Decimal(1)) / blocks * Decimal(365)  * BLOCKS_PER_DAY
+            change = s.credits_ratio / last_snapshot.credits_ratio
+            s.apr = (
+                Decimal(100)
+                * (change - Decimal(1))
+                / blocks
+                * Decimal(365)
+                * BLOCKS_PER_DAY
+            )
         rows.append(s)
         last_snapshot = s
     rows.reverse()
     return render(request, "apr_index.html", locals())
+
 
 def address(request, address):
     block_number = lastest_block() - 2
@@ -152,9 +162,6 @@ def address_balance(request, address):
     #     transfer_i += 1
 
     return render(request, "address_balance.html", locals())
-
-
-
 
 
 def ensure_debug_tx(tx_hash):

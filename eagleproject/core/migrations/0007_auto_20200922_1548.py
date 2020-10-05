@@ -6,20 +6,20 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0006_auto_20200922_1512'),
+        ("core", "0006_auto_20200922_1512"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='log',
-            options={'ordering': ['-block_number', '-log_index']},
+            name="log",
+            options={"ordering": ["-block_number", "-log_index"]},
         ),
         migrations.RemoveField(
-            model_name='log',
-            name='method',
+            model_name="log",
+            name="method",
         ),
         migrations.RemoveField(
-            model_name='log',
-            name='signature',
+            model_name="log",
+            name="signature",
         ),
     ]
