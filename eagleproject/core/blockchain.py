@@ -3,7 +3,7 @@ import math
 from decimal import Decimal
 from eth_abi import encode_single
 
-from core.models import AssetBlock, DebugTx, LogPointer, Log
+from core.models import AssetBlock, DebugTx, LogPointer, Log, SupplySnapshot
 
 START_OF_EVERYTHING = 10884500
 
@@ -59,6 +59,12 @@ def call(to, signature, payload, block="latest"):
     return request("eth_call", params)
 
 
+def storage_at(address, slot, block="latest"):
+    params = [address, hex(slot), block if block == "latest" else hex(block)]
+    print(params)
+    return request("eth_getStorageAt", params)
+
+
 def debug_trace_transaction(tx_hash):
     params = [tx_hash]
     return request("trace_transaction", params)
@@ -98,6 +104,11 @@ def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
     except:
         print("EXPLODY")
         return Decimal(0)
+
+
+def ousd_total_credits(block):
+    data = storage_at(OUSD, 58, block)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
 
 
 def priceUSDMint(coin_contract, symbol, block="latest"):
@@ -202,3 +213,32 @@ def ensure_log_record(raw_log):
         log.topic_2 = raw_log["topics"][2]
     log.save()
     return log
+
+
+def ensure_supply_snapshot(block_number):
+    q = SupplySnapshot.objects.filter(block_number=block_number)
+    if q.count():
+        return q.first()
+    else:
+        dai = ensure_asset("DAI", block_number).total()
+        usdt = ensure_asset("USDT", block_number).total()
+        usdc = ensure_asset("USDC", block_number).total()
+
+        s = SupplySnapshot()
+        s.block_number = block_number
+        s.credits = ousd_total_credits(block_number)
+        s.computed_supply = dai + usdt + usdc
+        s.reported_supply = totalSupply(OUSD, 18, block_number)
+        s.credits_ratio = s.computed_supply / s.credits
+        s.save()
+        return s
+
+
+def ensure_asset(symbol, block_number):
+    q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number)
+    if q.count():
+        return q.first()
+    else:
+        ab = build_asset_block(symbol, block_number)
+        ab.save()
+        return ab

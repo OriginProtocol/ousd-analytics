@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}APR{% endblock %}
+
+
+{% block content %}
+
+<h1>APR</h1>
+
+<p>Daily APR for the last two weeks.</p>
+
+<table class="table table-right">
+    <thead>
+        <tr>
+            <th>Block</th>
+            <th>APR</th>
+            <th>Ratio</th>
+            <th>Reported Supply</th>
+            <th>Computed Supply</th>
+            <th>Credits</th>
+            
+            
+        </tr>
+    </thead>
+    {% for row in rows %}    
+        <tr>
+            <td>{{row.block_number}}</td>
+            <td><strong>{{row.apr|floatformat:2}}%</strong></td>
+            <td>{{row.credits_ratio|floatformat:8}}</td>
+            <td>{{row.computed_supply|floatformat:2}}</td>
+            <td>{{row.reported_supply|floatformat:2}}</td>
+            <td>{{row.credits|floatformat:2}}</td>
+            
+            
+            
+        </tr>
+    {% endfor %}
+</table>
+
+
+{% endblock %}

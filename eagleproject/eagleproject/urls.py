@@ -22,5 +22,6 @@ urlpatterns = [
     path('tx/debug/<slug:tx_hash>', core_views.tx_debug),
     path('address/<slug:address>', core_views.address),
     path('address/<slug:address>/ousd_balance', core_views.address_balance),
+    path('apr', core_views.apr_index),
     # path('admin/', admin.site.urls),
 ]

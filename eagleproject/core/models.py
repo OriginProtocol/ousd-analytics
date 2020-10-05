@@ -13,6 +13,9 @@ class AssetBlock(models.Model):
     def ora_diff_basis(self):
         return (self.ora_tok_usd_max - self.ora_tok_usd_min) * Decimal(10000)
 
+    def total(self):
+        return self.vault_holding + self.compstrat_holding
+
 
 class DebugTx(models.Model):
     tx_hash = models.CharField(max_length=66, db_index=True)
@@ -39,4 +42,14 @@ class Log(models.Model):
 
     class Meta:
         ordering = ['-block_number','-log_index']
-    
+
+class SupplySnapshot(models.Model):
+    block_number = models.IntegerField(db_index=True)
+    reported_supply = models.DecimalField(max_digits=64, decimal_places=18)
+    computed_supply = models.DecimalField(max_digits=64, decimal_places=18)
+    credits = models.DecimalField(max_digits=64, decimal_places=18)
+    credits_ratio = models.DecimalField(max_digits=64, decimal_places=18)
+    apr = Decimal(0) # Not persisted
+
+    class Meta:
+            ordering = ['-block_number']

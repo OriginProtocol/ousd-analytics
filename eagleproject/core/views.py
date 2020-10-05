@@ -3,6 +3,8 @@ from django.db.models import Q
 from core.blockchain import (
     build_asset_block,
     build_debug_tx,
+    ensure_supply_snapshot,
+    ensure_asset,
     lastest_block,
     ensure_latest_logs,
     download_logs_from_contract,
@@ -11,6 +13,8 @@ from core.blockchain import (
 from core.models import AssetBlock, DebugTx, LogPointer, Log
 
 import core.blockchain as blockchain
+
+from decimal import Decimal
 
 
 def dashboard(request):
@@ -36,6 +40,24 @@ def dashboard(request):
 
     return render(request, "dashboard.html", locals())
 
+def apr_index(request):
+    STEP = 6400
+    NUM_STEPS = 14
+    BLOCKS_PER_DAY = 6400
+    end_block_number = lastest_block() - 2
+    end_block_number = end_block_number - end_block_number % STEP
+    rows = []
+    last_snapshot = None
+    for block_number in range(end_block_number - (NUM_STEPS-1)*STEP, end_block_number + 1,  STEP):
+        s = ensure_supply_snapshot(block_number)
+        if last_snapshot:
+            blocks = s.block_number - last_snapshot.block_number
+            change = (s.credits_ratio / last_snapshot.credits_ratio)
+            s.apr = Decimal(100)*(change - Decimal(1)) / blocks * Decimal(365)  * BLOCKS_PER_DAY
+        rows.append(s)
+        last_snapshot = s
+    rows.reverse()
+    return render(request, "apr_index.html", locals())
 
 def address(request, address):
     block_number = lastest_block() - 2
@@ -132,14 +154,7 @@ def address_balance(request, address):
     return render(request, "address_balance.html", locals())
 
 
-def ensure_asset(symbol, block_number):
-    q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number)
-    if q.count():
-        return q.first()
-    else:
-        ab = build_asset_block(symbol, block_number)
-        ab.save()
-        return ab
+
 
 
 def ensure_debug_tx(tx_hash):
