@@ -1,9 +1,11 @@
-import requests
+import os
 import math
+import requests
 from decimal import Decimal
 from eth_abi import encode_single
 
 from core.models import AssetBlock, DebugTx, LogPointer, Log, SupplySnapshot
+
 
 START_OF_EVERYTHING = 10884500
 
@@ -40,7 +42,9 @@ LOG_CONTRACTS = [OUSD, VAULT, COMPSTRAT, OUSD_USDT_UNISWAP]
 
 
 def request(method, params):
-    url = "https://eth-mainnet.alchemyapi.io/v2/PGQ2MsXpNvo48XeXC7_ML8WFRmrK2hl5"
+    url = os.environ.get('PROVIDER_URL')
+    if url is None:
+        raise Exception("No PROVIDER_URL ENV variable defined")
     params = {
         "jsonrpc": "2.0",
         "id": 0,
