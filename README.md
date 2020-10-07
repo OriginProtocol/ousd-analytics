@@ -15,6 +15,7 @@ Vault Eagle
     pip install -r eagleproject/requirements.txt
 
 ## To run
+    export PROVIDER_URL="https://CHANGEURLHERE"
     source ./eagle-python/bin/activate
     cd eagleproject
     python ./manage.py runserver
