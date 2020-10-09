@@ -18,6 +18,7 @@ Vault Eagle
     export PROVIDER_URL="https://CHANGEURLHERE"
     source ./eagle-python/bin/activate
     cd eagleproject
+    python manage.py migrate
     python ./manage.py runserver
 
 ## Future
