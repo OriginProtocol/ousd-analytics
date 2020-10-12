@@ -195,4 +195,9 @@ def trace_annotation(trace):
         symbol = _snarf_input_symbol(trace)
         value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e8)
         return "🏛 %s at $%s" % (symbol, value)
+    elif to == "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae" and signature == "0xfe2c6198":
+        symbol = _snarf_input_symbol(trace)
+        value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e6)
+        return "🏛🏛 %s at $%s" % (symbol, value)
+
     return "."
