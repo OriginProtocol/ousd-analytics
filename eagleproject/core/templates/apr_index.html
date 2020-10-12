@@ -7,9 +7,9 @@
 
 {% block content %}
 
-<h1>APR</h1>
+<h1>APR {{seven_day_apr|floatformat:2}}% <small>seven day average</small></h1>
 
-<p>Daily APR for the last two weeks.</p>
+<p>Daily APR for the last two weeks:</p>
 
 <table class="table table-right">
     <thead>
@@ -17,8 +17,8 @@
             <th>Block</th>
             <th>APR</th>
             <th>Ratio</th>
-            <th>Reported Supply</th>
-            <th>Computed Supply</th>
+            <th>OUSD Supply</th>
+            <th>Backing Supply</th>
             <th>Credits</th>
             
             
@@ -29,8 +29,8 @@
             <td>{{row.block_number}}</td>
             <td><strong>{{row.apr|floatformat:2}}%</strong></td>
             <td>{{row.credits_ratio|floatformat:8}}</td>
-            <td>{{row.computed_supply|floatformat:2}}</td>
             <td>{{row.reported_supply|floatformat:2}}</td>
+            <td>{{row.computed_supply|floatformat:2}}</td>
             <td>{{row.credits|floatformat:2}}</td>
             
             

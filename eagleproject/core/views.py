@@ -47,7 +47,7 @@ def dashboard(request):
 
 def apr_index(request):
     STEP = 6400
-    NUM_STEPS = 14
+    NUM_STEPS = 15
     BLOCKS_PER_DAY = 6400
     end_block_number = lastest_block() - 2
     end_block_number = end_block_number - end_block_number % STEP
@@ -70,6 +70,7 @@ def apr_index(request):
         rows.append(s)
         last_snapshot = s
     rows.reverse()
+    seven_day_apr = ((rows[0].credits_ratio / rows[7].credits_ratio) - Decimal(1)) * Decimal(100) * Decimal(365) / Decimal(7)
     return render(request, "apr_index.html", locals())
 
 
