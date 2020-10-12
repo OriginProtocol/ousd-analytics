@@ -41,6 +41,7 @@ CONTRACT_NAMES = {
     "0xb103ede8acd6f0c106b7a5772e9d24e34f5ebc2c": "Chainlink Eth USD Internal",
     "0xf79d6afbb6da890132f9d7c355e3015f15f3406f": "Chainlink Eth USD Internal 2",
     "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae": "Open Price Feed",
+    "0x922018674c12a7f0d394ebeef9b58f186cde13c1": "Open Price Feed 2",
     "0x197e90f9fad81970ba7976f33cbd77088e5d7cf7": "Mkr MCD  Pot",
     "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71": "OUSD/USDT Uniswap",
     "0x7a250d5630b4cf539739df2c5dacb4c659f2488d": "Uniswap V2 Router",
@@ -195,9 +196,18 @@ def trace_annotation(trace):
         symbol = _snarf_input_symbol(trace)
         value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e8)
         return "🏛 %s at $%s" % (symbol, value)
-    elif to == "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae" and signature == "0xfe2c6198":
+    elif(to == "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae" or to == "0x922018674c12a7f0d394ebeef9b58f186cde13c1") and signature == "0xfe2c6198":
         symbol = _snarf_input_symbol(trace)
         value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e6)
         return "🏛🏛 %s at $%s" % (symbol, value)
+    elif(to == "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419" and signature == "0xfeaf968c"):
+        s = '0x'+trace["result"]["output"][2+64:2+64+64]
+        value = Decimal(int(s, 16)) / Decimal(1e8)
+        return "🏛🏛 CHAIN ETH %f" % value
+    elif(signature == "0xfeaf968c"):
+        s = '0x'+trace["result"]["output"][2+64:2+64+64]
+        print(s)
+        value = Decimal(int(s, 16)) / Decimal(1e8)
+        return "CHAIN %f" % value
 
     return "."
