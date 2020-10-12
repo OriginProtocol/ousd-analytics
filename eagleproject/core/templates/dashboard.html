@@ -7,70 +7,70 @@
 
 {% block content %}
 
-<style>
-    table.table th{ border-left: 1px solid;padding:4px 8px;}
-    table.table-right td{ text-align: right;}
-</style>
-
 <h2>
-    Block Number: {{block_number}}
+    OUSD at block {{block_number}}
 </h2>
 
 <h2>Holdings</h2>
-<table class="table table-right no-wrap">
+
+<table class="table-center no-wrap" style="margin-bottom:2em;">
+    <tr class="super-number">
+        <td>{{total_assets|floatformat:2}}</td>
+        <td>{{total_supply|floatformat:2}}</td>
+        <td>${{total_value|floatformat:2}}</td>
+    </tr>
+    <tr class="under-title">
+        <td>Backing Assets</td>
+        <td>OUSD Supply</td>
+        <td>Backing Value</td>
+    </tr>
+    <tr class="super-number">
+        <td>{{extra_assets|floatformat:2}}</td>
+        <td></td>
+        <td>${{extra_value|floatformat:2}}</td>
+    </tr>
+    <tr class="under-title">
+        <td>Next Rebase</td>
+        <td></td>
+        <td>Extra Value</td>
+    </tr>
+</table>
+
+<table class="table table-center no-wrap">
     <thead>
         <tr>
-            <th>Symbol</th>
+            <th></th>
             <th>Vault</th>
+            <th>Buffer</th>
             <th>Compound</th>
-            <th>Mint Price</th>
-            <th>Redeem Price</th>
+            <th>Mint Oracle</th>
+            <th>Redeem Oracle</th>
             <th>Basis diff</th>
+            <th>Value</th>
         </tr>
     </thead>
-    <tr>
-        <td>{{dai.symbol}}</td>
-        <td>{{dai.vault_holding|floatformat:2}}</td>
-        <td>{{dai.compstrat_holding|floatformat:2}}</td>
-        <td>${{dai.ora_tok_usd_min|floatformat:4}}</td>
-        <td>${{dai.ora_tok_usd_max|floatformat:4}}</td>
-        <td>{{dai.ora_diff_basis|floatformat:1}}</td>
-    </tr>
-    <tr>
-        <td>{{usdc.symbol}}</td>
-        <td>{{usdc.vault_holding|floatformat:2}}</td>
-        <td>{{usdc.compstrat_holding|floatformat:2}}</td>
-        <td>${{usdc.ora_tok_usd_min|floatformat:4}}</td>
-        <td>${{usdc.ora_tok_usd_max|floatformat:4}}</td>
-        <td>{{usdc.ora_diff_basis|floatformat:1}}</td>
-    </tr>
-    <tr>
-        <td>{{usdt.symbol}}</td>
-        <td>{{usdt.vault_holding|floatformat:2}}</td>
-        <td>{{usdt.compstrat_holding|floatformat:2}}</td>
-        <td>${{usdt.ora_tok_usd_min|floatformat:4}}</td>
-        <td>${{usdt.ora_tok_usd_max|floatformat:4}}</td>
-        <td>{{usdt.ora_diff_basis|floatformat:1}}</td>
-    </tr>
-    <tr>
+
+    {% for asset in assets %}
+        <tr>
+            <td>{{asset.symbol}}</td>
+            <td>{{asset.total|floatformat:2}}</td>
+            <td>{{asset.vault_holding|floatformat:2}}</td>
+            <td>{{asset.compstrat_holding|floatformat:2}}</td>
+            <td>${{asset.ora_tok_usd_min|floatformat:4}}</td>
+            <td>${{asset.ora_tok_usd_max|floatformat:4}}</td>
+            <td>{{asset.ora_diff_basis|floatformat:1}}</td>
+            <td>${{asset.redeem_value|floatformat:2}}</td>
+        </tr>
+    {% endfor %}
+    <tr class="row-summary">
         <td></td>
-        <td>${{total_vault|floatformat:2}}</td>
-        <td>${{total_compstrat|floatformat:2}}</td>
-    </tr>
-    <tr>
-        <td></td>
-        <td>&nbsp;</td>
-        <td>Supply:</td>
-    </tr>
-    <tr>
-        <td></td>
-        <td>Priced</td>
-        <td>${{total_assets|floatformat:2}}</td>
-    </tr>
-    <tr>
-        <td></td>
-        <td>Rebased</td>
-        <td>${{total_supply|floatformat:2}}</td>
+        <td><strong>{{total_assets|floatformat:2}}</strong></td>
+        <td>{{total_vault|floatformat:2}}</td>
+        <td>{{total_compstrat|floatformat:2}}</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td><strong>${{total_value|floatformat:2}}</strong></td>
     </tr>
 </table>
 

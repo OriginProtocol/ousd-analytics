@@ -13,12 +13,12 @@ Vault Eagle
     python3 -m venv eagle-python
     source ./eagle-python/bin/activate
     pip install -r eagleproject/requirements.txt
+    cd eagleproject
+    python manage.py migrate
 
 ## To run
     export PROVIDER_URL="https://CHANGEURLHERE"
     source ./eagle-python/bin/activate
-    cd eagleproject
-    python manage.py migrate
     python ./manage.py runserver
 
 ## Future

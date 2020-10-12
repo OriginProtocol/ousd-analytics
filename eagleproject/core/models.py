@@ -16,6 +16,15 @@ class AssetBlock(models.Model):
     def total(self):
         return self.vault_holding + self.compstrat_holding
 
+    def redeem_value(self):
+        return self.total() * self.redeem_price()
+
+    def redeem_price(self):
+        if self.ora_tok_usd_max > 1.0:
+            return self.ora_tok_usd_max
+        else:
+            return Decimal(1)
+
 
 class DebugTx(models.Model):
     tx_hash = models.CharField(max_length=66, db_index=True)

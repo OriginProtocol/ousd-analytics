@@ -26,10 +26,14 @@ def dashboard(request):
     usdc = ensure_asset("USDC", block_number)
 
     assets = [dai, usdt, usdc]
-    total_vault = sum(x.vault_holding * x.ora_tok_usd_min for x in assets)
-    total_compstrat = sum(x.compstrat_holding * x.ora_tok_usd_min for x in assets)
+    total_vault = sum(x.vault_holding for x in assets)
+    total_compstrat = sum(x.compstrat_holding for x in assets)
     total_assets = total_vault + total_compstrat
     total_supply = totalSupply(blockchain.OUSD, 18, block_number)
+    total_value = sum(x.redeem_value() for x in assets)
+    extra_assets = total_assets - total_supply
+    extra_value = total_value - total_supply
+
 
     ensure_latest_logs(block_number)
 
