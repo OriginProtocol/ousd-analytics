@@ -1,4 +1,6 @@
+from decimal import Decimal
 from django.shortcuts import render
+from django.http import HttpResponse
 from django.db.models import Q
 from core.blockchain import (
     build_asset_block,
@@ -14,12 +16,9 @@ from core.models import AssetBlock, DebugTx, LogPointer, Log
 
 import core.blockchain as blockchain
 
-from decimal import Decimal
-
 
 def dashboard(request):
-    # AssetBlock.objects.all().delete()
-    block_number = lastest_block() - 2
+    block_number = _lastest_block_ten()
 
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
@@ -34,7 +33,6 @@ def dashboard(request):
     extra_assets = total_assets - total_supply
     extra_value = total_value - total_supply
 
-
     ensure_latest_logs(block_number)
 
     logs_q = Log.objects.all()
@@ -42,7 +40,14 @@ def dashboard(request):
         logs_q = logs_q.filter(topic_0=request.GET.get("topic_0"))
     latest_logs = logs_q[:100]
 
-    return _cache(10, render(request, "dashboard.html", locals()))
+    return _cache(20, render(request, "dashboard.html", locals()))
+
+
+def reload(request):
+    latest = lastest_block()
+    _reload(latest - 2)
+    _reload(_lastest_block_ten(latest))
+    return HttpResponse("ok")
 
 
 def apr_index(request):
@@ -70,7 +75,12 @@ def apr_index(request):
         rows.append(s)
         last_snapshot = s
     rows.reverse()
-    seven_day_apr = ((rows[0].credits_ratio / rows[7].credits_ratio) - Decimal(1)) * Decimal(100) * Decimal(365) / Decimal(7)
+    seven_day_apr = (
+        ((rows[0].credits_ratio / rows[7].credits_ratio) - Decimal(1))
+        * Decimal(100)
+        * Decimal(365)
+        / Decimal(7)
+    )
     return _cache(2400, render(request, "apr_index.html", locals()))
 
 
@@ -177,7 +187,22 @@ def ensure_debug_tx(tx_hash):
         ab = DebugTx.objects.filter(tx_hash=tx_hash).first()
     return ab
 
+
 def _cache(seconds, response):
-    response.setdefault('Cache-Control', 'max-age=%d' % seconds)
-    response.setdefault('Vary', 'Accept-Encoding')
+    response.setdefault("Cache-Control", "max-age=%d" % seconds)
+    response.setdefault("Vary", "Accept-Encoding")
     return response
+
+
+def _reload(block_number):
+    dai = ensure_asset("DAI", block_number)
+    usdt = ensure_asset("USDT", block_number)
+    usdc = ensure_asset("USDC", block_number)
+    ensure_latest_logs(block_number)
+    ensure_supply_snapshot(block_number)
+
+
+def _lastest_block_ten(latest=lastest_block()):
+    b = latest - 2
+    b = b - b % 10
+    return b

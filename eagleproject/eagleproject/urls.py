@@ -23,5 +23,6 @@ urlpatterns = [
     path("address/<slug:address>", core_views.address),
     path("address/<slug:address>/ousd_balance", core_views.address_balance),
     path("apr", core_views.apr_index),
+    path("reload", core_views.reload),
     # path('admin/', admin.site.urls),
 ]
