@@ -42,7 +42,7 @@ def dashboard(request):
         logs_q = logs_q.filter(topic_0=request.GET.get("topic_0"))
     latest_logs = logs_q[:100]
 
-    return render(request, "dashboard.html", locals())
+    return _cache(10, render(request, "dashboard.html", locals()))
 
 
 def apr_index(request):
@@ -71,7 +71,7 @@ def apr_index(request):
         last_snapshot = s
     rows.reverse()
     seven_day_apr = ((rows[0].credits_ratio / rows[7].credits_ratio) - Decimal(1)) * Decimal(100) * Decimal(365) / Decimal(7)
-    return render(request, "apr_index.html", locals())
+    return _cache(2400, render(request, "apr_index.html", locals()))
 
 
 def address(request, address):
@@ -116,7 +116,7 @@ def _my_assets(address, block_number):
 
 def tx_debug(request, tx_hash):
     debug_tx = ensure_debug_tx(tx_hash)
-    return render(request, "debug_tx.html", locals())
+    return _cache(1200, render(request, "debug_tx.html", locals()))
 
 
 def address_balance(request, address):
@@ -176,3 +176,8 @@ def ensure_debug_tx(tx_hash):
     else:
         ab = DebugTx.objects.filter(tx_hash=tx_hash).first()
     return ab
+
+def _cache(seconds, response):
+    response.setdefault('Cache-Control', 'max-age=%d' % seconds)
+    response.setdefault('Vary', 'Accept-Encoding')
+    return response
