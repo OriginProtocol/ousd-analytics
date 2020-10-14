@@ -87,7 +87,9 @@ def apr_index(request):
     return _cache(2400, render(request, "apr_index.html", locals()))
 
 def api_apr_trailing(request):
-    return _cache(120, JsonResponse({"apr": _get_trailing_apr()}))
+    response = JsonResponse({"apr": _get_trailing_apr()})
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return _cache(120, response)
 
 def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
