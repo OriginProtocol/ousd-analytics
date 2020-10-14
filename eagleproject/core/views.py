@@ -21,9 +21,7 @@ BLOCKS_PER_DAY = 6400
 
 
 def dashboard(request):
-    # block_number = _latest_snapshot_block_number()
-    block_number = lastest_block()
-    _reload(block_number - 2)
+    block_number = _latest_snapshot_block_number()
 
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
@@ -57,7 +55,7 @@ def reload(request):
 def apr_index(request):
     STEP = 6400
     NUM_STEPS = 15
-    end_block_number = lastest_block() - 2
+    end_block_number = _latest_snapshot_block_number()
     end_block_number = end_block_number - end_block_number % STEP
     rows = []
     last_snapshot = None
