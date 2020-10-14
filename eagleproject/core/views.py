@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db.models import Q
 from core.blockchain import (
     build_asset_block,
@@ -12,13 +12,18 @@ from core.blockchain import (
     download_logs_from_contract,
     totalSupply,
 )
-from core.models import AssetBlock, DebugTx, LogPointer, Log
+from core.models import AssetBlock, DebugTx, LogPointer, Log, SupplySnapshot
 
 import core.blockchain as blockchain
+import datetime
+
+BLOCKS_PER_DAY = 6400
 
 
 def dashboard(request):
-    block_number = _lastest_block_ten()
+    # block_number = _latest_snapshot_block_number()
+    block_number = lastest_block()
+    _reload(block_number - 2)
 
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
@@ -46,14 +51,12 @@ def dashboard(request):
 def reload(request):
     latest = lastest_block()
     _reload(latest - 2)
-    _reload(_lastest_block_ten(latest))
     return HttpResponse("ok")
 
 
 def apr_index(request):
     STEP = 6400
     NUM_STEPS = 15
-    BLOCKS_PER_DAY = 6400
     end_block_number = lastest_block() - 2
     end_block_number = end_block_number - end_block_number % STEP
     rows = []
@@ -82,6 +85,10 @@ def apr_index(request):
         / Decimal(7)
     )
     return _cache(2400, render(request, "apr_index.html", locals()))
+
+
+def api_apr_trailing(request):
+    return _cache(120, JsonResponse({"apr": _get_trailing_apr()}))
 
 
 def address(request, address):
@@ -202,7 +209,35 @@ def _reload(block_number):
     ensure_supply_snapshot(block_number)
 
 
-def _lastest_block_ten(latest=lastest_block()):
-    b = latest - 2
-    b = b - b % 10
-    return b
+def _latest_snapshot_block_number():
+    latest = SupplySnapshot.objects.order_by("-block_number")[0]
+    return latest.block_number
+
+
+PREV_APR = None
+
+
+def _get_trailing_apr():
+    # Check cache first
+    global PREV_APR
+    if PREV_APR:
+        good_to, apr = PREV_APR
+        if good_to > datetime.datetime.today():
+            return apr
+    # Calculate
+    end_block_number = lastest_block() - 2
+    end_block_number = end_block_number - end_block_number % BLOCKS_PER_DAY
+    week_block_number = end_block_number - BLOCKS_PER_DAY * 7
+    today = ensure_supply_snapshot(end_block_number)
+    weekago = ensure_supply_snapshot(week_block_number)
+
+    seven_day_apr = (
+        ((today.credits_ratio / weekago.credits_ratio) - Decimal(1))
+        * Decimal(100)
+        * Decimal(365)
+        / Decimal(7)
+    )
+    seven_day_apr = round(seven_day_apr, 2)
+    good_to = datetime.datetime.today() + datetime.timedelta(minutes=5)
+    PREV_APR = [good_to, seven_day_apr]
+    return seven_day_apr

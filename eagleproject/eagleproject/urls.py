@@ -24,5 +24,6 @@ urlpatterns = [
     path("address/<slug:address>/ousd_balance", core_views.address_balance),
     path("apr", core_views.apr_index),
     path("reload", core_views.reload),
+    path("api/v1/apr/trailing", core_views.api_apr_trailing),
     # path('admin/', admin.site.urls),
 ]

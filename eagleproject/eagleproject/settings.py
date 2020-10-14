@@ -34,7 +34,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 USE_THOUSAND_SEPARATOR = True
 
-ALLOWED_HOSTS = [env("ALLOWED_HOST")]
+ALLOWED_HOSTS = [env("ALLOWED_HOST"), "analytics.ousd.com"]
 
 
 # Application definition
