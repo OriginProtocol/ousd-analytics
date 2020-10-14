@@ -86,9 +86,11 @@ def apr_index(request):
     )
     return _cache(2400, render(request, "apr_index.html", locals()))
 
-
 def api_apr_trailing(request):
     return _cache(120, JsonResponse({"apr": _get_trailing_apr()}))
+
+def api_speed_test(request):
+    return _cache(120, JsonResponse({"test": "test"}))
 
 
 def address(request, address):
@@ -196,7 +198,7 @@ def ensure_debug_tx(tx_hash):
 
 
 def _cache(seconds, response):
-    response.setdefault("Cache-Control", "max-age=%d" % seconds)
+    response.setdefault("Cache-Control", "public, max-age=%d" % seconds)
     response.setdefault("Vary", "Accept-Encoding")
     return response
 

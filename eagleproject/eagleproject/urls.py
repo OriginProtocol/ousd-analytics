@@ -25,5 +25,6 @@ urlpatterns = [
     path("apr", core_views.apr_index),
     path("reload", core_views.reload),
     path("api/v1/apr/trailing", core_views.api_apr_trailing),
+    path("api/v1/speed_test", core_views.api_speed_test),
     # path('admin/', admin.site.urls),
 ]
