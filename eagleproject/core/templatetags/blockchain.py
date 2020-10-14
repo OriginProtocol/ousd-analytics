@@ -196,16 +196,21 @@ def trace_annotation(trace):
         symbol = _snarf_input_symbol(trace)
         value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e8)
         return "🏛 %s at $%s" % (symbol, value)
-    elif(to == "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae" or to == "0x922018674c12a7f0d394ebeef9b58f186cde13c1") and signature == "0xfe2c6198":
+    elif (
+        to == "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae"
+        or to == "0x922018674c12a7f0d394ebeef9b58f186cde13c1"
+    ) and signature == "0xfe2c6198":
         symbol = _snarf_input_symbol(trace)
         value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e6)
         return "🏛🏛 %s at $%s" % (symbol, value)
-    elif(to == "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419" and signature == "0xfeaf968c"):
-        s = '0x'+trace["result"]["output"][2+64:2+64+64]
+    elif (
+        to == "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419" and signature == "0xfeaf968c"
+    ):
+        s = "0x" + trace["result"]["output"][2 + 64 : 2 + 64 + 64]
         value = Decimal(int(s, 16)) / Decimal(1e8)
         return "🏛🏛 CHAIN ETH %f" % value
-    elif(signature == "0xfeaf968c"):
-        s = '0x'+trace["result"]["output"][2+64:2+64+64]
+    elif signature == "0xfeaf968c":
+        s = "0x" + trace["result"]["output"][2 + 64 : 2 + 64 + 64]
         print(s)
         value = Decimal(int(s, 16)) / Decimal(1e8)
         return "CHAIN %f" % value

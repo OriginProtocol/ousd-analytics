@@ -42,7 +42,7 @@ LOG_CONTRACTS = [OUSD, VAULT, COMPSTRAT, OUSD_USDT_UNISWAP]
 
 
 def request(method, params):
-    url = os.environ.get('PROVIDER_URL')
+    url = os.environ.get("PROVIDER_URL")
     if url is None:
         raise Exception("No PROVIDER_URL ENV variable defined")
     params = {
