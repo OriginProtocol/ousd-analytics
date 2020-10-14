@@ -116,7 +116,6 @@ def _my_assets(address, block_number):
 
     current_balance = blockchain.balanceOf(blockchain.OUSD, address, 18, block_number)
     total_supply = totalSupply(blockchain.OUSD, 18, block_number)
-    print(block_number, current_balance, total_supply)
 
     return {
         "my": {
