@@ -32,9 +32,9 @@ CONTRACT_NAMES = {
     "0x8de3ac42f800a1186b6d70cb91e0d6876cc36759": "ChainlinkOracle",
     "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419": "ChainlinkOracle 2",
     "0xa8f14f558ac70f5f52c37cd96d802ef9210023c5": "UniswapOracle",
-    "0x47211b1d1f6da45aaee06f877266e072cf8baa74": "CompoundStrategy", #Outdated
-    "0xfceea3923dd126d8fb3873389187307519c1de37": "CompoundStrategy Internal", #Outdated
-    "0x5b57e808b0ddcf097e25c5f5e3d8d3c2b0d26319": "CompoundStrategy Internal", #Outdated
+    "0x47211b1d1f6da45aaee06f877266e072cf8baa74": "CompoundStrategy",  # Outdated
+    "0xfceea3923dd126d8fb3873389187307519c1de37": "CompoundStrategy Internal",  # Outdated
+    "0x5b57e808b0ddcf097e25c5f5e3d8d3c2b0d26319": "CompoundStrategy Internal",  # Outdated
     "0xe40e09cd6725e542001fcb900d9dfea447b529c0": "3PoolStrategy USDT",
     "0x75bc09f72db1663ed35925b89de2b5212b9b6cb3": "3PoolStrategy USDT Internal",
     "0x67023c56548ba15ad3542e65493311f19adfdd6d": "3PoolStrategy USDC",
@@ -113,16 +113,16 @@ SIGNATURES = {
     "0xa0712d68": "mint(uint256)",
     "0x9f678cca": "drip()",
     "0xf24e23eb": "suck(address,address,uint256)",
-    "0xfe0d94c1":"execute(uint256)",
-    "0xc1a287e2":"GRACE_PERIOD()",
-    "0xc9411e22":"addStrategy(address,uint256)",
-    "0x4641257d":"harvest()",
-    "0x0242241d":"collectRewardToken()",
-    "0x125f9e33":"rewardTokenAddress()",
-    "0x095ea7b3":"approve(address,uint256)",
-    "0xeabe7d91":"redeemAllowed(address,address,uint256)",
-    "0x51dff989":"redeemVerify(address,address,uint256,uint256)",
-    "":"",
+    "0xfe0d94c1": "execute(uint256)",
+    "0xc1a287e2": "GRACE_PERIOD()",
+    "0xc9411e22": "addStrategy(address,uint256)",
+    "0x4641257d": "harvest()",
+    "0x0242241d": "collectRewardToken()",
+    "0x125f9e33": "rewardTokenAddress()",
+    "0x095ea7b3": "approve(address,uint256)",
+    "0xeabe7d91": "redeemAllowed(address,address,uint256)",
+    "0x51dff989": "redeemVerify(address,address,uint256,uint256)",
+    "0xcc2b27d7": "calc_withdraw_one_coin(uint256,int128)",
 }
 
 EVENT_NAMES = {
