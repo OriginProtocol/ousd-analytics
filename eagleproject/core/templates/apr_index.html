@@ -17,25 +17,21 @@
             <th>Block</th>
             <th>APR</th>
             <th>Yield</th>
-            <th>Ratio</th>
             <th>OUSD Supply</th>
             <th>Backing Supply</th>
             <th>Credits</th>
-            
-            
+            <th>Ratio</th>
         </tr>
     </thead>
     {% for row in rows %}    
         <tr>
             <td>{{row.block_number}}</td>
             <td><strong>{{row.apr|floatformat:2}}%</strong></td>
-            <td>{{row.gain|floatformat:8}}</td>
-            <td>{{row.credits_ratio|floatformat:8}}</td>
+            <td>{{row.gain|floatformat:2}}</td>
             <td>{{row.reported_supply|floatformat:2}}</td>
             <td>{{row.computed_supply|floatformat:2}}</td>
             <td>{{row.credits|floatformat:2}}</td>
-            
-            
+            <td>{{row.credits_ratio|floatformat:8}}</td>
         </tr>
     {% endfor %}
 </table>
