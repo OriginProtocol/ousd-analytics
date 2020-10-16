@@ -85,7 +85,10 @@ def apr_index(request):
     return _cache(2400, render(request, "apr_index.html", locals()))
 
 def api_apr_trailing(request):
-    response = JsonResponse({"apr": _get_trailing_apr()})
+    apr = _get_trailing_apr()
+    if apr < 0:
+        apr = "0"
+    response = JsonResponse({"apr": apr})
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
