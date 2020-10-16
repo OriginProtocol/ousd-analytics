@@ -7,12 +7,11 @@
 
 {% block content %}
 
-<h2>
-    OUSD at block {{block_number}}
-</h2>
 
 
-<table class="table-center no-wrap" style="margin-bottom:2em;">
+<div style="width:1100px; text-align:center; margin:auto">
+
+<table class="table-center no-wrap" style="margin:2em auto 2em;">
     <tr class="super-number">
         <td>{{total_assets|floatformat:2}}</td>
         <td style="font-size:64px"><strong>{{total_supply|floatformat:2}}</strong></td>
@@ -42,7 +41,7 @@
     </tr>
 </table>
 
-<table class="table table-center no-wrap">
+<table class="table table-center no-wrap" style="margin:4em auto 2em;">
     <thead>
         <tr>
             <th></th>
@@ -82,6 +81,8 @@
         <td><strong>${{total_value|floatformat:2}}</strong></td>
     </tr>
 </table>
+
+</div>
 
 <h2>Logs</h2>
 
@@ -141,6 +142,8 @@
 
 </div>
 
-
+<p>
+    OUSD at block {{block_number}}
+</p>
 
 {% endblock %}
