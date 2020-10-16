@@ -13,31 +13,20 @@
 
 <table class="table-center no-wrap" style="margin:2em auto 2em;">
     <tr class="super-number">
-        <td>{{total_assets|floatformat:2}}</td>
+        <td width="250">{{apy|floatformat:2}}%</td>
         <td style="font-size:64px"><strong>{{total_supply|floatformat:2}}</strong></td>
-        <td>${{total_value|floatformat:2}}</td>
+        <td width="250">${{extra_assets|floatformat:2}}</td>
     </tr>
     <tr class="under-title">
-        <td>Backing Assets</td>
+        <td>APY</td>
         <td>OUSD Supply</td>
-        <td>Backing Value</td>
-    </tr>
-    <tr class="super-number">
-        <td>{{extra_assets|floatformat:2}}</td>
-        <td></td>
-        <td>${{extra_value|floatformat:2}}</td>
-    </tr>
-    <tr class="under-title">
         <td>
             {% if extra_assets > 0 %}
                 Next Rebase
             {% else %}
-                Rebase Hold
+            Next Rebase on Hold
             {% endif %}
-            
         </td>
-        <td></td>
-        <td>Extra Value</td>
     </tr>
 </table>
 
@@ -58,7 +47,7 @@
 
     {% for asset in assets %}
         <tr>
-            <td>{{asset.symbol}}</td>
+            <td><strong>{{asset.symbol}}</strong></td>
             <td>{{asset.total|floatformat:2}}</td>
             <td>{{asset.vault_holding|floatformat:2}}</td>
             <td>{{asset.compstrat_holding|floatformat:2}}</td>
