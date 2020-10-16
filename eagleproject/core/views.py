@@ -27,6 +27,8 @@ def dashboard(request):
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
 
+    apy = _get_trailing_apy()
+
     assets = [dai, usdt, usdc]
     total_vault = sum(x.vault_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
@@ -86,7 +88,10 @@ def api_apr_trailing(request):
     apr = _get_trailing_apr()
     if apr < 0:
         apr = "0"
-    response = JsonResponse({"apr": apr})
+    apy = _get_trailing_apy()
+    if apy < 0:
+        apy = 0
+    response = JsonResponse({"apr": apr, "apy": apy})
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
@@ -244,3 +249,10 @@ def _get_trailing_apr():
     good_to = datetime.datetime.today() + datetime.timedelta(minutes=5)
     PREV_APR = [good_to, seven_day_apr]
     return seven_day_apr
+
+
+def _get_trailing_apy():
+    apr = Decimal(_get_trailing_apr())
+    periods_per_year = Decimal(365.25 / 7.0)
+    apy = ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
+    return round(apy, 2)
