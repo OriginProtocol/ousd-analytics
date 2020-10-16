@@ -65,6 +65,7 @@ class SupplySnapshot(models.Model):
     credits = models.DecimalField(max_digits=64, decimal_places=18)
     credits_ratio = models.DecimalField(max_digits=64, decimal_places=18)
     apr = Decimal(0)  # Not persisted
+    gain = Decimal(0)  # Not persisted
 
     class Meta:
         ordering = ["-block_number"]

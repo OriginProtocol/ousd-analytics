@@ -60,20 +60,16 @@ def apr_index(request):
     end_block_number = end_block_number - end_block_number % STEP
     rows = []
     last_snapshot = None
-    for block_number in range(
+    block_numbers = range(
         end_block_number - (NUM_STEPS - 1) * STEP, end_block_number + 1, STEP
-    ):
+    )
+    for block_number in block_numbers:
         s = ensure_supply_snapshot(block_number)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
-            change = s.credits_ratio / last_snapshot.credits_ratio
-            s.apr = (
-                Decimal(100)
-                * (change - Decimal(1))
-                / blocks
-                * Decimal(365)
-                * BLOCKS_PER_DAY
-            )
+            change = (s.credits_ratio / last_snapshot.credits_ratio) - Decimal(1)
+            s.apr = Decimal(100) * change / blocks * Decimal(365) * BLOCKS_PER_DAY
+            s.gain = change * s.computed_supply
         rows.append(s)
         last_snapshot = s
     rows.reverse()
@@ -85,6 +81,7 @@ def apr_index(request):
     )
     return _cache(2400, render(request, "apr_index.html", locals()))
 
+
 def api_apr_trailing(request):
     apr = _get_trailing_apr()
     if apr < 0:
@@ -92,6 +89,7 @@ def api_apr_trailing(request):
     response = JsonResponse({"apr": apr})
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
+
 
 def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
