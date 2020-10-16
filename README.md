@@ -14,30 +14,29 @@ Vault Eagle
     source ./eagle-python/bin/activate
     pip install -r eagleproject/requirements.txt
     cd eagleproject
+    cp eagleproject/.env.dev eagleproject/.env
+    # edit eagleproject/.env and add in your provider URL
     python manage.py migrate
 
 ## To run
     export PROVIDER_URL="https://CHANGEURLHERE"
     source ./eagle-python/bin/activate
     python ./manage.py runserver
+    # To download data from the blockchain, visit
+    # vist http://localhost:9001/reload
+
 
 ## Future
 
 Data ingest:
 
 - Oracle readings
-- Vault holdings
-- Vault supply
-- Strategy holdings
 - Actual exchange asset pricing
-- OUSD and vault event logging
-- [later] Compound events / state
+- Compound state
 
 Views:
 
 - Holdings (current and historical)
-- APR
-- All Transactions
 - [later] Oracle analysis
 - [later] Compound health analysis
 - [later] Flagged Transactions
@@ -45,5 +44,4 @@ Views:
 Pushes:
 
 - [later] To Discord
-- [later]To a staticly rendered site for the public
 
