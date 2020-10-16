@@ -30,7 +30,8 @@ def dashboard(request):
     assets = [dai, usdt, usdc]
     total_vault = sum(x.vault_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
-    total_assets = total_vault + total_compstrat
+    total_threepool = sum(x.threepoolstrat_holding for x in assets)
+    total_assets = sum(x.total() for x in assets)
     total_supply = totalSupply(blockchain.OUSD, 18, block_number)
     total_value = sum(x.redeem_value() for x in assets)
     extra_assets = total_assets - total_supply

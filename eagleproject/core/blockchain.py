@@ -15,10 +15,16 @@ DAI = "0x6b175474e89094c44da98b954eedeac495271d0f"
 CDAI = "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643"
 CUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563"
 CUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9"
+THREEPOOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
+
 OUSD = "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86"
 VAULT = "0x277e80f3e14e7fb3fc40a9d6184088e0241034bd"
 COMPSTRAT = "0x47211b1d1f6da45aaee06f877266e072cf8baa74"
 OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
+
+STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
+STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
+STRATCOMPDIA = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
@@ -30,6 +36,12 @@ DECIMALS_FOR_SYMBOL = {
     "DAI": 18,
     "USDT": 6,
     "USDC": 6,
+}
+
+THREEPOOLINDEX_FOR_ASSET = {
+    DAI: 0,
+    USDC: 1,
+    USDT: 2,
 }
 
 COMPOUND_FOR_SYMBOL = {
@@ -106,7 +118,20 @@ def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
             math.pow(10, decimals)
         )
     except:
-        print("EXPLODY")
+        print("ERROR: balanceOfUnderlying failed")
+        return Decimal(0)
+
+
+def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
+    signature = "0x5f515226"
+    try:
+        payload = encode_single("(address)", [coin_contract]).hex()
+        data = call(strategy, signature, payload, block)
+        return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+            math.pow(10, decimals)
+        )
+    except:
+        print("ERROR: strategyCheckBalance failed")
         return Decimal(0)
 
 
@@ -131,6 +156,33 @@ def priceUSDRedeem(coin_contract, symbol, block="latest"):
 
 def build_asset_block(symbol, block_number):
     symbol = symbol.upper()
+    compstrat_holding = Decimal(0)
+    threepoolstrat_holding = Decimal(0)
+
+    if block_number != "latest" and block_number < 11067601:
+        compstrat_holding += balanceOfUnderlying(
+            COMPOUND_FOR_SYMBOL[symbol],
+            COMPSTRAT,
+            DECIMALS_FOR_SYMBOL[symbol],
+            block_number,
+        )
+    if block_number == "latest" or block_number > 11060000:
+        if symbol == "DAI":
+            compstrat_holding += balanceOfUnderlying(
+                COMPOUND_FOR_SYMBOL[symbol],
+                STRATCOMPDIA,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+        elif symbol == "USDC":
+            threepoolstrat_holding += strategyCheckBalance(
+                STRAT3POOLUSDC, USDC, DECIMALS_FOR_SYMBOL[symbol], block_number
+            )
+        elif symbol == "USDT":
+            threepoolstrat_holding += strategyCheckBalance(
+                STRAT3POOLUSDT, USDT, DECIMALS_FOR_SYMBOL[symbol], block_number
+            )
+
     return AssetBlock(
         symbol=symbol,
         block_number=block_number,
@@ -142,12 +194,8 @@ def build_asset_block(symbol, block_number):
             DECIMALS_FOR_SYMBOL[symbol],
             block_number,
         ),
-        compstrat_holding=balanceOfUnderlying(
-            COMPOUND_FOR_SYMBOL[symbol],
-            COMPSTRAT,
-            DECIMALS_FOR_SYMBOL[symbol],
-            block_number,
-        ),
+        compstrat_holding=compstrat_holding,
+        threepoolstrat_holding=threepoolstrat_holding,
     )
 
 

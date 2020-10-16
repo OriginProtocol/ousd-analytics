@@ -9,12 +9,15 @@ class AssetBlock(models.Model):
     ora_tok_usd_max = models.DecimalField(max_digits=64, decimal_places=18)
     vault_holding = models.DecimalField(max_digits=64, decimal_places=18)
     compstrat_holding = models.DecimalField(max_digits=64, decimal_places=18)
+    threepoolstrat_holding = models.DecimalField(
+        max_digits=64, decimal_places=18, default=0
+    )
 
     def ora_diff_basis(self):
         return (self.ora_tok_usd_max - self.ora_tok_usd_min) * Decimal(10000)
 
     def total(self):
-        return self.vault_holding + self.compstrat_holding
+        return self.vault_holding + self.compstrat_holding + self.threepoolstrat_holding
 
     def redeem_value(self):
         return self.total() * self.redeem_price()
