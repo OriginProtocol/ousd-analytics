@@ -58,13 +58,13 @@ def reload(request):
 def apr_index(request):
     STEP = 6400
     NUM_STEPS = 15
-    end_block_number = _latest_snapshot_block_number()
-    end_block_number = end_block_number - end_block_number % STEP
+    latest_block_number = _latest_snapshot_block_number()
+    end_block_number = latest_block_number - latest_block_number % STEP
     rows = []
     last_snapshot = None
-    block_numbers = range(
+    block_numbers = list(range(
         end_block_number - (NUM_STEPS - 1) * STEP, end_block_number + 1, STEP
-    )
+    )) + [latest_block_number]
     for block_number in block_numbers:
         s = ensure_supply_snapshot(block_number)
         if last_snapshot:
@@ -81,6 +81,11 @@ def apr_index(request):
         * Decimal(365)
         / Decimal(7)
     )
+
+    # Running for today
+    today_adjust = Decimal((latest_block_number - end_block_number) / float(BLOCKS_PER_DAY))
+    rows[0].apr = rows[0].apr / today_adjust
+
     return _cache(2400, render(request, "apr_index.html", locals()))
 
 
