@@ -52,6 +52,7 @@ def dashboard(request):
 def reload(request):
     latest = lastest_block()
     _reload(latest - 2)
+    _reload(latest - 2 - 6400 * 7)  # Week ago, for APR
     return HttpResponse("ok")
 
 
@@ -83,6 +84,8 @@ def apr_index(request):
     )
     rows[0].apr = rows[0].apr / today_adjust
 
+    # drop last row with incomplete information
+    rows = rows[:-1]
     return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
 
