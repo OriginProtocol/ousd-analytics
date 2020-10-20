@@ -62,9 +62,9 @@ def apr_index(request):
     end_block_number = latest_block_number - latest_block_number % STEP
     rows = []
     last_snapshot = None
-    block_numbers = list(range(
-        end_block_number - (NUM_STEPS - 1) * STEP, end_block_number + 1, STEP
-    )) + [latest_block_number]
+    block_numbers = list(
+        range(end_block_number - (NUM_STEPS - 1) * STEP, end_block_number + 1, STEP)
+    ) + [latest_block_number]
     for block_number in block_numbers:
         s = ensure_supply_snapshot(block_number)
         if last_snapshot:
@@ -75,18 +75,15 @@ def apr_index(request):
         rows.append(s)
         last_snapshot = s
     rows.reverse()
-    seven_day_apr = (
-        ((rows[0].credits_ratio / rows[7].credits_ratio) - Decimal(1))
-        * Decimal(100)
-        * Decimal(365)
-        / Decimal(7)
-    )
+    seven_day_apr = _get_trailing_apr()
 
     # Running for today
-    today_adjust = Decimal((latest_block_number - end_block_number) / float(BLOCKS_PER_DAY))
+    today_adjust = Decimal(
+        (latest_block_number - end_block_number) / float(BLOCKS_PER_DAY)
+    )
     rows[0].apr = rows[0].apr / today_adjust
 
-    return _cache(2400, render(request, "apr_index.html", locals()))
+    return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
 
 def api_apr_trailing(request):
@@ -239,7 +236,8 @@ def _get_trailing_apr():
             return apr
     # Calculate
     end_block_number = lastest_block() - 2
-    end_block_number = end_block_number - end_block_number % BLOCKS_PER_DAY
+    # Comment this out for live trailing
+    # end_block_number = end_block_number - end_block_number % BLOCKS_PER_DAY
     week_block_number = end_block_number - BLOCKS_PER_DAY * 7
     today = ensure_supply_snapshot(end_block_number)
     weekago = ensure_supply_snapshot(week_block_number)

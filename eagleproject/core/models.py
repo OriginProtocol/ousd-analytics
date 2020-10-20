@@ -67,7 +67,6 @@ class SupplySnapshot(models.Model):
     apr = Decimal(0)  # Not persisted
     gain = Decimal(0)  # Not persisted
 
-
     def backing_diff(self):
         return self.computed_supply - self.reported_supply
 
