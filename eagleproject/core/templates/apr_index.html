@@ -25,7 +25,7 @@
     </thead>
     {% for row in rows %}    
         <tr>
-            <td>{% if row.block_number == latest_block_number %}Today{% else %}{{row.block_number}}{% endif %}</td>
+            <td>{% if row.block_number == latest_block_number %}Today So Far{% else %}{{row.block_number}}{% endif %}</td>
             <td><strong>{{row.apr|floatformat:2}}%</strong></td>
             <td>{{row.gain|floatformat:2}}</td>
             <td>{{row.reported_supply|floatformat:2}}</td>

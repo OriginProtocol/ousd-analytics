@@ -228,6 +228,7 @@ PREV_APR = None
 
 
 def _get_trailing_apr():
+    days = 7
     # Check cache first
     global PREV_APR
     if PREV_APR:
@@ -238,7 +239,7 @@ def _get_trailing_apr():
     end_block_number = lastest_block() - 2
     # Comment this out for live trailing
     # end_block_number = end_block_number - end_block_number % BLOCKS_PER_DAY
-    week_block_number = end_block_number - BLOCKS_PER_DAY * 7
+    week_block_number = end_block_number - BLOCKS_PER_DAY * days
     today = ensure_supply_snapshot(end_block_number)
     weekago = ensure_supply_snapshot(week_block_number)
 
@@ -246,7 +247,7 @@ def _get_trailing_apr():
         ((today.credits_ratio / weekago.credits_ratio) - Decimal(1))
         * Decimal(100)
         * Decimal(365)
-        / Decimal(7)
+        / Decimal(days)
     )
     seven_day_apr = round(seven_day_apr, 2)
     good_to = datetime.datetime.today() + datetime.timedelta(minutes=5)
