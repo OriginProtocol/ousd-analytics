@@ -75,7 +75,7 @@ def apr_index(request):
         rows.append(s)
         last_snapshot = s
     rows.reverse()
-    seven_day_apr = _get_trailing_apr()
+    seven_day_apy = _get_trailing_apy()
 
     # Running for today
     today_adjust = Decimal(
