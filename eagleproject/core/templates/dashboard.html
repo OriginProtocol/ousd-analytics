@@ -65,8 +65,8 @@
         <td><strong>{{total_assets|floatformat:2}}</strong></td>
         <td>{{total_vault|floatformat:2}}</td>
         <td>{{total_threepool|floatformat:2}}</td>
-        <td>{{total_aave|floatformat:2}}</td>
         <td>{{total_compstrat|floatformat:2}}</td>
+        <td>{{total_aave|floatformat:2}}</td>
         <td>-</td>
         <td>-</td>
         <td>-</td>
@@ -79,7 +79,10 @@
 <h2>Logs</h2>
 
 <p>
-    <a href="/?topic_0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef">Transfers Only</a>
+    Filter: <a href="/?topic_0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef">transfers</a>,
+    <a href="/?topic_0=0x0f6798a560793a54c3bcfe86a93cde1e73087d944c0ea20544137d4121396885">mints</a>,
+    <a href="/?topic_0=0x222838db2794d11532d940e8dec38ae307ed0b63cd97c233322e221f998767a6">redeems</a>,
+    <a href="/?topic_0=0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7">governance</a>
 </p>
 <div>
     <table class="table">
@@ -100,6 +103,9 @@
                 {% endif %}
                 {% if log.topic_0 == "0x0f6798a560793a54c3bcfe86a93cde1e73087d944c0ea20544137d4121396885" %}
                     ❇️
+                {% endif %}
+                {% if log.topic_0 == "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7" %}
+                    👷‍♂️
                 {% endif %}
 
                 

@@ -133,6 +133,8 @@ SIGNATURES = {
     "0x5909c0d5": "price0CumulativeLast()",
     "0x5a3d5493": "price1CumulativeLast()",
     "0xfff6cae9": "sync()",
+    "0x5d36b190": "claimGovernance()",
+    "0x3659cfe6": "upgradeTo(address)",
 }
 
 EVENT_NAMES = {
@@ -152,6 +154,8 @@ EVENT_NAMES = {
     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822": "Swap(address,uint256,uint256,uint256,uint256,address)",
     "0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1": "Sync(uint112,uint112)",
     "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": "Approval(address,address,uint256)",
+    "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7": "ExecuteTransaction",
+    "0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f": "QueueTransaction",
 }
 
 
