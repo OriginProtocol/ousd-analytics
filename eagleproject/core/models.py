@@ -60,6 +60,13 @@ class Log(models.Model):
     transaction_index = models.IntegerField(db_index=True)
     account_balance = Decimal(0)
 
+    def is_ousd_in(self):
+        """For uniswap events"""
+        return (
+            self.data[2 + 3 * 64 : 2 + 4 * 64]
+            != "0000000000000000000000000000000000000000000000000000000000000000"
+        )
+
     class Meta:
         ordering = ["-block_number", "-log_index"]
 

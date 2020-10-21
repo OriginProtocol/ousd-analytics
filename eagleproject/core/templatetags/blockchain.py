@@ -2,6 +2,7 @@ from django import template
 from django.template.defaultfilters import stringfilter
 from binascii import unhexlify
 from decimal import Decimal
+from eth_abi import decode_single
 
 register = template.Library()
 
@@ -135,6 +136,8 @@ SIGNATURES = {
     "0xfff6cae9": "sync()",
     "0x5d36b190": "claimGovernance()",
     "0x3659cfe6": "upgradeTo(address)",
+    "0x372aa224": "setPriceProvider(address)",
+    "0x8ec489a2": "setVaultBuffer(uint256)",
 }
 
 EVENT_NAMES = {
@@ -203,15 +206,47 @@ def long_address_name(value):
 
 
 @register.filter
+def decode_execute_event_signature(value):
+    abi = "(uint256,string,bytes,uint256)"
+    b = bytearray.fromhex(value[2:])  # bytearray hates the 0x
+    return decode_single(abi, b)[1]
+
+
+@register.filter
 def dec_18(value):
     if isinstance(value, str):
         return int(value, 16) / 1e18
 
 
 @register.filter
+def dec_6(value):
+    if isinstance(value, str):
+        return int(value, 16) / 1e6
+
+
+def _slot(value, i):
+    """Get the x 256bit field from a data string"""
+    return value[2 + i * 64 : 2 + (i + 1) * 64]
+
+
+@register.filter
+def slot_0(value):
+    return _slot(value, 0)
+
+
+@register.filter
+def slot_1(value):
+    return _slot(value, 1)
+
+
+@register.filter
 def slot_2(value):
-    """Get the second 256bit field from a data sting"""
-    return value[2 + 64 :]
+    return _slot(value, 2)
+
+
+@register.filter
+def slot_3(value):
+    return _slot(value, 3)
 
 
 @register.filter
