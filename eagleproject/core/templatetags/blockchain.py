@@ -209,6 +209,12 @@ def dec_18(value):
 
 
 @register.filter
+def slot_2(value):
+    """Get the second 256bit field from a data sting"""
+    return value[2 + 64 :]
+
+
+@register.filter
 def explode_data(value):
     count = len(value) // 64
     out = []
