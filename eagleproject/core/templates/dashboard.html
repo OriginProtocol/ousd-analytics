@@ -36,8 +36,9 @@
             <th></th>
             <th>Vault</th>
             <th>Buffer</th>
-            <th>Compound</th>
             <th>3Pool</th>
+            <th>Compound</th>
+            <th>AAVE</th>
             <th>Mint Oracle</th>
             <th>Redeem Oracle</th>
             <th>Basis diff</th>
@@ -50,8 +51,9 @@
             <td><strong>{{asset.symbol}}</strong></td>
             <td>{{asset.total|floatformat:2}}</td>
             <td>{{asset.vault_holding|floatformat:2}}</td>
-            <td>{{asset.compstrat_holding|floatformat:2}}</td>
             <td>{{asset.threepoolstrat_holding|floatformat:2}}</td>
+            <td>{{asset.compstrat_holding|floatformat:2}}</td>
+            <td>{{asset.aavestrat_holding|floatformat:2}}</td>
             <td>${{asset.ora_tok_usd_min|floatformat:4}}</td>
             <td>${{asset.ora_tok_usd_max|floatformat:4}}</td>
             <td>{{asset.ora_diff_basis|floatformat:1}}</td>
@@ -62,8 +64,9 @@
         <td></td>
         <td><strong>{{total_assets|floatformat:2}}</strong></td>
         <td>{{total_vault|floatformat:2}}</td>
-        <td>{{total_compstrat|floatformat:2}}</td>
         <td>{{total_threepool|floatformat:2}}</td>
+        <td>{{total_aave|floatformat:2}}</td>
+        <td>{{total_compstrat|floatformat:2}}</td>
         <td>-</td>
         <td>-</td>
         <td>-</td>

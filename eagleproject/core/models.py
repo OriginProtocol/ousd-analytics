@@ -5,19 +5,25 @@ from decimal import Decimal
 class AssetBlock(models.Model):
     symbol = models.CharField(max_length=8, db_index=True)
     block_number = models.IntegerField(db_index=True)
-    ora_tok_usd_min = models.DecimalField(max_digits=64, decimal_places=18)
-    ora_tok_usd_max = models.DecimalField(max_digits=64, decimal_places=18)
-    vault_holding = models.DecimalField(max_digits=64, decimal_places=18)
-    compstrat_holding = models.DecimalField(max_digits=64, decimal_places=18)
+    ora_tok_usd_min = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    ora_tok_usd_max = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    vault_holding = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    compstrat_holding = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     threepoolstrat_holding = models.DecimalField(
         max_digits=64, decimal_places=18, default=0
     )
+    aavestrat_holding = models.DecimalField(max_digits=64, decimal_places=18, default=0)
 
     def ora_diff_basis(self):
         return (self.ora_tok_usd_max - self.ora_tok_usd_min) * Decimal(10000)
 
     def total(self):
-        return self.vault_holding + self.compstrat_holding + self.threepoolstrat_holding
+        return (
+            self.vault_holding
+            + self.compstrat_holding
+            + self.threepoolstrat_holding
+            + self.aavestrat_holding
+        )
 
     def redeem_value(self):
         return self.total() * self.redeem_price()

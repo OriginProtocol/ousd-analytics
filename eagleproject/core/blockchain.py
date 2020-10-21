@@ -25,6 +25,7 @@ OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
 STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
 STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
 STRATCOMPDIA = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
+STRATAAVEDAI = "0x051caefa90adf261b8e8200920c83778b7b176b6"
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
@@ -158,6 +159,7 @@ def build_asset_block(symbol, block_number):
     symbol = symbol.upper()
     compstrat_holding = Decimal(0)
     threepoolstrat_holding = Decimal(0)
+    aavestrat_holding = Decimal(0)
 
     if block_number != "latest" and block_number < 11067601:
         compstrat_holding += balanceOfUnderlying(
@@ -166,6 +168,7 @@ def build_asset_block(symbol, block_number):
             DECIMALS_FOR_SYMBOL[symbol],
             block_number,
         )
+
     if block_number == "latest" or block_number > 11060000:
         if symbol == "DAI":
             compstrat_holding += balanceOfUnderlying(
@@ -182,6 +185,15 @@ def build_asset_block(symbol, block_number):
             threepoolstrat_holding += strategyCheckBalance(
                 STRAT3POOLUSDT, USDT, DECIMALS_FOR_SYMBOL[symbol], block_number
             )
+    # First AAVE Strat
+    if block_number == "latest" or block_number >= 11096410:
+        if symbol == "DAI":
+            aavestrat_holding += strategyCheckBalance(
+                STRATAAVEDAI,
+                DAI,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
 
     return AssetBlock(
         symbol=symbol,
@@ -196,6 +208,7 @@ def build_asset_block(symbol, block_number):
         ),
         compstrat_holding=compstrat_holding,
         threepoolstrat_holding=threepoolstrat_holding,
+        aavestrat_holding=aavestrat_holding,
     )
 
 

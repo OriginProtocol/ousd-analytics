@@ -28,19 +28,25 @@ CONTRACT_NAMES = {
     "0x39aa39c021dfbae8fac545936693ac917d5e7563": "cUSDC",
     "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9": "cUSDT",
     "0x976aa93ca5aaa569109f4267589c619a097f001d": "cUSDT Internal",
-    "0xcf67e56965ad7cec05ebf88bad798a875e0460eb": "MixOracle",
+    "0xcf67e56965ad7cec05ebf88bad798a875e0460eb": "MixOracle",  # Outdated
+    "0x4d4f5e7a1fe57f5ceb38bfce8653effa5e584458": "MixOracle",
     "0x8de3ac42f800a1186b6d70cb91e0d6876cc36759": "ChainlinkOracle",
     "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419": "ChainlinkOracle 2",
-    "0xa8f14f558ac70f5f52c37cd96d802ef9210023c5": "UniswapOracle",
+    "0xa8f14f558ac70f5f52c37cd96d802ef9210023c5": "UniswapOracle",  # Outdated
+    "0xc15169bad17e676b3badb699dee327423ce6178e": "UniswapOracle",
     "0x47211b1d1f6da45aaee06f877266e072cf8baa74": "CompoundStrategy",  # Outdated
     "0xfceea3923dd126d8fb3873389187307519c1de37": "CompoundStrategy Internal",  # Outdated
     "0x5b57e808b0ddcf097e25c5f5e3d8d3c2b0d26319": "CompoundStrategy Internal",  # Outdated
     "0xe40e09cd6725e542001fcb900d9dfea447b529c0": "3PoolStrategy USDT",
-    "0x75bc09f72db1663ed35925b89de2b5212b9b6cb3": "3PoolStrategy USDT Internal",
+    "0x75bc09f72db1663ed35925b89de2b5212b9b6cb3": "3PoolStrategy USDT Internal",  # Outdated
+    "0x641e3b5b081fb2fb8b43d5a163649312a28e23da": "3PoolStrategy USDT Internal",
     "0x67023c56548ba15ad3542e65493311f19adfdd6d": "3PoolStrategy USDC",
     "0x96e89b021e4d72b680bb0400ff504eb5f4a24327": "3PoolStrategy USDC Internal",
+    "0xf92b0de25660c18bedaa55795986781d7899b0f9": "3PoolStrategy USDC Internal",  # Outdated
     "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3": "CompoundStrategy DIA",
     "0xfaf23bd848126521064184282e8ad344490ba6f0": "CompoundStrategy DIA Internal",
+    "0x051caefa90adf261b8e8200920c83778b7b176b6": "AaveStrategy",
+    "0x5d9aa9f977e47ea0bfe61ba8b8f535aba02be135": "AaveStrategy Internal",
     "0x986b5e1e1755e3c2440e960477f25201b0a8bbd4": "Chainlink USDC ETH",
     "0x85ab3512465f39b8bb40a8872f8fbfd5f08ace1e": "Chainlink USDC ETH Internal",
     "0xde54467873c3bcaa76421061036053e371721708": "Chainlink USDC ETH Internal 2",
@@ -59,6 +65,7 @@ CONTRACT_NAMES = {
     "0x9759a6ac90977b93b58547b4a71c78317f391a28": "Mkr MCD Join DAI",
     "0x35d1b3f3d7966a1dfe207aa4514c12a259a0492b": "Mkr MCD Vat",
     "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71": "OUSD/USDT Uniswap",
+    "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852": "ETH/USDT Uniswap",
     "0x7a250d5630b4cf539739df2c5dacb4c659f2488d": "Uniswap V2 Router",
     "0x0000000000000000000000000000000000000000": "The Void",
     "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7": "Curve 3pool vault",
@@ -123,6 +130,9 @@ SIGNATURES = {
     "0xeabe7d91": "redeemAllowed(address,address,uint256)",
     "0x51dff989": "redeemVerify(address,address,uint256,uint256)",
     "0xcc2b27d7": "calc_withdraw_one_coin(uint256,int128)",
+    "0x5909c0d5": "price0CumulativeLast()",
+    "0x5a3d5493": "price1CumulativeLast()",
+    "0xfff6cae9": "sync()",
 }
 
 EVENT_NAMES = {

@@ -31,6 +31,7 @@ def dashboard(request):
 
     assets = [dai, usdt, usdc]
     total_vault = sum(x.vault_holding for x in assets)
+    total_aave = sum(x.aavestrat_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
     total_threepool = sum(x.threepoolstrat_holding for x in assets)
     total_assets = sum(x.total() for x in assets)
