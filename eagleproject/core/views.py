@@ -240,7 +240,7 @@ def _get_trailing_apr():
         if good_to > datetime.datetime.today():
             return apr
     # Calculate
-    end_block_number = lastest_block() - 2
+    end_block_number = _latest_snapshot_block_number()
     # Comment this out for live trailing
     # end_block_number = end_block_number - end_block_number % BLOCKS_PER_DAY
     week_block_number = end_block_number - BLOCKS_PER_DAY * days
