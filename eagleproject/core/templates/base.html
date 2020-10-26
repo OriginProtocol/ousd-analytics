@@ -4,56 +4,133 @@
     <title>{% block title %}{% endblock %}</title>
 
     <style>
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue-grey: #8293a4;
+            --dark-blue-grey: #183140;
+            --powder-blue: #cdd7e0;
+            --pale-grey: #fafbfc;
+        }
         body {
-            font-family: "Open Sans", system-ui ;
+            background: var(--pale-grey);
+            color: var(--dark-blue-grey);
+            font-family: 'Lato', sans-serif;
             margin: 0px 0px;
             padding: 0px 0px;
         }
+        strong {
+            font-weight: 900;
+        }
+        h1, h2 {
+            font-weight:900;
+        }
+        h1 small {
+            font-weight: normal;
+            font-size: 12px;
+        }
+        abbr {
+            font-variant: small-caps;
+            font-size: 0.8em;
+        }
+        a:hover {
+            opacity: 0.8;
+        }
+        .no-mobile {
+            display: none;
+        }
         .topnav {
-            padding: 3px 32px;
-            border-bottom: dashed 1px #eee;
+            background-color: var(--dark-blue-grey);
+            height: 21px;
+            padding: 35px 0;
+            border-bottom: none;
         }
-        .topnav a { color: black; }
-        .content{
-            
-            margin: 0px 32px;
+        .topnav .container {
+            display: flex;
         }
-        table.table th{ padding:4px 8px; font-weight: normal; }
-        table.table td{ padding: 2px 8px; vertical-align: top; border-top: 1px solid #eee;}
-        table.table-center td{ text-align: center;}
-        table.table-right td{ text-align: right;}
-        .l { text-align: right;}
-        tr.row-summary > td{ border-top: 1px solid #e76d12; }
-        tr.super-number > td {     font-size: 44px; padding: 20px 20px 0px;}
-        h1 small {font-weight: normal; font-size:12px;}
-        abbr { font-variant:  small-caps; font-size: 0.8em;}
+        table.table th {
+            padding:4px 8px;
+            font-weight: normal;
+        }
+        table.table td {
+            padding: 2px 8px;
+            vertical-align: top;
+            border-top: 1px solid #eee;
+        }
+        table.table-center td {
+            text-align: center;
+        }
+        table.table-right td {
+            text-align: right;
+        }
+        .l {
+            text-align: right;
+        }
+        tr.row-summary > td {
+            border-top: 1px solid #e76d12;
+        }
+        tr.super-number > td {
+            font-size: 44px;
+            padding: 20px 20px 0px;
+        }
+
+        /* Bootstrap-inspired container */
+        .container,
+        .container-fluid,
+        .container-sm,
+        .container-md,
+        .container-lg,
+        .container-xl,
+        .container-xxl {
+            --gutter-x: 20px;
+            margin-left: auto;
+            margin-right: auto;
+            max-width: calc(100% - var(--gutter-x) * 2);
+            padding-left: var(--gutter-x);
+            padding-right: var(--gutter-x);
+            width: 100%;
+        }
+        @media (min-width: 576px) {
+            .container, .container-sm {
+                max-width: 540px;
+            }
+        }
+        @media (min-width: 768px) {
+            .container, .container-sm, .container-md {
+                max-width: 720px;
+            }
+            .no-mobile {
+                display: revert;
+            }
+        }
+        @media (min-width: 992px) {
+            .container, .container-sm, .container-md, .container-lg {
+                max-width: 960px;
+            }
+        }
+
+        .content {
+            padding-top: 45px;
+        }
+        .logo {
+            margin-right: auto;
+        }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        body{
-            background: #fafbfc;
-            color: #183140;
-            font-family: "Lato", system-ui;
-        }
-        .topnav { background: #183140; height: 21px; padding:35px 50px; border-bottom: none;}
-        .topnav a { color: #fafbfc; }
-        .content{   
-            margin: 0px 50px 0px;
-        }
-        strong { font-weight: 900;}
-        h1, h2 {font-weight:900;}
-    </style>
-    
-    <!-- <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet"> -->
 </head>
 
 <body>
     <div class="topnav">
-        <a href="/"><img src="/static/core/img/ousd-logo-white-bg.svg"
-            class="ousd-logo-white-bg"></a>
-        <a href="/apr" style="float:right">APR</a>
+        <div class="container">
+            <div class="logo">
+                <a href="/">
+                    <img src="/static/core/img/ousd-logo-white-bg.svg" alt="Origin Dollar logo" />
+                </a>
+            </div>
+            <!-- <a href="/apr">APR</a> -->
+        </div>
     </div>
-    <div class="content">
+    <div class="content container">
     {% block content %}
     {% endblock %}
     </div>
