@@ -4,76 +4,291 @@
 
 {% block title %}OUSD Analytics{% endblock %}
 
-
 {% block content %}
 
+<style>
+    .module {
+        border: solid 1px var(--powder-blue);
+        border-radius: 10px;
+        flex-grow: 1;
+        margin-bottom: var(--gutter-x);
+        padding: 30px;
+    }
 
+    .module a {
+        color: white;
+        text-decoration: none;
+    }
 
-<div style="text-align:center; margin:auto">
+    .module small {
+        font-size: 0.875rem;
+    }
 
-<table class="table-center no-wrap" style="margin:2em auto 2em;">
-    <tr class="super-number">
-        <td width="250">{{apy|floatformat:2}}%</td>
-        <td style="font-size:64px"><strong>{{total_supply|floatformat:2}}</strong></td>
-        <td width="250">${{extra_assets|floatformat:2}}</td>
-    </tr>
-    <tr class="under-title">
-        <td>APY</td>
-        <td>OUSD Supply</td>
-        <td>
-            {% if extra_assets > 0 %}
-                Next Rebase
-            {% else %}
-            Next Rebase on Hold
-            {% endif %}
-        </td>
-    </tr>
-</table>
+    .module .negative {
+        opacity: 0.1;
+    }
 
-<table class="table table-center no-wrap" style="margin:4em auto 2em;">
-    <thead>
-        <tr>
-            <th></th>
-            <th>Vault</th>
-            <th>Buffer</th>
-            <th>3Pool</th>
-            <th>Compound</th>
-            <th>AAVE</th>
-            <th>Mint Oracle</th>
-            <th>Redeem Oracle</th>
-            <th>Basis diff</th>
-            <th>Value</th>
-        </tr>
-    </thead>
+    .top-three .module {
+        background-color: var(--dark-blue-grey);
+        color: white;
+        font-size: 2.25rem;
+        font-weight: bold;
+    }
 
-    {% for asset in assets %}
-        <tr>
-            <td><strong>{{asset.symbol}}</strong></td>
-            <td>{{asset.total|floatformat:2}}</td>
-            <td>{{asset.vault_holding|floatformat:2}}</td>
-            <td>{{asset.threepoolstrat_holding|floatformat:2}}</td>
-            <td>{{asset.compstrat_holding|floatformat:2}}</td>
-            <td>{{asset.aavestrat_holding|floatformat:2}}</td>
-            <td>${{asset.ora_tok_usd_min|floatformat:4}}</td>
-            <td>${{asset.ora_tok_usd_max|floatformat:4}}</td>
-            <td>{{asset.ora_diff_basis|floatformat:1}}</td>
-            <td>${{asset.redeem_value|floatformat:2}}</td>
-        </tr>
-    {% endfor %}
-    <tr class="row-summary">
-        <td></td>
-        <td><strong>{{total_assets|floatformat:2}}</strong></td>
-        <td>{{total_vault|floatformat:2}}</td>
-        <td>{{total_threepool|floatformat:2}}</td>
-        <td>{{total_compstrat|floatformat:2}}</td>
-        <td>{{total_aave|floatformat:2}}</td>
-        <td>-</td>
-        <td>-</td>
-        <td>-</td>
-        <td><strong>${{total_value|floatformat:2}}</strong></td>
-    </tr>
-</table>
+    .vault-allocations .module {
+        font-size: 1.375rem;
+    }
 
+    .strategy-allocations .module {
+        font-size: 0.875rem;
+    }
+
+    .label {
+        color: var(--blue-grey);
+        font-size: 0.875rem;
+    }
+
+    .module .label {
+        align-items: center;
+        display: flex;
+        margin-bottom: 20px;
+    }
+
+    .module .label img {
+        height: 20px;
+        width: 20px;
+    }
+
+    .module .line-item {
+        align-items: center;
+        display: flex;
+    }
+
+    .module .line-item:not(:last-of-type) {
+        margin-bottom: 10px;
+    }
+
+    .vault-allocations .module .line-item:not(:last-of-type) {
+        margin-bottom: 20px;
+    }
+
+    .module .line-item .value {
+        margin-left: auto;
+    }
+
+    .module img {
+        margin-right: 10px;
+    }
+
+    .module table {
+        font-size: 0.875rem;
+        text-align: right;
+        width: 100%;
+    }
+
+    .module table th {
+        border-bottom: 1px solid var(--powder-blue);
+        color: var(--blue-grey);
+        font-size: 0.6875rem;
+        padding: 0 0 10px;
+    }
+
+    .module table td {
+        padding: 0 0 10px;
+    }
+
+    .module tbody tr:first-of-type td {
+        padding-top: 10px;
+    }
+
+    .module tbody tr.with-rule td {
+        border-top: 1px solid var(--powder-blue);
+        padding: 10px 0;
+    }
+
+    .module tbody tr:last-of-type.with-rule td {
+        padding-bottom: 0;
+    }
+
+    .module table th,
+    .module table td {
+        font-weight: normal;
+    }
+
+    .module table th:first-of-type,
+    .module table td:first-of-type {
+        text-align: left;
+    }
+
+    @media (min-width: 768px) {
+        .columns {
+            display: flex;
+        }
+        .columns .module {
+            width: calc(50% - var(--gutter-x) / 2)
+        }
+        .columns .module:not(:first-of-type) {
+            margin-left: var(--gutter-x);
+        }
+        .value-calculations .columns .module {
+            margin: 0;
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="top-three columns">
+    <div class="module">
+        <div class="label">
+            APY
+        </div>
+        <a href="/apr">{{apy|floatformat:2}}%</a>
+    </div>
+    <div class="module">
+        <div class="label">
+            Total Supply
+        </div>
+        {{total_supply|floatformat:2}}
+        <small>OUSD</small>
+    </div>
+    <div class="module">
+        <div class="label">
+            Next Rebase
+        {% if extra_assets < 0 %}
+            &nbsp;(on hold)
+        {% endif %}
+        </div>
+        <div class="{% if extra_assets < 0 %}negative{% endif %}">
+            {{extra_assets|floatformat:2}}
+            <small>OUSD</small>
+        </div>
+    </div>
+</div>
+
+<div class="vault-allocations columns">
+    <div class="module">
+        <div class="label">
+            Vault Holdings
+        </div>
+        {% for asset in assets %}
+        <div class="line-item">
+            <img src="/static/core/img/{{asset.symbol.lower}}-icon.svg" alt="{{asset.symbol}} icon" />
+            {{asset.symbol}}
+            <span class="value">{{asset.total|floatformat:2}}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="module">
+        <div class="label">
+            Vault Strategy Allocations
+        </div>
+        <div class="line-item">
+            <img src="/static/core/img/compound-icon.svg" alt="COMP icon" />
+            Compound
+            <span class="value">{{total_compstrat|floatformat:2}}</span>
+        </div>
+        <div class="line-item">
+            <img src="/static/core/img/curve-icon.svg" alt="CRV icon" />
+            Curve
+            <span class="value">{{total_threepool|floatformat:2}}</span>
+        </div>
+        <div class="line-item">
+            <img src="/static/core/img/aave-icon.svg" alt="AAVE icon" />
+            Aave
+            <span class="value">{{total_aave|floatformat:2}}</span>
+        </div>
+        <div class="line-item">
+            <img src="/static/core/img/buffer-icon.svg" alt="Unallocated icon" />
+            Unallocated
+            <span class="value">{{total_vault|floatformat:2}}</span>
+        </div>
+    </div>
+</div>
+
+<div class="strategy-allocations columns">
+    <div class="module">
+        <div class="label">
+            <img src="/static/core/img/compound-icon.svg" alt="COMP icon" />
+            Compound Strategy Allocation
+        </div>
+        {% for asset in assets %}
+        <div class="line-item">
+            {{asset.symbol}}
+            <span class="value">{{asset.compstrat_holding|floatformat:2}}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="module">
+        <div class="label">
+            <img src="/static/core/img/curve-icon.svg" alt="CRV icon" />
+            Curve Strategy Allocation
+        </div>
+        {% for asset in assets %}
+        <div class="line-item">
+            {{asset.symbol}}
+            <span class="value">{{asset.threepoolstrat_holding|floatformat:2}}</span>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="module">
+        <div class="label">
+            <img src="/static/core/img/aave-icon.svg" alt="AAVE icon" />
+            Aave Strategy Allocation
+        </div>
+        {% for asset in assets %}
+        <div class="line-item">
+            {{asset.symbol}}
+            <span class="value">{{asset.aavestrat_holding|floatformat:2}}</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="value-calculations">
+    <div class="module">
+        <div class="label">
+            Vault Value
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th class="no-mobile">Mint Rate</th>
+                        <th class="no-mobile">Redeem Rate</th>
+                        <th class="no-mobile">Basis Difference</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for asset in assets %}
+                    <tr>
+                        <td>{{asset.symbol}}</td>
+                        <td class="no-mobile">${{asset.ora_tok_usd_min|floatformat:4}}</td>
+                        <td class="no-mobile">${{asset.ora_tok_usd_max|floatformat:4}}</td>
+                        <td class="no-mobile">{{asset.ora_diff_basis|floatformat:1}}</td>
+                        <td>${{asset.redeem_value|floatformat:2}}</td>
+                    </tr>
+                {% endfor %}
+                    <tr class="with-rule">
+                        <td>Combined stablecoins</td>
+                        <td colspan="3" class="no-mobile" />
+                        <td>${{total_value|floatformat:2}}</td>
+                    </tr>
+                    <tr>
+                        <td>- Total OUSD supply</td>
+                        <td colspan="3" class="no-mobile" />
+                        <td>{{total_supply|floatformat:2}}</td>
+                    </tr>
+                    <tr class="with-rule">
+                        <td>Extra value</td>
+                        <td colspan="3" class="no-mobile" />
+                        <td>${{extra_value|floatformat:2}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 
 <h2>Logs</h2>
@@ -148,8 +363,6 @@
         </tr>
         {% endfor %}
     </table>
-    
-
 </div>
 
 <p>
