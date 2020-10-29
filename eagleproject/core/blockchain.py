@@ -182,9 +182,21 @@ def build_asset_block(symbol, block_number):
             threepoolstrat_holding += strategyCheckBalance(
                 STRAT3POOLUSDC, USDC, DECIMALS_FOR_SYMBOL[symbol], block_number
             )
+            compstrat_holding += balanceOfUnderlying(
+                COMPOUND_FOR_SYMBOL[symbol],
+                STRATCOMPDIA,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
         elif symbol == "USDT":
             threepoolstrat_holding += strategyCheckBalance(
                 STRAT3POOLUSDT, USDT, DECIMALS_FOR_SYMBOL[symbol], block_number
+            )
+            compstrat_holding += balanceOfUnderlying(
+                COMPOUND_FOR_SYMBOL[symbol],
+                STRATCOMPDIA,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
             )
     # First AAVE Strat
     if block_number == "latest" or block_number >= 11096410:
