@@ -26,6 +26,7 @@ def dashboard(request):
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
+    comp = ensure_asset("COMP", block_number)
 
     apy = _get_trailing_apy()
 
@@ -35,6 +36,7 @@ def dashboard(request):
     total_compstrat = sum(x.compstrat_holding for x in assets)
     total_threepool = sum(x.threepoolstrat_holding for x in assets)
     total_assets = sum(x.total() for x in assets)
+    total_comp = comp.total()
     total_supply = totalSupply(blockchain.OUSD, 18, block_number)
     total_value = sum(x.redeem_value() for x in assets)
     extra_assets = total_assets - total_supply
@@ -219,6 +221,7 @@ def _reload(block_number):
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
+    comp = ensure_asset("COMP", block_number)
     ensure_latest_logs(block_number)
     ensure_supply_snapshot(block_number)
 

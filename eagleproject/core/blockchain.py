@@ -12,6 +12,7 @@ START_OF_EVERYTHING = 10884500
 USDT = "0xdac17f958d2ee523a2206206994597c13d831ec7"
 USDC = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 DAI = "0x6b175474e89094c44da98b954eedeac495271d0f"
+COMP = "0xc00e94cb662c3520282e6f5717214004a7f26888"
 CDAI = "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643"
 CUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563"
 CUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9"
@@ -25,16 +26,18 @@ TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
 
 STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
 STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
-STRATCOMPDIA = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
+STRATCOMPDAI = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
 STRATAAVEDAI = "0x051caefa90adf261b8e8200920c83778b7b176b6"
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
     "USDT": USDT,
     "USDC": USDC,
+    "COMP": COMP,
 }
 
 DECIMALS_FOR_SYMBOL = {
+    "COMP": 18,
     "DAI": 18,
     "USDT": 6,
     "USDC": 6,
@@ -79,7 +82,6 @@ def call(to, signature, payload, block="latest"):
 
 def storage_at(address, slot, block="latest"):
     params = [address, hex(slot), block if block == "latest" else hex(block)]
-    print(params)
     return request("eth_getStorageAt", params)
 
 
@@ -161,20 +163,27 @@ def build_asset_block(symbol, block_number):
     compstrat_holding = Decimal(0)
     threepoolstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
-
     if block_number != "latest" and block_number < 11067601:
-        compstrat_holding += balanceOfUnderlying(
-            COMPOUND_FOR_SYMBOL[symbol],
-            COMPSTRAT,
-            DECIMALS_FOR_SYMBOL[symbol],
-            block_number,
-        )
+        if symbol == "COMP":
+            compstrat_holding += balanceOf(
+                CONTRACT_FOR_SYMBOL[symbol],
+                COMPSTRAT,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+        else:
+            compstrat_holding += balanceOfUnderlying(
+                COMPOUND_FOR_SYMBOL[symbol],
+                COMPSTRAT,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
 
     if block_number == "latest" or block_number > 11060000:
         if symbol == "DAI":
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDIA,
+                STRATCOMPDAI,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
@@ -184,7 +193,7 @@ def build_asset_block(symbol, block_number):
             )
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDIA,
+                STRATCOMPDAI,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
@@ -194,10 +203,24 @@ def build_asset_block(symbol, block_number):
             )
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDIA,
+                STRATCOMPDAI,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
+        elif symbol == "COMP":
+            compstrat_holding += balanceOf(
+                CONTRACT_FOR_SYMBOL[symbol],
+                COMPSTRAT,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+            compstrat_holding += balanceOf(
+                CONTRACT_FOR_SYMBOL[symbol],
+                STRATCOMPDAI,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+
     # First AAVE Strat
     if block_number == "latest" or block_number >= 11096410:
         if symbol == "DAI":
@@ -208,11 +231,14 @@ def build_asset_block(symbol, block_number):
                 block_number,
             )
 
+    ora_tok_usd_min = 0 if symbol == 'COMP' else priceUSDMint(VAULT, symbol, block_number)
+    ora_tok_usd_max = 0 if symbol == 'COMP' else priceUSDRedeem(VAULT, symbol, block_number)
+
     return AssetBlock(
         symbol=symbol,
         block_number=block_number,
-        ora_tok_usd_min=priceUSDMint(VAULT, symbol, block_number),
-        ora_tok_usd_max=priceUSDRedeem(VAULT, symbol, block_number),
+        ora_tok_usd_min=ora_tok_usd_min,
+        ora_tok_usd_max=ora_tok_usd_max,
         vault_holding=balanceOf(
             CONTRACT_FOR_SYMBOL[symbol],
             VAULT,

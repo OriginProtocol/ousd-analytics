@@ -177,13 +177,18 @@
             <span class="value">{{asset.total|floatformat:2}}</span>
         </div>
         {% endfor %}
+        <div class="line-item">
+            <img src="/static/core/img/comp-icon.svg" alt="COMP icon" />
+            COMP
+            <span class="value">{{total_comp|floatformat:2}}</span>
+        </div>
     </div>
     <div class="module">
         <div class="label">
             Vault Strategy Allocations
         </div>
         <div class="line-item">
-            <img src="/static/core/img/compound-icon.svg" alt="COMP icon" />
+            <img src="/static/core/img/comp-icon.svg" alt="COMP icon" />
             Compound
             <span class="value">{{total_compstrat|floatformat:2}}</span>
         </div>
@@ -208,7 +213,7 @@
 <div class="strategy-allocations columns">
     <div class="module">
         <div class="label">
-            <img src="/static/core/img/compound-icon.svg" alt="COMP icon" />
+            <img src="/static/core/img/comp-icon.svg" alt="COMP icon" />
             Compound Strategy Allocation
         </div>
         {% for asset in assets %}
