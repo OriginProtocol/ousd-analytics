@@ -43,9 +43,33 @@ def dashboard(request):
     ensure_latest_logs(block_number)
 
     logs_q = Log.objects.all()
-    if request.GET.get("topic_0"):
-        logs_q = logs_q.filter(topic_0=request.GET.get("topic_0"))
+    topic = request.GET.get("topic_0")
+    if topic:
+        logs_q = logs_q.filter(topic_0=topic)
     latest_logs = logs_q[:100]
+
+    filters = [
+        {
+            "topic": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+            "label": "transfers",
+        },
+        {
+            "topic": "0x0f6798a560793a54c3bcfe86a93cde1e73087d944c0ea20544137d4121396885",
+            "label": "mints",
+        },
+        {
+            "topic": "0x222838db2794d11532d940e8dec38ae307ed0b63cd97c233322e221f998767a6",
+            "label": "redeems",
+        },
+        {
+            "topic": "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7",
+            "label": "governance",
+        },
+        {
+            "topic": "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822",
+            "label": "swaps",
+        },
+    ]
 
     return _cache(20, render(request, "dashboard.html", locals()))
 
