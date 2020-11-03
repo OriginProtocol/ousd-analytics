@@ -22,9 +22,9 @@ Vault Eagle
     export PROVIDER_URL="https://CHANGEURLHERE"
     source ./eagle-python/bin/activate
     python ./manage.py runserver
-    # To download data from the blockchain, visit
-    # vist http://localhost:9001/reload
-
+    # **IMPORTANT**
+    # Start by visiting http://localhost:8000/reload to download blockchain data
+    # Otherwise, the root dashboard view will crash if there is no data
 
 ## Future
 
