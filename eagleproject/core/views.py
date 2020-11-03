@@ -71,7 +71,7 @@ def apr_index(request):
         s = ensure_supply_snapshot(block_number)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
-            change = (s.credits_ratio / last_snapshot.credits_ratio) - Decimal(1)
+            change = (s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio) - Decimal(1)
             s.apr = Decimal(100) * change / blocks * Decimal(365) * BLOCKS_PER_DAY
             s.gain = change * s.computed_supply
         rows.append(s)
@@ -248,7 +248,7 @@ def _get_trailing_apr():
     weekago = ensure_supply_snapshot(week_block_number)
 
     seven_day_apr = (
-        ((today.credits_ratio / weekago.credits_ratio) - Decimal(1))
+        ((today.rebasing_credits_ratio / weekago.rebasing_credits_ratio) - Decimal(1))
         * Decimal(100)
         * Decimal(365)
         / Decimal(days)

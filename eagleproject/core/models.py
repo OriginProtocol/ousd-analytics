@@ -33,6 +33,11 @@ class AssetBlock(models.Model):
             return self.ora_tok_usd_max
         else:
             return Decimal(1)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['block_number']),
+        ]
 
 
 class DebugTx(models.Model):
@@ -69,6 +74,9 @@ class Log(models.Model):
 
     class Meta:
         ordering = ["-block_number", "-log_index"]
+        indexes = [
+            models.Index(fields=['block_number']),
+        ]
 
 
 class SupplySnapshot(models.Model):
@@ -88,3 +96,6 @@ class SupplySnapshot(models.Model):
 
     class Meta:
         ordering = ["-block_number"]
+        indexes = [
+            models.Index(fields=['block_number']),
+        ]
