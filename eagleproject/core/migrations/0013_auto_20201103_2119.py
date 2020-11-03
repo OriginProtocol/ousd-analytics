@@ -6,20 +6,26 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0012_auto_20201103_2050'),
+        ("core", "0012_auto_20201103_2050"),
     ]
 
     operations = [
         migrations.AddIndex(
-            model_name='assetblock',
-            index=models.Index(fields=['block_number'], name='core_assetb_block_n_98c697_idx'),
+            model_name="assetblock",
+            index=models.Index(
+                fields=["block_number"], name="core_assetb_block_n_98c697_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='log',
-            index=models.Index(fields=['block_number'], name='core_log_block_n_514364_idx'),
+            model_name="log",
+            index=models.Index(
+                fields=["block_number"], name="core_log_block_n_514364_idx"
+            ),
         ),
         migrations.AddIndex(
-            model_name='supplysnapshot',
-            index=models.Index(fields=['block_number'], name='core_supply_block_n_ea15f7_idx'),
+            model_name="supplysnapshot",
+            index=models.Index(
+                fields=["block_number"], name="core_supply_block_n_ea15f7_idx"
+            ),
         ),
     ]

@@ -137,13 +137,15 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
         return Decimal(0)
 
 
-def ousd_total_credits(block):
+def ousd_rebasing_credits(block):
     data = storage_at(OUSD, 58, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
+
 
 def ousd_non_rebasing_credits(block):
     data = storage_at(OUSD, 63, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
+
 
 def ousd_non_rebasing_supply(block):
     data = storage_at(OUSD, 64, block)
@@ -312,13 +314,15 @@ def ensure_supply_snapshot(block_number):
 
         s = SupplySnapshot()
         s.block_number = block_number
-        s.credits = ousd_total_credits(block_number) + ousd_non_rebasing_credits(block_number)
+        s.non_rebasing_credits = ousd_non_rebasing_credits(block_number)
+        s.credits = ousd_rebasing_credits(block_number) + s.non_rebasing_credits
         s.computed_supply = dai + usdt + usdc
         s.reported_supply = totalSupply(OUSD, 18, block_number)
-        s.non_rebasing_credits = ousd_non_rebasing_credits(block_number)
         s.ousd_non_rebasing_supply = ousd_non_rebasing_supply(block_number)
         s.credits_ratio = s.computed_supply / s.credits
-        s.rebasing_credits_ratio = (s.computed_supply - s.ousd_non_rebasing_supply)  / (s.credits - s.non_rebasing_credits)
+        s.rebasing_credits_ratio = (s.computed_supply - s.ousd_non_rebasing_supply) / (
+            s.credits - s.non_rebasing_credits
+        )
         s.save()
         return s
 

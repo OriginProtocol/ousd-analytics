@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0011_auto_20201021_1132'),
+        ("core", "0011_auto_20201021_1132"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='supplysnapshot',
-            name='non_rebasing_credits',
+            model_name="supplysnapshot",
+            name="non_rebasing_credits",
             field=models.DecimalField(decimal_places=18, default=0, max_digits=64),
         ),
         migrations.AddField(
-            model_name='supplysnapshot',
-            name='non_rebasing_supply',
+            model_name="supplysnapshot",
+            name="non_rebasing_supply",
             field=models.DecimalField(decimal_places=18, default=0, max_digits=64),
         ),
         migrations.AddField(
-            model_name='supplysnapshot',
-            name='rebasing_credits_ratio',
+            model_name="supplysnapshot",
+            name="rebasing_credits_ratio",
             field=models.DecimalField(decimal_places=18, default=0, max_digits=64),
         ),
     ]

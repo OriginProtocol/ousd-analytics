@@ -71,7 +71,9 @@ def apr_index(request):
         s = ensure_supply_snapshot(block_number)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
-            change = (s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio) - Decimal(1)
+            change = (
+                s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio
+            ) - Decimal(1)
             s.apr = Decimal(100) * change / blocks * Decimal(365) * BLOCKS_PER_DAY
             s.gain = change * s.computed_supply
         rows.append(s)
