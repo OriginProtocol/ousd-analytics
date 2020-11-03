@@ -75,8 +75,11 @@ class SupplySnapshot(models.Model):
     block_number = models.IntegerField(db_index=True)
     reported_supply = models.DecimalField(max_digits=64, decimal_places=18)
     computed_supply = models.DecimalField(max_digits=64, decimal_places=18)
+    non_rebasing_credits = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    non_rebasing_supply = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     credits = models.DecimalField(max_digits=64, decimal_places=18)
     credits_ratio = models.DecimalField(max_digits=64, decimal_places=18)
+    rebasing_credits_ratio = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     apr = Decimal(0)  # Not persisted
     gain = Decimal(0)  # Not persisted
 
