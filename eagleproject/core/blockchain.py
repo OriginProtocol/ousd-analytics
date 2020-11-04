@@ -318,9 +318,9 @@ def ensure_supply_snapshot(block_number):
         s.credits = ousd_rebasing_credits(block_number) + s.non_rebasing_credits
         s.computed_supply = dai + usdt + usdc
         s.reported_supply = totalSupply(OUSD, 18, block_number)
-        s.ousd_non_rebasing_supply = ousd_non_rebasing_supply(block_number)
+        s.non_rebasing_supply = ousd_non_rebasing_supply(block_number)
         s.credits_ratio = s.computed_supply / s.credits
-        s.rebasing_credits_ratio = (s.computed_supply - s.ousd_non_rebasing_supply) / (
+        s.rebasing_credits_ratio = (s.computed_supply - s.non_rebasing_supply) / (
             s.credits - s.non_rebasing_credits
         )
         s.save()

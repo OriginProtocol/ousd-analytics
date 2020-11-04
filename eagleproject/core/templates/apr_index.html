@@ -19,6 +19,7 @@
             <th>Yield</th>
             <th>OUSD Supply</th>
             <th>Backing Supply</th>
+            <th>Non-Rebasing</th>
             <th>Credits</th>
             <th>Ratio</th>
         </tr>
@@ -30,8 +31,8 @@
             <td>{{row.gain|floatformat:2}}</td>
             <td>{{row.reported_supply|floatformat:2}}</td>
             <td>{{row.computed_supply|floatformat:2}}</td>
+            <td>{{row.non_rebasing_percentage|floatformat:1}}%</td>
             <td>{{row.credits|floatformat:2}}</td>
-            <td>{{row.credits_ratio|floatformat:8}}</td>
             <td>{{row.rebasing_credits_ratio|floatformat:8}}</td>
         </tr>
     {% endfor %}
