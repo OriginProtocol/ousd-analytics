@@ -16,10 +16,12 @@
         <tr>
             <th>Block</th>
             <th>APR</th>
+            <th>Boost</th>
             <th>Yield</th>
             <th>OUSD Supply</th>
             <th>Backing Supply</th>
             <th>Non-Rebasing</th>
+            <th>%</th>
             <th>Credits</th>
             <th>Ratio</th>
         </tr>
@@ -28,11 +30,13 @@
         <tr>
             <td>{% if row.block_number == latest_block_number %}Today So Far{% else %}{{row.block_number}}{% endif %}</td>
             <td><strong>{{row.apr|floatformat:2}}%</strong></td>
-            <td>{{row.gain|floatformat:2}}</td>
-            <td>{{row.reported_supply|floatformat:2}}</td>
-            <td>{{row.computed_supply|floatformat:2}}</td>
+            <td>{{row.non_rebasing_boost_percentage|floatformat:1}}%</td>
+            <td><strong>{{row.gain|floatformat:2}}</strong></td>
+            <td>{{row.reported_supply|floatformat:0}}</td>
+            <td>{{row.computed_supply|floatformat:0}}</td>
+            <td>{{row.non_rebasing_supply|floatformat:0}}</td>
             <td>{{row.non_rebasing_percentage|floatformat:1}}%</td>
-            <td>{{row.credits|floatformat:2}}</td>
+            <td>{{row.credits|floatformat:0}}</td>
             <td>{{row.rebasing_credits_ratio|floatformat:8}}</td>
         </tr>
     {% endfor %}

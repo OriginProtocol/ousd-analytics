@@ -99,9 +99,15 @@ class SupplySnapshot(models.Model):
 
     def backing_diff(self):
         return self.computed_supply - self.reported_supply
-    
+
     def non_rebasing_percentage(self):
         return (self.non_rebasing_supply / self.computed_supply) * 100
+
+    def non_rebasing_boost_percentage(self):
+        return (
+            (self.computed_supply / (self.computed_supply - self.non_rebasing_supply))
+            - 1
+        ) * 100
 
     class Meta:
         ordering = ["-block_number"]
