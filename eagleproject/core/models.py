@@ -72,6 +72,9 @@ class Log(models.Model):
             != "0000000000000000000000000000000000000000000000000000000000000000"
         )
 
+    def ousd_value(self):
+        return Decimal(int(self.data, 16) / 1e18)
+
     class Meta:
         ordering = ["-block_number", "-log_index"]
         indexes = [

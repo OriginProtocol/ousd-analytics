@@ -2,12 +2,12 @@
 {% load blockchain %}
 {% load humanize %}
 
-{% block title %}Address{% endblock %}
+{% block title %}Address {{address}}{% endblock %}
 
 
 {% block content %}
-<h1>Address Details</h1>
-<pre style="font-size:12px">{{address}}</pre>
+<h1>OUSD Holdings</h1>
+<h2>{{address}}</h2>
 
 <style>
     .card {
@@ -22,53 +22,34 @@
         padding-right: 20px;
         font-family: ioseveka, monospace;
     }
+    .label { font-size: 18px; width: 140px; display: block; float: right; padding-top: 20px; font-family: Lato;}
 </style>
 
-<h2>Balance: {{now.current_balance|floatformat:6}}</h2>
-
-<h2>Before and After Comparison <form method="GET"><input name="blocks" value="{{blocks}}"></form></h2>
-
-<div class="card">
-    <div>{{ past_block_number }}</div>
-    <div>{{ block_number }}</div>
-    <div>{{ block_number|sub:past_block_number }}</div>
-    <div>Block Numbers</div>
+<div class="mono" style="width: 700px; font-size: 50px; text-align:right; margin: 2em auto;">
+    <div style="clear:both"> <strong>+ {{yield_balance|floatformat:4}}</strong> <small  class="label">Earned <strong>Yield</strong></small></div>
+    <div style="clear:both"> + {{transfers_in|floatformat:4}} <small class="label">Transfers In</small></div>
+    <div style="clear:both"> - {{transfers_out|floatformat:4}} <small  class="label">Transfers Out</small></div>
+    <div style="clear:both">=<small  class="label">&nbsp;</small></div>
+    <div style="clear:both"><strong>{{current_balance|floatformat:4}}</strong> <small  class="label">Current Balance</small></div>
 </div>
 
-<div class="card">
-    <div>{{ before.current_balance }}</div>
-    <div>{{ now.current_balance }}</div>
-    <div>{{ now.current_balance|sub:before.current_balance }}</div>
-    <div>My OUSD</div>
-</div>
 
-<div class="card">
-    <div>{{ before.my.DAI }}</div>
-    <div>{{ now.my.DAI }}</div>
-    <div><strong>{{ now.my.DAI|sub:before.my.DAI }}</strong></div>
-    <div>DAI</div>
-</div>
+<h3>Transfers:</h3>
 
-<div class="card">
-    <div>{{ before.my.USDC }}</div>
-    <div>{{ now.my.USDC }}</div>
-    <div><strong>{{ now.my.USDC|sub:before.my.USDC }}</strong></div>
-    <div>USDC</div>
-</div>
-
-<div class="card">
-    <div>{{ before.my.USDT }}</div>
-    <div>{{ now.my.USDT }}</div>
-    <div><strong>{{ now.my.USDT|sub:before.my.USDT }}</strong></div>
-    <div>USDT</div>
-</div>
-
-<div class="card">
-    <div>{{ before.total_supply }}</div>
-    <div>{{ now.total_supply }}</div>
-    <div>{{ now.total_supply|sub:before.total_supply }}</div>
-    <div>OUSD Supply</div>
-</div>
+<table class="table">
+{% for log in transfers %}
+    <tr>
+        <td>🔆</td>
+        <td><strong>Transfer</strong></td>
+        <td>{{log.data|dec_18|floatformat:2}} <abbr>OUSD</abbr></td>
+        <td><strong>{{log.topic_1|long_address_name}}</strong></td>
+        <td>to</td>
+        <td><strong>{{log.topic_2|long_address_name}}</strong></td>
+        <td>{{log.block_number}}</td>
+        <td>{{log.txhash}}</td>
+    </tr>
+{% endfor %}
+</table>
 
 <div style="clear: both"></div>
 
