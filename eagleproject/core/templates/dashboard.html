@@ -205,11 +205,6 @@
     </div>
 </div>
 
-<div style="text-align:center; margin: 1em;">
-    <input placeholder="View yield for eth address..." id="address" style="width:300px"/>
-    <button onclick="window.location='/address/'+document.getElementById('address').value">View Earnings</button>
-</div>
-
 <div class="strategy-allocations columns">
     <div class="module">
         <div class="label">
@@ -247,6 +242,28 @@
         </div>
         {% endfor %}
     </div>
+</div>
+
+<div style="text-align:center; margin: 1em;">
+    <script>
+        function submitSearchBar(){
+            var q = document.getElementById('address').value.toLowerCase()
+            if(q.length == 66){
+                window.location='/tx/debug/' + q 
+            } else if(q.length == 42) {
+                window.location='/address/' + q
+            } else {
+                alert('Not a valid address or transaction hash')
+            }
+        }
+        function goOnEnter(evt){
+            if (event.key === 'Enter') {
+                submitSearchBar()
+            }
+        }
+    </script>
+    <input placeholder="Search for ETH address or Tx Hash" id="address" style="width:330px" onkeypress="goOnEnter()"/>
+    <button onclick="submitSearchBar()">Go</button>
 </div>
 
 <div class="value-calculations">
