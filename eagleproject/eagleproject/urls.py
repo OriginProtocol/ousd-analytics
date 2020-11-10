@@ -20,7 +20,7 @@ from core import views as core_views
 urlpatterns = [
     path("", core_views.dashboard),
     path("tx/debug/<slug:tx_hash>", core_views.tx_debug),
-    path("address/<slug:address>", core_views.address),
+    path("address/<slug:address>", core_views.address, name="address"),
     path("apr", core_views.apr_index),
     path("reload", core_views.reload),
     path("api/v1/apr/trailing", core_views.api_apr_trailing),

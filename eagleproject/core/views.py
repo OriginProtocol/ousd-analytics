@@ -1,5 +1,5 @@
 from decimal import Decimal
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db.models import Q
 from core.blockchain import (
@@ -110,6 +110,8 @@ def api_speed_test(request):
 
 
 def address(request, address):
+    if address != address.lower():
+        return redirect("address", address=address.lower())
     long_address = address.replace("0x", "0x000000000000000000000000")
     latest_block_number = _latest_snapshot_block_number()
     transfers = Log.objects.filter(
