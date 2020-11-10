@@ -18,7 +18,7 @@ from core.models import AssetBlock, DebugTx, LogPointer, Log, SupplySnapshot
 import core.blockchain as blockchain
 import datetime
 
-BLOCKS_PER_DAY = 6400
+BLOCKS_PER_DAY = 6500
 
 
 def dashboard(request):
@@ -54,12 +54,12 @@ def dashboard(request):
 def reload(request):
     latest = lastest_block()
     _reload(latest - 2)
-    _reload(latest - 2 - 6400 * 7)  # Week ago, for APR
+    _reload(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
     return HttpResponse("ok")
 
 
 def apr_index(request):
-    STEP = 6400
+    STEP = BLOCKS_PER_DAY
     NUM_STEPS = 15
     latest_block_number = _latest_snapshot_block_number()
     end_block_number = latest_block_number - latest_block_number % STEP
@@ -208,7 +208,7 @@ def _get_trailing_apr():
     seven_day_apr = (
         ((today.rebasing_credits_ratio / weekago.rebasing_credits_ratio) - Decimal(1))
         * Decimal(100)
-        * Decimal(365)
+        * Decimal(365.25)
         / Decimal(days)
     )
     seven_day_apr = round(seven_day_apr, 2)
