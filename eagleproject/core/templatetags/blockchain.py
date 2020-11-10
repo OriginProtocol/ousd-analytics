@@ -76,6 +76,9 @@ CONTRACT_NAMES = {
     "0x2f50d538606fa9edd2b11e2446beb18c9d5846bb": "Curve gauge controller",
     "0x5f3b5dfeb7b28cdbd7faba78963ee202a494e2a2": "Curve veCRV",
     "0xbfcf63294ad7105dea65aa58f8ae5be2d9d0952a": "Curve Token Minter",
+    "0x111111125434b319222cdbf8c261674adb56f3ae": "1inch.exchange",
+    "0x6ffe8f6d47afb19f12f46e5499a182a99c4d3bef": "Snowswap OUSD Lockup",
+    "0x20d01749ccf2b689b758e07c597d9bb35370c378": "Mooniswap V1 (OUSD-USDT)",
 }
 
 SIGNATURES = {
@@ -152,7 +155,7 @@ EVENT_NAMES = {
     "0x2717ead6b9200dd235aad468c9809ea400fe33ac69b5bfaa6d3e90fc922b6398": "Withdrawal(address,address,uint256)",
     "0x79236a0cb516e4a8800fe3ac58e17c1eeb924b29658a461c9e65ed41d7db88f4": "Approval(address,address,uint)",
     "0x930a61a57a70a73c2a503615b87e2e54fe5b9cdeacda518270b852296ab1a377": "Transfer(address,address,uint)",
-    "66c66224810ae56fadced079f9b31b994b686b0fab399bc95e32e55813d6d0b4": "Mint(address,amount0,amount1)",
+    "0x66c66224810ae56fadced079f9b31b994b686b0fab399bc95e32e55813d6d0b4": "Mint(address,amount0,amount1)",
     "0xd28e94e5f38ffc345d5364aefeee37a38ca95e1fb8101ca4a0c17abe86df9226": "Burn(address,amount0,amount1,address)",
     "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822": "Swap(address,uint256,uint256,uint256,uint256,address)",
     "0x1c411e9a96e071241c2f21f7726b17ae89e3cab4c78be50e062b03a9fffbbad1": "Sync(uint112,uint112)",
