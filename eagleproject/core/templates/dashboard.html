@@ -120,6 +120,85 @@
         text-align: left;
     }
 
+    .logs h2 {
+        font-size: 0.875rem;
+        font-weight: bold;
+        margin: 0;
+    }
+
+    .logs header {
+        color: var(--blue-grey);
+        display: flex;
+        margin: 30px 0 12px;
+    }
+
+    .logs a {
+        text-decoration: none;
+    }
+
+    .logs .filters {
+        font-size: 0.875rem;
+    }
+
+    .logs .filters a {
+        color: var(--blue-grey);
+        margin-left: 10px;
+    }
+
+    .logs .filters .active {
+        color: var(--dark-blue-grey);
+        text-decoration: underline;
+    }
+
+    .logs table {
+        border-spacing: 0;
+        color: var(--dark-blue-grey);
+        table-layout: fixed;
+        text-align: left;
+        width: 100%;
+    }
+
+    .logs table th {
+        border-bottom: 1px solid var(--powder-blue);
+        border-top: 1px solid var(--powder-blue);
+        color: var(--blue-grey);
+        font-size: 0.6875rem;
+        padding: 12px 0;
+        width: 120px;
+    }
+
+    .logs table th:nth-of-type(3) {
+        width: 100%;
+    }
+
+    .logs table td {
+        overflow: hidden;
+        padding: 10px 0;
+        text-overflow: ellipsis;
+        vertical-align: top;
+    }
+
+    .logs table td {
+        border-bottom: solid 1px var(--very-light-blue);
+    }
+
+    .logs table a {
+        color: var(--dark-blue-grey);
+    }
+
+    .logs table small {
+        color: var(--blue-grey);
+    }
+
+    footer {
+        box-shadow: 0 -1px 0 0 var(--powder-blue);
+        background-color: var(--pale-grey);
+        color: var(--blue-grey);
+        font-size: 0.875rem;
+        padding: 22px;
+        text-align: center;
+    }
+
     @media (min-width: 768px) {
         .columns {
             display: flex;
@@ -133,6 +212,12 @@
         .value-calculations .columns .module {
             margin: 0;
             width: 100%;
+        }
+        .logs .filters {
+            margin-left: auto;
+        }
+        .logs .filters a {
+            margin-left: 20px;
         }
     }
 </style>
@@ -313,82 +398,91 @@
     </div>
 </div>
 
-<h2>Logs</h2>
 
-<p>
-    Filter: <a href="/?topic_0=0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef">transfers</a>,
-    <a href="/?topic_0=0x0f6798a560793a54c3bcfe86a93cde1e73087d944c0ea20544137d4121396885">mints</a>,
-    <a href="/?topic_0=0x222838db2794d11532d940e8dec38ae307ed0b63cd97c233322e221f998767a6">redeems</a>,
-    <a href="/?topic_0=0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7">governance</a>,
-    <a href="/?topic_0=0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822">swaps</a>,
-</p>
-<div>
-    <table class="table">
-        {% for log in latest_logs %}
-        <tr>
-
-            <td>
-                {% ifchanged %}<a href="/tx/debug/{{log.transaction_hash}}">{{log.transaction_hash|truncatechars:14}}</a>{% endifchanged %}
-                {% ifchanged %}{{log.block_number}}{% endifchanged %}
-            </td>
-            <td>
-                →
-            </td>
-            <td>{{log.address|contract_name}}</td>
-            <td>
-                {% if log.topic_0 == "0x222838db2794d11532d940e8dec38ae307ed0b63cd97c233322e221f998767a6" %}
-                    
-                {% endif %}
-                {% if log.topic_0 == "0x0f6798a560793a54c3bcfe86a93cde1e73087d944c0ea20544137d4121396885" %}
-                    ❇️
-                {% endif %}
-                
-
-                
-                {% if log.topic_0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" and log.address == "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86" %}
-                    🔆 <strong>Transfer</strong>
-                    {{log.data|dec_18|floatformat:2}} <abbr>OUSD</abbr>
-                    from
-                    <strong>{{log.topic_1|long_address_name}}</strong> to
-                    <strong>{{log.topic_2|long_address_name}}</strong>
-                {% elif log.topic_0 == "0x222838db2794d11532d940e8dec38ae307ed0b63cd97c233322e221f998767a6" %}
-                    🌹 <strong>Redeem</strong>
-                    {{log.data|slot_1|dec_18|floatformat:2}} <abbr>OUSD</abbr>
-                {% elif log.topic_0 == "0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1" %}
-                    🉑 <strong>TotalSupplyUpdated</strong>
-                    {% for v in log.data|explode_data %}
-                        {{v}}
-                    {% endfor %}
-                {% elif log.topic_0 == "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7" %}
-                    👷‍♂️ <strong>ExecuteTransaction</strong> on <strong>{{log.topic_2|long_address_name}}</strong> calling <strong>{{log.data|decode_execute_event_signature}}</strong>
-                {% elif log.topic_0 == "0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f" %}
-                    🗳 <strong>Queue Transaction</strong> for <strong>{{log.topic_2|long_address_name}}</strong>
-                {% elif log.topic_0 == "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822" and log.address == "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71" %}
-                    🦄 <strong>Swap</strong>
-                    {% if log.is_ousd_in %}
-                        {{log.data|slot_0|dec_18|floatformat:2}} <abbr>OUSD</abbr> for {{log.data|slot_3|dec_6|floatformat:2}} <abbr>USDT</abbr>
-                    {% else %}
-                        {{log.data|slot_1|dec_6|floatformat:2}}  <abbr>USDT</abbr> for {{log.data|slot_2|dec_18|floatformat:2}} <abbr>OUSD</abbr>
-                    {% endif %}
+<div class="logs">
+    <header>
+        <h2>Recent Activity</h2>
+        <div class="filters">
+            Filter:
+            {% for filter in filters %}
+                {% if topic == filter.topic %}
+                    <a href="/" class="active">{{filter.label}}</a>
                 {% else %}
-                    <strong>{{log.topic_0|event_name}}</strong><br>
-                    {% if log.topic_1 %}
-                        {{log.topic_1}}<br>
-                    {% endif %}
-                    {% if log.topic_2 %}
-                        {{log.topic_2}}<br>
-                    {% endif %}
-                    {{log.data}}
+                    <a href="/?topic_0={{filter.topic}}">{{filter.label}}</a>
                 {% endif %}
-                
-            </td>
-        </tr>
-        {% endfor %}
+            {% endfor %}
+        </div>
+    </header>
+    <table>
+        <thead>
+            <tr>
+                <th>Block Number</th>
+                <th>Contract</th>
+                <th>Transaction Type</th>
+                <th>Transaction Hash</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in latest_logs %}
+                <tr>
+                    <td>
+                        {% ifchanged %}
+                            {{log.block_number}}
+                        {% endifchanged %}
+                    </td>
+                    <td>{{log.address|contract_name}}</td>
+                    <td>
+                        {% if log.topic_0 == "0x0f6798a560793a54c3bcfe86a93cde1e73087d944c0ea20544137d4121396885" %}
+                            ❇️
+                        {% endif %}
+                        {% if log.topic_0 == "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef" and log.address == "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86" %}
+                            🔆 <strong>Transfer</strong>
+                            from
+                            <strong>{{log.topic_1|long_address_name}}</strong> to
+                            <strong>{{log.topic_2|long_address_name}}</strong>
+                        {% elif log.topic_0 == "0x222838db2794d11532d940e8dec38ae307ed0b63cd97c233322e221f998767a6" %}
+                            🌹 <strong>Redeem</strong>
+                            {{log.data|slot_1|dec_18|floatformat:2}} <abbr>OUSD</abbr>
+                        {% elif log.topic_0 == "0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1" %}
+                            🉑 <strong>TotalSupplyUpdated</strong>
+                            {% for v in log.data|explode_data %}<br>
+                                <small>{{v}}</small>
+                            {% endfor %}
+                        {% elif log.topic_0 == "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7" %}
+                            👷‍ <strong>ExecuteTransaction</strong> on <strong>{{log.topic_2|long_address_name}}</strong> calling <strong>{{log.data|decode_execute_event_signature}}</strong>
+                        {% elif log.topic_0 == "0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f" %}
+                            🗳 <strong>Queue Transaction</strong> for <strong>{{log.topic_2|long_address_name}}</strong>
+                        {% elif log.topic_0 == "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822" and log.address == "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71" %}
+                            🦄 <strong>Swap</strong>
+                            {% if log.is_ousd_in %}
+                                {{log.data|slot_0|dec_18|floatformat:2}} <abbr>OUSD</abbr> for {{log.data|slot_3|dec_6|floatformat:2}} <abbr>USDT</abbr>
+                            {% else %}
+                                {{log.data|slot_1|dec_6|floatformat:2}}  <abbr>USDT</abbr> for {{log.data|slot_2|dec_18|floatformat:2}} <abbr>OUSD</abbr>
+                            {% endif %}
+                        {% else %}
+                            <strong>{{log.topic_0|event_name}}</strong>
+                            {% if log.topic_1 %}
+                                <small>{{log.topic_1}}</small><br>
+                            {% endif %}
+                            {% if log.topic_2 %}
+                                <small>{{log.topic_2}}</small><br>
+                            {% endif %}
+                            <small>{{log.data}}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% ifchanged %}
+                            <a href="/tx/debug/{{log.transaction_hash}}" class="transaction-hash address">{{log.transaction_hash}}</a>
+                        {% endifchanged %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 
-<p>
-    OUSD at block {{block_number}}
-</p>
+<footer>
+    Latest Block: {{block_number}}
+</footer>
 
 {% endblock %}
