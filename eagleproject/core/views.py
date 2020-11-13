@@ -135,6 +135,13 @@ def api_apr_trailing(request):
 def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
 
+def api_ratios(request):
+    s = _latest_snapshot()
+    return _cache(30, JsonResponse({
+        "current_credits_per_token": s.rebasing_credits_per_token,
+        "next_credits_per_token": Decimal(1.0) / s.rebasing_credits_ratio,
+    }))
+
 
 def address(request, address):
     if address != address.lower():
@@ -201,9 +208,11 @@ def _reload(block_number):
     ensure_supply_snapshot(block_number)
 
 
+def _latest_snapshot():
+    return SupplySnapshot.objects.order_by("-block_number")[0]
+
 def _latest_snapshot_block_number():
-    latest = SupplySnapshot.objects.order_by("-block_number")[0]
-    return latest.block_number
+    return _latest_snapshot().block_number
 
 
 PREV_APR = None
