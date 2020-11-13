@@ -12,6 +12,7 @@ from core.models import (
     SupplySnapshot,
     Block,
     Transaction,
+    OusdTransfer,
 )
 import datetime
 
@@ -407,6 +408,36 @@ def ensure_block(block_number):
         return block
 
 
+def maybe_store_transfer_record(log, block):
+    # Must be a transfer event
+    if (
+        log["topics"][0]
+        != "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+    ):
+        return None
+    # Must be on OUSD
+    if log["address"] != "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86":
+        return None
+    tx_hash = log["transactionHash"]
+    log_index = int(log["logIndex"], 16)
+    db_transfer = list(
+        OusdTransfer.objects.filter(tx_hash=tx_hash, log_index=log_index)
+    )
+    if len(db_transfer) > 0:
+        return db_transfer[0]
+
+    transfer = OusdTransfer(
+        tx_hash=tx_hash,
+        log_index=log_index,
+        block_time=block.block_time,
+        from_address="0x" + log["topics"][1][-40:],
+        to_address="0x" + log["topics"][2][-40:],
+        amount=int(_slot(log["data"], 0), 16) / 1e18,
+    )
+    transfer.save()
+    return transfer
+
+
 def ensure_transaction_and_downstream(tx_hash):
     db_tx = list(Transaction.objects.filter(tx_hash=tx_hash))
     if len(db_tx) > 0:
@@ -421,6 +452,7 @@ def ensure_transaction_and_downstream(tx_hash):
 
     for log in receipt["logs"]:
         ensure_log_record(log)
+        maybe_store_transfer_record(log, block)
 
     transaction = Transaction(
         tx_hash=tx_hash,
@@ -432,3 +464,8 @@ def ensure_transaction_and_downstream(tx_hash):
     )
     transaction.save()
     return transaction
+
+
+def _slot(value, i):
+    """Get the x 256bit field from a data string"""
+    return value[2 + i * 64 : 2 + (i + 1) * 64]

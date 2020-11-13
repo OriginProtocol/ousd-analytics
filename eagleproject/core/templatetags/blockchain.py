@@ -4,6 +4,7 @@ from django.utils import timezone
 from binascii import unhexlify
 from decimal import Decimal
 from eth_abi import decode_single
+from core.blockchain import _slot
 import pytz
 
 
@@ -231,11 +232,6 @@ def dec_18(value):
 def dec_6(value):
     if isinstance(value, str):
         return int(value, 16) / 1e6
-
-
-def _slot(value, i):
-    """Get the x 256bit field from a data string"""
-    return value[2 + i * 64 : 2 + (i + 1) * 64]
 
 
 @register.filter
