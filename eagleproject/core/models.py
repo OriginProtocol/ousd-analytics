@@ -97,6 +97,9 @@ class SupplySnapshot(models.Model):
     rebasing_credits_ratio = models.DecimalField(
         max_digits=64, decimal_places=18, default=0
     )
+    rebasing_credits_per_token = models.DecimalField(
+        max_digits=64, decimal_places=18, default=0
+    )
     apr = Decimal(0)  # Not persisted
     gain = Decimal(0)  # Not persisted
 

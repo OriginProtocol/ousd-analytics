@@ -168,6 +168,10 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
         return Decimal(0)
 
 
+def rebasing_credits_per_token(block):
+    data = storage_at(OUSD, 59, block)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
+
 def ousd_rebasing_credits(block):
     data = storage_at(OUSD, 58, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
@@ -382,6 +386,7 @@ def ensure_supply_snapshot(block_number):
         s.rebasing_credits_ratio = (s.computed_supply - s.non_rebasing_supply) / (
             s.credits - s.non_rebasing_credits
         )
+        s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
         s.save()
         return s
 
