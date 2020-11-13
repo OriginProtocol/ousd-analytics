@@ -7,6 +7,7 @@ from core.blockchain import (
     build_debug_tx,
     ensure_supply_snapshot,
     ensure_asset,
+    ensure_transaction_and_downstream,
     lastest_block,
     ensure_latest_logs,
     download_logs_from_contract,
@@ -180,17 +181,9 @@ def _my_assets(address, block_number):
 
 
 def tx_debug(request, tx_hash):
-    debug_tx = ensure_debug_tx(tx_hash)
+    transaction = ensure_transaction_and_downstream(tx_hash)
+    logs = Log.objects.filter(transaction_hash=tx_hash)
     return _cache(1200, render(request, "debug_tx.html", locals()))
-
-
-def ensure_debug_tx(tx_hash):
-    if DebugTx.objects.filter(tx_hash=tx_hash).count() == 0:
-        ab = build_debug_tx(tx_hash)
-        ab.save()
-    else:
-        ab = DebugTx.objects.filter(tx_hash=tx_hash).first()
-    return ab
 
 
 def _cache(seconds, response):

@@ -117,3 +117,26 @@ class SupplySnapshot(models.Model):
         indexes = [
             models.Index(fields=["block_number"]),
         ]
+
+
+class Block(models.Model):
+    block_number = models.IntegerField(primary_key=True)
+    block_time = models.DateTimeField(db_index=True)
+
+
+class Transaction(models.Model):
+    tx_hash = models.CharField(max_length=66, primary_key=True)
+    block_number = models.IntegerField(db_index=True)
+    block_time = models.DateTimeField(db_index=True)
+    notes = models.TextField()
+    data = models.JSONField(default=dict)
+    receipt_data = models.JSONField(default=dict)
+    debug_data = models.JSONField(default=dict)
+
+
+class OusdTransfer(models.Model):
+    tx_hash = models.CharField(max_length=66, primary_key=True)
+    block_time = models.DateTimeField(db_index=True)
+    from_address = models.CharField(max_length=42, db_index=True)
+    to_address = models.CharField(max_length=42, db_index=True)
+    amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)

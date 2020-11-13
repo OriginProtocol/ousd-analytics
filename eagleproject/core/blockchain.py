@@ -4,8 +4,16 @@ import requests
 from decimal import Decimal
 from eth_abi import encode_single
 
-from core.models import AssetBlock, DebugTx, LogPointer, Log, SupplySnapshot
-
+from core.models import (
+    AssetBlock,
+    DebugTx,
+    LogPointer,
+    Log,
+    SupplySnapshot,
+    Block,
+    Transaction,
+)
+import datetime
 
 START_OF_EVERYTHING = 10884500
 
@@ -89,12 +97,30 @@ def storage_at(address, slot, block="latest"):
 
 def debug_trace_transaction(tx_hash):
     params = [tx_hash]
-    return request("trace_transaction", params)
+    data = request("trace_transaction", params)
+    return data["result"]
 
 
 def lastest_block():
     data = request("eth_blockNumber", [])
     return int(data["result"], 16)
+
+
+def get_block(block_number):
+    hex_block = hex(block_number)
+    params = [hex_block, False]
+    data = request("eth_getBlockByNumber", params)
+    return data["result"]
+
+
+def get_transaction(tx_hash):
+    data = request("eth_getTransactionByHash", [tx_hash])
+    return data["result"]
+
+
+def get_transaction_receipt(tx_hash):
+    data = request("eth_getTransactionReceipt", [tx_hash])
+    return data["result"]
 
 
 def balanceOf(coin_contract, holder, decimals, block="latest"):
@@ -243,8 +269,12 @@ def build_asset_block(symbol, block_number):
                 block_number,
             )
 
-    ora_tok_usd_min = 0 if symbol == 'COMP' else priceUSDMint(VAULT, symbol, block_number)
-    ora_tok_usd_max = 0 if symbol == 'COMP' else priceUSDRedeem(VAULT, symbol, block_number)
+    ora_tok_usd_min = (
+        0 if symbol == "COMP" else priceUSDMint(VAULT, symbol, block_number)
+    )
+    ora_tok_usd_max = (
+        0 if symbol == "COMP" else priceUSDRedeem(VAULT, symbol, block_number)
+    )
 
     return AssetBlock(
         symbol=symbol,
@@ -297,8 +327,8 @@ def download_logs_from_contract(contract, start_block, end_block):
             }
         ],
     )
-    for raw_log in data["result"]:
-        ensure_log_record(raw_log)
+    for tx_hash in set([x["transactionHash"] for x in data["result"]]):
+        ensure_transaction_and_downstream(tx_hash)
 
 
 def ensure_log_record(raw_log):
@@ -363,3 +393,42 @@ def ensure_asset(symbol, block_number):
         ab = build_asset_block(symbol, block_number)
         ab.save()
         return ab
+
+
+def ensure_block(block_number):
+    blocks = list(Block.objects.filter(block_number=block_number))
+    if len(blocks) > 0:
+        return blocks[0]
+    else:
+        raw_block = get_block(block_number)
+        block_time = datetime.datetime.utcfromtimestamp(int(raw_block["timestamp"], 16))
+        block = Block(block_number=block_number, block_time=block_time)
+        block.save()
+        return block
+
+
+def ensure_transaction_and_downstream(tx_hash):
+    db_tx = list(Transaction.objects.filter(tx_hash=tx_hash))
+    if len(db_tx) > 0:
+        return db_tx[0]
+
+    raw_transaction = get_transaction(tx_hash)
+    receipt = get_transaction_receipt(tx_hash)
+    debug = debug_trace_transaction(tx_hash)
+
+    block_number = int(raw_transaction["blockNumber"], 16)
+    block = ensure_block(block_number)
+
+    for log in receipt["logs"]:
+        ensure_log_record(log)
+
+    transaction = Transaction(
+        tx_hash=tx_hash,
+        block_number=block_number,
+        block_time=block.block_time,
+        data=raw_transaction,
+        receipt_data=receipt,
+        debug_data=debug,
+    )
+    transaction.save()
+    return transaction

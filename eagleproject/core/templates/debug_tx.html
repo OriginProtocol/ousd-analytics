@@ -8,10 +8,24 @@
 {% block content %}
 <h1>Debug Transaction</h1>
 
+<p>{{transaction.tx_hash}}</p>
+<p>{{transaction.block_time|local_time}} ⎯ Block {{transaction.block_number}}</p>
+
 <style>
     .no-wrap td { white-space: nowrap; }
 </style>
 
+<h3>Events</h3>
+<table>
+    {% for log in logs %}
+    <tr>
+        <td>{{log.address|contract_name}}</td>
+        <td>{{log.topic_0|event_name}}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h3>Trace</h3>
 <table class="table no-wrap">
     <thead>
         <tr>
@@ -26,7 +40,7 @@
             <th>Output</th>
         </tr>
     </thead>
-    {% for row in debug_tx.data %}
+    {% for row in transaction.debug_data %}
     <tr>
         <td>{{row|trace_annotation}}</td>
         <td class="grey">

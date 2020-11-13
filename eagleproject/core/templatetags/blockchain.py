@@ -1,8 +1,11 @@
 from django import template
 from django.template.defaultfilters import stringfilter
+from django.utils import timezone
 from binascii import unhexlify
 from decimal import Decimal
 from eth_abi import decode_single
+import pytz
+
 
 register = template.Library()
 
@@ -79,6 +82,8 @@ CONTRACT_NAMES = {
     "0x111111125434b319222cdbf8c261674adb56f3ae": "1inch.exchange",
     "0x6ffe8f6d47afb19f12f46e5499a182a99c4d3bef": "Snowswap OUSD Lockup",
     "0x20d01749ccf2b689b758e07c597d9bb35370c378": "Mooniswap V1 (OUSD-USDT)",
+    "0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f": "Sushiswap Router",
+    "0xe4455fdec181561e9ffe909dde46aaeaedc55283": "Sushiswap OUSD-USDT",
 }
 
 SIGNATURES = {
@@ -141,6 +146,7 @@ SIGNATURES = {
     "0x3659cfe6": "upgradeTo(address)",
     "0x372aa224": "setPriceProvider(address)",
     "0x8ec489a2": "setVaultBuffer(uint256)",
+    "0x10d1e85c": "uniswapV2Call(address,uint256,uint256,bytes)",
 }
 
 EVENT_NAMES = {
@@ -265,6 +271,15 @@ def _snarf_input_symbol(trace):
     s = trace["action"]["input"][64 + 10 + 64 :]
     out = unhexlify(s).decode("utf-8")
     return out
+
+
+@register.filter
+def local_time(dt):
+    utc = dt.replace(tzinfo=pytz.UTC)
+    localtz = utc.astimezone(timezone.get_current_timezone())
+    return "{d:%l}:{d.minute:02}{d:%p} {d:%b} {d.day}, {d.year} {d:%Z}".format(
+        d=localtz
+    )
 
 
 @register.filter
