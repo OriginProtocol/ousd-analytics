@@ -16,8 +16,11 @@
     }
 
     .module a {
+        color: inherit;
+    }
+
+    .module a:hover {
         color: white;
-        text-decoration: none;
     }
 
     .module small {
@@ -225,15 +228,19 @@
 <div class="top-three columns">
     <div class="module">
         <div class="label">
-            APY
+            Trailing&nbsp;<a href="/apr">7-Day</a>&nbsp;APY
         </div>
-        <a href="/apr">{{apy|floatformat:2}}%</a>
+        {{apy|floatformat:2}}%
     </div>
     <div class="module">
         <div class="label">
             Total Supply
         </div>
-        {{total_supply|floatformat:2}}
+        {% if total_supply >= 1000000 %}
+            {{total_supply|floatformat:0}}
+        {% else %}
+            {{total_supply|floatformat:2}}
+        {% endif %}
         <small>OUSD</small>
     </div>
     <div class="module">
@@ -332,28 +339,6 @@
         </div>
         {% endfor %}
     </div>
-</div>
-
-<div style="text-align:center; margin: 1em;">
-    <script>
-        function submitSearchBar(){
-            var q = document.getElementById('address').value.toLowerCase()
-            if(q.length == 66){
-                window.location='/tx/debug/' + q 
-            } else if(q.length == 42) {
-                window.location='/address/' + q
-            } else {
-                alert('Not a valid address or transaction hash')
-            }
-        }
-        function goOnEnter(evt){
-            if (event.key === 'Enter') {
-                submitSearchBar()
-            }
-        }
-    </script>
-    <input placeholder="Search for ETH address or Tx Hash" id="address" style="width:330px" onkeypress="goOnEnter()"/>
-    <button onclick="submitSearchBar()">Go</button>
 </div>
 
 <div class="value-calculations">

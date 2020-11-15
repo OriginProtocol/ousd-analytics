@@ -46,8 +46,7 @@
         }
         .topnav {
             background-color: var(--dark-blue-grey);
-            height: 21px;
-            padding: 35px 0;
+            padding: 24px 0;
             border-bottom: none;
         }
         .topnav .container {
@@ -117,8 +116,64 @@
         .content {
             padding-top: 45px;
         }
+        .brand {
+            margin-top: 11px;
+        }
         .logo {
+            height: 20px;
             margin-right: auto;
+        }
+        .logo img {
+            height: 100%;
+        }
+        .search {
+            position: relative;
+            margin-left: auto;
+            padding-left: 22px;
+        }
+        .search input {
+            background-color: transparent;
+            border: none;
+            border-bottom: solid 1px var(--blue-grey);
+            color: white;
+            font-size: 20px;
+            height: 42px;
+            padding: 0 31px 0 0;
+        }
+        .search input:focus {
+            border-color: white;
+            outline: none;
+        }
+        .search input::placeholder {
+            color: var(--blue-grey);
+        }
+        .search button {
+            position: absolute;
+            background-color: transparent;
+            border: none;
+            height: 42px;
+            padding: 0;
+            right: 0;
+        }
+        .search button svg {
+            height: 20px;
+            width: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .search input {
+                width: 330px;
+            }
+        }
+        @media (min-width: 992px) {
+            .search input {
+                width: 420px;
+            }
+        }
+        @media (min-width: 1200px) {
+            .search input {
+                width: 510px;
+            }
         }
     </style>
 </head>
@@ -126,12 +181,36 @@
 <body>
     <div class="topnav">
         <div class="container">
-            <div class="logo">
-                <a href="/">
-                    <img src="/static/core/img/ousd-logo-white-bg.svg" alt="Origin Dollar logo" />
-                </a>
+            <div class="brand">
+                <div class="logo">
+                    <a href="/">
+                        <img src="/static/core/img/ousd-logo-white-bg.svg" alt="Origin Dollar logo" />
+                    </a>
+                </div>
             </div>
-            <!-- <a href="/apr">APR</a> -->
+            <div class="search">
+                <script>
+                    function submitSearchBar(){
+                        var q = document.getElementById('address').value.toLowerCase()
+                        if(q.length == 66){
+                            window.location='/tx/debug/' + q
+                        } else if(q.length == 42) {
+                            window.location='/address/' + q
+                        } else {
+                            alert('Not a valid address or transaction hash')
+                        }
+                    }
+                    function goOnEnter(evt){
+                        if (event.key === 'Enter') {
+                            submitSearchBar()
+                        }
+                    }
+                </script>
+                <input placeholder="0x..." id="address" onkeypress="goOnEnter()" />
+                <button onclick="submitSearchBar()">
+                    <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#8293a4" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"></path></svg>
+                </button>
+            </div>
         </div>
     </div>
     <div class="content container">
