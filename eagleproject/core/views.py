@@ -137,10 +137,12 @@ def api_speed_test(request):
 
 def api_ratios(request):
     s = _latest_snapshot()
-    return _cache(30, JsonResponse({
+    response = JsonResponse({
         "current_credits_per_token": s.rebasing_credits_per_token,
         "next_credits_per_token": Decimal(1.0) / s.rebasing_credits_ratio,
-    }))
+    })
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return _cache(30, response)
 
 
 def address(request, address):
