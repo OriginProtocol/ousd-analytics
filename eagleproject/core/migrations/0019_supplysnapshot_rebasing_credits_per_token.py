@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0018_ousdtransfer'),
+        ("core", "0018_ousdtransfer"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='supplysnapshot',
-            name='rebasing_credits_per_token',
+            model_name="supplysnapshot",
+            name="rebasing_credits_per_token",
             field=models.DecimalField(decimal_places=18, default=0, max_digits=64),
         ),
     ]

@@ -30,13 +30,16 @@ THREEPOOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 OUSD = "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86"
 VAULT = "0x277e80f3e14e7fb3fc40a9d6184088e0241034bd"
 COMPSTRAT = "0x47211b1d1f6da45aaee06f877266e072cf8baa74"
-OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
 TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
 
 STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
 STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
 STRATCOMPDAI = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
 STRATAAVEDAI = "0x051caefa90adf261b8e8200920c83778b7b176b6"
+
+OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
+OUSD_USDT_SUSHI = "0xe4455fdec181561e9ffe909dde46aaeaedc55283"
+SNOWSWAP = "0x7c2fa8c30db09e8b3c147ac67947829447bf07bd"
 
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
@@ -171,6 +174,7 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
 def rebasing_credits_per_token(block):
     data = storage_at(OUSD, 59, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
+
 
 def ousd_rebasing_credits(block):
     data = storage_at(OUSD, 58, block)

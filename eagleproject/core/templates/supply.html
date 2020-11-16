@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Supply Breakdown{% endblock %}
+
+
+{% block content %}
+
+<h1>Supply Breakdown</h1>
+
+<table class="table">
+    <tr>
+        <td>Other Rebasing</th>
+        <td class="text-right big">{{other_rebasing|floatformat:0}}</td>
+        <td>Rebasing</td>
+    </tr>
+    {% for pool in pools %}    
+        <tr>
+            <td>{{pool.name}}</th>
+            <td class="text-right big">{{pool.amount|floatformat:0}}</td>
+            <td>{% if pool.is_rebasing %}Rebasing{% else %}Non-rebasing{% endif %}</td>
+        </tr>
+    {% endfor %}
+    
+    <tr>
+        <td>Other Non-rebasing</th>
+        <td class="text-right big">{{other_non_rebasing|floatformat:0}}</td>
+        <td>Non-rebasing</td>
+    </tr>
+    <tr>
+        <td>Total</th>
+        <td class="text-right big"><strong>{{s.reported_supply|floatformat:0}}</strong></td>
+        <td></td>
+    </tr>
+    
+    <tr>
+
+    </tr>
+</table>
+    
+
+
+{% endblock %}

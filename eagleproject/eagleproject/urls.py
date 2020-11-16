@@ -22,6 +22,7 @@ urlpatterns = [
     path("tx/debug/<slug:tx_hash>", core_views.tx_debug),
     path("address/<slug:address>", core_views.address, name="address"),
     path("apr", core_views.apr_index),
+    path("supply", core_views.supply),
     path("reload", core_views.reload),
     path("api/v1/apr/trailing", core_views.api_apr_trailing),
     path("api/v1/ratios", core_views.api_ratios),

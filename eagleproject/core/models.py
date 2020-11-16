@@ -103,6 +103,12 @@ class SupplySnapshot(models.Model):
     apr = Decimal(0)  # Not persisted
     gain = Decimal(0)  # Not persisted
 
+    def rebasing_reported_supply(self):
+        return self.reported_supply - self.non_rebasing_supply
+
+    def non_rebasing_reported_supply(self):
+        return self.non_rebasing_supply
+
     def backing_diff(self):
         return self.computed_supply - self.reported_supply
 

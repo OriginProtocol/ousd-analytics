@@ -120,6 +120,33 @@ def apr_index(request):
     return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
 
+def supply(request):
+    pools_config = [
+        ("Uniswap OUSD/USDT", blockchain.OUSD_USDT_UNISWAP, False),
+        ("Sushi OUSD/USDT", blockchain.OUSD_USDT_SUSHI, False),
+        ("Snowswap", blockchain.SNOWSWAP, True),
+    ]
+    pools = []
+    totals_by_rebasing = {True: Decimal(0), False: Decimal(0)}
+    for name, address, is_rebasing in pools_config:
+        amount = balanceOf(blockchain.OUSD, address, 18)
+        pools.append(
+            {
+                "name": name,
+                "amount": amount,
+                "is_rebasing": is_rebasing,
+            }
+        )
+        totals_by_rebasing[is_rebasing] += amount
+    pools = sorted(pools, key=lambda pool: 0-pool["amount"])
+
+    s = _latest_snapshot()
+    other_rebasing = s.rebasing_reported_supply() - totals_by_rebasing[is_rebasing]
+    other_non_rebasing = s.non_rebasing_reported_supply() - totals_by_rebasing[False]
+
+    return _cache(30, render(request, "supply.html", locals()))
+
+
 def api_apr_trailing(request):
     apr = _get_trailing_apr()
     if apr < 0:
@@ -134,6 +161,7 @@ def api_apr_trailing(request):
 
 def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
+
 
 def api_ratios(request):
     s = _latest_snapshot()
@@ -212,6 +240,7 @@ def _reload(block_number):
 
 def _latest_snapshot():
     return SupplySnapshot.objects.order_by("-block_number")[0]
+
 
 def _latest_snapshot_block_number():
     return _latest_snapshot().block_number
