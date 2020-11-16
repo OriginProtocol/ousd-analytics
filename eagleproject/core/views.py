@@ -87,7 +87,7 @@ def reload(request):
 
 def apr_index(request):
     STEP = BLOCKS_PER_DAY
-    NUM_STEPS = 15
+    NUM_STEPS = 31
     latest_block_number = _latest_snapshot_block_number()
     end_block_number = latest_block_number - latest_block_number % STEP
     rows = []
