@@ -2,7 +2,7 @@
 {% load blockchain %}
 {% load humanize %}
 
-{% block title %}Supply Breakdown{% endblock %}
+{% block title %}OUSD Supply{% endblock %}
 
 
 {% block content %}
@@ -11,7 +11,7 @@
     tr.grey td { background: #eee;}
 </style>
 
-<h1>Supply Breakdown</h1>
+<h1>OUSD Supply</h1>
 
 <table class="table">
     <tr>
@@ -35,11 +35,6 @@
         <td>Additional Non-rebasing</td>
         <td class="text-right big">{{other_non_rebasing|floatformat:0}}</td>
         <td>Non-rebasing</td>
-    </tr>
-
-    
-    <tr>
-
     </tr>
 </table>
     
