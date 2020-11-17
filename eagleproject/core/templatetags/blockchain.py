@@ -4,6 +4,7 @@ from django.utils import timezone
 from binascii import unhexlify
 from decimal import Decimal
 from eth_abi import decode_single
+import core.blockchain as blockchain
 from core.blockchain import _slot
 import pytz
 
@@ -289,7 +290,8 @@ def sub(v, arg):
 def trace_annotation(trace):
     # mixOracle, priceMin
     to = trace["action"]["to"]
-    signature = trace["action"]["input"][0:10]
+    t_input = trace["action"]["input"]
+    signature = t_input[0:10]
     # print(to, signature)
     if not "result" in trace:
         return "❌"
@@ -310,6 +312,32 @@ def trace_annotation(trace):
         s = "0x" + trace["result"]["output"][2 + 64 : 2 + 64 + 64]
         value = Decimal(int(s, 16)) / Decimal(1e8)
         return "🏛🏛 CHAIN ETH %f" % value
+    elif to == blockchain.USDC and signature == "0xa9059cbb":
+        value = int(slot_1('0x'+t_input[10:]),16) / Decimal(1e6)
+        return "➡️ %s USDC" % value
+    elif to == blockchain.USDT and signature == "0xa9059cbb":
+        value = int(slot_1('0x'+t_input[10:]),16) / Decimal(1e6)
+        return "➡️ %s USDT" % value
+    elif to == blockchain.DAI and signature == "0xa9059cbb":
+        value = int(slot_1('0x'+t_input[10:]),16) / Decimal(1e18)
+        return "➡️ %s DAI" % value
+    elif to == blockchain.OUSD and signature == "0xa9059cbb":
+        value = int(slot_1('0x'+t_input[10:]),16) / Decimal(1e18)
+        return "➡️ %s OUSD" % value
+
+    elif to == blockchain.USDC and signature == "0x23b872dd":
+        value = int(slot_2('0x'+t_input[10:]),16) / Decimal(1e6)
+        return "➡️ %s USDC" % value
+    elif to == blockchain.USDT and signature == "0x23b872dd":
+        value = int(slot_2('0x'+t_input[10:]),16) / Decimal(1e6)
+        return "➡️ %s USDT" % value
+    elif to == blockchain.DAI and signature == "0x23b872dd":
+        value = int(slot_2('0x'+t_input[10:]),16) / Decimal(1e18)
+        return "➡️ %s DAI" % value
+    elif to == blockchain.OUSD and signature == "0x23b872dd":
+        value = int(slot_2('0x'+t_input[10:]),16) / Decimal(1e18)
+        return "➡️ %s OUSD" % value
+
     elif signature == "0xfeaf968c":
         s = "0x" + trace["result"]["output"][2 + 64 : 2 + 64 + 64]
         print(s)
