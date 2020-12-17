@@ -1,21 +1,21 @@
 """ Every file in this dir (that doesn't start with __) is an individual trigger
 that when run, processes the analytics data of its choosing looking to meet
-specific conditions.  If a condition is met, it will return the actions it
-thinks should be taken.
-
-Triggers are aware of everything except when/why they're executed.  They do not
-deal with data collection.
+specific conditions.  If a condition is met, it will return the events it
+thinks are relevant.
 
 Every trigger should implement:
- - run_trigger() -> List[Action]
+ - run_trigger() -> List[Event]
 
  Every run_trigger() implementation can accept any of these kwargs:
 
- - cursor - ?
+ - transfer_cursor - A NotifyCursor model for transfers
+ - transaction_cursor - A NotifyCursor model for transactions
  - transfers - All transfers
  - new_transfers - All new transfers since the last update
  - transactions - All transactions
  - new_transactions - All new transactions since the last run
+ - logs - All logs
+ - new_logs - All new logs since the last run
 """
 import inspect
 from pathlib import Path
@@ -29,7 +29,7 @@ from notify.models import CursorId, NotifyCursor
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
 TRIGGERS = set()
-SKIP_TRIGGERS = ['noop', 'ousd_outliers', 'ousd_mint'] # TODO: testing
+SKIP_TRIGGERS = ['noop']
 
 
 def strip_ext(fname):
@@ -96,6 +96,7 @@ def run_all_triggers():
 
     availible_kwargs_valgen = {
         "transfer_cursor": lambda: transfer_cursor,
+        "transaction_cursor": lambda: transaction_cursor,
         "transactions": lambda: transactions(transaction_cursor.block_number),
         "new_transactions": lambda: transactions(
             transaction_cursor.block_number
