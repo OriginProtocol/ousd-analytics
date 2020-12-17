@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from core import views as core_views
+from notify import views as notify_views
 
 urlpatterns = [
     path("", core_views.dashboard),
@@ -27,5 +28,6 @@ urlpatterns = [
     path("api/v1/apr/trailing", core_views.api_apr_trailing),
     path("api/v1/ratios", core_views.api_ratios),
     path("api/v1/speed_test", core_views.api_speed_test),
+    path("runtriggers", notify_views.run_triggers),
     # path('admin/', admin.site.urls),
 ]
