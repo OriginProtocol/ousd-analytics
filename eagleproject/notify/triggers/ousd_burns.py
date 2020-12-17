@@ -42,9 +42,7 @@ def run_trigger(new_transfers):
     """ Check OUSD transactions for burns """
     events = []
 
-    """ Burns shouldn't happen too often, and only occur on redeems.
-
-    TODO: This is probably too sensitive but will keep this for now """
+    # Burns shouldn't happen except on redeems, which are ignored here.
     burns = get_burns(new_transfers)
 
     if burns:

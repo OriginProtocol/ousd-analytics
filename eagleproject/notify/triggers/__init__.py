@@ -70,7 +70,7 @@ def logs(block_number):
 
 def run_all_triggers():
     """ Run all triggers """
-    actions = []
+    events = []
     mods = load_triggers()
 
     block_number = latest_block()
@@ -114,7 +114,7 @@ def run_all_triggers():
         }
 
         # Execute and save actions for return
-        actions.extend(mod.run_trigger(**script_kwargs))
+        events.extend(mod.run_trigger(**script_kwargs))
 
     transfer_cursor.block_number = block_number
     transfer_cursor.last_update = datetime.now()
@@ -124,4 +124,4 @@ def run_all_triggers():
     transaction_cursor.last_update = datetime.now()
     transaction_cursor.save()
 
-    return actions
+    return events
