@@ -28,7 +28,6 @@ from notify.models import CursorId, NotifyCursor
 
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
-TRIGGERS = set()
 SKIP_TRIGGERS = ['noop']
 
 
@@ -41,8 +40,6 @@ def strip_ext(fname):
 
 def load_triggers():
     """ Loads all trigger modules in this dir """
-    global TRIGGERS
-
     files = [
         x
         for x in THIS_DIR.iterdir()
