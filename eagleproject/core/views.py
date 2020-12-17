@@ -8,7 +8,7 @@ from core.blockchain import (
     ensure_supply_snapshot,
     ensure_asset,
     ensure_transaction_and_downstream,
-    lastest_block,
+    latest_block,
     ensure_latest_logs,
     download_logs_from_contract,
     totalSupply,
@@ -79,7 +79,7 @@ def dashboard(request):
 
 
 def reload(request):
-    latest = lastest_block()
+    latest = latest_block()
     _reload(latest - 2)
     _reload(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
     return HttpResponse("ok")
