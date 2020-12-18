@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "core",
+    "notify",
 ]
 
 MIDDLEWARE = [
@@ -128,3 +129,12 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
+
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+EMAIL_HOST = os.environ.get("EMAIL_HOST")
+EMAIL_PORT = os.environ.get("EMAIL_PORT", 25)
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS") == "true"
+
+ADMINS = [("Engineering", "engineering@originprotocol.com")]
+DISCORD_BOT_NAME = os.environ.get("DISCORD_BOT_NAME", "OUSD Analytics Bot")
+DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")

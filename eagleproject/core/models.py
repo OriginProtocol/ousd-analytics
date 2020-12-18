@@ -144,7 +144,12 @@ class Transaction(models.Model):
 
 
 class OusdTransfer(models.Model):
-    tx_hash = models.CharField(max_length=66, db_index=True)
+    tx_hash = models.ForeignKey(
+        "Transaction",
+        to_field="tx_hash",
+        on_delete=models.DO_NOTHING,
+        db_index=True,
+    )
     log_index = models.CharField(max_length=66, db_index=True)
     block_time = models.DateTimeField(db_index=True)
     from_address = models.CharField(max_length=42, db_index=True)

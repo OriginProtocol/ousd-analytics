@@ -1,5 +1,6 @@
 import os
 import math
+import datetime
 import requests
 from decimal import Decimal
 from eth_abi import encode_single
@@ -14,7 +15,6 @@ from core.models import (
     Transaction,
     OusdTransfer,
 )
-import datetime
 
 START_OF_EVERYTHING = 10884500
 
@@ -105,7 +105,7 @@ def debug_trace_transaction(tx_hash):
     return data["result"]
 
 
-def lastest_block():
+def latest_block():
     data = request("eth_blockNumber", [])
     return int(data["result"], 16)
 
