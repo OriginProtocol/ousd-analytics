@@ -19,7 +19,8 @@ env = environ.Env(
     DEBUG=(bool, False),
     DATABASE_HOST_OVERRIDE=(str, None),
 )
-environ.Env.read_env()
+env_file = Path(__file__).resolve().parent.joinpath('.env')
+environ.Env.read_env(env.str('ENV_PATH', str(env_file)))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,6 +81,27 @@ TEMPLATES = [
     },
 ]
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'propagate': False,
+        },
+    },
+}
+
 WSGI_APPLICATION = "eagleproject.wsgi.application"
 
 
@@ -87,8 +109,8 @@ WSGI_APPLICATION = "eagleproject.wsgi.application"
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {"default": env.db()}
-if env("DATABASE_HOST_OVERRIDE"):
-    DATABASES["default"]["HOST"] = env("DATABASE_HOST_OVERRIDE")
+if os.environ.get("DATABASE_HOST_OVERRIDE"):
+    DATABASES["default"]["HOST"] = os.environ.get("DATABASE_HOST_OVERRIDE")
 CONN_MAX_AGE = 100
 
 # Password validation

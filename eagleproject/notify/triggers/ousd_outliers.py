@@ -17,7 +17,7 @@ def get_past_week(transfers):
         CACHE.get("past_week")
         and CACHE["past_week"].get("expiry") > datetime.now()
     ):
-        return CACHE["past_week"]["result"]
+        return CACHE["past_week"]
 
     one_week_ago = datetime.now() - timedelta(days=7)
     transfers = transfers.filter(block_time__gt=one_week_ago)

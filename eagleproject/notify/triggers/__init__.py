@@ -19,6 +19,7 @@ Every trigger should implement:
  - new_logs - All new logs since the last run
 """
 import inspect
+import logging
 from pathlib import Path
 from datetime import datetime
 from importlib import import_module
@@ -30,6 +31,7 @@ from notify.models import CursorId, NotifyCursor
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
 SKIP_TRIGGERS = ['noop']
+log = logging.getLogger('notify.triggers')
 
 
 def strip_ext(fname):
@@ -119,8 +121,11 @@ def run_all_triggers():
             k: availible_kwargs_valgen.get(k)() for k in func_spec.args
         }
 
-        # Execute and save actions for return
-        events.extend(mod.run_trigger(**script_kwargs))
+        try:
+            # Execute and save actions for return
+            events.extend(mod.run_trigger(**script_kwargs))
+        except Exception:
+            log.exception("Exception occurred running trigger")
 
     transfer_cursor.block_number = block_number
     transfer_cursor.last_update = datetime.now()
