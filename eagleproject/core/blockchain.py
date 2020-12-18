@@ -467,7 +467,7 @@ def maybe_store_transfer_record(log, block):
         return db_transfer[0]
 
     transfer = OusdTransfer(
-        tx_hash=tx_hash,
+        tx_hash_id=tx_hash,
         log_index=log_index,
         block_time=block.block_time,
         from_address="0x" + log["topics"][1][-40:],
@@ -490,10 +490,6 @@ def ensure_transaction_and_downstream(tx_hash):
     block_number = int(raw_transaction["blockNumber"], 16)
     block = ensure_block(block_number)
 
-    for log in receipt["logs"]:
-        ensure_log_record(log)
-        maybe_store_transfer_record(log, block)
-
     transaction = Transaction(
         tx_hash=tx_hash,
         block_number=block_number,
@@ -503,6 +499,11 @@ def ensure_transaction_and_downstream(tx_hash):
         debug_data=debug,
     )
     transaction.save()
+
+    for log in receipt["logs"]:
+        ensure_log_record(log)
+        maybe_store_transfer_record(log, block)
+
     return transaction
 
 
