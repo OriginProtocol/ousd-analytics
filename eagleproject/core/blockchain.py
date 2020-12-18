@@ -4,10 +4,12 @@ import datetime
 import requests
 from decimal import Decimal
 from eth_abi import encode_single
+from django.conf import settings
 
 from core.models import (
     AssetBlock,
     DebugTx,
+    EtherscanPointer,
     LogPointer,
     Log,
     SupplySnapshot,
@@ -15,6 +17,7 @@ from core.models import (
     Transaction,
     OusdTransfer,
 )
+from core.etherscan import get_contract_transactions
 
 START_OF_EVERYTHING = 10884500
 
@@ -70,6 +73,7 @@ COMPOUND_FOR_SYMBOL = {
 }
 
 LOG_CONTRACTS = [OUSD, VAULT, COMPSTRAT, OUSD_USDT_UNISWAP, TIMELOCK]
+ETHERSCAN_CONTRACTS = [OUSD, VAULT, TIMELOCK]
 
 
 def request(method, params):
@@ -192,14 +196,14 @@ def ousd_non_rebasing_supply(block):
 
 
 def priceUSDMint(coin_contract, symbol, block="latest"):
-    signature = "0x686b37ca"
+    signature = "0x686b37ca"  # priceUSDMint(string)
     payload = encode_single("(string)", [symbol]).hex()
     data = call(coin_contract, signature, payload, block)
     return Decimal(int(data["result"], 16)) / Decimal(1e18)
 
 
 def priceUSDRedeem(coin_contract, symbol, block="latest"):
-    signature = "0x29a903ec"
+    signature = "0x29a903ec"  # priceUSDRedeem(string)
     payload = encode_single("(string)", [symbol]).hex()
     data = call(coin_contract, signature, payload, block)
     return Decimal(int(data["result"], 16)) / Decimal(1e18)
@@ -310,7 +314,7 @@ def build_debug_tx(tx_hash):
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
     for contract in LOG_CONTRACTS:
-        if not contract in pointers:
+        if contract not in pointers:
             pointer = LogPointer(contract=contract, last_block=START_OF_EVERYTHING)
             pointer.save()
         else:
@@ -322,6 +326,33 @@ def ensure_latest_logs(upto):
             pointer.last_block = end_block
             pointer.save()
             start_block = pointer.last_block + 1
+
+
+def ensure_all_transactions(block_number):
+    """ Verify we have all transactions using Etherscan as a secondary source of
+    transaction data.  This has the benefit of including failed transactions
+    and transactions that do not generate logs.
+    """
+    pointers = {x.contract: x for x in EtherscanPointer.objects.all()}
+
+    if settings.ETHERSCAN_API_KEY:
+
+        for address in ETHERSCAN_CONTRACTS:
+            if address not in pointers:
+                pointers[address] = EtherscanPointer.objects.create(
+                    contract=address,
+                    last_block=0,
+                )
+
+            for tx in get_contract_transactions(
+                address,
+                pointers[address].last_block,
+                block_number
+            ):
+                ensure_transaction_and_downstream(tx.get('hash'))
+
+            pointers[address].last_block = block_number
+            pointers[address].save()
 
 
 def download_logs_from_contract(contract, start_block, end_block):

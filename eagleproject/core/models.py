@@ -52,6 +52,11 @@ class LogPointer(models.Model):
     last_block = models.IntegerField(db_index=True)
 
 
+class EtherscanPointer(models.Model):
+    contract = models.CharField(max_length=256, db_index=True, primary_key=True)
+    last_block = models.IntegerField(db_index=True)
+
+
 class Log(models.Model):
     address = models.CharField(max_length=255, db_index=True)
     event_name = models.CharField(max_length=255, db_index=True, blank=True)

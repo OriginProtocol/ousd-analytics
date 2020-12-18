@@ -10,6 +10,7 @@ from core.blockchain import (
     ensure_transaction_and_downstream,
     latest_block,
     ensure_latest_logs,
+    ensure_all_transactions,
     download_logs_from_contract,
     totalSupply,
     balanceOf,
@@ -236,6 +237,7 @@ def _reload(block_number):
     comp = ensure_asset("COMP", block_number)
     ensure_latest_logs(block_number)
     ensure_supply_snapshot(block_number)
+    ensure_all_transactions(block_number)
 
 
 def _latest_snapshot():
