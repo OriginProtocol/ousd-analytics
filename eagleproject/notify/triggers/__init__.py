@@ -8,6 +8,7 @@ Every trigger should implement:
 
  Every run_trigger() implementation can accept any of these kwargs:
 
+ - latest_block - The latest known block number according to the RPC source
  - transfer_cursor - A NotifyCursor model for transfers
  - transaction_cursor - A NotifyCursor model for transactions
  - transfers - All transfers
@@ -21,9 +22,9 @@ import inspect
 from pathlib import Path
 from datetime import datetime
 from importlib import import_module
+from django.db.models import Max
 
-from core.blockchain import latest_block
-from core.models import Log, OusdTransfer, Transaction
+from core.models import Block, Log, OusdTransfer, Transaction
 from notify.models import CursorId, NotifyCursor
 
 ME = Path(__file__).resolve()
@@ -73,7 +74,11 @@ def run_all_triggers():
     events = []
     mods = load_triggers()
 
-    block_number = latest_block()
+    # Source from the DB to prevent a race with data collection
+    max_block = Block.objects.all().aggregate(Max("block_number"))
+    block_number = 0
+    if max_block:
+        block_number = max_block.get("block_number__max", 0)
 
     transfer_cursor, _ = NotifyCursor.objects.get_or_create(
         cursor_id=CursorId.TRANSFERS,
@@ -92,6 +97,7 @@ def run_all_triggers():
     )
 
     availible_kwargs_valgen = {
+        "latest_block": lambda: block_number,
         "transfer_cursor": lambda: transfer_cursor,
         "transaction_cursor": lambda: transaction_cursor,
         "transactions": lambda: transactions(transaction_cursor.block_number),
