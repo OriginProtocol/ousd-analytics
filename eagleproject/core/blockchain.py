@@ -73,7 +73,7 @@ COMPOUND_FOR_SYMBOL = {
 }
 
 LOG_CONTRACTS = [OUSD, VAULT, COMPSTRAT, OUSD_USDT_UNISWAP, TIMELOCK]
-ETHERSCAN_CONTRACTS = [OUSD, VAULT]
+ETHERSCAN_CONTRACTS = [OUSD, VAULT, TIMELOCK]
 
 
 def request(method, params):
@@ -314,7 +314,7 @@ def build_debug_tx(tx_hash):
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
     for contract in LOG_CONTRACTS:
-        if not contract in pointers:
+        if contract not in pointers:
             pointer = LogPointer(contract=contract, last_block=START_OF_EVERYTHING)
             pointer.save()
         else:
