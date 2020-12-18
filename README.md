@@ -26,6 +26,13 @@ Vault Eagle
     # Start by visiting http://localhost:8000/reload to download blockchain data
     # Otherwise, the root dashboard view will crash if there is no data
 
+## To deploy
+
+    # First make sure you can connect to the DB in question (e.g. cloud_sql_proxy)
+    python manage.py migrate
+    python manage.py collectstatic
+    gcloud app deploy
+
 ## Future
 
 Data ingest:
