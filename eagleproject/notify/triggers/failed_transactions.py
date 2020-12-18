@@ -27,6 +27,7 @@ def get_failed_transactions(address, start_block, end_block):
     """ Get all failed transactions between start and end blocks """
     return Transaction.objects.filter(
         data__to=address,
+        receipt_data__status='0x0',
         block_number__gt=start_block,
         block_number__lte=end_block
     )
