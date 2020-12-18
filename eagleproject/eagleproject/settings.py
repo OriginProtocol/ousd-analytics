@@ -160,3 +160,5 @@ EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS") == "true"
 ADMINS = [("Engineering", "engineering@originprotocol.com")]
 DISCORD_BOT_NAME = os.environ.get("DISCORD_BOT_NAME", "OUSD Analytics Bot")
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+
+ETHERSCAN_API_KEY = os.environ.get("ETHERSCAN_API_KEY")
