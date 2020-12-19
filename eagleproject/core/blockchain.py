@@ -35,6 +35,8 @@ VAULT = "0x277e80f3e14e7fb3fc40a9d6184088e0241034bd"
 COMPSTRAT = "0x47211b1d1f6da45aaee06f877266e072cf8baa74"
 TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
 
+OGN_STAKING = "0x501804B374EF06fa9C427476147ac09F1551B9A0"
+
 STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
 STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
 STRATCOMPDAI = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
@@ -72,7 +74,14 @@ COMPOUND_FOR_SYMBOL = {
     "USDC": CUSDC,
 }
 
-LOG_CONTRACTS = [OUSD, VAULT, COMPSTRAT, OUSD_USDT_UNISWAP, TIMELOCK]
+LOG_CONTRACTS = [
+    OUSD,
+    VAULT,
+    COMPSTRAT,
+    OUSD_USDT_UNISWAP,
+    TIMELOCK,
+    OGN_STAKING,
+]
 ETHERSCAN_CONTRACTS = [OUSD, VAULT, TIMELOCK]
 
 
@@ -106,7 +115,7 @@ def storage_at(address, slot, block="latest"):
 def debug_trace_transaction(tx_hash):
     params = [tx_hash]
     data = request("trace_transaction", params)
-    return data["result"]
+    return data.get("result", {})
 
 
 def latest_block():
@@ -314,6 +323,7 @@ def build_debug_tx(tx_hash):
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
     for contract in LOG_CONTRACTS:
+        pointer = None
         if contract not in pointers:
             pointer = LogPointer(contract=contract, last_block=START_OF_EVERYTHING)
             pointer.save()
