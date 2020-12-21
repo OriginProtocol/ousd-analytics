@@ -24,7 +24,6 @@ def run_trigger(new_logs):
     events = []
 
     for ev in get_stake_withdrawn_events(new_logs):
-        print('&&&&ve:', ev)
         is_staked = ev.topic_0 == SIG_EVENT_STAKED
         (amount,) = decode_single('(uint256)', decode_hex(ev.data))
 
