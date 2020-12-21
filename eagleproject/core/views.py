@@ -311,6 +311,6 @@ def staking_stats(request):
         data = {
             "success": True,
             "userCount": count,
-            "lockupSum": float(total_staked),
+            "lockupSum": float(total_staked) if total_staked else 0,
         }
         return JsonResponse(data)
