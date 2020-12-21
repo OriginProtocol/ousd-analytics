@@ -35,7 +35,7 @@ def run_trigger(new_logs):
     events = []
 
     for ev in get_rates_events(new_logs):
-        duration_event = get_durations_event()
+        duration_event = get_durations_event(ev.transaction_hash)
         rates = decode_single("(uint256[])", ev.data)
         durations = decode_single("(uint256[])", duration_event.data)
 
