@@ -16,8 +16,12 @@ from core.models import (
     Block,
     Transaction,
     OusdTransfer,
+    OgnStaked
 )
 from core.etherscan import get_contract_transactions
+
+from eth_hash.auto import keccak
+from eth_utils import encode_hex
 
 START_OF_EVERYTHING = 10884500
 
@@ -41,12 +45,15 @@ STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
 STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
 STRATCOMPDAI = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
 STRATAAVEDAI = "0x051caefa90adf261b8e8200920c83778b7b176b6"
-
+ 
 OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
 OUSD_USDT_SUSHI = "0xe4455fdec181561e9ffe909dde46aaeaedc55283"
 SNOWSWAP = "0x7c2fa8c30db09e8b3c147ac67947829447bf07bd"
 
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
+SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
+SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256)"))
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
@@ -83,7 +90,6 @@ LOG_CONTRACTS = [
     OGN_STAKING,
 ]
 ETHERSCAN_CONTRACTS = [OUSD, VAULT, TIMELOCK]
-
 
 def request(method, params):
     url = os.environ.get("PROVIDER_URL")
@@ -462,7 +468,7 @@ def maybe_store_transfer_record(log, block):
     # Must be a transfer event
     if (
         log["topics"][0]
-        != "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+        != TRANSFER
     ):
         return None
     # Must be on OUSD
@@ -486,6 +492,33 @@ def maybe_store_transfer_record(log, block):
     )
     transfer.save()
     return transfer
+
+def maybe_store_stake_withdrawn_record(log, block):
+    # Must be a Staked or Withdrawn event
+    if (
+        log["topics"][0] != SIG_EVENT_STAKED and 
+        log["topics"][0] != SIG_EVENT_WITHDRAWN
+    ):
+        return None
+
+    tx_hash = log["transactionHash"]
+    log_index = int(log["logIndex"], 16)
+    db_staked = list(
+        OgnStaked.objects.filter(tx_hash=tx_hash, log_index=log_index)
+    )
+    if len(db_staked) > 0:
+        return db_staked[0]
+
+    staked = OgnStaked(
+        tx_hash=tx_hash,
+        log_index=log_index,
+        block_time=block.block_time,
+        user_address="0x" + log["topics"][1][-40:],
+        is_staked=log["topics"][0] == SIG_EVENT_STAKED,
+        amount=int(_slot(log["data"], 0), 16) / 1e18,
+    )
+    staked.save()
+    return staked
 
 
 def ensure_transaction_and_downstream(tx_hash):
@@ -513,6 +546,7 @@ def ensure_transaction_and_downstream(tx_hash):
     for log in receipt["logs"]:
         ensure_log_record(log)
         maybe_store_transfer_record(log, block)
+        maybe_store_stake_withdrawn_record(log, block)
 
     return transaction
 
