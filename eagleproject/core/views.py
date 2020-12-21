@@ -20,6 +20,8 @@ from core.models import AssetBlock, DebugTx, LogPointer, Log, SupplySnapshot
 import core.blockchain as blockchain
 import datetime
 
+from django.db import connection
+
 BLOCKS_PER_DAY = 6500
 
 
@@ -285,3 +287,26 @@ def _get_trailing_apy():
     return 0 # Temporary
     apy = ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
     return round(apy, 2)
+
+def staking_stats(request):
+    with connection.cursor() as cursor:
+        query = """
+        select count(*) as count, sum(staked_amount) as total_staked from (
+            select user_address, sum(
+                case 
+                when is_staked then amount
+                else amount * -1
+                end
+            ) as staked_amount from core_ognstaked group by user_address
+        ) as t where staked_amount > 0;
+        """
+        cursor.execute(query)
+        row = cursor.fetchone()
+        count, total_staked = row
+
+        data = {
+            "success": True,
+            "userCount": count,
+            "lockupSum": float(total_staked),
+        }
+        return JsonResponse(data)
