@@ -16,8 +16,12 @@ from core.models import (
     Block,
     Transaction,
     OusdTransfer,
+    OgnStaked
 )
 from core.etherscan import get_contract_transactions
+
+from eth_hash.auto import keccak
+from eth_utils import encode_hex
 
 START_OF_EVERYTHING = 10884500
 
@@ -35,6 +39,8 @@ VAULT = "0x277e80f3e14e7fb3fc40a9d6184088e0241034bd"
 COMPSTRAT = "0x47211b1d1f6da45aaee06f877266e072cf8baa74"
 TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
 
+OGN_STAKING = "0x501804b374ef06fa9c427476147ac09f1551b9a0"
+
 STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
 STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
 STRATCOMPDAI = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
@@ -45,6 +51,9 @@ OUSD_USDT_SUSHI = "0xe4455fdec181561e9ffe909dde46aaeaedc55283"
 SNOWSWAP = "0x7c2fa8c30db09e8b3c147ac67947829447bf07bd"
 
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+
+SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
+SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256)"))
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
@@ -72,7 +81,14 @@ COMPOUND_FOR_SYMBOL = {
     "USDC": CUSDC,
 }
 
-LOG_CONTRACTS = [OUSD, VAULT, COMPSTRAT, OUSD_USDT_UNISWAP, TIMELOCK]
+LOG_CONTRACTS = [
+    OUSD,
+    VAULT,
+    COMPSTRAT,
+    OUSD_USDT_UNISWAP,
+    TIMELOCK,
+    OGN_STAKING,
+]
 ETHERSCAN_CONTRACTS = [OUSD, VAULT, TIMELOCK]
 
 
@@ -106,7 +122,7 @@ def storage_at(address, slot, block="latest"):
 def debug_trace_transaction(tx_hash):
     params = [tx_hash]
     data = request("trace_transaction", params)
-    return data["result"]
+    return data.get("result", {})
 
 
 def latest_block():
@@ -314,6 +330,7 @@ def build_debug_tx(tx_hash):
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
     for contract in LOG_CONTRACTS:
+        pointer = None
         if contract not in pointers:
             pointer = LogPointer(contract=contract, last_block=START_OF_EVERYTHING)
             pointer.save()
@@ -452,7 +469,7 @@ def maybe_store_transfer_record(log, block):
     # Must be a transfer event
     if (
         log["topics"][0]
-        != "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+        != TRANSFER
     ):
         return None
     # Must be on OUSD
@@ -476,6 +493,34 @@ def maybe_store_transfer_record(log, block):
     )
     transfer.save()
     return transfer
+
+
+def maybe_store_stake_withdrawn_record(log, block):
+    # Must be a Staked or Withdrawn event
+    if (
+        log["address"] == OGN_STAKING and
+        log["topics"][0] not in [SIG_EVENT_STAKED, SIG_EVENT_WITHDRAWN]
+    ):
+        return None
+
+    tx_hash = log["transactionHash"]
+    log_index = int(log["logIndex"], 16)
+    db_staked = list(
+        OgnStaked.objects.filter(tx_hash=tx_hash, log_index=log_index)
+    )
+    if len(db_staked) > 0:
+        return db_staked[0]
+
+    staked = OgnStaked(
+        tx_hash=tx_hash,
+        log_index=log_index,
+        block_time=block.block_time,
+        user_address="0x" + log["topics"][1][-40:],
+        is_staked=log["topics"][0] == SIG_EVENT_STAKED,
+        amount=int(_slot(log["data"], 0), 16) / 1e18,
+    )
+    staked.save()
+    return staked
 
 
 def ensure_transaction_and_downstream(tx_hash):
@@ -503,6 +548,7 @@ def ensure_transaction_and_downstream(tx_hash):
     for log in receipt["logs"]:
         ensure_log_record(log)
         maybe_store_transfer_record(log, block)
+        maybe_store_stake_withdrawn_record(log, block)
 
     return transaction
 

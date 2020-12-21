@@ -1,24 +1,25 @@
+import datetime
 from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
+from django.db import connection
 from django.db.models import Q
 from core.blockchain import (
-    build_asset_block,
-    build_debug_tx,
+    OUSD_USDT_UNISWAP,
+    OUSD_USDT_SUSHI,
+    SNOWSWAP,
+    OUSD,
+    TRANSFER,
     ensure_supply_snapshot,
     ensure_asset,
     ensure_transaction_and_downstream,
     latest_block,
     ensure_latest_logs,
     ensure_all_transactions,
-    download_logs_from_contract,
     totalSupply,
     balanceOf,
 )
-from core.models import AssetBlock, DebugTx, LogPointer, Log, SupplySnapshot
-
-import core.blockchain as blockchain
-import datetime
+from core.models import Log, SupplySnapshot
 
 BLOCKS_PER_DAY = 6500
 
@@ -40,7 +41,7 @@ def dashboard(request):
     total_threepool = sum(x.threepoolstrat_holding for x in assets)
     total_assets = sum(x.total() for x in assets)
     total_comp = comp.total()
-    total_supply = totalSupply(blockchain.OUSD, 18, block_number)
+    total_supply = totalSupply(OUSD, 18, block_number)
     total_value = sum(x.redeem_value() for x in assets)
     extra_assets = total_assets - total_supply
     extra_value = total_value - total_supply
@@ -123,14 +124,14 @@ def apr_index(request):
 
 def supply(request):
     pools_config = [
-        ("Uniswap OUSD/USDT", blockchain.OUSD_USDT_UNISWAP, False),
-        ("Sushi OUSD/USDT", blockchain.OUSD_USDT_SUSHI, False),
-        ("Snowswap", blockchain.SNOWSWAP, True),
+        ("Uniswap OUSD/USDT", OUSD_USDT_UNISWAP, False),
+        ("Sushi OUSD/USDT", OUSD_USDT_SUSHI, False),
+        ("Snowswap", SNOWSWAP, True),
     ]
     pools = []
     totals_by_rebasing = {True: Decimal(0), False: Decimal(0)}
     for name, address, is_rebasing in pools_config:
-        amount = balanceOf(blockchain.OUSD, address, 18)
+        amount = balanceOf(OUSD, address, 18)
         pools.append(
             {
                 "name": name,
@@ -180,13 +181,17 @@ def address(request, address):
     long_address = address.replace("0x", "0x000000000000000000000000")
     latest_block_number = _latest_snapshot_block_number()
     transfers = Log.objects.filter(
-        address=blockchain.OUSD, topic_0=blockchain.TRANSFER
+        address=OUSD, topic_0=TRANSFER
     ).filter(Q(topic_1=long_address) | Q(topic_2=long_address))
-    transfers_in = sum([x.ousd_value() for x in transfers if x.topic_2 == long_address])
+    transfers_in = sum([
+        x.ousd_value()
+        for x in transfers
+        if x.topic_2 == long_address
+    ])
     transfers_out = sum(
         [x.ousd_value() for x in transfers if x.topic_1 == long_address]
     )
-    current_balance = balanceOf(blockchain.OUSD, address, 18)
+    current_balance = balanceOf(OUSD, address, 18)
     non_yield_balance = transfers_in - transfers_out
     yield_balance = current_balance - non_yield_balance
     return render(request, "address.html", locals())
@@ -196,10 +201,10 @@ def _my_assets(address, block_number):
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
-    total_supply = totalSupply(blockchain.OUSD, 18, block_number)
+    total_supply = totalSupply(OUSD, 18, block_number)
 
-    current_balance = blockchain.balanceOf(blockchain.OUSD, address, 18, block_number)
-    total_supply = totalSupply(blockchain.OUSD, 18, block_number)
+    current_balance = balanceOf(OUSD, address, 18, block_number)
+    total_supply = totalSupply(OUSD, 18, block_number)
 
     return {
         "my": {
@@ -231,10 +236,10 @@ def _cache(seconds, response):
 
 
 def _reload(block_number):
-    dai = ensure_asset("DAI", block_number)
-    usdt = ensure_asset("USDT", block_number)
-    usdc = ensure_asset("USDC", block_number)
-    comp = ensure_asset("COMP", block_number)
+    ensure_asset("DAI", block_number)
+    ensure_asset("USDT", block_number)
+    ensure_asset("USDC", block_number)
+    ensure_asset("COMP", block_number)
     ensure_latest_logs(block_number)
     ensure_supply_snapshot(block_number)
     ensure_all_transactions(block_number)
@@ -282,6 +287,30 @@ def _get_trailing_apr():
 def _get_trailing_apy():
     apr = Decimal(_get_trailing_apr())
     periods_per_year = Decimal(365.25 / 7.0)
-    return 0 # Temporary
+    return 0  # Temporary
     apy = ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
     return round(apy, 2)
+
+
+def staking_stats(request):
+    with connection.cursor() as cursor:
+        query = """
+        select count(*) as count, sum(staked_amount) as total_staked from (
+            select user_address, sum(
+                case
+                when is_staked then amount
+                else amount * -1
+                end
+            ) as staked_amount from core_ognstaked group by user_address
+        ) as t where staked_amount > 0;
+        """
+        cursor.execute(query)
+        row = cursor.fetchone()
+        count, total_staked = row
+
+        data = {
+            "success": True,
+            "userCount": count,
+            "lockupSum": float(total_staked) if total_staked else 0,
+        }
+        return JsonResponse(data)

@@ -30,4 +30,5 @@ urlpatterns = [
     path("api/v1/speed_test", core_views.api_speed_test),
     path("runtriggers", notify_views.run_triggers),
     # path('admin/', admin.site.urls),
+    path("api/v1/staking_stats", core_views.staking_stats),
 ]
