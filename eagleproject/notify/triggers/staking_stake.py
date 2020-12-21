@@ -19,16 +19,16 @@ def get_stake_withdrawn_events(logs):
 
 
 def run_trigger(new_logs):
-    """ Look for mints and redeems """
+    """ Look for Stake/Withdraw """
     events = []
 
-    for ev in get_mint_redeem_events(new_logs):
+    for ev in get_stake_withdrawn_events(new_logs):
         is_staked = ev.topic_0 == SIG_EVENT_STAKED
         addr, value = decode_single('(address,uint256)', decode_hex(ev.data))
 
         events.append(
             event_normal(
-                "Staked    🪙" if is_staked else "Withdrawn 💵",
+                "Staked    🥩" if is_staked else "Withdrawn 🍰",
                 "{} OGN was {}".format(
                     format_ousd_human(Decimal(value) / Decimal(1e18)),
                     "staked" if is_staked else "withdrawn",
