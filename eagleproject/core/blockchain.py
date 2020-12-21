@@ -91,6 +91,7 @@ LOG_CONTRACTS = [
 ]
 ETHERSCAN_CONTRACTS = [OUSD, VAULT, TIMELOCK]
 
+
 def request(method, params):
     url = os.environ.get("PROVIDER_URL")
     if url is None:
@@ -493,10 +494,12 @@ def maybe_store_transfer_record(log, block):
     transfer.save()
     return transfer
 
+
 def maybe_store_stake_withdrawn_record(log, block):
     # Must be a Staked or Withdrawn event
     if (
-        log["topics"][0] != SIG_EVENT_STAKED and 
+        log["address"] == OGN_STAKING and
+        log["topics"][0] != SIG_EVENT_STAKED and
         log["topics"][0] != SIG_EVENT_WITHDRAWN
     ):
         return None
