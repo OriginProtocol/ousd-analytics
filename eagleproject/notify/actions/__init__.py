@@ -28,6 +28,7 @@ def create_actions_from_events(events):
         actions.append(DiscordWebhook(
             summary=ev.title,
             details=ev.details,
+            severity=ev.severity,
             color=SEVERITY_COLOR[ev.severity],
         ))
 
@@ -40,7 +41,9 @@ def create_actions_from_events(events):
             '{} [{}] {}'.format(ev.stamp, ev.severity.name, ev.details)
             for ev in email_events
         ])
-        actions.append(Email(summary=summary, details=details))
+        actions.append(
+            Email(summary=summary, details=details, severity=highest_severity)
+        )
 
     return actions
 

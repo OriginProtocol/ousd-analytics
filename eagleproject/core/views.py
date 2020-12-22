@@ -11,6 +11,7 @@ from core.blockchain import (
     OUSD,
     TRANSFER,
     ensure_supply_snapshot,
+    ensure_staking_snapshot,
     ensure_asset,
     ensure_transaction_and_downstream,
     latest_block,
@@ -242,6 +243,7 @@ def _reload(block_number):
     ensure_asset("COMP", block_number)
     ensure_latest_logs(block_number)
     ensure_supply_snapshot(block_number)
+    ensure_staking_snapshot(block_number)
     ensure_all_transactions(block_number)
 
 

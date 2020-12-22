@@ -17,7 +17,7 @@ SEVERITY_COLOR = {
 
 class Action:
     """ An action to perform """
-    def __init__(self, summary, details):
+    def __init__(self, summary, details, severity=Severity.NORMAL):
         self.summary = summary
         self.details = details
 
@@ -48,10 +48,11 @@ class Email(Action):
 
 
 class DiscordWebhook(Action):
-    def __init__(self, summary, details,
+    def __init__(self, summary, details, severity=Severity.NORMAL,
                  color=SEVERITY_COLOR[Severity.NORMAL]):
-        super().__init__(summary, details)
+        super().__init__(summary, details, severity)
         self.color = color
+        self.severity = severity
 
     def _is_configured(self):
         return settings.DISCORD_WEBHOOK_URL is not None
@@ -70,6 +71,12 @@ class DiscordWebhook(Action):
                     }
                 ]
             }
+
+            if self.severity > Severity.NORMAL and settings.DISCORD_WEBHOOK_AT:
+                ats = settings.DISCORD_WEBHOOK_AT.split(',')
+                payload["content"] = " ".join(
+                    ["<@{}>".format(at) for at in ats]
+                )
 
             # Retry request in specific cases
             while True:

@@ -133,6 +133,13 @@ class SupplySnapshot(models.Model):
         ]
 
 
+class OgnStakingSnapshot(models.Model):
+    block_number = models.IntegerField(db_index=True, unique=True)
+    ogn_balance = models.DecimalField(max_digits=64, decimal_places=18)
+    total_outstanding = models.DecimalField(max_digits=64, decimal_places=18)
+    user_count = models.IntegerField()
+
+
 class Block(models.Model):
     block_number = models.IntegerField(primary_key=True)
     block_time = models.DateTimeField(db_index=True)
@@ -160,6 +167,7 @@ class OusdTransfer(models.Model):
     from_address = models.CharField(max_length=42, db_index=True)
     to_address = models.CharField(max_length=42, db_index=True)
     amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+
 
 class OgnStaked(models.Model):
     tx_hash = models.CharField(max_length=66)
