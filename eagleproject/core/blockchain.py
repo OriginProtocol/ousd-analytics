@@ -391,7 +391,11 @@ def download_logs_from_contract(contract, start_block, end_block):
 def ensure_log_record(raw_log):
     block_number = int(raw_log["blockNumber"], 16)
     log_index = int(raw_log["logIndex"], 16)
-    log = Log.objects.filter(block_number=block_number, log_index=log_index)
+    log = Log.objects.filter(
+        block_number=block_number,
+        transaction_hash=raw_log["transactionHash"],
+        log_index=log_index,
+    )
     if log:
         return log
     log = Log(
