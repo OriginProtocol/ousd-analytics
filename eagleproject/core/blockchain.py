@@ -462,11 +462,13 @@ def ensure_staking_snapshot(block_number):
 
     ogn_balance = balanceOf(OGN, OGN_STAKING, 18, block=block_number)
     total_outstanding = ogn_staking_total_outstanding(block_number)
+    user_count = OgnStaked.objects.values('user_address').distinct().count()
 
     return OgnStakingSnapshot.objects.create(
         block_number=block_number,
         ogn_balance=ogn_balance,
         total_outstanding=total_outstanding,
+        user_count=user_count,
     )
 
 

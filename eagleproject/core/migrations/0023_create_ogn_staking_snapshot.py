@@ -14,9 +14,10 @@ class Migration(migrations.Migration):
             name='OgnStakingSnapshot',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('block_number', models.IntegerField(db_index=True)),
+                ('block_number', models.IntegerField(db_index=True, unique=True)),
                 ('ogn_balance', models.DecimalField(decimal_places=18, max_digits=64)),
                 ('total_outstanding', models.DecimalField(decimal_places=18, max_digits=64)),
+                ('user_count', models.IntegerField()),
             ],
         ),
     ]
