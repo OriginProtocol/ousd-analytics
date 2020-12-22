@@ -81,7 +81,6 @@ def latest_ogn_staking_snap():
     try:
         return OgnStakingSnapshot.objects.all().order_by('-block_number')[0]
     except Exception as e:
-        print('e:', e)
         return None
 
 
