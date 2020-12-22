@@ -16,7 +16,8 @@ from core.models import (
     Block,
     Transaction,
     OusdTransfer,
-    OgnStaked
+    OgnStaked,
+    OgnStakingSnapshot,
 )
 from core.etherscan import get_contract_transactions
 
@@ -39,6 +40,7 @@ VAULT = "0x277e80f3e14e7fb3fc40a9d6184088e0241034bd"
 COMPSTRAT = "0x47211b1d1f6da45aaee06f877266e072cf8baa74"
 TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
 
+OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26"
 OGN_STAKING = "0x501804b374ef06fa9c427476147ac09f1551b9a0"
 
 STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
@@ -209,6 +211,11 @@ def ousd_non_rebasing_credits(block):
 def ousd_non_rebasing_supply(block):
     data = storage_at(OUSD, 64, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
+
+
+def ogn_staking_total_outstanding(block):
+    data = storage_at(OGN_STAKING, 54, block)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(1e18)
 
 
 def priceUSDMint(coin_contract, symbol, block="latest"):
@@ -445,6 +452,22 @@ def ensure_supply_snapshot(block_number):
         s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
         s.save()
         return s
+
+
+def ensure_staking_snapshot(block_number):
+    try:
+        return OgnStakingSnapshot.objects.get(block_number=block_number)
+    except OgnStakingSnapshot.DoesNotExist:
+        pass
+
+    ogn_balance = balanceOf(OGN, OGN_STAKING, 18, block=block_number)
+    total_outstanding = ogn_staking_total_outstanding(block_number)
+
+    return OgnStakingSnapshot.objects.create(
+        block_number=block_number,
+        ogn_balance=ogn_balance,
+        total_outstanding=total_outstanding,
+    )
 
 
 def ensure_asset(symbol, block_number):

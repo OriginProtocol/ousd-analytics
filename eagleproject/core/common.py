@@ -66,3 +66,7 @@ def format_ousd_human(value, places=4):
         number_string_comma(''.join(map(str, digits[:exp]))),
         ''.join(map(str, digits[exp:])).rstrip('0') or '00'
     )
+
+
+# In case we want this different in the future
+format_ogn_human = format_ousd_human

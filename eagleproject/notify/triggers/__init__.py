@@ -25,7 +25,13 @@ from datetime import datetime
 from importlib import import_module
 from django.db.models import Max
 
-from core.models import Block, Log, OusdTransfer, Transaction
+from core.models import (
+    Block,
+    Log,
+    OgnStakingSnapshot,
+    OusdTransfer,
+    Transaction,
+)
 from notify.models import CursorId, NotifyCursor
 
 ME = Path(__file__).resolve()
@@ -71,6 +77,14 @@ def logs(block_number):
     return Log.objects.filter(block_number__gt=block_number)
 
 
+def latest_ogn_staking_snap():
+    try:
+        return OgnStakingSnapshot.objects.all().order_by('-block_number')[0]
+    except Exception as e:
+        print('e:', e)
+        return None
+
+
 def run_all_triggers():
     """ Run all triggers """
     events = []
@@ -110,6 +124,7 @@ def run_all_triggers():
         "new_transfers": lambda: transfers(transfer_cursor.block_number),
         "logs": lambda: logs(0),
         "new_logs": lambda: logs(transfer_cursor.block_number),
+        "ogn_staking_snapshot": latest_ogn_staking_snap,
     }
 
     for mod in mods:
