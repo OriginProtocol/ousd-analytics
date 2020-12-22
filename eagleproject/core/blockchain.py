@@ -498,8 +498,11 @@ def maybe_store_transfer_record(log, block):
 def maybe_store_stake_withdrawn_record(log, block):
     # Must be a Staked or Withdrawn event
     if (
-        log["address"] == OGN_STAKING and
-        log["topics"][0] not in [SIG_EVENT_STAKED, SIG_EVENT_WITHDRAWN]
+        log["address"] != OGN_STAKING or
+        (
+            log["address"] == OGN_STAKING and
+            log["topics"][0] not in [SIG_EVENT_STAKED, SIG_EVENT_WITHDRAWN]
+        )
     ):
         return None
 
