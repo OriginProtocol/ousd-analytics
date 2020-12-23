@@ -29,6 +29,7 @@ from core.models import (
     Block,
     Log,
     OgnStakingSnapshot,
+    OracleSnapshot,
     OusdTransfer,
     Transaction,
 )
@@ -81,7 +82,12 @@ def latest_ogn_staking_snap():
     try:
         return OgnStakingSnapshot.objects.all().order_by('-block_number')[0]
     except Exception as e:
+        print('e:', e)
         return None
+
+
+def oracles_snaps(block_number):
+    return OracleSnapshot.objects.filter(block_number=block_number)
 
 
 def run_all_triggers():
@@ -124,6 +130,7 @@ def run_all_triggers():
         "logs": lambda: logs(0),
         "new_logs": lambda: logs(transfer_cursor.block_number),
         "ogn_staking_snapshot": latest_ogn_staking_snap,
+        "oracle_snapshots": lambda: oracles_snaps(block_number)
     }
 
     for mod in mods:
