@@ -54,8 +54,8 @@ SNOWSWAP = "0x7c2fa8c30db09e8b3c147ac67947829447bf07bd"
 
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
-SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
-SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256)"))
+SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256,uint256,uint256)"))
+SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256,uint256)"))
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
@@ -543,13 +543,16 @@ def maybe_store_stake_withdrawn_record(log, block):
     if len(db_staked) > 0:
         return db_staked[0]
 
+    is_staked_event = log["topics"][0] == SIG_EVENT_STAKED
+
     staked = OgnStaked(
         tx_hash=tx_hash,
         log_index=log_index,
         block_time=block.block_time,
         user_address="0x" + log["topics"][1][-40:],
-        is_staked=log["topics"][0] == SIG_EVENT_STAKED,
+        is_staked=is_staked_event,
         amount=int(_slot(log["data"], 0), 16) / 1e18,
+        staked_amount=int(_slot(log["data"], 1), 16) / 1e18 if not is_staked_event else 0,
     )
     staked.save()
     return staked

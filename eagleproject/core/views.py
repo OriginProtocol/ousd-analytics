@@ -301,7 +301,7 @@ def staking_stats(request):
             select user_address, sum(
                 case
                 when is_staked then amount
-                else amount * -1
+                else staked_amount * -1
                 end
             ) as staked_amount from core_ognstaked group by user_address
         ) as t where staked_amount > 0;
