@@ -189,10 +189,8 @@ def totalSupply(coin_contract, decimals, block="latest"):
 def chainlink_ethUsdPrice(block="latest"):
     signature = CHAINLINK_ETH_USD_PRICE[:10]
     payload = ""
-    print('signature:', signature)
-    print('block:', block)
     data = call(CHAINLINK_ORACLE, signature, payload, block)
-    print('chainlink_ethUsdPrice data:', data)
+    # tokEthPrice() returns an ETH-USD price with 6 decimals
     return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e6)
 
 
@@ -206,12 +204,8 @@ def chainlink_tokEthPrice(ticker, block="latest"):
 
 def chainlink_tokUsdPrice(ticker, block="latest"):
     signature = CHAINLINK_TOK_USD_PRICE[:10]
-    print('ticker:', ticker)
     payload = encode_single("(string)", [ticker]).hex()
-    print('signature:', signature)
-    print('payload:', payload)
     data = call(CHAINLINK_ORACLE, signature, payload, block)
-    print('chainlink_tokUsdPrice data:', data)
     # tokEthPrice() returns an ETH price with 8 decimals for some reason...
     return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e8)
 
