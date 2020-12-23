@@ -4,6 +4,7 @@ from django.db import models
 class CursorId(models.TextChoices):
     TRANSACTIONS = 'tx', 'Transactions'
     TRANSFERS = 'tr', 'Transfers'
+    SNAPSHOT = 'sn', 'Snapshots'
 
 
 class NotifyCursor(models.Model):
