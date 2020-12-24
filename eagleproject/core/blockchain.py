@@ -7,10 +7,10 @@ from eth_abi import encode_single
 from django.conf import settings
 
 from core.sigs import (
-    OPEN_ORACLE_GET_PRICE,
     CHAINLINK_ETH_USD_PRICE,
     CHAINLINK_TOK_ETH_PRICE,
     CHAINLINK_TOK_USD_PRICE,
+    OPEN_ORACLE_PRICE,
     TRANSFER,
     SIG_EVENT_STAKED,
     SIG_EVENT_WITHDRAWN,
@@ -30,9 +30,6 @@ from core.models import (
     Transaction,
 )
 from core.etherscan import get_contract_transactions
-
-from eth_hash.auto import keccak
-from eth_utils import encode_hex
 
 START_OF_EVERYTHING = 10884500
 
@@ -184,6 +181,14 @@ def totalSupply(coin_contract, decimals, block="latest"):
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
         math.pow(10, decimals)
     )
+
+
+def open_oracle_price(ticker, block="latest"):
+    signature = OPEN_ORACLE_PRICE[:10]
+    payload = encode_single("(string)", [ticker]).hex()
+    data = call(OPEN_ORACLE, signature, payload, block)
+    # price() returns 6 decimals
+    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e6)
 
 
 def chainlink_ethUsdPrice(block="latest"):
@@ -564,6 +569,19 @@ def ensure_oracle_snapshot(block_number):
         #             price=usd_price
         #         )
         #     )
+
+        # Open Oracle
+        usd_price = open_oracle_price(ticker)
+        if usd_price:
+            snaps.append(
+                OracleSnapshot.objects.create(
+                    block_number=block_number,
+                    oracle=OPEN_ORACLE,
+                    ticker_left=ticker,
+                    ticker_right="USD",
+                    price=usd_price
+                )
+            )
 
 
 def ensure_asset(symbol, block_number):

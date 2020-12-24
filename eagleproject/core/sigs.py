@@ -3,6 +3,8 @@ from eth_utils import encode_hex
 
 # getPrice(address source, string calldata key)
 OPEN_ORACLE_GET_PRICE = encode_hex(keccak(b"getPrice(address,string)"))
+# price(string calldata symbol)
+OPEN_ORACLE_PRICE = encode_hex(keccak(b"price(string)"))
 # ethUsdPrice() - uint256 (6-decimal USD)
 CHAINLINK_ETH_USD_PRICE = encode_hex(keccak(b"ethUsdPrice()"))
 # tokEthPrice(string calldata symbol)
