@@ -1,16 +1,23 @@
 from numpy import percentile
+from decimal import Decimal
 from datetime import datetime, timedelta
 from statistics import median
 
 from core.models import OracleSnapshot
-from core.common import format_ousd_human
+from core.blockchain import MIX_ORACLE, CHAINLINK_ORACLE, OPEN_ORACLE
+from core.common import format_deimal
 from notify.events import event_normal
 
 # Blocks per week
 WEEK = 60 * 60 * 24 * 7 / 15
-PERCENTILE_HIGH = 90
-PERCENTILE_LOW = 15
+PERCENTILE_HIGH = 95
+PERCENTILE_LOW = 5
 CACHE_DURATION_MINUTES = 60
+ORACLE_TO_NAME = {
+    MIX_ORACLE: "MixOracle",
+    CHAINLINK_ORACLE: "ChainlinkOracle",
+    OPEN_ORACLE: "Open Price Oracle",
+}
 
 CACHE = {}
 
@@ -94,12 +101,16 @@ def run_trigger(snapshot_cursor, latest_snapshot_block, oracle_snapshots):
 
     if outliers:
         for snap in outliers:
+            price = format_deimal(snap.price)
+
             events.append(
                 event_normal(
-                    "Exceptional oracle price   🧙‍♀️",
+                    "{} price deviation   🧙‍♀️".format(
+                        ORACLE_TO_NAME[snap.oracle]
+                    ),
                     "{} @ {} {}\n\n".format(
                         snap.ticker_left,
-                        format_ousd_human(snap.price),
+                        price,
                         snap.ticker_right,
                     )
                 )

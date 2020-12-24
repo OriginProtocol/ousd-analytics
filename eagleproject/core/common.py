@@ -70,3 +70,17 @@ def format_ousd_human(value, places=4):
 
 # In case we want this different in the future
 format_ogn_human = format_ousd_human
+
+
+def format_deimal(v):
+    """ Format a Decimal to a string, stripping off unnecessary trailing zeros
+    """
+    sign, digits, price_exp = v.as_tuple()
+    price_whole = digits[:price_exp] if len(digits) > abs(price_exp) else (0,)
+    price_decimal = digits[price_exp:]
+    dec_leftpad = abs(price_exp) - len(price_decimal)
+    return "{}.{}{}".format(
+        ''.join(map(str, price_whole)),
+        '0' * dec_leftpad,
+        ''.join(map(str, price_decimal)).rstrip('0')
+    )
