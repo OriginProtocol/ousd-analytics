@@ -546,8 +546,9 @@ def maybe_store_stake_withdrawn_record(log, block):
     if len(db_staked) > 0:
         return db_staked[0]
 
-    is_withdraw_event = log["topics"][0] == SIG_EVENT_WITHDRAWN
-    is_staked_event = log["topics"][0] == DEPRECATED_SIG_EVENT_STAKED or log["topics"][0] == SIG_EVENT_STAKED
+    is_updated_staked_event = log["topics"][0] == SIG_EVENT_STAKED
+    is_withdrawn_event = log["topics"][0] == SIG_EVENT_WITHDRAWN
+    is_staked_event = log["topics"][0] == DEPRECATED_SIG_EVENT_STAKED or is_updated_staked_event
 
     staked = OgnStaked(
         tx_hash=tx_hash,
@@ -556,7 +557,9 @@ def maybe_store_stake_withdrawn_record(log, block):
         user_address="0x" + log["topics"][1][-40:],
         is_staked=is_staked_event,
         amount=int(_slot(log["data"], 0), 16) / 1e18,
-        staked_amount=int(_slot(log["data"], 1), 16) / 1e18 if is_withdraw_event else 0,
+        staked_amount=int(_slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
+        duration=int(_slot(log["data"], 2), 16) if is_updated_staked_event else 0,
+        rate=(Decimal(rate) / Decimal(1e18)) if is_updated_staked_event else 0
     )
     staked.save()
     return staked
