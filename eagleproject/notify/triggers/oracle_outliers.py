@@ -4,7 +4,7 @@ from statistics import median
 
 from core.models import OracleSnapshot
 from core.common import format_ousd_human
-from notify.events import event_high
+from notify.events import event_normal
 
 # Blocks per week
 WEEK = 60 * 60 * 24 * 7 / 15
@@ -95,7 +95,7 @@ def run_trigger(snapshot_cursor, latest_snapshot_block, oracle_snapshots):
     if outliers:
         for snap in outliers:
             events.append(
-                event_high(
+                event_normal(
                     "Exceptional oracle price   🧙‍♀️",
                     "{} @ {} {}\n\n".format(
                         snap.ticker_left,
