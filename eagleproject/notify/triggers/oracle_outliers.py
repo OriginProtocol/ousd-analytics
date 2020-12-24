@@ -37,6 +37,9 @@ def get_past_week(latest_block):
     dai_eth_snaps = snaps.filter(ticker_left="DAI", ticker_right="ETH")
     usdc_eth_snaps = snaps.filter(ticker_left="USDC", ticker_right="ETH")
     usdt_eth_snaps = snaps.filter(ticker_left="USDT", ticker_right="ETH")
+    dai_usd_snaps = snaps.filter(ticker_left="DAI", ticker_right="USD")
+    usdc_usd_snaps = snaps.filter(ticker_left="USDC", ticker_right="USD")
+    usdt_usd_snaps = snaps.filter(ticker_left="USDT", ticker_right="USD")
 
     CACHE["past_week"] = {
         "expiry": datetime.now() + timedelta(minutes=CACHE_DURATION_MINUTES),
@@ -45,6 +48,9 @@ def get_past_week(latest_block):
             "DAI-ETH": [x.price for x in dai_eth_snaps],
             "USDC-ETH": [x.price for x in usdc_eth_snaps],
             "USDT-ETH": [x.price for x in usdt_eth_snaps],
+            "DAI-USD": [x.price for x in dai_usd_snaps],
+            "USDC-USD": [x.price for x in usdc_usd_snaps],
+            "USDT-USD": [x.price for x in usdt_usd_snaps],
         },
     }
 
@@ -81,6 +87,11 @@ def get_outlier_prices(latest_block, new_snapshotss,
         lower_bound = q1 - (1.5 * iqr)
         if lower_bound < 0:
             lower_bound = 0
+
+        # In the edge case where there has been no deviation in price yet (e.g.
+        # price has always been 1), there's nothing extraordinary yet
+        if upper_bound == lower_bound:
+            continue
 
         # Find any outliers from the latest group of snapshots
         if snap.price <= lower_bound or snap.price >= upper_bound:
