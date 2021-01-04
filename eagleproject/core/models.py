@@ -176,3 +176,12 @@ class OgnStaked(models.Model):
     user_address = models.CharField(max_length=42, db_index=True)
     is_staked = models.BooleanField()
     amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+
+
+class OracleSnapshot(models.Model):
+    """ Snapshot of prices from dependency oracles """
+    block_number = models.IntegerField(db_index=True)
+    oracle = models.CharField(max_length=42, db_index=True)
+    ticker_left = models.CharField(max_length=6, db_index=True)
+    ticker_right = models.CharField(max_length=6, db_index=True)
+    price = models.DecimalField(max_digits=64, decimal_places=18)

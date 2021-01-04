@@ -6,23 +6,30 @@ from decimal import Decimal
 from eth_abi import encode_single
 from django.conf import settings
 
+from core.sigs import (
+    CHAINLINK_ETH_USD_PRICE,
+    CHAINLINK_TOK_ETH_PRICE,
+    CHAINLINK_TOK_USD_PRICE,
+    OPEN_ORACLE_PRICE,
+    TRANSFER,
+    SIG_EVENT_STAKED,
+    SIG_EVENT_WITHDRAWN,
+)
 from core.models import (
     AssetBlock,
+    Block,
     DebugTx,
     EtherscanPointer,
-    LogPointer,
     Log,
-    SupplySnapshot,
-    Block,
-    Transaction,
-    OusdTransfer,
+    LogPointer,
     OgnStaked,
     OgnStakingSnapshot,
+    OracleSnapshot,
+    OusdTransfer,
+    SupplySnapshot,
+    Transaction,
 )
 from core.etherscan import get_contract_transactions
-
-from eth_hash.auto import keccak
-from eth_utils import encode_hex
 
 START_OF_EVERYTHING = 10884500
 
@@ -52,10 +59,17 @@ OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
 OUSD_USDT_SUSHI = "0xe4455fdec181561e9ffe909dde46aaeaedc55283"
 SNOWSWAP = "0x7c2fa8c30db09e8b3c147ac67947829447bf07bd"
 
-TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+# Oracles
+MIX_ORACLE = "0x4d4f5e7a1fe57f5ceb38bfce8653effa5e584458"  # Meta oracle
+OPEN_ORACLE = "0x922018674c12a7f0d394ebeef9b58f186cde13c1"  # Token prices
+CHAINLINK_ORACLE = "0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759"  # Tokens
 
-SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
-SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256)"))
+CHAINLINK_ETH_USD_FEED = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"  # ETH
+CHAINLINK_DAI_ETH_FEED = "0x773616E4d11A78F511299002da57A0a94577F1f4"
+CHAINLINK_USDC_ETH_FEED = "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4"
+CHAINLINK_USDT_ETH_FEED = "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46"
+# Not currently used?
+# UNISWAP_ANCHORED_VIEW = "0x922018674c12a7f0d394ebeef9b58f186cde13c1"
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
@@ -92,6 +106,8 @@ LOG_CONTRACTS = [
     OGN_STAKING,
 ]
 ETHERSCAN_CONTRACTS = [OUSD, VAULT, TIMELOCK]
+
+ASSET_TICKERS = ["DAI", "USDC", "USDT"]
 
 
 def request(method, params):
@@ -165,6 +181,38 @@ def totalSupply(coin_contract, decimals, block="latest"):
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
         math.pow(10, decimals)
     )
+
+
+def open_oracle_price(ticker, block="latest"):
+    signature = OPEN_ORACLE_PRICE[:10]
+    payload = encode_single("(string)", [ticker]).hex()
+    data = call(OPEN_ORACLE, signature, payload, block)
+    # price() returns 6 decimals
+    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e6)
+
+
+def chainlink_ethUsdPrice(block="latest"):
+    signature = CHAINLINK_ETH_USD_PRICE[:10]
+    payload = ""
+    data = call(CHAINLINK_ORACLE, signature, payload, block)
+    # tokEthPrice() returns an ETH-USD price with 6 decimals
+    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e6)
+
+
+def chainlink_tokEthPrice(ticker, block="latest"):
+    signature = CHAINLINK_TOK_ETH_PRICE[:10]
+    payload = encode_single("(string)", [ticker]).hex()
+    data = call(CHAINLINK_ORACLE, signature, payload, block)
+    # tokEthPrice() returns an ETH price with 8 decimals for some reason...
+    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e8)
+
+
+def chainlink_tokUsdPrice(ticker, block="latest"):
+    signature = CHAINLINK_TOK_USD_PRICE[:10]
+    payload = encode_single("(string)", [ticker]).hex()
+    data = call(CHAINLINK_ORACLE, signature, payload, block)
+    # tokEthPrice() returns an ETH price with 8 decimals for some reason...
+    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e8)
 
 
 def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
@@ -470,6 +518,70 @@ def ensure_staking_snapshot(block_number):
         total_outstanding=total_outstanding,
         user_count=user_count,
     )
+
+
+def ensure_oracle_snapshot(block_number):
+    """ Take oracle snapshots """
+    existing_snaps = OracleSnapshot.objects.filter(block_number=block_number)
+    if len(existing_snaps) > 0:
+        return existing_snaps
+
+    snaps = []
+
+    # USD price of ETH
+    usd_eth_price = chainlink_ethUsdPrice()
+    if usd_eth_price:
+        snaps.append(
+            OracleSnapshot.objects.create(
+                block_number=block_number,
+                oracle=CHAINLINK_ORACLE,
+                ticker_left="ETH",
+                ticker_right="USD",
+                price=usd_eth_price
+            )
+        )
+
+    # Get oracle prices for all OUSD minting assets
+    for ticker in ASSET_TICKERS:
+        # ETH price
+        eth_price = chainlink_tokEthPrice(ticker)
+        if eth_price:
+            snaps.append(
+                OracleSnapshot.objects.create(
+                    block_number=block_number,
+                    oracle=CHAINLINK_ORACLE,
+                    ticker_left=ticker,
+                    ticker_right="ETH",
+                    price=eth_price
+                )
+            )
+
+        # USD price
+        # Doesn't currently work?  reverts: "Price is not direct to usd"
+        # usd_price = chainlink_tokUsdPrice(ticker)
+        # if usd_price:
+        #     snaps.append(
+        #         OracleSnapshot.objects.create(
+        #             block_number=block_number,
+        #             oracle=CHAINLINK_ORACLE,
+        #             ticker_left=ticker,
+        #             ticker_right="USD",
+        #             price=usd_price
+        #         )
+        #     )
+
+        # Open Oracle
+        usd_price = open_oracle_price(ticker)
+        if usd_price:
+            snaps.append(
+                OracleSnapshot.objects.create(
+                    block_number=block_number,
+                    oracle=OPEN_ORACLE,
+                    ticker_left=ticker,
+                    ticker_right="USD",
+                    price=usd_price
+                )
+            )
 
 
 def ensure_asset(symbol, block_number):
