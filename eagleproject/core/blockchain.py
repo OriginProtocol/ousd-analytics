@@ -44,15 +44,12 @@ THREEPOOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 
 OUSD = "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86"
 VAULT = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70"
-COMPSTRAT = "0x47211b1d1f6da45aaee06f877266e072cf8baa74"
 TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
 
 OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26"
 OGN_STAKING = "0x501804b374ef06fa9c427476147ac09f1551b9a0"
 
-STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
-STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
-STRATCOMPDAI = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
+STRATCOMP = "0xd5433168ed0b1f7714819646606db509d9d8ec1f"
 STRATAAVEDAI = "0x051caefa90adf261b8e8200920c83778b7b176b6"
 
 OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
@@ -100,7 +97,8 @@ COMPOUND_FOR_SYMBOL = {
 LOG_CONTRACTS = [
     OUSD,
     VAULT,
-    COMPSTRAT,
+    STRATCOMP,
+    # STRATAAVEDAI,  # no events
     OUSD_USDT_UNISWAP,
     TIMELOCK,
     OGN_STAKING,
@@ -258,6 +256,7 @@ def ousd_non_rebasing_supply(block="latest"):
     data = call(OUSD, signature, "", block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
 
+
 def ogn_staking_total_outstanding(block):
     data = storage_at(OGN_STAKING, 54, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(1e18)
@@ -280,62 +279,27 @@ def priceUSDRedeem(coin_contract, symbol, block="latest"):
 def build_asset_block(symbol, block_number):
     symbol = symbol.upper()
     compstrat_holding = Decimal(0)
-    threepoolstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
-    if block_number != "latest" and block_number < 11067601:
-        if symbol == "COMP":
-            compstrat_holding += balanceOf(
-                CONTRACT_FOR_SYMBOL[symbol],
-                COMPSTRAT,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
-        else:
-            compstrat_holding += balanceOfUnderlying(
-                COMPOUND_FOR_SYMBOL[symbol],
-                COMPSTRAT,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
 
     if block_number == "latest" or block_number > 11060000:
-        if symbol == "DAI":
+        if symbol == "USDC":
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDAI,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
-        elif symbol == "USDC":
-            threepoolstrat_holding += strategyCheckBalance(
-                STRAT3POOLUSDC, USDC, DECIMALS_FOR_SYMBOL[symbol], block_number
-            )
-            compstrat_holding += balanceOfUnderlying(
-                COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDAI,
+                STRATCOMP,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
         elif symbol == "USDT":
-            threepoolstrat_holding += strategyCheckBalance(
-                STRAT3POOLUSDT, USDT, DECIMALS_FOR_SYMBOL[symbol], block_number
-            )
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDAI,
+                STRATCOMP,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
         elif symbol == "COMP":
             compstrat_holding += balanceOf(
                 CONTRACT_FOR_SYMBOL[symbol],
-                COMPSTRAT,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
-            compstrat_holding += balanceOf(
-                CONTRACT_FOR_SYMBOL[symbol],
-                STRATCOMPDAI,
+                STRATCOMP,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
@@ -369,7 +333,7 @@ def build_asset_block(symbol, block_number):
             block_number,
         ),
         compstrat_holding=compstrat_holding,
-        threepoolstrat_holding=threepoolstrat_holding,
+        threepoolstrat_holding=Decimal(0),
         aavestrat_holding=aavestrat_holding,
     )
 
