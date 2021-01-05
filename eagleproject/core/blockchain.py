@@ -4,6 +4,8 @@ import datetime
 import requests
 from decimal import Decimal
 from eth_abi import encode_single
+from eth_utils import encode_hex
+from eth_hash.auto import keccak
 from django.conf import settings
 
 from core.sigs import (
