@@ -10,9 +10,10 @@ from core.blockchain import (
     SNOWSWAP,
     OUSD,
     TRANSFER,
-    ensure_supply_snapshot,
-    ensure_staking_snapshot,
     ensure_asset,
+    ensure_oracle_snapshot,
+    ensure_staking_snapshot,
+    ensure_supply_snapshot,
     ensure_transaction_and_downstream,
     latest_block,
     ensure_latest_logs,
@@ -245,6 +246,7 @@ def _reload(block_number):
     ensure_supply_snapshot(block_number)
     ensure_staking_snapshot(block_number)
     ensure_all_transactions(block_number)
+    ensure_oracle_snapshot(block_number)
 
 
 def _latest_snapshot():

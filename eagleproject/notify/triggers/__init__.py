@@ -29,7 +29,9 @@ from core.models import (
     Block,
     Log,
     OgnStakingSnapshot,
+    OracleSnapshot,
     OusdTransfer,
+    SupplySnapshot,
     Transaction,
 )
 from notify.models import CursorId, NotifyCursor
@@ -81,7 +83,12 @@ def latest_ogn_staking_snap():
     try:
         return OgnStakingSnapshot.objects.all().order_by('-block_number')[0]
     except Exception as e:
+        print('e:', e)
         return None
+
+
+def oracles_snaps(block_number):
+    return OracleSnapshot.objects.filter(block_number=block_number)
 
 
 def run_all_triggers():
@@ -91,9 +98,16 @@ def run_all_triggers():
 
     # Source from the DB to prevent a race with data collection
     max_block = Block.objects.all().aggregate(Max("block_number"))
+    max_snapshot_block = SupplySnapshot.objects.all().aggregate(
+        Max("block_number")
+    )
     block_number = 0
+    snapshot_block_number = 0
+
     if max_block:
         block_number = max_block.get("block_number__max", 0)
+    if max_snapshot_block:
+        snapshot_block_number = max_snapshot_block.get("block_number__max", 0)
 
     transfer_cursor, _ = NotifyCursor.objects.get_or_create(
         cursor_id=CursorId.TRANSFERS,
@@ -111,8 +125,18 @@ def run_all_triggers():
         }
     )
 
+    snapshot_cursor, _ = NotifyCursor.objects.get_or_create(
+        cursor_id=CursorId.SNAPSHOT,
+        defaults={
+            "block_number": snapshot_block_number,
+            "last_update": datetime.now(),
+        }
+    )
+
     availible_kwargs_valgen = {
         "latest_block": lambda: block_number,
+        "latest_snapshot_block": lambda: snapshot_block_number,
+        "snapshot_cursor": lambda: snapshot_cursor,
         "transfer_cursor": lambda: transfer_cursor,
         "transaction_cursor": lambda: transaction_cursor,
         "transactions": lambda: transactions(transaction_cursor.block_number),
@@ -124,6 +148,7 @@ def run_all_triggers():
         "logs": lambda: logs(0),
         "new_logs": lambda: logs(transfer_cursor.block_number),
         "ogn_staking_snapshot": latest_ogn_staking_snap,
+        "oracle_snapshots": lambda: oracles_snaps(snapshot_block_number)
     }
 
     for mod in mods:
@@ -141,12 +166,19 @@ def run_all_triggers():
         except Exception:
             log.exception("Exception occurred running trigger")
 
-    transfer_cursor.block_number = block_number
-    transfer_cursor.last_update = datetime.now()
-    transfer_cursor.save()
+    if transfer_cursor.block_number != block_number:
+        transfer_cursor.block_number = block_number
+        transfer_cursor.last_update = datetime.now()
+        transfer_cursor.save()
 
-    transaction_cursor.block_number = block_number
-    transaction_cursor.last_update = datetime.now()
-    transaction_cursor.save()
+    if transaction_cursor.block_number != block_number:
+        transaction_cursor.block_number = block_number
+        transaction_cursor.last_update = datetime.now()
+        transaction_cursor.save()
+
+    if snapshot_cursor.block_number != snapshot_block_number:
+        snapshot_cursor.block_number = snapshot_block_number
+        snapshot_cursor.last_update = datetime.now()
+        snapshot_cursor.save()
 
     return events
