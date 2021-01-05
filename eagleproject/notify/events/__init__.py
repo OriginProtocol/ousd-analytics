@@ -96,8 +96,8 @@ def seen_filter(events, since):
         if ev.hash() not in hashes_since:
             filtered.append(ev)
 
-        EventSeen.objects.update_or_create(event_hash=ev.hash(), defaults={
-            'last_seen': datetime.now()
-        })
+            EventSeen.objects.update_or_create(event_hash=ev.hash(), defaults={
+                'last_seen': datetime.now()
+            })
 
     return filtered
