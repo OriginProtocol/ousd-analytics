@@ -20,3 +20,11 @@ class NotifyCursor(models.Model):
         indexes = [
             models.Index(fields=["cursor_id", "block_number"]),
         ]
+
+
+class EventSeen(models.Model):
+    event_hash = models.CharField(max_length=64, primary_key=True)
+    last_seen = models.DateTimeField()
+
+    class Meta:
+        indexes = [models.Index(fields=["last_seen"])]
