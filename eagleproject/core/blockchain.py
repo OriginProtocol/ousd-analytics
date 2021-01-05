@@ -241,25 +241,22 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
         return Decimal(0)
 
 
-def rebasing_credits_per_token(block):
-    data = storage_at(OUSD, 59, block)
+def rebasing_credits_per_token(block="latest"):
+    signature = "0x6691cb3d"  # rebasingCreditsPerToken()
+    data = call(OUSD, signature, "", block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
 
 
-def ousd_rebasing_credits(block):
-    data = storage_at(OUSD, 58, block)
+def ousd_rebasing_credits(block="latest"):
+    signature = "0x077f22b7"  # rebasingCredits()
+    data = call(OUSD, signature, "", block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
 
 
-def ousd_non_rebasing_credits(block):
-    data = storage_at(OUSD, 63, block)
+def ousd_non_rebasing_supply(block="latest"):
+    signature = "0xe696393a"  # nonRebasingSupply()
+    data = call(OUSD, signature, "", block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
-
-
-def ousd_non_rebasing_supply(block):
-    data = storage_at(OUSD, 64, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
-
 
 def ogn_staking_total_outstanding(block):
     data = storage_at(OGN_STAKING, 54, block)
@@ -488,7 +485,7 @@ def ensure_supply_snapshot(block_number):
 
         s = SupplySnapshot()
         s.block_number = block_number
-        s.non_rebasing_credits = ousd_non_rebasing_credits(block_number)
+        s.non_rebasing_credits = Decimal(0)
         s.credits = ousd_rebasing_credits(block_number) + s.non_rebasing_credits
         s.computed_supply = dai + usdt + usdc
         s.reported_supply = totalSupply(OUSD, 18, block_number)
