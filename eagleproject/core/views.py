@@ -85,7 +85,8 @@ def dashboard(request):
 def reload(request):
     latest = latest_block()
     _reload(latest - 2)
-    _reload(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
+    # Disable the reach-back for the time being
+    # _reload(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
     return HttpResponse("ok")
 
 
