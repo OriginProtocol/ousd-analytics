@@ -261,6 +261,8 @@ PREV_APR = None
 
 
 def _get_trailing_apr():
+    return Decimal(13.68)  # Temporary
+
     days = 7
     # Check cache first
     global PREV_APR
@@ -291,7 +293,6 @@ def _get_trailing_apr():
 def _get_trailing_apy():
     apr = Decimal(_get_trailing_apr())
     periods_per_year = Decimal(365.25 / 7.0)
-    return Decimal(14.68)  # Temporary
     apy = ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
     return round(apy, 2)
 
