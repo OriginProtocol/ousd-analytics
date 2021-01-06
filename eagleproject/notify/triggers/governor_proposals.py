@@ -1,24 +1,30 @@
 import re
-import sys
-import py4byte
 from datetime import datetime
 from eth_hash.auto import keccak
 from eth_abi import decode_single
 from eth_utils import encode_hex, decode_hex
 from django.db.models import Q
+from core.blockchain import CONTRACT_ADDR_TO_NAME
 from notify.events import event_high
 
-SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,]+)\)$'
-SIG_EVENT_PROPOSAL_CREATED = encode_hex(keccak(b"ProposalCreated(uint256,address,address[],string[],bytes[],string)"))
-SIG_EVENT_PROPOSAL_QUEUED = encode_hex(keccak(b"ProposalQueued(uint256,uint256)"))
+SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,]*)\)$'
+SIG_EVENT_PROPOSAL_CREATED = encode_hex(
+    keccak(
+        b"ProposalCreated(uint256,address,address[],string[],bytes[],string)"
+    )
+)
+SIG_EVENT_PROPOSAL_QUEUED = encode_hex(
+    keccak(b"ProposalQueued(uint256,uint256)")
+)
 SIG_EVENT_PROPOSAL_EXECUTED = encode_hex(keccak(b"ProposalExecuted(uint256)"))
-SIG_EVENT_PROPOSAL_CANCELLED = encode_hex(keccak(b"ProposalCancelled(uint256)"))
+SIG_EVENT_PROPOSAL_CANCELLED = encode_hex(
+    keccak(b"ProposalCancelled(uint256)")
+)
 HUMAN_DATETIME_FORMAT = '%A, %B %e, %Y @ %H:%M UTC'
 
 
 def get_proposal_events(logs):
     """ Get Mint/Redeem events """
-    print('logs:', logs)
     return logs.filter(
         Q(topic_0=SIG_EVENT_PROPOSAL_CREATED)
         | Q(topic_0=SIG_EVENT_PROPOSAL_QUEUED)
@@ -34,16 +40,21 @@ def decode_calls(signatures, calldatas):
         match = re.match(SIG_PATTERN, sig)
 
         if not match:
-            return ""
+            # TODO: Better way to represent this?
+            calls.append('{}({})'.format(sig[:10], calldatas[i]))
+            continue
 
         func = match.groups()[0]
-        types_string = match.groups()[1]
+        try:
+            types_string = match.groups()[1]
+        except IndexError:
+            types_string = ""
 
         # Tag the arg types from the signature and decode calldata accordingly
         types = [x.strip() for x in types_string.split(',')]
         args = decode_single('({})'.format(','.join(types)), calldatas[i])
 
-        # Assemble a human-readable funciton call with arg values
+        # Assemble a human-readable function call with arg values
         call = '{}({})'.format(func, ','.join([v for v in args]))
 
         calls.append(call)
@@ -71,18 +82,20 @@ def run_trigger(new_logs):
 
             title = "New Proposal   🗳️"
             details = (
-                "A new proposal ({}) was created.\n"
+                "A new proposal ({}) was created: {}\n"
                 "\n"
                 "Proposer: {}\n"
                 "Targets: {}\n"
-                "Calls: {}\n"
-                "Description: {}\n"
+                "Calls: \n - {}\n"
             ).format(
                 proposal_id,
+                description,
                 proposer,
-                ', '.join(set(targets)),
-                '; '.join(decode_calls(signatures, calldatas)),
-                description
+                ', '.join([
+                    CONTRACT_ADDR_TO_NAME.get(target, target)
+                    for target in set(targets)
+                ]),
+                '\n - '.join(decode_calls(signatures, calldatas)),
             )
 
         elif ev.topic_0 == SIG_EVENT_PROPOSAL_QUEUED:
