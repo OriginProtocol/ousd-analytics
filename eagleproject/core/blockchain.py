@@ -1,8 +1,10 @@
 import os
+import sys
 import math
 import datetime
 import requests
 from decimal import Decimal
+from json.decoder import JSONDecodeError
 from eth_abi import encode_single
 from django.conf import settings
 
@@ -110,16 +112,32 @@ ASSET_TICKERS = ["DAI", "USDC", "USDT"]
 
 def request(method, params):
     url = os.environ.get("PROVIDER_URL")
+
     if url is None:
         raise Exception("No PROVIDER_URL ENV variable defined")
+
     params = {
         "jsonrpc": "2.0",
         "id": 0,
         "method": method,
         "params": params,
     }
+
     r = requests.post(url, json=params)
-    return r.json()
+
+    try:
+        return r.json()
+
+    except JSONDecodeError as err:
+        try:
+            print(r.text, file=sys.stderr)
+        except Exception:
+            pass
+        raise err
+
+    except Exception as err:
+        print(err, file=sys.stderr)
+        raise err
 
 
 def call(to, signature, payload, block="latest"):
