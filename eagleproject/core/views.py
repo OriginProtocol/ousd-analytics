@@ -262,33 +262,36 @@ PREV_APR = None
 
 
 def _get_trailing_apr():
-    return Decimal(13.68)  # Temporary
+    """
+    Calculates the APR by using the OUSD rebase ratio. 
+    
+    This has the upside that it's simple to calculate and exactly matches 
+    user's balance changes. 
 
-    days = 7
+    It has the downside that the number it pulls from only gets updated
+    on rebases, making this method less acurate. It's bit iffy using it
+    on only one day, but that's the data we have at the moment.
+    """
+    days = 1.00
+    
     # Check cache first
     global PREV_APR
     if PREV_APR:
         good_to, apr = PREV_APR
         if good_to > datetime.datetime.today():
             return apr
-    # Calculate
-    end_block_number = _latest_snapshot_block_number()
-    # Comment this out for live trailing
-    # end_block_number = end_block_number - end_block_number % BLOCKS_PER_DAY
-    week_block_number = end_block_number - BLOCKS_PER_DAY * days
-    today = ensure_supply_snapshot(end_block_number)
-    weekago = ensure_supply_snapshot(week_block_number)
 
-    seven_day_apr = (
-        ((today.rebasing_credits_ratio / weekago.rebasing_credits_ratio) - Decimal(1))
-        * Decimal(100)
-        * Decimal(365.25)
-        / Decimal(days)
-    )
-    seven_day_apr = round(seven_day_apr, 2)
+    # Calculate
+    block = _latest_snapshot_block_number()
+    current = rebasing_credits_per_token(block)
+    past = rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
+    ratio = Decimal(float(past) / float(current))
+    apr = ( (ratio - Decimal(1)) * Decimal(100) * Decimal(365.25) / Decimal(days))
+    
+    # Save to cache
     good_to = datetime.datetime.today() + datetime.timedelta(minutes=5)
-    PREV_APR = [good_to, seven_day_apr]
-    return seven_day_apr
+    PREV_APR = [good_to, apr]
+    return apr
 
 
 def _get_trailing_apy():
