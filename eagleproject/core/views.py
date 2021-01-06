@@ -85,7 +85,8 @@ def dashboard(request):
 def reload(request):
     latest = latest_block()
     _reload(latest - 2)
-    _reload(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
+    # Disable the reach-back for the time being
+    # _reload(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
     return HttpResponse("ok")
 
 
@@ -261,6 +262,8 @@ PREV_APR = None
 
 
 def _get_trailing_apr():
+    return Decimal(13.68)  # Temporary
+
     days = 7
     # Check cache first
     global PREV_APR
@@ -291,7 +294,6 @@ def _get_trailing_apr():
 def _get_trailing_apy():
     apr = Decimal(_get_trailing_apr())
     periods_per_year = Decimal(365.25 / 7.0)
-    return 0  # Temporary
     apy = ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
     return round(apy, 2)
 
