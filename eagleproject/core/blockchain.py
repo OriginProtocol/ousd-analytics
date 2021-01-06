@@ -91,7 +91,9 @@ CONTRACT_ADDR_TO_NAME = {
     VAULT: 'Vault',
     MIX_ORACLE: 'MixOracle',
     CHAINLINK_ORACLE: 'ChainlinkOracle',
-    OGN_STAKING: 'OGN Staking'
+    OGN_STAKING: 'OGN Staking',
+    STRATCOMP: 'Compound Strategy',
+    STRATAAVEDAI: 'Aave Strategy',
 }
 
 THREEPOOLINDEX_FOR_ASSET = {
