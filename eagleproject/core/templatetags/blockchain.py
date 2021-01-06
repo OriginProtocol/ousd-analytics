@@ -12,15 +12,11 @@ import pytz
 register = template.Library()
 
 CONTRACT_NAMES = {
-    "0x277e80f3e14e7fb3fc40a9d6184088e0241034bd": "Vault",
+    "0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70": "Vault",
     "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86": "OUSD",
-    "0xb72b3f5523851c2eb0ca14137803ca4ac7295f3f": "OUSD Internal",
-    "0x3c09b440f9e46c0e4a665539aeca80fcaa92c36e": "OUSD Internal",
-    "0x1ae95dd4eeae7ed03da79856c2d44ffa3318f805": "OUSD Internal",
-    "0xa7f26e9aeeea4fe16d9c4a6a0464af8258f437bb": "Vault Internal1",
-    "0xf251cb9129fdb7e9ca5cad097de3ea70cab9d8f9": "Vault Internal2",
-    "0x0660bf15a89d8e90cba1b3f0ccf493c415b1369d": "Vault Internal3",
-    "0x69a8b2ae6a3606b766be99c42328459167f51b25": "Vault Internal Admin",
+    "0x159ea2fA3a92DAE6b9f21D6753AA6a8EA5bf77BA": "OUSD Internal",
+    "0xE54f14FC3fBc5915D070DE4758bcF591541BD1c3": "Vault Core",
+    "0x84fB09fCb6fc5cc0DBA13FE5CF87A613e34a386a": "Vault Admin",
     "0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f": "Origin Multisig",
     "0x8a5ff78bfe0de04f5dc1b57d2e1095be697be76e": "Origin Timelock",
     "0x52bebd3d7f37ec4284853fd5861ae71253a7f428": "Origin Minute Timelock",
