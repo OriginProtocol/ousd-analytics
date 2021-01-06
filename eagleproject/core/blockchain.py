@@ -86,6 +86,14 @@ DECIMALS_FOR_SYMBOL = {
     "USDC": 6,
 }
 
+CONTRACT_ADDR_TO_NAME = {
+    OUSD: 'OUSD Token',
+    VAULT: 'Vault',
+    MIX_ORACLE: 'MixOracle',
+    CHAINLINK_ORACLE: 'ChainlinkOracle',
+    OGN_STAKING: 'OGN Staking'
+}
+
 THREEPOOLINDEX_FOR_ASSET = {
     DAI: 0,
     USDC: 1,
