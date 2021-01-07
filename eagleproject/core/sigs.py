@@ -29,6 +29,12 @@ SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
 # Vault
 SIG_EVENT_MINT = encode_hex(keccak(b"Mint(address,uint256)"))
 SIG_EVENT_REDEEM = encode_hex(keccak(b"Redeem(address,uint256)"))
+SIG_EVENT_CAPITAL_PAUSED = encode_hex(keccak(b"CapitalPaused()"))
+SIG_EVENT_CAPITAL_UNPAUSED = encode_hex(keccak(b"CapitalUnpaused()"))
+SIG_EVENT_STRATEGY_ADDED = encode_hex(keccak(b"StrategyAdded(address)"))
+SIG_EVENT_STRATEGY_REMOVED = encode_hex(keccak(b"StrategyRemoved(address)"))
+SIG_EVENT_WEIGHTS_UPDATED = encode_hex(keccak(b"StrategyWeightsUpdated(address[],uint256[])"))
+SIG_EVENT_ASSET_SUPPORTED = encode_hex(keccak(b"AssetSupported(address)"))
 
 # Governable
 SIG_EVENT_PENDING_TRANSFER = encode_hex(keccak(b"PendingGovernorshipTransfer(address,address)"))

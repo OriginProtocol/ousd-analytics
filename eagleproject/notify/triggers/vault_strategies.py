@@ -1,12 +1,13 @@
-from eth_hash.auto import keccak
 from eth_abi import decode_single
-from eth_utils import encode_hex, decode_hex
+from eth_utils import decode_hex
 from django.db.models import Q
-from notify.events import event_high
 
-SIG_EVENT_STRATEGY_ADDED = encode_hex(keccak(b"StrategyAdded(address)"))
-SIG_EVENT_STRATEGY_REMOVED = encode_hex(keccak(b"StrategyRemoved(address)"))
-SIG_EVENT_WEIGHTS_UPDATED = encode_hex(keccak(b"StrategyWeightsUpdated(address[],uint256[])"))
+from core.sigs import (
+    SIG_EVENT_STRATEGY_ADDED,
+    SIG_EVENT_STRATEGY_REMOVED,
+    SIG_EVENT_WEIGHTS_UPDATED,
+)
+from notify.events import event_high
 
 
 def get_strategy_events(logs):
