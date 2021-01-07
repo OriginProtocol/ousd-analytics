@@ -30,6 +30,18 @@ SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
 SIG_EVENT_MINT = encode_hex(keccak(b"Mint(address,uint256)"))
 SIG_EVENT_REDEEM = encode_hex(keccak(b"Redeem(address,uint256)"))
 
+# Governable
+SIG_EVENT_PENDING_TRANSFER = encode_hex(keccak(b"PendingGovernorshipTransfer(address,address)"))
+SIG_EVENT_TRANSFER = encode_hex(keccak(b"GovernorshipTransferred(address,address)"))
+
+# Proxy
+SIG_EVENT_UPGRADED = encode_hex(keccak(b"Upgraded(address)"))
+
+# Timelock
+SIG_EVENT_NEW_ADMIN = encode_hex(keccak(b"NewAdmin(address)"))
+SIG_EVENT_NEW_PENDING_ADMIN = encode_hex(keccak(b"NewPendingAdmin(address)"))
+SIG_EVENT_DELAY = encode_hex(keccak(b"NewDelay(uint256)"))
+
 # Strategy
 SIG_EVENT_DEPOSIT = encode_hex(keccak(b"Deposit(address,address,uint256)"))
 SIG_EVENT_WITHDRAWAL = encode_hex(keccak(b"Withdrawal(address,address,uint256)"))
@@ -38,3 +50,4 @@ SIG_EVENT_PTOKEN_REMOVED = encode_hex(keccak(b"Deposit(address,address,uint256)"
 SIG_EVENT_REWARDS_COLLECTED = encode_hex(
     keccak(b"RewardTokenCollected(address,uint256)")
 )
+
