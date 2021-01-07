@@ -1,8 +1,10 @@
 import os
+import sys
 import math
 import datetime
 import requests
 from decimal import Decimal
+from json.decoder import JSONDecodeError
 from eth_abi import encode_single
 from eth_utils import encode_hex
 from eth_hash.auto import keccak
@@ -35,6 +37,8 @@ from core.etherscan import get_contract_transactions
 
 START_OF_EVERYTHING = 10884500
 
+ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
+
 USDT = "0xdac17f958d2ee523a2206206994597c13d831ec7"
 USDC = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 DAI = "0x6b175474e89094c44da98b954eedeac495271d0f"
@@ -44,18 +48,17 @@ CUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563"
 CUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9"
 THREEPOOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 
+GOVERNOR = "0x8e7bdfecd1164c46ad51b58e49a611f954d23377"
+
 OUSD = "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86"
-VAULT = "0x277e80f3e14e7fb3fc40a9d6184088e0241034bd"
-COMPSTRAT = "0x47211b1d1f6da45aaee06f877266e072cf8baa74"
+VAULT = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70"
 TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
 
 OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26"
 OGN_STAKING = "0x501804b374ef06fa9c427476147ac09f1551b9a0"
 
-STRAT3POOLUSDT = "0xe40e09cd6725e542001fcb900d9dfea447b529c0"
-STRAT3POOLUSDC = "0x67023c56548ba15ad3542e65493311f19adfdd6d"
-STRATCOMPDAI = "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3"
-STRATAAVEDAI = "0x051caefa90adf261b8e8200920c83778b7b176b6"
+STRATCOMP = "0xd5433168ed0b1f7714819646606db509d9d8ec1f"
+STRATAAVEDAI = "0x9f2b18751376cF6a3432eb158Ba5F9b1AbD2F7ce"
 
 OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
 OUSD_USDT_SUSHI = "0xe4455fdec181561e9ffe909dde46aaeaedc55283"
@@ -92,6 +95,16 @@ DECIMALS_FOR_SYMBOL = {
     "USDC": 6,
 }
 
+CONTRACT_ADDR_TO_NAME = {
+    OUSD: 'OUSD Token',
+    VAULT: 'Vault',
+    MIX_ORACLE: 'MixOracle',
+    CHAINLINK_ORACLE: 'ChainlinkOracle',
+    OGN_STAKING: 'OGN Staking',
+    STRATCOMP: 'Compound Strategy',
+    STRATAAVEDAI: 'Aave Strategy',
+}
+
 THREEPOOLINDEX_FOR_ASSET = {
     DAI: 0,
     USDC: 1,
@@ -105,30 +118,48 @@ COMPOUND_FOR_SYMBOL = {
 }
 
 LOG_CONTRACTS = [
+    GOVERNOR,
     OUSD,
     VAULT,
-    COMPSTRAT,
+    STRATCOMP,
+    # STRATAAVEDAI,  # no events
     OUSD_USDT_UNISWAP,
     TIMELOCK,
     OGN_STAKING,
 ]
-ETHERSCAN_CONTRACTS = [OUSD, VAULT, TIMELOCK]
+ETHERSCAN_CONTRACTS = [GOVERNOR, OUSD, VAULT, TIMELOCK]
 
 ASSET_TICKERS = ["DAI", "USDC", "USDT"]
 
 
 def request(method, params):
     url = os.environ.get("PROVIDER_URL")
+
     if url is None:
         raise Exception("No PROVIDER_URL ENV variable defined")
+
     params = {
         "jsonrpc": "2.0",
         "id": 0,
         "method": method,
         "params": params,
     }
+
     r = requests.post(url, json=params)
-    return r.json()
+
+    try:
+        return r.json()
+
+    except JSONDecodeError as err:
+        try:
+            print(r.text, file=sys.stderr)
+        except Exception:
+            pass
+        raise err
+
+    except Exception as err:
+        print(err, file=sys.stderr)
+        raise err
 
 
 def call(to, signature, payload, block="latest"):
@@ -248,23 +279,21 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
         return Decimal(0)
 
 
-def rebasing_credits_per_token(block):
-    data = storage_at(OUSD, 59, block)
+def rebasing_credits_per_token(block="latest"):
+    signature = "0x6691cb3d"  # rebasingCreditsPerToken()
+    data = call(OUSD, signature, "", block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
 
 
-def ousd_rebasing_credits(block):
-    data = storage_at(OUSD, 58, block)
+def ousd_rebasing_credits(block="latest"):
+    signature = "0x077f22b7"  # rebasingCredits()
+    data = call(OUSD, signature, "", block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
 
 
-def ousd_non_rebasing_credits(block):
-    data = storage_at(OUSD, 63, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
-
-
-def ousd_non_rebasing_supply(block):
-    data = storage_at(OUSD, 64, block)
+def ousd_non_rebasing_supply(block="latest"):
+    signature = "0xe696393a"  # nonRebasingSupply()
+    data = call(OUSD, signature, "", block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
 
 
@@ -290,62 +319,27 @@ def priceUSDRedeem(coin_contract, symbol, block="latest"):
 def build_asset_block(symbol, block_number):
     symbol = symbol.upper()
     compstrat_holding = Decimal(0)
-    threepoolstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
-    if block_number != "latest" and block_number < 11067601:
-        if symbol == "COMP":
-            compstrat_holding += balanceOf(
-                CONTRACT_FOR_SYMBOL[symbol],
-                COMPSTRAT,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
-        else:
-            compstrat_holding += balanceOfUnderlying(
-                COMPOUND_FOR_SYMBOL[symbol],
-                COMPSTRAT,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
 
     if block_number == "latest" or block_number > 11060000:
-        if symbol == "DAI":
+        if symbol == "USDC":
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDAI,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
-        elif symbol == "USDC":
-            threepoolstrat_holding += strategyCheckBalance(
-                STRAT3POOLUSDC, USDC, DECIMALS_FOR_SYMBOL[symbol], block_number
-            )
-            compstrat_holding += balanceOfUnderlying(
-                COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDAI,
+                STRATCOMP,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
         elif symbol == "USDT":
-            threepoolstrat_holding += strategyCheckBalance(
-                STRAT3POOLUSDT, USDT, DECIMALS_FOR_SYMBOL[symbol], block_number
-            )
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMPDAI,
+                STRATCOMP,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
         elif symbol == "COMP":
             compstrat_holding += balanceOf(
                 CONTRACT_FOR_SYMBOL[symbol],
-                COMPSTRAT,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
-            compstrat_holding += balanceOf(
-                CONTRACT_FOR_SYMBOL[symbol],
-                STRATCOMPDAI,
+                STRATCOMP,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
@@ -379,7 +373,7 @@ def build_asset_block(symbol, block_number):
             block_number,
         ),
         compstrat_holding=compstrat_holding,
-        threepoolstrat_holding=threepoolstrat_holding,
+        threepoolstrat_holding=Decimal(0),
         aavestrat_holding=aavestrat_holding,
     )
 
@@ -495,7 +489,7 @@ def ensure_supply_snapshot(block_number):
 
         s = SupplySnapshot()
         s.block_number = block_number
-        s.non_rebasing_credits = ousd_non_rebasing_credits(block_number)
+        s.non_rebasing_credits = Decimal(0)
         s.credits = ousd_rebasing_credits(block_number) + s.non_rebasing_credits
         s.computed_supply = dai + usdt + usdc
         s.reported_supply = totalSupply(OUSD, 18, block_number)

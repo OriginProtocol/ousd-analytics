@@ -1,7 +1,10 @@
 from numpy import percentile
 from datetime import datetime, timedelta
 from statistics import median
+from django.db.models import Q
+
 from core.common import format_ousd_human
+from core.blockchain import ZERO_ADDRESS
 from notify.events import event_low
 
 CACHE_DURATION_MINUTES = 30
@@ -20,7 +23,9 @@ def get_past_week(transfers):
         return CACHE["past_week"]
 
     one_week_ago = datetime.now() - timedelta(days=7)
-    transfers = transfers.filter(block_time__gt=one_week_ago)
+    transfers = transfers.filter(
+        block_time__gt=one_week_ago
+    ).filter(~Q(from_address=ZERO_ADDRESS))
     values = [t.amount for t in transfers]
 
     CACHE["past_week"] = {
@@ -61,7 +66,7 @@ def get_outlier_transfers(transfers, new_transfers, high_percentile=95,
         lower_bound = 0
 
     # Find any outliers from the latest group of transactions
-    for t in new_transfers:
+    for t in new_transfers.filter(~Q(from_address=ZERO_ADDRESS)):
         if t.amount <= lower_bound or t.amount >= upper_bound:
             outliers.append(t)
 
