@@ -29,3 +29,9 @@ SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
 # Vault
 SIG_EVENT_MINT = encode_hex(keccak(b"Mint(address,uint256)"))
 SIG_EVENT_REDEEM = encode_hex(keccak(b"Redeem(address,uint256)"))
+
+# Strategy
+SIG_EVENT_DEPOSIT = encode_hex(keccak(b"Deposit(address,address,uint256)"))
+SIG_EVENT_WITHDRAWAL = encode_hex(keccak(b"Withdrawal(address,address,uint256)"))
+SIG_EVENT_PTOKEN_ADDED = encode_hex(keccak(b"Deposit(address,address,uint256)"))
+SIG_EVENT_PTOKEN_REMOVED = encode_hex(keccak(b"Deposit(address,address,uint256)"))
