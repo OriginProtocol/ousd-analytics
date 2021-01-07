@@ -20,6 +20,7 @@ from core.blockchain import (
     ensure_all_transactions,
     totalSupply,
     balanceOf,
+    rebasing_credits_per_token,
 )
 from core.models import Log, SupplySnapshot
 
