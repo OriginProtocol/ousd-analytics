@@ -1,5 +1,6 @@
 """ Trigger for timelock admin changes """
 from django.db.models import Q
+from eth_utils import decode_hex
 from eth_abi import decode_single
 
 from core.sigs import SIG_EVENT_NEW_ADMIN, SIG_EVENT_NEW_PENDING_ADMIN
@@ -19,7 +20,7 @@ def run_trigger(new_logs):
     events = []
 
     for ev in get_events(new_logs):
-        admin_address = decode_single("(address)", ev.topic_1)
+        admin_address = decode_single("(address)", decode_hex(ev.topic_1))[0]
 
         if ev.topic_0 == SIG_EVENT_NEW_ADMIN:
             events.append(event_high(
