@@ -36,3 +36,9 @@ SIG_EVENT_TRANSFER = encode_hex(keccak(b"GovernorshipTransferred(address,address
 
 # Proxy
 SIG_EVENT_UPGRADED = encode_hex(keccak(b"Upgraded(address)"))
+
+# Timelock
+SIG_EVENT_NEW_ADMIN = encode_hex(keccak(b"NewAdmin(address)"))
+SIG_EVENT_NEW_PENDING_ADMIN = encode_hex(keccak(b"NewPendingAdmin(address)"))
+SIG_EVENT_DELAY = encode_hex(keccak(b"NewDelay(uint256)"))
+
