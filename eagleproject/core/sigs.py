@@ -29,3 +29,8 @@ SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
 # Vault
 SIG_EVENT_MINT = encode_hex(keccak(b"Mint(address,uint256)"))
 SIG_EVENT_REDEEM = encode_hex(keccak(b"Redeem(address,uint256)"))
+
+# Timelock
+SIG_EVENT_NEW_ADMIN = encode_hex(keccak(b"NewAdmin(address)"))
+SIG_EVENT_NEW_PENDING_ADMIN = encode_hex(keccak(b"NewPendingAdmin(address)"))
+SIG_EVENT_DELAY = encode_hex(keccak(b"NewDelay(uint256)"))
