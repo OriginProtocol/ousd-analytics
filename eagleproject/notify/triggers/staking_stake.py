@@ -51,7 +51,7 @@ def run_trigger(new_logs):
             apy = round((Decimal(rate) / Decimal(1e18)) * apy_multiple * Decimal(100), 1)
 
             events.append(
-                event.normal(
+                event_normal(
                     "Staked    🥩",
                     "{} OGN was staked for {} days at {}%".format(
                         format_ousd_human(Decimal(amount) / Decimal(1e18)),
@@ -64,7 +64,7 @@ def run_trigger(new_logs):
             (amount,staked_amount) = decode_single('(uint256,uint256)', decode_hex(ev.data))
 
             events.append(
-                event.normal(
+                event_normal(
                     "Withdrawn 🍰",
                     "{} OGN was withdrawn".format(
                         format_ousd_human(Decimal(amount) / Decimal(1e18))
