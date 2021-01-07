@@ -29,3 +29,10 @@ SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
 # Vault
 SIG_EVENT_MINT = encode_hex(keccak(b"Mint(address,uint256)"))
 SIG_EVENT_REDEEM = encode_hex(keccak(b"Redeem(address,uint256)"))
+
+# Governable
+SIG_EVENT_PENDING_TRANSFER = encode_hex(keccak(b"PendingGovernorshipTransfer(address,address)"))
+SIG_EVENT_TRANSFER = encode_hex(keccak(b"GovernorshipTransferred(address,address)"))
+
+# Proxy
+SIG_EVENT_UPGRADED = encode_hex(keccak(b"Upgraded(address)"))
