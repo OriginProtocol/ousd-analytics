@@ -91,6 +91,7 @@ DECIMALS_FOR_SYMBOL = {
 
 CONTRACT_ADDR_TO_NAME = {
     OUSD: 'OUSD Token',
+    COMP: 'COMP Token',
     VAULT: 'Vault',
     MIX_ORACLE: 'MixOracle',
     CHAINLINK_ORACLE: 'ChainlinkOracle',
