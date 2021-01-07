@@ -1,13 +1,10 @@
 from decimal import Decimal
-from eth_hash.auto import keccak
 from eth_abi import decode_single
-from eth_utils import encode_hex, decode_hex
+from eth_utils import decode_hex
 from django.db.models import Q
 from core.common import format_ousd_human
+from core.sigs import SIG_EVENT_MINT, SIG_EVENT_REDEEM
 from notify.events import event_normal
-
-SIG_EVENT_MINT = encode_hex(keccak(b"Mint(address,uint256)"))
-SIG_EVENT_REDEEM = encode_hex(keccak(b"Redeem(address,uint256)"))
 
 
 def get_mint_redeem_events(logs):
