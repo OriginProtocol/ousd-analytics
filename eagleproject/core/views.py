@@ -265,7 +265,7 @@ PREV_APR = None
 def _get_trailing_apr():
     """
     Calculates the APR by using the OUSD rebase ratio. 
-    
+
     This has the upside that it's simple to calculate and exactly matches 
     user's balance changes. 
 
@@ -273,8 +273,8 @@ def _get_trailing_apr():
     on rebases, making this method less acurate. It's bit iffy using it
     on only one day, but that's the data we have at the moment.
     """
-    days = 1.00
-    
+    days = 2.00
+
     # Check cache first
     global PREV_APR
     if PREV_APR:
@@ -287,8 +287,8 @@ def _get_trailing_apr():
     current = rebasing_credits_per_token(block)
     past = rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
     ratio = Decimal(float(past) / float(current))
-    apr = ( (ratio - Decimal(1)) * Decimal(100) * Decimal(365.25) / Decimal(days))
-    
+    apr = ((ratio - Decimal(1)) * Decimal(100) * Decimal(365.25) / Decimal(days))
+
     # Save to cache
     good_to = datetime.datetime.today() + datetime.timedelta(minutes=5)
     PREV_APR = [good_to, apr]
