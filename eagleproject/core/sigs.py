@@ -41,9 +41,9 @@ SIG_EVENT_WEIGHTS_UPDATED = encode_hex(
 SIG_EVENT_ASSET_SUPPORTED = encode_hex(keccak(b"AssetSupported(address)"))
 SIG_EVENT_BUFFER_UPDATE = encode_hex(keccak(b"VaultBufferUpdated(uint256)"))
 SIG_EVENT_REDEEM_FEE = encode_hex(keccak(b"RedeemFeeUpdated(uint256)"))
+SIG_EVENT_PRICE_PROVIDER = encode_hex(keccak(b"PriceProviderUpdated(address)"))
 
 # Vault not implemented
-SIG_EVENT_PRICE_PROVIDER = encode_hex(keccak(b"PriceProviderUpdated(address)"))
 SIG_EVENT_ALLOCATE_THRESHOLD = encode_hex(keccak(b"AllocateThresholdUpdated(uint256)"))
 SIG_EVENT_REBASE_THRESHOLD = encode_hex(keccak(b"RebaseThresholdUpdated(uint256)"))
 SIG_EVENT_UNISWAP = encode_hex(keccak(b"UniswapUpdated(address)"))
