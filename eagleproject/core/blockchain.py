@@ -6,6 +6,8 @@ import requests
 from decimal import Decimal
 from json.decoder import JSONDecodeError
 from eth_abi import encode_single
+from eth_utils import encode_hex
+from eth_hash.auto import keccak
 from django.conf import settings
 
 from core.sigs import (
@@ -67,6 +69,11 @@ MIX_ORACLE = "0x4d4f5e7a1fe57f5ceb38bfce8653effa5e584458"  # Meta oracle
 OPEN_ORACLE = "0x922018674c12a7f0d394ebeef9b58f186cde13c1"  # Token prices
 CHAINLINK_ORACLE = "0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759"  # Tokens
 
+DEPRECATED_SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
+DEPRECATED_SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256)"))
+
+SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256,uint256,uint256)"))
+SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256,uint256)"))
 CHAINLINK_ETH_USD_FEED = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"  # ETH
 CHAINLINK_DAI_ETH_FEED = "0x773616E4d11A78F511299002da57A0a94577F1f4"
 CHAINLINK_USDC_ETH_FEED = "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4"
@@ -634,10 +641,7 @@ def maybe_store_stake_withdrawn_record(log, block):
     # Must be a Staked or Withdrawn event
     if (
         log["address"] != OGN_STAKING or
-        (
-            log["address"] == OGN_STAKING and
-            log["topics"][0] not in [SIG_EVENT_STAKED, SIG_EVENT_WITHDRAWN]
-        )
+        log["topics"][0] not in [SIG_EVENT_STAKED, SIG_EVENT_WITHDRAWN, DEPRECATED_SIG_EVENT_STAKED, DEPRECATED_SIG_EVENT_WITHDRAWN]
     ):
         return None
 
@@ -649,13 +653,29 @@ def maybe_store_stake_withdrawn_record(log, block):
     if len(db_staked) > 0:
         return db_staked[0]
 
+    is_updated_staked_event = log["topics"][0] == SIG_EVENT_STAKED
+    is_withdrawn_event = log["topics"][0] == SIG_EVENT_WITHDRAWN
+    is_staked_event = log["topics"][0] == DEPRECATED_SIG_EVENT_STAKED or is_updated_staked_event
+
+    duration = 0
+    rate = 0
+
+    if is_updated_staked_event:
+        # store duration in days
+        duration = int(_slot(log["data"], 1), 16) / (24 * 60 * 60)
+        # convert rate back to yearly rate
+        rate = Decimal(int(_slot(log["data"], 2), 16) / Decimal(1e18)) * 365 / Decimal(duration)
+
     staked = OgnStaked(
         tx_hash=tx_hash,
         log_index=log_index,
         block_time=block.block_time,
         user_address="0x" + log["topics"][1][-40:],
-        is_staked=log["topics"][0] == SIG_EVENT_STAKED,
+        is_staked=is_staked_event,
         amount=int(_slot(log["data"], 0), 16) / 1e18,
+        staked_amount=int(_slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
+        duration=duration,
+        rate=rate
     )
     staked.save()
     return staked

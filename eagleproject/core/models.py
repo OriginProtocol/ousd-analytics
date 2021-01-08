@@ -176,6 +176,9 @@ class OgnStaked(models.Model):
     user_address = models.CharField(max_length=42, db_index=True)
     is_staked = models.BooleanField()
     amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    staked_amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    duration = models.IntegerField(default=0)
+    rate = models.DecimalField(max_digits=64, decimal_places=18, default=0)
 
 
 class OracleSnapshot(models.Model):
