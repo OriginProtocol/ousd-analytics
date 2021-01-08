@@ -35,8 +35,20 @@ SIG_EVENT_REBASE_PAUSED = encode_hex(keccak(b"RebasePaused()"))
 SIG_EVENT_REBASE_UNPAUSED = encode_hex(keccak(b"RebaseUnpaused()"))
 SIG_EVENT_STRATEGY_ADDED = encode_hex(keccak(b"StrategyAdded(address)"))
 SIG_EVENT_STRATEGY_REMOVED = encode_hex(keccak(b"StrategyRemoved(address)"))
-SIG_EVENT_WEIGHTS_UPDATED = encode_hex(keccak(b"StrategyWeightsUpdated(address[],uint256[])"))
+SIG_EVENT_WEIGHTS_UPDATED = encode_hex(
+    keccak(b"StrategyWeightsUpdated(address[],uint256[])")
+)
 SIG_EVENT_ASSET_SUPPORTED = encode_hex(keccak(b"AssetSupported(address)"))
+SIG_EVENT_BUFFER_UPDATE = encode_hex(keccak(b"VaultBufferUpdated(uint256)"))
+
+# Vault not implemented
+SIG_EVENT_REDEEM_FEE = encode_hex(keccak(b"RedeemFeeUpdated(uint256)"))
+SIG_EVENT_PRICE_PROVIDER = encode_hex(keccak(b"PriceProviderUpdated(address)"))
+SIG_EVENT_ALLOCATE_THRESHOLD = encode_hex(keccak(b"AllocateThresholdUpdated(uint256)"))
+SIG_EVENT_REBASE_THRESHOLD = encode_hex(keccak(b"RebaseThresholdUpdated(uint256)"))
+SIG_EVENT_UNISWAP = encode_hex(keccak(b"UniswapUpdated(address)"))
+SIG_EVENT_STRATEGIST = encode_hex(keccak(b"StrategistUpdated(address)"))
+SIG_EVENT_MAX_SUPPLY_DIFF = encode_hex(keccak(b"MaxSupplyDiffChanged(uint256)"))
 
 # Governable
 SIG_EVENT_PENDING_TRANSFER = encode_hex(keccak(b"PendingGovernorshipTransfer(address,address)"))
@@ -49,4 +61,3 @@ SIG_EVENT_UPGRADED = encode_hex(keccak(b"Upgraded(address)"))
 SIG_EVENT_NEW_ADMIN = encode_hex(keccak(b"NewAdmin(address)"))
 SIG_EVENT_NEW_PENDING_ADMIN = encode_hex(keccak(b"NewPendingAdmin(address)"))
 SIG_EVENT_DELAY = encode_hex(keccak(b"NewDelay(uint256)"))
-
