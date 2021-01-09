@@ -1,5 +1,7 @@
+from math import pow
 from enum import Enum
 from decimal import Decimal
+from core.blockchain import DECIMALS_FOR_SYMBOL
 
 
 class OrderedEnum(Enum):
@@ -58,6 +60,21 @@ def number_string_comma(v):
 def format_ousd_human(value, places=4):
     if value == Decimal(0):
         return '0'
+
+    q = Decimal(10) ** -places  # 2 places --> '0.01'
+    sign, digits, exp = value.quantize(q).as_tuple()
+
+    return '{}.{}'.format(
+        number_string_comma(''.join(map(str, digits[:exp]))),
+        ''.join(map(str, digits[exp:])).rstrip('0') or '00'
+    )
+
+
+def format_token_human(symbol, value, places=4):
+    if value == Decimal(0):
+        return '0'
+
+    value = Decimal(value) / Decimal(pow(10, DECIMALS_FOR_SYMBOL[symbol]))
 
     q = Decimal(10) ** -places  # 2 places --> '0.01'
     sign, digits, exp = value.quantize(q).as_tuple()

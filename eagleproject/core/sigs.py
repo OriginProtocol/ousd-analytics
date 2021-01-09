@@ -61,3 +61,13 @@ SIG_EVENT_UPGRADED = encode_hex(keccak(b"Upgraded(address)"))
 SIG_EVENT_NEW_ADMIN = encode_hex(keccak(b"NewAdmin(address)"))
 SIG_EVENT_NEW_PENDING_ADMIN = encode_hex(keccak(b"NewPendingAdmin(address)"))
 SIG_EVENT_DELAY = encode_hex(keccak(b"NewDelay(uint256)"))
+
+# Strategy
+SIG_EVENT_DEPOSIT = encode_hex(keccak(b"Deposit(address,address,uint256)"))
+SIG_EVENT_WITHDRAWAL = encode_hex(keccak(b"Withdrawal(address,address,uint256)"))
+SIG_EVENT_PTOKEN_ADDED = encode_hex(keccak(b"Deposit(address,address,uint256)"))
+SIG_EVENT_PTOKEN_REMOVED = encode_hex(keccak(b"Deposit(address,address,uint256)"))
+SIG_EVENT_REWARDS_COLLECTED = encode_hex(
+    keccak(b"RewardTokenCollected(address,uint256)")
+)
+
