@@ -18,8 +18,14 @@ CHAINLINK_TOK_USD_PRICE = encode_hex(keccak(b"tokUsdPrice(string)"))
 TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 
 # OGN Staking
-SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
-SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256)"))
+SIG_EVENT_STAKED = encode_hex(
+    keccak(b"Staked(address,uint256,uint256,uint256)")
+)
+SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256,uint256)"))
+DEPRECATED_SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
+DEPRECATED_SIG_EVENT_WITHDRAWN = encode_hex(
+    keccak(b"Withdrawn(address,uint256)")
+)
 
 # OUSD
 SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(

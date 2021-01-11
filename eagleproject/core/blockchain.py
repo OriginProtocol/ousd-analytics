@@ -18,6 +18,8 @@ from core.sigs import (
     TRANSFER,
     SIG_EVENT_STAKED,
     SIG_EVENT_WITHDRAWN,
+    DEPRECATED_SIG_EVENT_STAKED,
+    DEPRECATED_SIG_EVENT_WITHDRAWN,
 )
 from core.models import (
     AssetBlock,
@@ -69,11 +71,6 @@ MIX_ORACLE = "0x4d4f5e7a1fe57f5ceb38bfce8653effa5e584458"  # Meta oracle
 OPEN_ORACLE = "0x922018674c12a7f0d394ebeef9b58f186cde13c1"  # Token prices
 CHAINLINK_ORACLE = "0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759"  # Tokens
 
-DEPRECATED_SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
-DEPRECATED_SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256)"))
-
-SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256,uint256,uint256)"))
-SIG_EVENT_WITHDRAWN = encode_hex(keccak(b"Withdrawn(address,uint256,uint256)"))
 CHAINLINK_ETH_USD_FEED = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419"  # ETH
 CHAINLINK_DAI_ETH_FEED = "0x773616E4d11A78F511299002da57A0a94577F1f4"
 CHAINLINK_USDC_ETH_FEED = "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4"
