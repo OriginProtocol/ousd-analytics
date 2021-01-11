@@ -50,10 +50,10 @@ SIG_EVENT_REDEEM_FEE = encode_hex(keccak(b"RedeemFeeUpdated(uint256)"))
 SIG_EVENT_PRICE_PROVIDER = encode_hex(keccak(b"PriceProviderUpdated(address)"))
 SIG_EVENT_ALLOCATE_THRESHOLD = encode_hex(keccak(b"AllocateThresholdUpdated(uint256)"))
 SIG_EVENT_REBASE_THRESHOLD = encode_hex(keccak(b"RebaseThresholdUpdated(uint256)"))
-
-# Vault not implemented
 SIG_EVENT_UNISWAP = encode_hex(keccak(b"UniswapUpdated(address)"))
 SIG_EVENT_STRATEGIST = encode_hex(keccak(b"StrategistUpdated(address)"))
+
+# Vault not implemented
 SIG_EVENT_MAX_SUPPLY_DIFF = encode_hex(keccak(b"MaxSupplyDiffChanged(uint256)"))
 
 # Governable
