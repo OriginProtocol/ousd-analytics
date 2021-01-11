@@ -54,8 +54,6 @@ SIG_EVENT_UNISWAP = encode_hex(keccak(b"UniswapUpdated(address)"))
 SIG_EVENT_STRATEGIST = encode_hex(keccak(b"StrategistUpdated(address)"))
 SIG_EVENT_MAX_SUPPLY_DIFF = encode_hex(keccak(b"MaxSupplyDiffChanged(uint256)"))
 SIG_EVENT_DEFAULT_STRATEGY = encode_hex(keccak(b"AssetDefaultStrategyUpdated(address,address)"))
-
-# Not implemented
 SIG_EVENT_STRATEGY_APPROVED = encode_hex(keccak(b"StrategyApproved(address)"))
 
 # Governable

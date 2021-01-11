@@ -5,6 +5,7 @@ from django.db.models import Q
 from core.blockchain import SYMBOL_FOR_CONTRACT
 from core.sigs import (
     SIG_EVENT_DEFAULT_STRATEGY,
+    SIG_EVENT_STRATEGY_APPROVED,
     SIG_EVENT_STRATEGY_ADDED,
     SIG_EVENT_STRATEGY_REMOVED,
     SIG_EVENT_WEIGHTS_UPDATED,
@@ -16,6 +17,7 @@ def get_strategy_events(logs):
     """ Get strategy related events """
     return logs.filter(
         Q(topic_0=SIG_EVENT_DEFAULT_STRATEGY)
+        | Q(topic_0=SIG_EVENT_STRATEGY_APPROVED)
         | Q(topic_0=SIG_EVENT_STRATEGY_ADDED)
         | Q(topic_0=SIG_EVENT_STRATEGY_REMOVED)
         | Q(topic_0=SIG_EVENT_WEIGHTS_UPDATED)
@@ -32,11 +34,18 @@ def run_trigger(new_logs):
 
         if ev.topic_0 == SIG_EVENT_DEFAULT_STRATEGY:
             title = 'Asset Default Strategy Set   ♟️'
-            asset, strat_addr = decode_single('(address)', decode_hex(ev.data))
+            asset, strat_addr = decode_single('(address,address)', decode_hex(ev.data))
             description = (
                 'New default strategy for {} has been set to {}'
             ).format(
                 SYMBOL_FOR_CONTRACT.get(asset, asset),
+                strat_addr,
+            )
+
+        elif ev.topic_0 == SIG_EVENT_STRATEGY_APPROVED:
+            title = 'Strategy Added To Vault    🏦♟️'
+            strat_addr = decode_single('(address)', decode_hex(ev.data))
+            description = 'New strategy {} has been added to the vault'.format(
                 strat_addr,
             )
 
