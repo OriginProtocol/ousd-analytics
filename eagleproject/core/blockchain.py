@@ -52,7 +52,6 @@ from core.addresses import (
     STRATCOMP,
     STRATAAVEDAI,
     OUSD_USDT_UNISWAP,
-    MIX_ORACLE,
     OPEN_ORACLE,
     CHAINLINK_ORACLE,
     COMPOUND_GOVERNOR_ALPHA,
@@ -74,17 +73,6 @@ DECIMALS_FOR_SYMBOL = {
     "DAI": 18,
     "USDT": 6,
     "USDC": 6,
-}
-
-CONTRACT_ADDR_TO_NAME = {
-    OUSD: 'OUSD Token',
-    COMP: 'COMP Token',
-    VAULT: 'Vault',
-    MIX_ORACLE: 'MixOracle',
-    CHAINLINK_ORACLE: 'ChainlinkOracle',
-    OGN_STAKING: 'OGN Staking',
-    STRATCOMP: 'Compound Strategy',
-    STRATAAVEDAI: 'Aave Strategy',
 }
 
 THREEPOOLINDEX_FOR_ASSET = {

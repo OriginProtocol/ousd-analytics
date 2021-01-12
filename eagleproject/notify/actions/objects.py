@@ -96,8 +96,9 @@ class DiscordWebhook(Action):
                     if retry_after > 30:
                         print(
                             'Discord rate limit wait of {}sec is too long!  '
-                            'Skipping.'.format(
-                                retry_after
+                            'Skipping. ({})'.format(
+                                retry_after,
+                                self.summary,
                             )
                         )
                         break

@@ -89,13 +89,13 @@ SIG_EVENT_REWARDS_COLLECTED = encode_hex(
 # SIG_EVENT_NEW_PENDING_ADMIN = encode_hex(keccak(b"NewPendingAdmin(address)"))
 # SIG_EVENT_DELAY = encode_hex(keccak(b"NewDelay(uint256)"))
 SIG_EVENT_CANCEL_TRANSACTION = encode_hex(
-    keccak(b"CancelTransaction(bytes32,address,uint,string,bytes,uint)")
+    keccak(b"CancelTransaction(bytes32,address,uint256,string,bytes,uint256)")
 )
 SIG_EVENT_EXECUTE_TRANSACTION = encode_hex(
-    keccak(b"ExecuteTransaction(bytes32,address,uint,string,bytes,uint)")
+    keccak(b"ExecuteTransaction(bytes32,address,uint256,string,bytes,uint256)")
 )
 SIG_EVENT_QUEUE_TRANSACTION = encode_hex(
-    keccak(b"QueueTransaction(bytes32,address,uint,string,bytes,uint)")
+    keccak(b"QueueTransaction(bytes32,address,uint256,string,bytes,uint256)")
 )
 
 # Compound GovernorAlpha
