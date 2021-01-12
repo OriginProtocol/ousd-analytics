@@ -17,7 +17,7 @@ def gc(request):
     # event_seen is time sensitive and old entries are irrelevant
     try:
         EventSeen.objects.filter(
-            last_seen__gt=datetime.now() - timedelta(hours=2)
+            last_seen__gt=datetime.utcnow() - timedelta(hours=2)
         ).delete()
     except Exception as err:
         print(err, file=sys.stderr)

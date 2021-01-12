@@ -4,12 +4,14 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
 from django.db.models import Q
-from core.blockchain import (
+from core.addresses import (
+    OUSD,
     OUSD_USDT_UNISWAP,
     OUSD_USDT_SUSHI,
     SNOWSWAP,
-    OUSD,
-    TRANSFER,
+)
+from core.sigs import TRANSFER
+from core.blockchain import (
     ensure_asset,
     ensure_oracle_snapshot,
     ensure_staking_snapshot,

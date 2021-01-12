@@ -70,10 +70,39 @@ SIG_EVENT_DELAY = encode_hex(keccak(b"NewDelay(uint256)"))
 
 # Strategy
 SIG_EVENT_DEPOSIT = encode_hex(keccak(b"Deposit(address,address,uint256)"))
-SIG_EVENT_WITHDRAWAL = encode_hex(keccak(b"Withdrawal(address,address,uint256)"))
-SIG_EVENT_PTOKEN_ADDED = encode_hex(keccak(b"Deposit(address,address,uint256)"))
-SIG_EVENT_PTOKEN_REMOVED = encode_hex(keccak(b"Deposit(address,address,uint256)"))
+SIG_EVENT_WITHDRAWAL = encode_hex(
+    keccak(b"Withdrawal(address,address,uint256)")
+)
+SIG_EVENT_PTOKEN_ADDED = encode_hex(
+    keccak(b"Deposit(address,address,uint256)")
+)
+SIG_EVENT_PTOKEN_REMOVED = encode_hex(
+    keccak(b"Deposit(address,address,uint256)")
+)
 SIG_EVENT_REWARDS_COLLECTED = encode_hex(
     keccak(b"RewardTokenCollected(address,uint256)")
 )
 
+# Compound Timelock
+# The following are already defined in our Timelock
+# SIG_EVENT_NEW_ADMIN = encode_hex(keccak(b"NewAdmin(address)"))
+# SIG_EVENT_NEW_PENDING_ADMIN = encode_hex(keccak(b"NewPendingAdmin(address)"))
+# SIG_EVENT_DELAY = encode_hex(keccak(b"NewDelay(uint256)"))
+SIG_EVENT_CANCEL_TRANSACTION = encode_hex(
+    keccak(b"CancelTransaction(bytes32,address,uint,string,bytes,uint)")
+)
+SIG_EVENT_EXECUTE_TRANSACTION = encode_hex(
+    keccak(b"ExecuteTransaction(bytes32,address,uint,string,bytes,uint)")
+)
+SIG_EVENT_QUEUE_TRANSACTION = encode_hex(
+    keccak(b"QueueTransaction(bytes32,address,uint,string,bytes,uint)")
+)
+
+# Compound GovernorAlpha
+SIG_EVENT_PROPOSAL_CREATED = encode_hex(
+    keccak(b"ProposalCreated(uint,address,address[],uint[],string[],bytes[],uint,uint,string)")
+)
+SIG_EVENT_VOTE_CAST = encode_hex(keccak(b"VoteCast(address,uint,bool,uint)"))
+SIG_EVENT_PROPOSAL_CANCELED = encode_hex(keccak(b"ProposalCanceled(uint)"))
+SIG_EVENT_PROPOSAL_QUEUED = encode_hex(keccak(b"ProposalQueued(uint,uint)"))
+SIG_EVENT_PROPOSAL_EXECUTED = encode_hex(keccak(b"ProposalExecuted(uint)"))

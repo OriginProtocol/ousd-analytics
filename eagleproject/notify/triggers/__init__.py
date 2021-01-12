@@ -113,7 +113,7 @@ def run_all_triggers():
         cursor_id=CursorId.TRANSFERS,
         defaults={
             "block_number": block_number,
-            "last_update": datetime.now(),
+            "last_update": datetime.utcnow(),
         }
     )
 
@@ -121,7 +121,7 @@ def run_all_triggers():
         cursor_id=CursorId.TRANSACTIONS,
         defaults={
             "block_number": block_number,
-            "last_update": datetime.now(),
+            "last_update": datetime.utcnow(),
         }
     )
 
@@ -129,7 +129,7 @@ def run_all_triggers():
         cursor_id=CursorId.SNAPSHOT,
         defaults={
             "block_number": snapshot_block_number,
-            "last_update": datetime.now(),
+            "last_update": datetime.utcnow(),
         }
     )
 
@@ -146,7 +146,7 @@ def run_all_triggers():
         "transfers": lambda: transfers(0),
         "new_transfers": lambda: transfers(transfer_cursor.block_number),
         "logs": lambda: logs(0),
-        "new_logs": lambda: logs(transfer_cursor.block_number),
+        "new_logs": lambda: logs(transaction_cursor.block_number),
         "ogn_staking_snapshot": latest_ogn_staking_snap,
         "oracle_snapshots": lambda: oracles_snaps(snapshot_block_number)
     }
@@ -168,17 +168,17 @@ def run_all_triggers():
 
     if transfer_cursor.block_number != block_number:
         transfer_cursor.block_number = block_number
-        transfer_cursor.last_update = datetime.now()
+        transfer_cursor.last_update = datetime.utcnow()
         transfer_cursor.save()
 
     if transaction_cursor.block_number != block_number:
         transaction_cursor.block_number = block_number
-        transaction_cursor.last_update = datetime.now()
+        transaction_cursor.last_update = datetime.utcnow()
         transaction_cursor.save()
 
     if snapshot_cursor.block_number != snapshot_block_number:
         snapshot_cursor.block_number = snapshot_block_number
-        snapshot_cursor.last_update = datetime.now()
+        snapshot_cursor.last_update = datetime.utcnow()
         snapshot_cursor.save()
 
     return events
