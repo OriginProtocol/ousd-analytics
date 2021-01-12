@@ -55,7 +55,7 @@ def decode_calls(signatures, calldatas):
         args = decode_single('({})'.format(','.join(types)), calldatas[i])
 
         # Assemble a human-readable function call with arg values
-        call = '{}({})'.format(func, ','.join([v for v in args]))
+        call = '{}({})'.format(func, ','.join([str(v) for v in args]))
 
         calls.append(call)
 
