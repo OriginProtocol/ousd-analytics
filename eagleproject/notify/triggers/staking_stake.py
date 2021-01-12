@@ -1,13 +1,19 @@
 from decimal import Decimal
-from eth_hash.auto import keccak
 from eth_abi import decode_single
-from eth_utils import encode_hex, decode_hex
+from eth_utils import decode_hex
 from django.db.models import Q
 from core.common import format_ousd_human
-from core.blockchain import OGN_STAKING, SIG_EVENT_STAKED, SIG_EVENT_WITHDRAWN, DEPRECATED_SIG_EVENT_STAKED, DEPRECATED_SIG_EVENT_WITHDRAWN
+from core.blockchain import (
+    OGN_STAKING,
+    SIG_EVENT_STAKED,
+    SIG_EVENT_WITHDRAWN,
+    DEPRECATED_SIG_EVENT_STAKED,
+    DEPRECATED_SIG_EVENT_WITHDRAWN,
+)
 from notify.events import event_normal
 from datetime import timedelta
 from notify.triggers.staking_rates import DAYS_365_SECONDS
+
 
 def get_stake_withdrawn_events(logs):
     """ Get Stake/Withdrawn events """
@@ -28,7 +34,10 @@ def run_trigger(new_logs):
 
     for ev in get_stake_withdrawn_events(new_logs):
 
-        if ev.topic_0 == DEPRECATED_SIG_EVENT_STAKED or ev.topic_0 == DEPRECATED_SIG_EVENT_WITHDRAWN:
+        if (
+            ev.topic_0 == DEPRECATED_SIG_EVENT_STAKED
+            or ev.topic_0 == DEPRECATED_SIG_EVENT_WITHDRAWN
+        ):
             is_staked = ev.topic_0 == DEPRECATED_SIG_EVENT_STAKED
 
             (amount,) = decode_single('(uint256)', decode_hex(ev.data))
@@ -43,7 +52,10 @@ def run_trigger(new_logs):
                 )
             )
         elif ev.topic_0 == SIG_EVENT_STAKED:
-            (amount,duration,rate,) = decode_single('(uint256,uint256,uint256)', decode_hex(ev.data))
+            amount, duration, rate = decode_single(
+                '(uint256,uint256,uint256)',
+                decode_hex(ev.data)
+            )
 
             duration_dt = timedelta(seconds=duration)
 
@@ -61,7 +73,10 @@ def run_trigger(new_logs):
                 )
             )
         elif ev.topic_0 == SIG_EVENT_WITHDRAWN:
-            (amount,staked_amount) = decode_single('(uint256,uint256)', decode_hex(ev.data))
+            amount,staked_amount = decode_single(
+                '(uint256,uint256)',
+                decode_hex(ev.data)
+            )
 
             events.append(
                 event_normal(
@@ -71,6 +86,5 @@ def run_trigger(new_logs):
                     )
                 )
             )
-
 
     return events

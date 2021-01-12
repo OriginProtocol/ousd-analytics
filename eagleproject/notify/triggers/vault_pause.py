@@ -1,3 +1,4 @@
+""" NOTE: DepositsPaused and DepositsUnpaused have been depreciated """
 from eth_hash.auto import keccak
 from eth_utils import encode_hex
 from django.db.models import Q
