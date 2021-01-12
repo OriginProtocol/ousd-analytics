@@ -73,11 +73,9 @@ SIG_EVENT_DEPOSIT = encode_hex(keccak(b"Deposit(address,address,uint256)"))
 SIG_EVENT_WITHDRAWAL = encode_hex(
     keccak(b"Withdrawal(address,address,uint256)")
 )
-SIG_EVENT_PTOKEN_ADDED = encode_hex(
-    keccak(b"Deposit(address,address,uint256)")
-)
+SIG_EVENT_PTOKEN_ADDED = encode_hex(keccak(b"PTokenAdded(address,address)"))
 SIG_EVENT_PTOKEN_REMOVED = encode_hex(
-    keccak(b"Deposit(address,address,uint256)")
+    keccak(b"PTokenRemoved(address,address)")
 )
 SIG_EVENT_REWARDS_COLLECTED = encode_hex(
     keccak(b"RewardTokenCollected(address,uint256)")
