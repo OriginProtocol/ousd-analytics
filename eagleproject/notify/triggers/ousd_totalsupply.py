@@ -8,7 +8,7 @@ from core.sigs import (
     SIG_EVENT_REDEEM,
     SIG_EVENT_TOTAL_SUPPLY_UPDATED,
 )
-from notify.events import event_high
+from notify.events import event_normal
 
 
 def get_supply_events(logs):
@@ -44,7 +44,7 @@ def run_trigger(new_logs):
         )
 
         events.append(
-            event_high(
+            event_normal(
                 "Total supply updated   👛",
                 "Total supply is now {} OUSD".format(
                     format_ousd_human(Decimal(total_supply) / Decimal(1e18)),
