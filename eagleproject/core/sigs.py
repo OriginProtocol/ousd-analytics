@@ -100,9 +100,9 @@ SIG_EVENT_QUEUE_TRANSACTION = encode_hex(
 
 # Compound GovernorAlpha
 SIG_EVENT_PROPOSAL_CREATED = encode_hex(
-    keccak(b"ProposalCreated(uint,address,address[],uint[],string[],bytes[],uint,uint,string)")
+    keccak(b"ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)")
 )
-SIG_EVENT_VOTE_CAST = encode_hex(keccak(b"VoteCast(address,uint,bool,uint)"))
-SIG_EVENT_PROPOSAL_CANCELED = encode_hex(keccak(b"ProposalCanceled(uint)"))
-SIG_EVENT_PROPOSAL_QUEUED = encode_hex(keccak(b"ProposalQueued(uint,uint)"))
-SIG_EVENT_PROPOSAL_EXECUTED = encode_hex(keccak(b"ProposalExecuted(uint)"))
+SIG_EVENT_VOTE_CAST = encode_hex(keccak(b"VoteCast(address,uint256,bool,uint256)"))
+SIG_EVENT_PROPOSAL_CANCELED = encode_hex(keccak(b"ProposalCanceled(uint256)"))
+SIG_EVENT_PROPOSAL_QUEUED = encode_hex(keccak(b"ProposalQueued(uint256,uint256)"))
+SIG_EVENT_PROPOSAL_EXECUTED = encode_hex(keccak(b"ProposalExecuted(uint256)"))

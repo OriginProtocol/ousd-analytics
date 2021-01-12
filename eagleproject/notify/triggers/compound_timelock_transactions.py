@@ -32,7 +32,7 @@ def run_trigger(new_logs):
         action = "ERROR"
 
         if ev.topic_0 == SIG_EVENT_QUEUE_TRANSACTION:
-            summary = "Compound Timelock transaction queued   ⏲️"
+            summary = "Compound Timelock transaction queued   ⏲️ 📥"
             action = "queued"
         elif ev.topic_0 == SIG_EVENT_CANCEL_TRANSACTION:
             summary = "Compound Timelock transaction canceled   ⏲️ ❌"
