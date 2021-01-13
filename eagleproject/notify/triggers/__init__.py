@@ -19,6 +19,9 @@ Every trigger should implement:
  - new_logs - All new logs since the last run
  - ogn_staking_snapshot - Latest OGN staking snapshot
  - oracle_snapshots - Oracle snapshot for a specific block
+ - ctoken_snapshots - Retreives the cToken snapshots for a specific block
+ - recent_ctoken_snapshots - Retrieves the cToken snapshots for the last N
+    snapshots
 """
 import inspect
 import logging
