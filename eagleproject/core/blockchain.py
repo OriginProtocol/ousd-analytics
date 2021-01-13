@@ -34,6 +34,7 @@ from core.sigs import (
     SIG_EVENT_WITHDRAWN,
     DEPRECATED_SIG_EVENT_STAKED,
     DEPRECATED_SIG_EVENT_WITHDRAWN,
+    SIG_FUNC_TOTAL_SUPPLY,
 )
 from core.addresses import (
     USDT,
@@ -185,7 +186,7 @@ def balanceOf(coin_contract, holder, decimals, block="latest"):
 
 
 def totalSupply(coin_contract, decimals, block="latest"):
-    signature = "0x18160ddd"
+    signature = SIG_FUNC_TOTAL_SUPPLY[:10]
     payload = ""
     data = call(coin_contract, signature, payload, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(

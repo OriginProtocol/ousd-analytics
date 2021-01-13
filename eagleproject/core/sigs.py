@@ -11,6 +11,8 @@ CHAINLINK_ETH_USD_PRICE = encode_hex(keccak(b"ethUsdPrice()"))
 CHAINLINK_TOK_ETH_PRICE = encode_hex(keccak(b"tokEthPrice(string)"))
 # tokUsdPrice(string calldata symbol)
 CHAINLINK_TOK_USD_PRICE = encode_hex(keccak(b"tokUsdPrice(string)"))
+# totalSupply()
+SIG_FUNC_TOTAL_SUPPLY = encode_hex(keccak(b"totalSupply()"))
 
 ########
 # Events
