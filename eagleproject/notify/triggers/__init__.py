@@ -17,6 +17,8 @@ Every trigger should implement:
  - new_transactions - All new transactions since the last run
  - logs - All logs
  - new_logs - All new logs since the last run
+ - ogn_staking_snapshot - Latest OGN staking snapshot
+ - oracle_snapshots - Oracle snapshot for a specific block
 """
 import inspect
 import logging
