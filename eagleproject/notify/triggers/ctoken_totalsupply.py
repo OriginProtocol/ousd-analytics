@@ -38,9 +38,6 @@ def run_trigger(recent_ctoken_snapshots):
         if total_supply_current < total_supply_comp:
             diff = total_supply_comp - total_supply_current
 
-            print('diff:', diff)
-            print('diff_threshold:', diff_threshold)
-
             if diff > diff_threshold:
                 events.append(event_critical(
                     "Compound cToken Total Supply Fluctuation   🚨",
@@ -57,9 +54,6 @@ def run_trigger(recent_ctoken_snapshots):
 
         else:
             diff = total_supply_current - total_supply_comp
-
-            print('diff:', diff)
-            print('diff_threshold:', diff_threshold)
 
             if diff > diff_threshold:
                 events.append(event_high(
