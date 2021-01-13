@@ -44,37 +44,7 @@ from notify.models import CursorId, NotifyCursor
 
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
-#SKIP_TRIGGERS = ['noop']
-# TODO: Debug
-SKIP_TRIGGERS = [
-    'noop',
-    'oracle_outliers',
-    'ousd_burns',
-    'ousd_outliers',
-    'ousd_totalsupply',
-    'vault_newasset',
-    'vault_oracle',
-    'vault_strategies',
-    'vault_capital',
-    'failed_transactions',
-    'ousd_mint',
-    'ousd_burn',
-    'staking_stake',
-    'governor_proposals',
-    'proxy_upgraded',
-    'governable_transfer',
-    'strategy_deposit',
-    'strategy_ptokens',
-    'compound_governoralpha_proposals',
-    'compound_timelock_admin',
-    'compound_timelock_delay',
-    'compound_timelock_transactions',
-    'vault_rebase_pause',
-    'vault_buffer',
-    'vault_fees',
-    'vault_supplydiff',
-]
-#SKIP_TRIGGERS = ['noop', 'oracle_outliers', 'vault_newasset', 'vault_oracle', 'vault_strategies', 'failed_transactions', 'staking_stake']
+SKIP_TRIGGERS = ['noop']
 log = logging.getLogger('notify.triggers')
 
 
