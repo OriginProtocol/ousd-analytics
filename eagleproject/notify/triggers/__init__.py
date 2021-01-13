@@ -25,9 +25,10 @@ import logging
 from pathlib import Path
 from datetime import datetime
 from importlib import import_module
-from django.db.models import Max
+from django.db.models import Max, Subquery
 
 from core.models import (
+    CTokenSnapshot,
     Block,
     Log,
     OgnStakingSnapshot,
@@ -56,7 +57,11 @@ def load_triggers():
     files = [
         x
         for x in THIS_DIR.iterdir()
-        if x.is_file() and not x.name.startswith('__')
+        if (
+            x.is_file()
+            and x.name.endswith('.py')
+            and not x.name.startswith('__')
+        )
     ]
 
     return [
@@ -91,6 +96,21 @@ def latest_ogn_staking_snap():
 
 def oracles_snaps(block_number):
     return OracleSnapshot.objects.filter(block_number=block_number)
+
+
+def ctoken_snapshots(block_number):
+    return CTokenSnapshot.objects.filter(block_number=block_number)
+
+
+def recent_ctoken_snapshots(snap_count=5):
+    """ Get the latest N snapshots for all cTokens """
+    return CTokenSnapshot.objects.annotate(
+        block_number__in=Subquery(
+            CTokenSnapshot.objects.order_by(
+                '-block_number'
+            ).values('block_number')[:snap_count]
+        )
+    ).order_by('-block_number', 'address')
 
 
 def run_all_triggers():
@@ -150,7 +170,11 @@ def run_all_triggers():
         "logs": lambda: logs(0),
         "new_logs": lambda: logs(transaction_cursor.block_number),
         "ogn_staking_snapshot": latest_ogn_staking_snap,
-        "oracle_snapshots": lambda: oracles_snaps(snapshot_block_number)
+        "oracle_snapshots": lambda: oracles_snaps(snapshot_block_number),
+        "ctoken_snapshots": lambda: ctoken_snapshots(
+            transaction_cursor.block_number
+        ),
+        "recent_ctoken_snapshots": lambda: recent_ctoken_snapshots()
     }
 
     for mod in mods:
@@ -159,7 +183,7 @@ def run_all_triggers():
 
         # Give it values
         script_kwargs = {
-            k: availible_kwargs_valgen.get(k)() for k in func_spec.args
+            k: availible_kwargs_valgen[k]() for k in func_spec.args
         }
 
         try:
