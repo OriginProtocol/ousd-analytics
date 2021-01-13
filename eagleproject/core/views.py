@@ -12,17 +12,19 @@ from core.addresses import (
 )
 from core.sigs import TRANSFER
 from core.blockchain import (
+    COMPOUND_FOR_SYMBOL,
+    balanceOf,
+    ensure_all_transactions,
     ensure_asset,
+    ensure_ctoken_snapshot,
+    ensure_latest_logs,
     ensure_oracle_snapshot,
     ensure_staking_snapshot,
     ensure_supply_snapshot,
     ensure_transaction_and_downstream,
     latest_block,
-    ensure_latest_logs,
-    ensure_all_transactions,
-    totalSupply,
-    balanceOf,
     rebasing_credits_per_token,
+    totalSupply,
 )
 from core.models import Log, SupplySnapshot
 
@@ -251,6 +253,9 @@ def _reload(block_number):
     ensure_staking_snapshot(block_number)
     ensure_all_transactions(block_number)
     ensure_oracle_snapshot(block_number)
+
+    for symbol in COMPOUND_FOR_SYMBOL:
+        ensure_ctoken_snapshot(symbol, block_number)
 
 
 def _latest_snapshot():
