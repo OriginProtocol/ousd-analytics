@@ -1,13 +1,13 @@
-import re
 from datetime import datetime
 from eth_hash.auto import keccak
 from eth_abi import decode_single
 from eth_utils import encode_hex, decode_hex
 from django.db.models import Q
-from core.blockchain import CONTRACT_ADDR_TO_NAME
+from core.common import decode_calls
+from core.addresses import CONTRACT_ADDR_TO_NAME
 from notify.events import event_high
 
-SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,]*)\)$'
+
 SIG_EVENT_PROPOSAL_CREATED = encode_hex(
     keccak(
         b"ProposalCreated(uint256,address,address[],string[],bytes[],string)"
@@ -31,35 +31,6 @@ def get_proposal_events(logs):
         | Q(topic_0=SIG_EVENT_PROPOSAL_EXECUTED)
         | Q(topic_0=SIG_EVENT_PROPOSAL_CANCELLED)
     ).order_by('block_number')
-
-
-def decode_calls(signatures, calldatas):
-    calls = []
-
-    for i, sig in enumerate(signatures):
-        match = re.match(SIG_PATTERN, sig)
-
-        if not match:
-            # TODO: Better way to represent this?
-            calls.append('{}({})'.format(sig[:10], calldatas[i]))
-            continue
-
-        func = match.groups()[0]
-        try:
-            types_string = match.groups()[1]
-        except IndexError:
-            types_string = ""
-
-        # Tag the arg types from the signature and decode calldata accordingly
-        types = [x.strip() for x in types_string.split(',')]
-        args = decode_single('({})'.format(','.join(types)), calldatas[i])
-
-        # Assemble a human-readable function call with arg values
-        call = '{}({})'.format(func, ','.join([str(v) for v in args]))
-
-        calls.append(call)
-
-    return calls
 
 
 def run_trigger(new_logs):
@@ -103,7 +74,7 @@ def run_trigger(new_logs):
                 '(uint256,uint256)',
                 decode_hex(ev.data)
             )
-            eta = datetime.fromtimestamp(eta_seconds)
+            eta = datetime.utcfromtimestamp(eta_seconds)
 
             title = "Proposal Queued   🗳️ ✔️"
             details = "Prop {} was accepted and queued for {}.".format(

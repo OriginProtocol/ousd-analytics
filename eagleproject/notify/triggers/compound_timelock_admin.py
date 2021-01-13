@@ -3,21 +3,21 @@ from django.db.models import Q
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.addresses import TIMELOCK
+from core.addresses import COMPOUND_TIMELOCK
 from core.sigs import SIG_EVENT_NEW_ADMIN, SIG_EVENT_NEW_PENDING_ADMIN
 from notify.events import event_high
 
 
 def get_events(logs):
     """ Get Mint/Redeem events """
-    return logs.filter(address=TIMELOCK).filter(
+    return logs.filter(address=COMPOUND_TIMELOCK).filter(
         Q(topic_0=SIG_EVENT_NEW_ADMIN)
         | Q(topic_0=SIG_EVENT_NEW_PENDING_ADMIN)
     ).order_by('block_number')
 
 
 def run_trigger(new_logs):
-    """ Timelock changes """
+    """ Compound Timelock changes """
     events = []
 
     for ev in get_events(new_logs):
@@ -25,8 +25,8 @@ def run_trigger(new_logs):
 
         if ev.topic_0 == SIG_EVENT_NEW_ADMIN:
             events.append(event_high(
-                "Governor admin claimed   👮",
-                "A new admin has been set for the Timelock "
+                "Compound Timelock admin claimed   👮",
+                "A new admin has been set for the Compound Timelock "
                 "contract: {}".format(
                     admin_address
                 )
@@ -34,9 +34,10 @@ def run_trigger(new_logs):
 
         elif ev.topic_0 == SIG_EVENT_NEW_PENDING_ADMIN:
             events.append(event_high(
-                "New governor admin proposed   👮",
-                "{} has been proposed as the new admin for Timelock governor "
-                " contract and is currently waiting to be claimed.".format(
+                "New Compound Timelock admin proposed   👮",
+                "{} has been proposed as the new admin for the Compound "
+                "Timelock governor contract and is currently waiting to be "
+                "claimed.".format(
                     admin_address
                 )
             ))

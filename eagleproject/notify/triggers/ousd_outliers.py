@@ -4,7 +4,7 @@ from statistics import median
 from django.db.models import Q
 
 from core.common import format_ousd_human
-from core.blockchain import ZERO_ADDRESS
+from core.addresses import ZERO_ADDRESS
 from notify.events import event_low
 
 CACHE_DURATION_MINUTES = 30

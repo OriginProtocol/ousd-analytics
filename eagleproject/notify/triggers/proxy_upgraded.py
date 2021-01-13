@@ -1,9 +1,8 @@
 """ Proxy upgrades """
-from django.db.models import Q
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.blockchain import CONTRACT_ADDR_TO_NAME
+from core.addresses import CONTRACT_ADDR_TO_NAME
 from core.sigs import SIG_EVENT_UPGRADED
 from notify.events import event_high
 

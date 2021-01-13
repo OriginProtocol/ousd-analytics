@@ -2,7 +2,6 @@ import sys
 import json
 import requests
 from time import sleep
-from datetime import datetime
 from django.conf import settings
 from django.core.mail import send_mail
 from core.common import Severity
@@ -97,8 +96,9 @@ class DiscordWebhook(Action):
                     if retry_after > 30:
                         print(
                             'Discord rate limit wait of {}sec is too long!  '
-                            'Skipping.'.format(
-                                retry_after
+                            'Skipping. ({})'.format(
+                                retry_after,
+                                self.summary,
                             )
                         )
                         break

@@ -1,7 +1,8 @@
 """ Oracle prices drift """
 import locale
 from decimal import Decimal
-from core.blockchain import VAULT, priceUSDMint, priceUSDRedeem
+from core.addresses import VAULT
+from core.blockchain import priceUSDMint, priceUSDRedeem
 from notify.events import event_high
 
 # USD-pegged stable coins drift thresholds
