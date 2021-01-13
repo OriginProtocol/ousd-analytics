@@ -17,9 +17,9 @@ def get_past_comparison(ctoken_snaps):
         return 0
 
     elif count > 2:
-        return mean([x.total_supply for x in ctoken_snaps[1:]])
+        return mean([x.total_borrows for x in ctoken_snaps[1:]])
 
-    return ctoken_snaps[1].total_supply
+    return ctoken_snaps[1].total_borrows
 
 
 def run_trigger(recent_ctoken_snapshots):
@@ -31,19 +31,18 @@ def run_trigger(recent_ctoken_snapshots):
         dict_append(snaps, snap.address, snap)
 
     for ctoken_address in snaps:
-        total_supply_comp = get_past_comparison(snaps[ctoken_address])
-        total_supply_current = snaps[ctoken_address][0].total_supply
-        diff_threshold = total_supply_comp * PERCENT_DIFF_THRESHOLD
+        total_borrows_comp = get_past_comparison(snaps[ctoken_address])
+        total_borrows_current = snaps[ctoken_address][0].total_borrows
+        diff_threshold = total_borrows_comp * PERCENT_DIFF_THRESHOLD
 
-        if total_supply_current < total_supply_comp:
-            diff = total_supply_comp - total_supply_current
+        if total_borrows_current < total_borrows_comp:
+            diff = total_borrows_comp - total_borrows_current
 
             if diff > diff_threshold:
                 events.append(event_critical(
-                    "Compound cToken Total Supply Fluctuation   🚨",
-                    "The cToken {} has dropped more than {}% between "
-                    "snapshots. This could indicate issues or a rush on "
-                    "capital.".format(
+                    "Compound cToken Total Borrows Fluctuation   🚨",
+                    "The cToken {} borrows have dropped more than {}% between "
+                    "snapshots.".format(
                         CONTRACT_ADDR_TO_NAME.get(
                             ctoken_address,
                             ctoken_address
@@ -53,12 +52,12 @@ def run_trigger(recent_ctoken_snapshots):
                 ))
 
         else:
-            diff = total_supply_current - total_supply_comp
+            diff = total_borrows_current - total_borrows_comp
 
             if diff > diff_threshold:
                 events.append(event_high(
-                    "Compound cToken Total Supply Fluctuation   🚨",
-                    "The cToken {} has gained more than {}% between "
+                    "Compound cToken Total Borrows Fluctuation   🚨",
+                    "The cToken {} has gained more than {}% borrows between "
                     "snapshots.".format(
                         CONTRACT_ADDR_TO_NAME.get(
                             ctoken_address,
