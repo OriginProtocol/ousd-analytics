@@ -188,3 +188,34 @@ class OracleSnapshot(models.Model):
     ticker_left = models.CharField(max_length=6, db_index=True)
     ticker_right = models.CharField(max_length=6, db_index=True)
     price = models.DecimalField(max_digits=64, decimal_places=18)
+
+
+class CTokenSnapshot(models.Model):
+    """ Snapshot of useful compound state for a given block """
+    block_number = models.IntegerField(db_index=True)
+
+    # Address of the cToken
+    address = models.CharField(max_length=42, db_index=True)
+
+    # These are the per-block rates in percentage (1.00 = 100%)
+    borrow_rate = models.DecimalField(max_digits=64, decimal_places=18)
+    supply_rate = models.DecimalField(max_digits=64, decimal_places=18)
+
+    # These are the calculated APY in percentage (1.00 = 100%)
+    borrow_apy = models.DecimalField(max_digits=64, decimal_places=18)
+    supply_apy = models.DecimalField(max_digits=64, decimal_places=18)
+
+    # Total number of cTokens in circulation
+    total_supply = models.DecimalField(max_digits=64, decimal_places=18)
+
+    # Total amount of outstanding borrows of the underlying in this market
+    total_borrows = models.DecimalField(max_digits=64, decimal_places=18)
+
+    # The exchange rate from the underlying to the CToken
+    exchange_rate_stored = models.DecimalField(
+        max_digits=64,
+        decimal_places=18
+    )
+
+    class Meta:
+        unique_together = ('block_number', 'address')

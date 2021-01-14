@@ -12,6 +12,15 @@ CHAINLINK_TOK_ETH_PRICE = encode_hex(keccak(b"tokEthPrice(string)"))
 # tokUsdPrice(string calldata symbol)
 CHAINLINK_TOK_USD_PRICE = encode_hex(keccak(b"tokUsdPrice(string)"))
 
+# ERC20
+SIG_FUNC_TOTAL_SUPPLY = encode_hex(keccak(b"totalSupply()"))
+
+# Compound
+SIG_FUNC_TOTAL_BORROWS = encode_hex(keccak(b"totalBorrows()"))
+SIG_FUNC_EXCHANGE_RATE_STORED = encode_hex(keccak(b"exchangeRateStored()"))
+SIG_FUNC_BORROW_RATE = encode_hex(keccak(b"borrowRatePerBlock()"))
+SIG_FUNC_SUPPLY_RATE = encode_hex(keccak(b"supplyRatePerBlock()"))
+
 ########
 # Events
 ########

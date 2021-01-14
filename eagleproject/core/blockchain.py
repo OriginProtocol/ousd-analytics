@@ -11,6 +11,7 @@ from django.conf import settings
 from core.models import (
     AssetBlock,
     Block,
+    CTokenSnapshot,
     DebugTx,
     EtherscanPointer,
     Log,
@@ -34,6 +35,11 @@ from core.sigs import (
     SIG_EVENT_WITHDRAWN,
     DEPRECATED_SIG_EVENT_STAKED,
     DEPRECATED_SIG_EVENT_WITHDRAWN,
+    SIG_FUNC_BORROW_RATE,
+    SIG_FUNC_EXCHANGE_RATE_STORED,
+    SIG_FUNC_SUPPLY_RATE,
+    SIG_FUNC_TOTAL_BORROWS,
+    SIG_FUNC_TOTAL_SUPPLY,
 )
 from core.addresses import (
     CHAINLINK_ORACLE,
@@ -60,6 +66,14 @@ from core.addresses import (
 )
 
 START_OF_EVERYTHING = 10884500
+BLOCKS_PER_MINUTE = 4
+BLOCKS_PER_HOUR = BLOCKS_PER_MINUTE * 60
+BLOCKS_PER_DAY = BLOCKS_PER_HOUR * 24
+BLOCKS_PER_YEAR = BLOCKS_PER_DAY * 365
+
+E_6 = Decimal(1e6)
+E_8 = Decimal(1e8)
+E_18 = Decimal(1e18)
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
@@ -187,7 +201,7 @@ def balanceOf(coin_contract, holder, decimals, block="latest"):
 
 
 def totalSupply(coin_contract, decimals, block="latest"):
-    signature = "0x18160ddd"
+    signature = SIG_FUNC_TOTAL_SUPPLY[:10]
     payload = ""
     data = call(coin_contract, signature, payload, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
@@ -195,12 +209,42 @@ def totalSupply(coin_contract, decimals, block="latest"):
     )
 
 
+def totalBorrows(coin_contract, decimals, block="latest"):
+    signature = SIG_FUNC_TOTAL_BORROWS[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+        math.pow(10, decimals)
+    )
+
+
+def exchnageRateStored(coin_contract, block="latest"):
+    signature = SIG_FUNC_EXCHANGE_RATE_STORED[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+
+
+def borrowRatePerBlock(coin_contract, block="latest"):
+    signature = SIG_FUNC_BORROW_RATE[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+
+
+def supplyRatePerBlock(coin_contract, block="latest"):
+    signature = SIG_FUNC_SUPPLY_RATE[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+
+
 def open_oracle_price(ticker, block="latest"):
     signature = OPEN_ORACLE_PRICE[:10]
     payload = encode_single("(string)", [ticker]).hex()
     data = call(OPEN_ORACLE, signature, payload, block)
     # price() returns 6 decimals
-    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e6)
+    return Decimal(int(data["result"][0:64 + 2], 16)) / E_6
 
 
 def chainlink_ethUsdPrice(block="latest"):
@@ -208,7 +252,7 @@ def chainlink_ethUsdPrice(block="latest"):
     payload = ""
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH-USD price with 6 decimals
-    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e6)
+    return Decimal(int(data["result"][0:64 + 2], 16)) / E_6
 
 
 def chainlink_tokEthPrice(ticker, block="latest"):
@@ -216,7 +260,7 @@ def chainlink_tokEthPrice(ticker, block="latest"):
     payload = encode_single("(string)", [ticker]).hex()
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH price with 8 decimals for some reason...
-    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e8)
+    return Decimal(int(data["result"][0:64 + 2], 16)) / E_8
 
 
 def chainlink_tokUsdPrice(ticker, block="latest"):
@@ -224,7 +268,7 @@ def chainlink_tokUsdPrice(ticker, block="latest"):
     payload = encode_single("(string)", [ticker]).hex()
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH price with 8 decimals for some reason...
-    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e8)
+    return Decimal(int(data["result"][0:64 + 2], 16)) / E_8
 
 
 def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
@@ -273,21 +317,21 @@ def ousd_non_rebasing_supply(block="latest"):
 
 def ogn_staking_total_outstanding(block):
     data = storage_at(OGN_STAKING, 54, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(1e18)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
 def priceUSDMint(coin_contract, symbol, block="latest"):
     signature = "0x686b37ca"  # priceUSDMint(string)
     payload = encode_single("(string)", [symbol]).hex()
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"], 16)) / Decimal(1e18)
+    return Decimal(int(data["result"], 16)) / E_18
 
 
 def priceUSDRedeem(coin_contract, symbol, block="latest"):
     signature = "0x29a903ec"  # priceUSDRedeem(string)
     payload = encode_single("(string)", [symbol]).hex()
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"], 16)) / Decimal(1e18)
+    return Decimal(int(data["result"], 16)) / E_18
 
 
 def build_asset_block(symbol, block_number):
@@ -638,7 +682,7 @@ def maybe_store_stake_withdrawn_record(log, block):
         # store duration in days
         duration = int(_slot(log["data"], 1), 16) / (24 * 60 * 60)
         # convert rate back to yearly rate
-        rate = Decimal(int(_slot(log["data"], 2), 16) / Decimal(1e18)) * 365 / Decimal(duration)
+        rate = Decimal(int(_slot(log["data"], 2), 16) / E_18) * 365 / Decimal(duration)
 
     staked = OgnStaked(
         tx_hash=tx_hash,
@@ -688,3 +732,49 @@ def ensure_transaction_and_downstream(tx_hash):
 def _slot(value, i):
     """Get the x 256bit field from a data string"""
     return value[2 + i * 64 : 2 + (i + 1) * 64]
+
+
+def ensure_ctoken_snapshot(underlying_symbol, block_number):
+    ctoken_address = COMPOUND_FOR_SYMBOL.get(underlying_symbol)
+
+    if not ctoken_address:
+        print('ERROR: Unknown underlying asset for cToken', file=sys.stderr)
+        return None
+
+    underlying_decimals = DECIMALS_FOR_SYMBOL[underlying_symbol]
+
+    q = CTokenSnapshot.objects.filter(
+        address=ctoken_address,
+        block_number=block_number
+    )
+
+    if q.count():
+        return q.first()
+
+    else:
+        borrow_rate = borrowRatePerBlock(ctoken_address, block_number)
+        supply_rate = supplyRatePerBlock(ctoken_address, block_number)
+
+        borrow_apy = borrow_rate * Decimal(BLOCKS_PER_YEAR)
+        supply_apy = supply_rate * Decimal(BLOCKS_PER_YEAR)
+
+        s = CTokenSnapshot()
+        s.block_number = block_number
+        s.address = ctoken_address
+        s.borrow_rate = borrow_rate
+        s.borrow_apy = borrow_apy
+        s.supply_rate = supply_rate
+        s.supply_apy = supply_apy
+        s.total_supply = totalSupply(ctoken_address, 8, block_number)
+        s.total_borrows = totalBorrows(
+            ctoken_address,
+            underlying_decimals,
+            block_number
+        )
+        s.exchange_rate_stored = exchnageRateStored(
+            ctoken_address,
+            block_number
+        )
+        s.save()
+
+        return s

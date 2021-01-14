@@ -138,3 +138,11 @@ def decode_calls(signatures, calldatas):
         calls.append(decode_call(sig, calldatas[i]))
 
     return calls
+
+
+def dict_append(d, k, v):
+    """ Make sure a dict key is a list, then append to it """
+    if k not in d or not isinstance(d[k], list):
+        d[k] = list()
+    d[k].append(v)
+    return d
