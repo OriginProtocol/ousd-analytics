@@ -3,7 +3,7 @@ from eth_abi import decode_single
 from eth_utils import decode_hex
 from django.db.models import Q
 from core.common import format_ousd_human
-from core.addresses import OGN_STAKING
+from core.blockchain.addresses import OGN_STAKING
 from core.blockchain import (
     SIG_EVENT_STAKED,
     SIG_EVENT_WITHDRAWN,

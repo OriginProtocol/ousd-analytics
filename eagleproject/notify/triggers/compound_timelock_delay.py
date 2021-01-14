@@ -3,7 +3,7 @@ from datetime import timedelta
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.addresses import COMPOUND_TIMELOCK
+from core.blockchain.addresses import COMPOUND_TIMELOCK
 from core.blockchain.sigs import SIG_EVENT_DELAY
 from notify.events import event_high
 

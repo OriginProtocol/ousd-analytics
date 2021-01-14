@@ -4,7 +4,7 @@ from eth_abi import decode_single
 from eth_utils import encode_hex, decode_hex
 from django.db.models import Q
 from core.common import decode_calls
-from core.addresses import CONTRACT_ADDR_TO_NAME
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 from notify.events import event_high
 
 

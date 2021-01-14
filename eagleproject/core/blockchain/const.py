@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from core.addresses import (
+from core.blockchain.addresses import (
     COMP,
     COMPENSATION_CLAIMS,
     COMPOUND_GOVERNOR_ALPHA,

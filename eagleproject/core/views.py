@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
 from django.db.models import Q
-from core.addresses import (
+from core.blockchain.addresses import (
     OUSD,
     OUSD_USDT_UNISWAP,
     OUSD_USDT_SUSHI,

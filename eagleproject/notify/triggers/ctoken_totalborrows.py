@@ -1,6 +1,6 @@
 from decimal import Decimal
 from statistics import mean
-from core.addresses import CONTRACT_ADDR_TO_NAME
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 from core.common import dict_append
 from notify.events import event_critical, event_high
 

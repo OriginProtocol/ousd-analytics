@@ -2,7 +2,7 @@ from numpy import percentile
 from datetime import datetime, timedelta
 
 from core.models import OracleSnapshot
-from core.addresses import MIX_ORACLE, CHAINLINK_ORACLE, OPEN_ORACLE
+from core.blockchain.addresses import MIX_ORACLE, CHAINLINK_ORACLE, OPEN_ORACLE
 from core.common import format_deimal
 from notify.events import event_normal
 

@@ -1,7 +1,7 @@
 """ Oracle prices drift """
 import locale
 from decimal import Decimal
-from core.addresses import VAULT
+from core.blockchain.addresses import VAULT
 from core.blockchain import priceUSDMint, priceUSDRedeem
 from notify.events import event_high
 

@@ -5,7 +5,7 @@ from eth_utils import decode_hex
 from eth_abi import decode_single
 
 from core.common import decode_calls
-from core.addresses import CONTRACT_ADDR_TO_NAME, COMPOUND_GOVERNOR_ALPHA
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME, COMPOUND_GOVERNOR_ALPHA
 from core.blockchain.sigs import (
     SIG_EVENT_PROPOSAL_CREATED,
     SIG_EVENT_PROPOSAL_CANCELED,
