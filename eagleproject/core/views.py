@@ -4,16 +4,15 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
 from django.db.models import Q
-from core.addresses import (
+from core.blockchain.addresses import (
     OUSD,
     OUSD_USDT_UNISWAP,
     OUSD_USDT_SUSHI,
     SNOWSWAP,
 )
-from core.sigs import TRANSFER
-from core.blockchain import (
-    COMPOUND_FOR_SYMBOL,
-    balanceOf,
+from core.blockchain.sigs import TRANSFER
+from core.blockchain.const import COMPOUND_FOR_SYMBOL
+from core.blockchain.harvest import (
     ensure_all_transactions,
     ensure_asset,
     ensure_ctoken_snapshot,
@@ -22,6 +21,9 @@ from core.blockchain import (
     ensure_staking_snapshot,
     ensure_supply_snapshot,
     ensure_transaction_and_downstream,
+)
+from core.blockchain.rpc import (
+    balanceOf,
     latest_block,
     rebasing_credits_per_token,
     totalSupply,

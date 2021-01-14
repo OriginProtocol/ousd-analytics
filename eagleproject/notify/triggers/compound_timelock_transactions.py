@@ -4,8 +4,8 @@ from eth_utils import decode_hex
 from eth_abi import decode_single
 from django.db.models import Q
 
-from core.addresses import CONTRACT_ADDR_TO_NAME, COMPOUND_TIMELOCK
-from core.sigs import (
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME, COMPOUND_TIMELOCK
+from core.blockchain.sigs import (
     SIG_EVENT_CANCEL_TRANSACTION,
     SIG_EVENT_EXECUTE_TRANSACTION,
     SIG_EVENT_QUEUE_TRANSACTION,

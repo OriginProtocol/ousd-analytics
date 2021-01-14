@@ -1,13 +1,64 @@
-import os
 import sys
-import math
-import datetime
-import requests
+from datetime import datetime
 from decimal import Decimal
-from json.decoder import JSONDecodeError
-from eth_abi import encode_single
 from django.conf import settings
 
+from core.blockchain.addresses import (
+    CHAINLINK_ORACLE,
+    DAI,
+    OGN,
+    OGN_STAKING,
+    OPEN_ORACLE,
+    OUSD,
+    STRATAAVEDAI,
+    STRATCOMP,
+    VAULT,
+)
+from core.common import slot
+from core.etherscan import get_contract_transactions
+from core.blockchain.const import (
+    E_18,
+    BLOCKS_PER_YEAR,
+    ASSET_TICKERS,
+    COMPOUND_FOR_SYMBOL,
+    CONTRACT_FOR_SYMBOL,
+    DECIMALS_FOR_SYMBOL,
+    ETHERSCAN_CONTRACTS,
+    LOG_CONTRACTS,
+    START_OF_EVERYTHING,
+)
+from core.blockchain.rpc import (
+    balanceOf,
+    balanceOfUnderlying,
+    borrowRatePerBlock,
+    chainlink_ethUsdPrice,
+    chainlink_tokEthPrice,
+    # chainlink_tokUsdPrice,
+    debug_trace_transaction,
+    exchnageRateStored,
+    get_block,
+    get_transaction,
+    get_transaction_receipt,
+    ogn_staking_total_outstanding,
+    open_oracle_price,
+    ousd_rebasing_credits,
+    ousd_non_rebasing_supply,
+    priceUSDMint,
+    priceUSDRedeem,
+    rebasing_credits_per_token,
+    request,
+    strategyCheckBalance,
+    supplyRatePerBlock,
+    totalSupply,
+    totalBorrows,
+)
+from core.blockchain.sigs import (
+    DEPRECATED_SIG_EVENT_WITHDRAWN,
+    DEPRECATED_SIG_EVENT_STAKED,
+    SIG_EVENT_STAKED,
+    SIG_EVENT_WITHDRAWN,
+    TRANSFER,
+)
 from core.models import (
     AssetBlock,
     Block,
@@ -23,315 +74,6 @@ from core.models import (
     SupplySnapshot,
     Transaction,
 )
-from core.etherscan import get_contract_transactions
-
-from core.sigs import (
-    CHAINLINK_ETH_USD_PRICE,
-    CHAINLINK_TOK_ETH_PRICE,
-    CHAINLINK_TOK_USD_PRICE,
-    OPEN_ORACLE_PRICE,
-    TRANSFER,
-    SIG_EVENT_STAKED,
-    SIG_EVENT_WITHDRAWN,
-    DEPRECATED_SIG_EVENT_STAKED,
-    DEPRECATED_SIG_EVENT_WITHDRAWN,
-    SIG_FUNC_BORROW_RATE,
-    SIG_FUNC_EXCHANGE_RATE_STORED,
-    SIG_FUNC_SUPPLY_RATE,
-    SIG_FUNC_TOTAL_BORROWS,
-    SIG_FUNC_TOTAL_SUPPLY,
-)
-from core.addresses import (
-    CHAINLINK_ORACLE,
-    COMP,
-    COMPENSATION_CLAIMS,
-    COMPOUND_GOVERNOR_ALPHA,
-    COMPOUND_TIMELOCK,
-    CDAI,
-    CUSDC,
-    CUSDT,
-    DAI,
-    GOVERNOR,
-    OGN,
-    OGN_STAKING,
-    OPEN_ORACLE,
-    OUSD,
-    OUSD_USDT_UNISWAP,
-    STRATAAVEDAI,
-    STRATCOMP,
-    TIMELOCK,
-    USDT,
-    USDC,
-    VAULT,
-)
-
-START_OF_EVERYTHING = 10884500
-BLOCKS_PER_MINUTE = 4
-BLOCKS_PER_HOUR = BLOCKS_PER_MINUTE * 60
-BLOCKS_PER_DAY = BLOCKS_PER_HOUR * 24
-BLOCKS_PER_YEAR = BLOCKS_PER_DAY * 365
-
-E_6 = Decimal(1e6)
-E_8 = Decimal(1e8)
-E_18 = Decimal(1e18)
-
-CONTRACT_FOR_SYMBOL = {
-    "DAI": DAI,
-    "USDT": USDT,
-    "USDC": USDC,
-    "COMP": COMP,
-}
-SYMBOL_FOR_CONTRACT = {v: k for (k, v) in CONTRACT_FOR_SYMBOL.items()}
-
-DECIMALS_FOR_SYMBOL = {
-    "COMP": 18,
-    "DAI": 18,
-    "USDT": 6,
-    "USDC": 6,
-}
-
-THREEPOOLINDEX_FOR_ASSET = {
-    DAI: 0,
-    USDC: 1,
-    USDT: 2,
-}
-
-COMPOUND_FOR_SYMBOL = {
-    "DAI": CDAI,
-    "USDT": CUSDT,
-    "USDC": CUSDC,
-}
-
-LOG_CONTRACTS = [
-    GOVERNOR,
-    OUSD,
-    VAULT,
-    STRATCOMP,
-    STRATAAVEDAI,
-    OUSD_USDT_UNISWAP,
-    TIMELOCK,
-    OGN_STAKING,
-    COMPOUND_GOVERNOR_ALPHA,
-    COMPOUND_TIMELOCK,
-    COMPENSATION_CLAIMS,
-]
-ETHERSCAN_CONTRACTS = [GOVERNOR, OUSD, VAULT, TIMELOCK]
-
-ASSET_TICKERS = ["DAI", "USDC", "USDT"]
-
-
-def request(method, params):
-    url = os.environ.get("PROVIDER_URL")
-
-    if url is None:
-        raise Exception("No PROVIDER_URL ENV variable defined")
-
-    params = {
-        "jsonrpc": "2.0",
-        "id": 0,
-        "method": method,
-        "params": params,
-    }
-
-    r = requests.post(url, json=params)
-
-    try:
-        return r.json()
-
-    except JSONDecodeError as err:
-        try:
-            print(r.text, file=sys.stderr)
-        except Exception:
-            pass
-        raise err
-
-    except Exception as err:
-        print(err, file=sys.stderr)
-        raise err
-
-
-def call(to, signature, payload, block="latest"):
-    params = [
-        {"to": to, "data": signature + payload},
-        block if block == "latest" else hex(block),
-    ]
-    return request("eth_call", params)
-
-
-def storage_at(address, slot, block="latest"):
-    params = [address, hex(slot), block if block == "latest" else hex(block)]
-    return request("eth_getStorageAt", params)
-
-
-def debug_trace_transaction(tx_hash):
-    params = [tx_hash]
-    data = request("trace_transaction", params)
-    return data.get("result", {})
-
-
-def latest_block():
-    data = request("eth_blockNumber", [])
-    return int(data["result"], 16)
-
-
-def get_block(block_number):
-    hex_block = hex(block_number)
-    params = [hex_block, False]
-    data = request("eth_getBlockByNumber", params)
-    return data["result"]
-
-
-def get_transaction(tx_hash):
-    data = request("eth_getTransactionByHash", [tx_hash])
-    return data["result"]
-
-
-def get_transaction_receipt(tx_hash):
-    data = request("eth_getTransactionReceipt", [tx_hash])
-    return data["result"]
-
-
-def balanceOf(coin_contract, holder, decimals, block="latest"):
-    signature = "0x70a08231"
-    payload = encode_single("(address)", [holder]).hex()
-    data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
-        math.pow(10, decimals)
-    )
-
-
-def totalSupply(coin_contract, decimals, block="latest"):
-    signature = SIG_FUNC_TOTAL_SUPPLY[:10]
-    payload = ""
-    data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
-        math.pow(10, decimals)
-    )
-
-
-def totalBorrows(coin_contract, decimals, block="latest"):
-    signature = SIG_FUNC_TOTAL_BORROWS[:10]
-    payload = ""
-    data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
-        math.pow(10, decimals)
-    )
-
-
-def exchnageRateStored(coin_contract, block="latest"):
-    signature = SIG_FUNC_EXCHANGE_RATE_STORED[:10]
-    payload = ""
-    data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0:64+2], 16)) / E_18
-
-
-def borrowRatePerBlock(coin_contract, block="latest"):
-    signature = SIG_FUNC_BORROW_RATE[:10]
-    payload = ""
-    data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0:64+2], 16)) / E_18
-
-
-def supplyRatePerBlock(coin_contract, block="latest"):
-    signature = SIG_FUNC_SUPPLY_RATE[:10]
-    payload = ""
-    data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0:64+2], 16)) / E_18
-
-
-def open_oracle_price(ticker, block="latest"):
-    signature = OPEN_ORACLE_PRICE[:10]
-    payload = encode_single("(string)", [ticker]).hex()
-    data = call(OPEN_ORACLE, signature, payload, block)
-    # price() returns 6 decimals
-    return Decimal(int(data["result"][0:64 + 2], 16)) / E_6
-
-
-def chainlink_ethUsdPrice(block="latest"):
-    signature = CHAINLINK_ETH_USD_PRICE[:10]
-    payload = ""
-    data = call(CHAINLINK_ORACLE, signature, payload, block)
-    # tokEthPrice() returns an ETH-USD price with 6 decimals
-    return Decimal(int(data["result"][0:64 + 2], 16)) / E_6
-
-
-def chainlink_tokEthPrice(ticker, block="latest"):
-    signature = CHAINLINK_TOK_ETH_PRICE[:10]
-    payload = encode_single("(string)", [ticker]).hex()
-    data = call(CHAINLINK_ORACLE, signature, payload, block)
-    # tokEthPrice() returns an ETH price with 8 decimals for some reason...
-    return Decimal(int(data["result"][0:64 + 2], 16)) / E_8
-
-
-def chainlink_tokUsdPrice(ticker, block="latest"):
-    signature = CHAINLINK_TOK_USD_PRICE[:10]
-    payload = encode_single("(string)", [ticker]).hex()
-    data = call(CHAINLINK_ORACLE, signature, payload, block)
-    # tokEthPrice() returns an ETH price with 8 decimals for some reason...
-    return Decimal(int(data["result"][0:64 + 2], 16)) / E_8
-
-
-def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
-    signature = "0x3af9e669"
-    try:
-        payload = encode_single("(address)", [holder]).hex()
-        data = call(coin_contract, signature, payload, block)
-        return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
-            math.pow(10, decimals)
-        )
-    except:
-        print("ERROR: balanceOfUnderlying failed")
-        return Decimal(0)
-
-
-def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
-    signature = "0x5f515226"
-    try:
-        payload = encode_single("(address)", [coin_contract]).hex()
-        data = call(strategy, signature, payload, block)
-        return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
-            math.pow(10, decimals)
-        )
-    except:
-        print("ERROR: strategyCheckBalance failed")
-        return Decimal(0)
-
-
-def rebasing_credits_per_token(block="latest"):
-    signature = "0x6691cb3d"  # rebasingCreditsPerToken()
-    data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
-
-
-def ousd_rebasing_credits(block="latest"):
-    signature = "0x077f22b7"  # rebasingCredits()
-    data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
-
-
-def ousd_non_rebasing_supply(block="latest"):
-    signature = "0xe696393a"  # nonRebasingSupply()
-    data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
-
-
-def ogn_staking_total_outstanding(block):
-    data = storage_at(OGN_STAKING, 54, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
-
-
-def priceUSDMint(coin_contract, symbol, block="latest"):
-    signature = "0x686b37ca"  # priceUSDMint(string)
-    payload = encode_single("(string)", [symbol]).hex()
-    data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"], 16)) / E_18
-
-
-def priceUSDRedeem(coin_contract, symbol, block="latest"):
-    signature = "0x29a903ec"  # priceUSDRedeem(string)
-    payload = encode_single("(string)", [symbol]).hex()
-    data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"], 16)) / E_18
 
 
 def build_asset_block(symbol, block_number):
@@ -484,8 +226,9 @@ def ensure_log_record(raw_log):
         topic_1="",
         topic_2="",
     )
-    if len(raw_log["data"]) >= 10:
-        signature = raw_log["data"][0:10]
+    # This doesn't do anything?
+    # if len(raw_log["data"]) >= 10:
+    #     signature = raw_log["data"][0:10]
     if len(raw_log["topics"]) >= 1:
         log.topic_0 = raw_log["topics"][0]
     if len(raw_log["topics"]) >= 2:
@@ -619,7 +362,7 @@ def ensure_block(block_number):
         return blocks[0]
     else:
         raw_block = get_block(block_number)
-        block_time = datetime.datetime.utcfromtimestamp(int(raw_block["timestamp"], 16))
+        block_time = datetime.utcfromtimestamp(int(raw_block["timestamp"], 16))
         block = Block(block_number=block_number, block_time=block_time)
         block.save()
         return block
@@ -649,7 +392,7 @@ def maybe_store_transfer_record(log, block):
         block_time=block.block_time,
         from_address="0x" + log["topics"][1][-40:],
         to_address="0x" + log["topics"][2][-40:],
-        amount=int(_slot(log["data"], 0), 16) / 1e18,
+        amount=int(slot(log["data"], 0), 16) / E_18,
     )
     transfer.save()
     return transfer
@@ -659,7 +402,12 @@ def maybe_store_stake_withdrawn_record(log, block):
     # Must be a Staked or Withdrawn event
     if (
         log["address"] != OGN_STAKING or
-        log["topics"][0] not in [SIG_EVENT_STAKED, SIG_EVENT_WITHDRAWN, DEPRECATED_SIG_EVENT_STAKED, DEPRECATED_SIG_EVENT_WITHDRAWN]
+        log["topics"][0] not in [
+            SIG_EVENT_STAKED,
+            SIG_EVENT_WITHDRAWN,
+            DEPRECATED_SIG_EVENT_STAKED,
+            DEPRECATED_SIG_EVENT_WITHDRAWN,
+        ]
     ):
         return None
 
@@ -680,9 +428,11 @@ def maybe_store_stake_withdrawn_record(log, block):
 
     if is_updated_staked_event:
         # store duration in days
-        duration = int(_slot(log["data"], 1), 16) / (24 * 60 * 60)
+        duration = int(slot(log["data"], 1), 16) / (24 * 60 * 60)
         # convert rate back to yearly rate
-        rate = Decimal(int(_slot(log["data"], 2), 16) / E_18) * 365 / Decimal(duration)
+        rate = Decimal(
+            int(slot(log["data"], 2), 16) / E_18
+        ) * 365 / Decimal(duration)
 
     staked = OgnStaked(
         tx_hash=tx_hash,
@@ -690,8 +440,8 @@ def maybe_store_stake_withdrawn_record(log, block):
         block_time=block.block_time,
         user_address="0x" + log["topics"][1][-40:],
         is_staked=is_staked_event,
-        amount=int(_slot(log["data"], 0), 16) / 1e18,
-        staked_amount=int(_slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
+        amount=int(slot(log["data"], 0), 16) / 1e18,
+        staked_amount=int(slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
         duration=duration,
         rate=rate
     )
@@ -727,11 +477,6 @@ def ensure_transaction_and_downstream(tx_hash):
         maybe_store_stake_withdrawn_record(log, block)
 
     return transaction
-
-
-def _slot(value, i):
-    """Get the x 256bit field from a data string"""
-    return value[2 + i * 64 : 2 + (i + 1) * 64]
 
 
 def ensure_ctoken_snapshot(underlying_symbol, block_number):

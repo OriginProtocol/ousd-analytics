@@ -3,7 +3,10 @@ from eth_utils import decode_hex
 from eth_abi import decode_single
 from django.db.models import Q
 
-from core.sigs import SIG_EVENT_ALLOCATE_THRESHOLD, SIG_EVENT_REBASE_THRESHOLD
+from core.blockchain.sigs import (
+    SIG_EVENT_ALLOCATE_THRESHOLD,
+    SIG_EVENT_REBASE_THRESHOLD,
+)
 from notify.events import event_normal
 
 

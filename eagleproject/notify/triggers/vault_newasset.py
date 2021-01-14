@@ -1,6 +1,6 @@
 from eth_utils import decode_hex
 from eth_abi import decode_single
-from core.sigs import SIG_EVENT_ASSET_SUPPORTED
+from core.blockchain.sigs import SIG_EVENT_ASSET_SUPPORTED
 from notify.events import event_high
 
 

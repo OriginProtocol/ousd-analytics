@@ -3,7 +3,7 @@ from eth_utils import decode_hex
 from django.db.models import Q
 
 from core.blockchain import SYMBOL_FOR_CONTRACT
-from core.sigs import (
+from core.blockchain.sigs import (
     SIG_EVENT_DEFAULT_STRATEGY,
     SIG_EVENT_STRATEGY_APPROVED,
     SIG_EVENT_STRATEGY_ADDED,

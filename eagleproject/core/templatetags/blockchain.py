@@ -4,8 +4,9 @@ from django.utils import timezone
 from binascii import unhexlify
 from decimal import Decimal
 from eth_abi import decode_single
-import core.blockchain as blockchain
-from core.blockchain import _slot
+from core.blockchain.const import E_6, E_8, E_18
+from core.blockchain.addresses import DAI, OUSD, USDC, USDT
+from core.common import slot
 import pytz
 
 
@@ -235,22 +236,22 @@ def dec_6(value):
 
 @register.filter
 def slot_0(value):
-    return _slot(value, 0)
+    return slot(value, 0)
 
 
 @register.filter
 def slot_1(value):
-    return _slot(value, 1)
+    return slot(value, 1)
 
 
 @register.filter
 def slot_2(value):
-    return _slot(value, 2)
+    return slot(value, 2)
 
 
 @register.filter
 def slot_3(value):
-    return _slot(value, 3)
+    return slot(value, 3)
 
 
 @register.filter
@@ -289,18 +290,18 @@ def trace_annotation(trace):
     t_input = trace["action"]["input"]
     signature = t_input[0:10]
     # print(to, signature)
-    if not "result" in trace:
+    if "result" not in trace:
         return "❌"
     if to == "0xcf67e56965ad7cec05ebf88bad798a875e0460eb" and signature == "0x19af6bf0":
         symbol = _snarf_input_symbol(trace)
-        value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e8)
+        value = Decimal(int(trace["result"]["output"], 16)) / E_8
         return "🏛 %s at $%s" % (symbol, value)
     elif (
         to == "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae"
         or to == "0x922018674c12a7f0d394ebeef9b58f186cde13c1"
     ) and signature == "0xfe2c6198":
         symbol = _snarf_input_symbol(trace)
-        value = Decimal(int(trace["result"]["output"], 16)) / Decimal(1e6)
+        value = Decimal(int(trace["result"]["output"], 16)) / E_6
         return "🏛🏛 %s at $%s" % (symbol, value)
     elif (
         to == "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419" and signature == "0xfeaf968c"
@@ -308,36 +309,36 @@ def trace_annotation(trace):
         s = "0x" + trace["result"]["output"][2 + 64 : 2 + 64 + 64]
         value = Decimal(int(s, 16)) / Decimal(1e8)
         return "🏛🏛 CHAIN ETH %f" % value
-    elif to == blockchain.USDC and signature == "0xa9059cbb":
-        value = int(slot_1('0x'+t_input[10:]),16) / Decimal(1e6)
+    elif to == USDC and signature == "0xa9059cbb":
+        value = int(slot_1('0x'+t_input[10:]),16) / E_6
         return "➡️ %s USDC" % value
-    elif to == blockchain.USDT and signature == "0xa9059cbb":
-        value = int(slot_1('0x'+t_input[10:]),16) / Decimal(1e6)
+    elif to == USDT and signature == "0xa9059cbb":
+        value = int(slot_1('0x'+t_input[10:]),16) / E_6
         return "➡️ %s USDT" % value
-    elif to == blockchain.DAI and signature == "0xa9059cbb":
-        value = int(slot_1('0x'+t_input[10:]),16) / Decimal(1e18)
+    elif to == DAI and signature == "0xa9059cbb":
+        value = int(slot_1('0x'+t_input[10:]),16) / E_18
         return "➡️ %s DAI" % value
-    elif to == blockchain.OUSD and signature == "0xa9059cbb":
-        value = int(slot_1('0x'+t_input[10:]),16) / Decimal(1e18)
+    elif to == OUSD and signature == "0xa9059cbb":
+        value = int(slot_1('0x'+t_input[10:]),16) / E_18
         return "➡️ %s OUSD" % value
 
-    elif to == blockchain.USDC and signature == "0x23b872dd":
-        value = int(slot_2('0x'+t_input[10:]),16) / Decimal(1e6)
+    elif to == USDC and signature == "0x23b872dd":
+        value = int(slot_2('0x'+t_input[10:]),16) / E_6
         return "➡️ %s USDC" % value
-    elif to == blockchain.USDT and signature == "0x23b872dd":
-        value = int(slot_2('0x'+t_input[10:]),16) / Decimal(1e6)
+    elif to == USDT and signature == "0x23b872dd":
+        value = int(slot_2('0x'+t_input[10:]),16) / E_6
         return "➡️ %s USDT" % value
-    elif to == blockchain.DAI and signature == "0x23b872dd":
-        value = int(slot_2('0x'+t_input[10:]),16) / Decimal(1e18)
+    elif to == DAI and signature == "0x23b872dd":
+        value = int(slot_2('0x'+t_input[10:]),16) / E_18
         return "➡️ %s DAI" % value
-    elif to == blockchain.OUSD and signature == "0x23b872dd":
-        value = int(slot_2('0x'+t_input[10:]),16) / Decimal(1e18)
+    elif to == OUSD and signature == "0x23b872dd":
+        value = int(slot_2('0x'+t_input[10:]),16) / E_18
         return "➡️ %s OUSD" % value
 
     elif signature == "0xfeaf968c":
         s = "0x" + trace["result"]["output"][2 + 64 : 2 + 64 + 64]
         print(s)
-        value = Decimal(int(s, 16)) / Decimal(1e8)
+        value = Decimal(int(s, 16)) / E_8
         return "CHAIN %f" % value
 
     return "."

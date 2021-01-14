@@ -1,5 +1,8 @@
 from django.db.models import Q
-from core.sigs import SIG_EVENT_CAPITAL_PAUSED, SIG_EVENT_CAPITAL_UNPAUSED
+from core.blockchain.sigs import (
+    SIG_EVENT_CAPITAL_PAUSED,
+    SIG_EVENT_CAPITAL_UNPAUSED,
+)
 from notify.events import event_high
 
 

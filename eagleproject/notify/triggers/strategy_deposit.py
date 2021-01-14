@@ -8,10 +8,10 @@ from django.db.models import Q
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.addresses import CONTRACT_ADDR_TO_NAME
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 from core.blockchain import SYMBOL_FOR_CONTRACT
 from core.common import format_token_human
-from core.sigs import SIG_EVENT_DEPOSIT, SIG_EVENT_WITHDRAWAL
+from core.blockchain.sigs import SIG_EVENT_DEPOSIT, SIG_EVENT_WITHDRAWAL
 from notify.events import event_low
 
 

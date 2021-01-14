@@ -3,8 +3,11 @@ from django.db.models import Q
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.addresses import COMPOUND_TIMELOCK
-from core.sigs import SIG_EVENT_NEW_ADMIN, SIG_EVENT_NEW_PENDING_ADMIN
+from core.blockchain.addresses import COMPOUND_TIMELOCK
+from core.blockchain.sigs import (
+    SIG_EVENT_NEW_ADMIN,
+    SIG_EVENT_NEW_PENDING_ADMIN,
+)
 from notify.events import event_high
 
 

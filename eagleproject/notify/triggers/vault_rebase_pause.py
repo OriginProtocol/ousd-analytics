@@ -1,6 +1,9 @@
 """ RebasePaused/RebaseUnpaused events """
 from django.db.models import Q
-from core.sigs import SIG_EVENT_REBASE_PAUSED, SIG_EVENT_REBASE_UNPAUSED
+from core.blockchain.sigs import (
+    SIG_EVENT_REBASE_PAUSED,
+    SIG_EVENT_REBASE_UNPAUSED,
+)
 from notify.events import event_high
 
 

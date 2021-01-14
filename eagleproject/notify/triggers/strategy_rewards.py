@@ -6,9 +6,9 @@ Events:
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.addresses import STRATCOMP, CONTRACT_ADDR_TO_NAME
+from core.blockchain.addresses import STRATCOMP, CONTRACT_ADDR_TO_NAME
 from core.common import format_token_human
-from core.sigs import SIG_EVENT_REWARDS_COLLECTED
+from core.blockchain.sigs import SIG_EVENT_REWARDS_COLLECTED
 from notify.events import event_normal
 
 

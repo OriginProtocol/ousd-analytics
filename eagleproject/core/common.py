@@ -4,7 +4,7 @@ from enum import Enum
 from decimal import Decimal
 from eth_abi import decode_single
 
-from core.blockchain import DECIMALS_FOR_SYMBOL
+from core.blockchain.const import DECIMALS_FOR_SYMBOL
 
 SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,]*)\)$'
 
@@ -106,6 +106,11 @@ def format_deimal(v):
         '0' * dec_leftpad,
         ''.join(map(str, price_decimal)).rstrip('0')
     )
+
+
+def slot(value, i):
+    """Get the x 256bit field from a data string"""
+    return value[2 + i * 64:2 + (i + 1) * 64]
 
 
 def decode_call(signature, calldata):
