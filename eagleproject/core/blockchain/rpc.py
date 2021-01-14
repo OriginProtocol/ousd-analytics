@@ -12,11 +12,17 @@ from core.blockchain.addresses import (
     OPEN_ORACLE,
     OUSD,
 )
+from core.blockchain.const import E_6, E_8, E_18
 from core.blockchain.sigs import (
     OPEN_ORACLE_PRICE,
     CHAINLINK_ETH_USD_PRICE,
     CHAINLINK_TOK_ETH_PRICE,
     CHAINLINK_TOK_USD_PRICE,
+    SIG_FUNC_BORROW_RATE,
+    SIG_FUNC_EXCHANGE_RATE_STORED,
+    SIG_FUNC_SUPPLY_RATE,
+    SIG_FUNC_TOTAL_BORROWS,
+    SIG_FUNC_TOTAL_SUPPLY,
 )
 
 
@@ -101,6 +107,16 @@ def balanceOf(coin_contract, holder, decimals, block="latest"):
 
 
 def totalSupply(coin_contract, decimals, block="latest"):
+    signature = SIG_FUNC_TOTAL_SUPPLY[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+        math.pow(10, decimals)
+    )
+
+
+def totalBorrows(coin_contract, decimals, block="latest"):
+    signature = SIG_FUNC_TOTAL_BORROWS[:10]
     signature = "0x18160ddd"
     payload = ""
     data = call(coin_contract, signature, payload, block)
@@ -109,12 +125,33 @@ def totalSupply(coin_contract, decimals, block="latest"):
     )
 
 
+def exchnageRateStored(coin_contract, block="latest"):
+    signature = SIG_FUNC_EXCHANGE_RATE_STORED[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+
+
+def borrowRatePerBlock(coin_contract, block="latest"):
+    signature = SIG_FUNC_BORROW_RATE[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+
+
+def supplyRatePerBlock(coin_contract, block="latest"):
+    signature = SIG_FUNC_SUPPLY_RATE[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+
+
 def open_oracle_price(ticker, block="latest"):
     signature = OPEN_ORACLE_PRICE[:10]
     payload = encode_single("(string)", [ticker]).hex()
     data = call(OPEN_ORACLE, signature, payload, block)
     # price() returns 6 decimals
-    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e6)
+    return Decimal(int(data["result"][0:64 + 2], 16)) / E_6
 
 
 def chainlink_ethUsdPrice(block="latest"):
@@ -122,7 +159,7 @@ def chainlink_ethUsdPrice(block="latest"):
     payload = ""
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH-USD price with 6 decimals
-    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e6)
+    return Decimal(int(data["result"][0:64 + 2], 16)) / E_6
 
 
 def chainlink_tokEthPrice(ticker, block="latest"):
@@ -130,7 +167,7 @@ def chainlink_tokEthPrice(ticker, block="latest"):
     payload = encode_single("(string)", [ticker]).hex()
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH price with 8 decimals for some reason...
-    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e8)
+    return Decimal(int(data["result"][0:64 + 2], 16)) / E_8
 
 
 def chainlink_tokUsdPrice(ticker, block="latest"):
@@ -138,7 +175,7 @@ def chainlink_tokUsdPrice(ticker, block="latest"):
     payload = encode_single("(string)", [ticker]).hex()
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH price with 8 decimals for some reason...
-    return Decimal(int(data["result"][0:64 + 2], 16)) / Decimal(1e8)
+    return Decimal(int(data["result"][0:64 + 2], 16)) / E_8
 
 
 def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
@@ -170,35 +207,35 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
 def rebasing_credits_per_token(block="latest"):
     signature = "0x6691cb3d"  # rebasingCreditsPerToken()
     data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
 def ousd_rebasing_credits(block="latest"):
     signature = "0x077f22b7"  # rebasingCredits()
     data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
 def ousd_non_rebasing_supply(block="latest"):
     signature = "0xe696393a"  # nonRebasingSupply()
     data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(math.pow(10, 18))
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
 def ogn_staking_total_outstanding(block):
     data = storage_at(OGN_STAKING, 54, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(1e18)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
 def priceUSDMint(coin_contract, symbol, block="latest"):
     signature = "0x686b37ca"  # priceUSDMint(string)
     payload = encode_single("(string)", [symbol]).hex()
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"], 16)) / Decimal(1e18)
+    return Decimal(int(data["result"], 16)) / E_18
 
 
 def priceUSDRedeem(coin_contract, symbol, block="latest"):
     signature = "0x29a903ec"  # priceUSDRedeem(string)
     payload = encode_single("(string)", [symbol]).hex()
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"], 16)) / Decimal(1e18)
+    return Decimal(int(data["result"], 16)) / E_18

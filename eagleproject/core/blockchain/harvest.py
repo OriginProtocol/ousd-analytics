@@ -1,5 +1,8 @@
+import sys
 from datetime import datetime
 from decimal import Decimal
+from json.decoder import JSONDecodeError
+from eth_abi import encode_single
 from django.conf import settings
 
 from core.addresses import (
@@ -16,6 +19,8 @@ from core.addresses import (
 from core.common import slot
 from core.etherscan import get_contract_transactions
 from core.blockchain.const import (
+    E_18,
+    BLOCKS_PER_YEAR,
     ASSET_TICKERS,
     COMPOUND_FOR_SYMBOL,
     CONTRACT_FOR_SYMBOL,
@@ -27,10 +32,12 @@ from core.blockchain.const import (
 from core.blockchain.rpc import (
     balanceOf,
     balanceOfUnderlying,
+    borrowRatePerBlock,
     chainlink_ethUsdPrice,
     chainlink_tokEthPrice,
     # chainlink_tokUsdPrice,
     debug_trace_transaction,
+    exchnageRateStored,
     get_block,
     get_transaction,
     get_transaction_receipt,
@@ -43,7 +50,9 @@ from core.blockchain.rpc import (
     rebasing_credits_per_token,
     request,
     strategyCheckBalance,
+    supplyRatePerBlock,
     totalSupply,
+    totalBorrows,
 )
 from core.blockchain.sigs import (
     DEPRECATED_SIG_EVENT_WITHDRAWN,
@@ -55,6 +64,7 @@ from core.blockchain.sigs import (
 from core.models import (
     AssetBlock,
     Block,
+    CTokenSnapshot,
     DebugTx,
     EtherscanPointer,
     Log,
@@ -384,7 +394,7 @@ def maybe_store_transfer_record(log, block):
         block_time=block.block_time,
         from_address="0x" + log["topics"][1][-40:],
         to_address="0x" + log["topics"][2][-40:],
-        amount=int(slot(log["data"], 0), 16) / 1e18,
+        amount=int(slot(log["data"], 0), 16) / E_18,
     )
     transfer.save()
     return transfer
@@ -394,7 +404,12 @@ def maybe_store_stake_withdrawn_record(log, block):
     # Must be a Staked or Withdrawn event
     if (
         log["address"] != OGN_STAKING or
-        log["topics"][0] not in [SIG_EVENT_STAKED, SIG_EVENT_WITHDRAWN, DEPRECATED_SIG_EVENT_STAKED, DEPRECATED_SIG_EVENT_WITHDRAWN]
+        log["topics"][0] not in [
+            SIG_EVENT_STAKED,
+            SIG_EVENT_WITHDRAWN,
+            DEPRECATED_SIG_EVENT_STAKED,
+            DEPRECATED_SIG_EVENT_WITHDRAWN,
+        ]
     ):
         return None
 
@@ -417,7 +432,9 @@ def maybe_store_stake_withdrawn_record(log, block):
         # store duration in days
         duration = int(slot(log["data"], 1), 16) / (24 * 60 * 60)
         # convert rate back to yearly rate
-        rate = Decimal(int(slot(log["data"], 2), 16) / Decimal(1e18)) * 365 / Decimal(duration)
+        rate = Decimal(
+            int(slot(log["data"], 2), 16) / E_18
+        ) * 365 / Decimal(duration)
 
     staked = OgnStaked(
         tx_hash=tx_hash,
@@ -462,3 +479,49 @@ def ensure_transaction_and_downstream(tx_hash):
         maybe_store_stake_withdrawn_record(log, block)
 
     return transaction
+
+
+def ensure_ctoken_snapshot(underlying_symbol, block_number):
+    ctoken_address = COMPOUND_FOR_SYMBOL.get(underlying_symbol)
+
+    if not ctoken_address:
+        print('ERROR: Unknown underlying asset for cToken', file=sys.stderr)
+        return None
+
+    underlying_decimals = DECIMALS_FOR_SYMBOL[underlying_symbol]
+
+    q = CTokenSnapshot.objects.filter(
+        address=ctoken_address,
+        block_number=block_number
+    )
+
+    if q.count():
+        return q.first()
+
+    else:
+        borrow_rate = borrowRatePerBlock(ctoken_address, block_number)
+        supply_rate = supplyRatePerBlock(ctoken_address, block_number)
+
+        borrow_apy = borrow_rate * Decimal(BLOCKS_PER_YEAR)
+        supply_apy = supply_rate * Decimal(BLOCKS_PER_YEAR)
+
+        s = CTokenSnapshot()
+        s.block_number = block_number
+        s.address = ctoken_address
+        s.borrow_rate = borrow_rate
+        s.borrow_apy = borrow_apy
+        s.supply_rate = supply_rate
+        s.supply_apy = supply_apy
+        s.total_supply = totalSupply(ctoken_address, 8, block_number)
+        s.total_borrows = totalBorrows(
+            ctoken_address,
+            underlying_decimals,
+            block_number
+        )
+        s.exchange_rate_stored = exchnageRateStored(
+            ctoken_address,
+            block_number
+        )
+        s.save()
+
+        return s

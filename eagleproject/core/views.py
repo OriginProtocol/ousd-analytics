@@ -11,18 +11,22 @@ from core.addresses import (
     SNOWSWAP,
 )
 from core.blockchain.sigs import TRANSFER
-from core.blockchain import (
+from core.blockchain.const import COMPOUND_FOR_SYMBOL
+from core.blockchain.harvest import (
+    ensure_all_transactions,
     ensure_asset,
+    ensure_ctoken_snapshot,
+    ensure_latest_logs,
     ensure_oracle_snapshot,
     ensure_staking_snapshot,
     ensure_supply_snapshot,
     ensure_transaction_and_downstream,
-    latest_block,
-    ensure_latest_logs,
-    ensure_all_transactions,
-    totalSupply,
+)
+from core.blockchain.rpc import (
     balanceOf,
+    latest_block,
     rebasing_credits_per_token,
+    totalSupply,
 )
 from core.models import Log, SupplySnapshot
 
@@ -252,6 +256,9 @@ def _reload(block_number):
     ensure_all_transactions(block_number)
     ensure_oracle_snapshot(block_number)
 
+    for symbol in COMPOUND_FOR_SYMBOL:
+        ensure_ctoken_snapshot(symbol, block_number)
+
 
 def _latest_snapshot():
     return SupplySnapshot.objects.order_by("-block_number")[0]
@@ -275,7 +282,7 @@ def _get_trailing_apr():
     on rebases, making this method less acurate. It's bit iffy using it
     on only one day, but that's the data we have at the moment.
     """
-    days = 5.00
+    days = 7.00
 
     # Check cache first
     global PREV_APR

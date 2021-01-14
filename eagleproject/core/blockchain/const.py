@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from core.addresses import (
     COMP,
     COMPENSATION_CLAIMS,
@@ -64,3 +66,12 @@ LOG_CONTRACTS = [
 ETHERSCAN_CONTRACTS = [GOVERNOR, OUSD, VAULT, TIMELOCK]
 
 ASSET_TICKERS = ["DAI", "USDC", "USDT"]
+
+BLOCKS_PER_MINUTE = 4
+BLOCKS_PER_HOUR = BLOCKS_PER_MINUTE * 60
+BLOCKS_PER_DAY = BLOCKS_PER_HOUR * 24
+BLOCKS_PER_YEAR = BLOCKS_PER_DAY * 365
+
+E_6 = Decimal(1e6)
+E_8 = Decimal(1e8)
+E_18 = Decimal(1e18)
