@@ -10,7 +10,7 @@ from core.addresses import (
     OUSD_USDT_SUSHI,
     SNOWSWAP,
 )
-from core.sigs import TRANSFER
+from core.blockchain.sigs import TRANSFER
 from core.blockchain import (
     ensure_asset,
     ensure_oracle_snapshot,

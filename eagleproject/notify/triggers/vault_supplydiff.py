@@ -3,7 +3,7 @@ from decimal import Decimal
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.sigs import SIG_EVENT_MAX_SUPPLY_DIFF
+from core.blockchain.sigs import SIG_EVENT_MAX_SUPPLY_DIFF
 from notify.events import event_high
 
 

@@ -10,7 +10,10 @@ from eth_abi import decode_single
 
 from core.addresses import CONTRACT_ADDR_TO_NAME
 from core.blockchain import SYMBOL_FOR_CONTRACT
-from core.sigs import SIG_EVENT_PTOKEN_ADDED, SIG_EVENT_PTOKEN_REMOVED
+from core.blockchain.sigs import (
+    SIG_EVENT_PTOKEN_ADDED,
+    SIG_EVENT_PTOKEN_REMOVED,
+)
 from notify.events import event_normal, event_high
 
 

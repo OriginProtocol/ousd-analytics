@@ -108,6 +108,11 @@ def format_deimal(v):
     )
 
 
+def slot(value, i):
+    """Get the x 256bit field from a data string"""
+    return value[2 + i * 64:2 + (i + 1) * 64]
+
+
 def decode_call(signature, calldata):
     """ Decode calldata for a given string signature """
     match = re.match(SIG_PATTERN, signature)

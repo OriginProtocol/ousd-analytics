@@ -3,7 +3,7 @@ from eth_abi import decode_single
 from eth_utils import decode_hex
 from django.db.models import Q
 from core.common import format_ousd_human
-from core.sigs import (
+from core.blockchain.sigs import (
     SIG_EVENT_MINT,
     SIG_EVENT_REDEEM,
     SIG_EVENT_TOTAL_SUPPLY_UPDATED,
