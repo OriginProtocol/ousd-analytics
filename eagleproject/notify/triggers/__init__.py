@@ -107,12 +107,10 @@ def ctoken_snapshots(block_number):
 
 def recent_ctoken_snapshots(snap_count=5):
     """ Get the latest N snapshots for all cTokens """
-    return CTokenSnapshot.objects.annotate(
-        block_number__in=Subquery(
-            CTokenSnapshot.objects.order_by(
-                '-block_number'
-            ).values('block_number')[:snap_count]
-        )
+    return CTokenSnapshot.objects.filter(
+        block_number__in=CTokenSnapshot.objects.order_by(
+            '-block_number'
+        ).values('block_number')[:snap_count]
     ).order_by('-block_number', 'address')
 
 
