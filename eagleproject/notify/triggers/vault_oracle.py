@@ -2,7 +2,7 @@
 import locale
 from decimal import Decimal
 from core.blockchain.addresses import VAULT
-from core.blockchain import priceUSDMint, priceUSDRedeem
+from core.blockchain.rpc import priceUSDMint, priceUSDRedeem
 from notify.events import event_high
 
 # USD-pegged stable coins drift thresholds

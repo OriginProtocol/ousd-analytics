@@ -9,7 +9,7 @@ from eth_utils import decode_hex
 from eth_abi import decode_single
 
 from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
-from core.blockchain import SYMBOL_FOR_CONTRACT
+from core.blockchain.const import SYMBOL_FOR_CONTRACT
 from core.blockchain.sigs import (
     SIG_EVENT_PTOKEN_ADDED,
     SIG_EVENT_PTOKEN_REMOVED,

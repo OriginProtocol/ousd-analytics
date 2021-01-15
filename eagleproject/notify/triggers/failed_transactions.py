@@ -1,10 +1,10 @@
 from core.models import Transaction
-from core.blockchain import (
+from core.blockchain.addresses import (
     OUSD,
     TIMELOCK,
     VAULT,
-    ensure_transaction_and_downstream,
 )
+from core.blockchain.harvest import ensure_transaction_and_downstream
 from notify.events import event_normal
 
 

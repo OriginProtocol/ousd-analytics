@@ -4,7 +4,7 @@ from eth_utils import decode_hex
 from django.db.models import Q
 from core.common import format_ousd_human
 from core.blockchain.addresses import OGN_STAKING
-from core.blockchain import (
+from core.blockchain.sigs import (
     SIG_EVENT_STAKED,
     SIG_EVENT_WITHDRAWN,
     DEPRECATED_SIG_EVENT_STAKED,
