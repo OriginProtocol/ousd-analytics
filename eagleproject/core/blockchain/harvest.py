@@ -14,7 +14,6 @@ from core.blockchain.addresses import (
     STRATCOMP,
     VAULT,
 )
-from core.common import slot
 from core.etherscan import get_contract_transactions
 from core.blockchain.const import (
     E_18,
@@ -27,6 +26,7 @@ from core.blockchain.const import (
     LOG_CONTRACTS,
     START_OF_EVERYTHING,
 )
+from core.blockchain.decode import slot
 from core.blockchain.rpc import (
     balanceOf,
     balanceOfUnderlying,
