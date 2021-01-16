@@ -557,7 +557,8 @@ def maybe_store_stake_withdrawn_record(log, block):
                 stake_type,
                 _duration,
                 _rate,
-                _amount
+                _amount,
+                _,
             ) = decode_args(
                 'airDroppedStake(uint256,uint8,uint256,uint256,uint256,bytes32[])',
                 decode_hex(tx_input[10:])
