@@ -4,6 +4,8 @@ from decimal import Decimal
 
 from core.blockchain.const import DECIMALS_FOR_SYMBOL
 
+SECONDS_IN_DAY = 24 * 60 * 60
+
 
 class OrderedEnum(Enum):
     def __ge__(self, other):
@@ -110,3 +112,7 @@ def dict_append(d, k, v):
         d[k] = list()
     d[k].append(v)
     return d
+
+
+def seconds_to_days(v):
+    return v / SECONDS_IN_DAY

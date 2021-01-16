@@ -14,12 +14,27 @@ CHAINLINK_TOK_USD_PRICE = encode_hex(keccak(b"tokUsdPrice(string)"))
 
 # ERC20
 SIG_FUNC_TOTAL_SUPPLY = encode_hex(keccak(b"totalSupply()"))
+SIG_FUNC_APPROVE_AND_CALL_SENDER = encode_hex(
+    keccak(b"approveAndCallWithSender(address,uint256,bytes4,bytes)")
+)
 
 # Compound
 SIG_FUNC_TOTAL_BORROWS = encode_hex(keccak(b"totalBorrows()"))
 SIG_FUNC_EXCHANGE_RATE_STORED = encode_hex(keccak(b"exchangeRateStored()"))
 SIG_FUNC_BORROW_RATE = encode_hex(keccak(b"borrowRatePerBlock()"))
 SIG_FUNC_SUPPLY_RATE = encode_hex(keccak(b"supplyRatePerBlock()"))
+
+# SingleAssetStaking
+SIG_FUNC_DURATION_REWARD_RATE = encode_hex(
+    keccak(b"durationRewardRate(uint256)")
+)
+SIG_FUNC_STAKE = encode_hex(keccak(b"stake(uint256,uint256)"))
+SIG_FUNC_STAKE_WITH_SENDER = encode_hex(
+    keccak(b"stakeWithSender(address,uint256,uint256)")
+)
+SIG_FUNC_AIR_DROPPED_STAKE = encode_hex(
+    keccak(b"airDroppedStake(uint256,uint8,uint256,uint256,uint256,bytes32[])")
+)
 
 ########
 # Events
