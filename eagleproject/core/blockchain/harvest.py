@@ -6,7 +6,7 @@ from eth_utils import (
     decode_hex,
     encode_hex,
     is_hex,
-    add__0x_prefix,
+    add_0x_prefix,
     remove_0x_prefix,
 )
 
@@ -470,7 +470,7 @@ def maybe_store_stake_withdrawn_record(log, block):
     is_updated_staked_event = log["topics"][0] == SIG_EVENT_STAKED
     is_withdrawn_event = log["topics"][0] == SIG_EVENT_WITHDRAWN
     is_staked_event = log["topics"][0] == DEPRECATED_SIG_EVENT_STAKED or is_updated_staked_event
-    staker = add__0x_prefix(log["topics"][1][-40:])
+    staker = add_0x_prefix(log["topics"][1][-40:])
 
     duration = 0
     rate = 0
@@ -588,7 +588,8 @@ def maybe_store_stake_withdrawn_record(log, block):
         amount=amount,
         staked_amount=int(slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
         duration=duration,
-        rate=rate
+        rate=rate,
+        stake_type=stake_type,
     )
     staked.save()
     return staked
