@@ -247,5 +247,4 @@ def staking_durationRewardRate(address, duration, block="latest"):
     signature = SIG_FUNC_DURATION_REWARD_RATE[:10]
     payload = encode_single("(uint256)", [duration]).hex()
     data = call(address, signature, payload, block)
-    print('data:', data)
     return Decimal(int(data["result"], 16))
