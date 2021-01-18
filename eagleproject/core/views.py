@@ -11,7 +11,10 @@ from core.blockchain.addresses import (
     SNOWSWAP,
 )
 from core.blockchain.sigs import TRANSFER
-from core.blockchain.const import COMPOUND_FOR_SYMBOL
+from core.blockchain.const import (
+    COMPOUND_FOR_SYMBOL,
+    START_OF_OUSD_V2,
+)
 from core.blockchain.harvest import (
     ensure_all_transactions,
     ensure_asset,
@@ -101,13 +104,16 @@ def apr_index(request):
     STEP = BLOCKS_PER_DAY
     NUM_STEPS = 31
     latest_block_number = _latest_snapshot_block_number()
-    end_block_number = latest_block_number - latest_block_number % STEP
-    rows = []
-    last_snapshot = None
+    end_block_number = latest_block_number - (latest_block_number % STEP)
     block_numbers = list(
         range(end_block_number - (NUM_STEPS - 1) * STEP, end_block_number + 1, STEP)
     ) + [latest_block_number]
+    rows = []
+    last_snapshot = None
+    
     for block_number in block_numbers:
+        if block_number < START_OF_OUSD_V2:
+            continue
         s = ensure_supply_snapshot(block_number)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number

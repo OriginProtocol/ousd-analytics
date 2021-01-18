@@ -22,6 +22,7 @@ from core.blockchain.addresses import (
 )
 
 START_OF_EVERYTHING = 10884500
+START_OF_OUSD_V2 = 11596940
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
