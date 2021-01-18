@@ -91,6 +91,7 @@ SIGNATURES = {
     "0x07ea5477": "mintMultiple(address[],uint256[])",
     "0x23b872dd": "transferFrom(address,address,uint256)",
     "0xa9059cbb": "transfer(address,uint256)",
+    "0xaf14052c": "rebase()",
     "0x95d89b41": "symbol()",
     "0xfeaf968c": "latestRoundData()",
     "0x668a0f02": "latestRound()",
