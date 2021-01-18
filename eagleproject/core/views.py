@@ -120,18 +120,12 @@ def apr_index(request):
             change = (
                 s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio
             ) - Decimal(1)
-            s.apr = Decimal(100) * change / blocks * Decimal(365) * BLOCKS_PER_DAY
-            s.gain = change * s.computed_supply
+            s.apr = Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
+            s.gain = change * (s.computed_supply - s.non_rebasing_supply)
         rows.append(s)
         last_snapshot = s
     rows.reverse()
     seven_day_apy = _get_trailing_apy()
-
-    # Running for today
-    today_adjust = Decimal(
-        (latest_block_number - end_block_number) / float(BLOCKS_PER_DAY)
-    )
-    rows[0].apr = rows[0].apr / today_adjust
 
     # drop last row with incomplete information
     rows = rows[:-1]
@@ -196,9 +190,11 @@ def address(request, address):
         return redirect("address", address=address.lower())
     long_address = address.replace("0x", "0x000000000000000000000000")
     latest_block_number = _latest_snapshot_block_number()
-    transfers = Log.objects.filter(
-        address=OUSD, topic_0=TRANSFER
-    ).filter(Q(topic_1=long_address) | Q(topic_2=long_address))
+    transfers = (Log.objects
+        .filter(address=OUSD, topic_0=TRANSFER)
+        .filter(Q(topic_1=long_address) | Q(topic_2=long_address))
+        .filter(block_number__gte=START_OF_OUSD_V2)
+    )
     transfers_in = sum([
         x.ousd_value()
         for x in transfers
