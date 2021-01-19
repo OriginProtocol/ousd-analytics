@@ -4,8 +4,11 @@ from django.db.models import Q
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.common import decode_calls
-from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME, COMPOUND_GOVERNOR_ALPHA
+from core.blockchain.addresses import (
+    CONTRACT_ADDR_TO_NAME,
+    COMPOUND_GOVERNOR_ALPHA,
+)
+from core.blockchain.decode import decode_calls
 from core.blockchain.sigs import (
     SIG_EVENT_PROPOSAL_CREATED,
     SIG_EVENT_PROPOSAL_CANCELED,
@@ -13,7 +16,7 @@ from core.blockchain.sigs import (
     SIG_EVENT_PROPOSAL_EXECUTED,
     SIG_EVENT_VOTE_CAST,
 )
-from notify.events import event_high, event_low
+from notify.events import event_high
 
 
 def get_events(logs):
