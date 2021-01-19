@@ -170,7 +170,7 @@ class OusdTransfer(models.Model):
 
 
 class OgnStaked(models.Model):
-    tx_hash = models.CharField(max_length=66)
+    tx_hash = models.CharField(max_length=66, db_index=True)
     log_index = models.CharField(max_length=66, db_index=True)
     block_time = models.DateTimeField(db_index=True)
     user_address = models.CharField(max_length=42, db_index=True)
@@ -180,6 +180,9 @@ class OgnStaked(models.Model):
     duration = models.IntegerField(default=0)
     rate = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     stake_type = models.IntegerField(default=0)
+
+    class Meta:
+        unique_together = ('tx_hash', 'log_index')
 
 
 class OracleSnapshot(models.Model):
