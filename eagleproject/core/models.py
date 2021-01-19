@@ -179,6 +179,7 @@ class OgnStaked(models.Model):
     staked_amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     duration = models.IntegerField(default=0)
     rate = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    stake_type = models.IntegerField(default=0)
 
 
 class OracleSnapshot(models.Model):

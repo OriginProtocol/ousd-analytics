@@ -4,9 +4,9 @@ from django.utils import timezone
 from binascii import unhexlify
 from decimal import Decimal
 from eth_abi import decode_single
-from core.blockchain.const import E_6, E_8, E_18
 from core.blockchain.addresses import DAI, OUSD, USDC, USDT
-from core.common import slot
+from core.blockchain.const import E_6, E_8, E_18
+from core.blockchain.decode import slot
 import pytz
 
 

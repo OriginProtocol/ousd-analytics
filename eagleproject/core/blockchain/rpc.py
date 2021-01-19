@@ -19,6 +19,7 @@ from core.blockchain.sigs import (
     CHAINLINK_TOK_ETH_PRICE,
     CHAINLINK_TOK_USD_PRICE,
     SIG_FUNC_BORROW_RATE,
+    SIG_FUNC_DURATION_REWARD_RATE,
     SIG_FUNC_EXCHANGE_RATE_STORED,
     SIG_FUNC_SUPPLY_RATE,
     SIG_FUNC_TOTAL_BORROWS,
@@ -248,3 +249,11 @@ def priceUSDRedeem(coin_contract, symbol, block="latest"):
     payload = encode_single("(string)", [symbol]).hex()
     data = call(coin_contract, signature, payload, block)
     return Decimal(int(data["result"], 16)) / E_18
+
+
+def staking_durationRewardRate(address, duration, block="latest"):
+    """ SingleAssetStaking.durationRewardRate(uint256 _duration) """
+    signature = SIG_FUNC_DURATION_REWARD_RATE[:10]
+    payload = encode_single("(uint256)", [duration]).hex()
+    data = call(address, signature, payload, block)
+    return Decimal(int(data["result"], 16))

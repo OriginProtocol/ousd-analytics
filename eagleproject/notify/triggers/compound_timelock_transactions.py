@@ -5,12 +5,12 @@ from eth_abi import decode_single
 from django.db.models import Q
 
 from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME, COMPOUND_TIMELOCK
+from core.blockchain.decode import decode_call
 from core.blockchain.sigs import (
     SIG_EVENT_CANCEL_TRANSACTION,
     SIG_EVENT_EXECUTE_TRANSACTION,
     SIG_EVENT_QUEUE_TRANSACTION,
 )
-from core.common import decode_call
 from notify.events import event_high
 
 

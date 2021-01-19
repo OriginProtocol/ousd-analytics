@@ -2,6 +2,13 @@ import sys
 from datetime import datetime
 from decimal import Decimal
 from django.conf import settings
+from eth_utils import (
+    decode_hex,
+    encode_hex,
+    is_hex,
+    add_0x_prefix,
+    remove_0x_prefix,
+)
 
 from core.blockchain.addresses import (
     CHAINLINK_ORACLE,
@@ -14,7 +21,6 @@ from core.blockchain.addresses import (
     STRATCOMP,
     VAULT,
 )
-from core.common import slot
 from core.etherscan import get_contract_transactions
 from core.blockchain.const import (
     E_18,
@@ -27,6 +33,7 @@ from core.blockchain.const import (
     LOG_CONTRACTS,
     START_OF_EVERYTHING,
 )
+from core.blockchain.decode import decode_args, slot
 from core.blockchain.rpc import (
     balanceOf,
     balanceOfUnderlying,
@@ -47,6 +54,7 @@ from core.blockchain.rpc import (
     priceUSDRedeem,
     rebasing_credits_per_token,
     request,
+    staking_durationRewardRate,
     strategyCheckBalance,
     supplyRatePerBlock,
     totalSupply,
@@ -58,8 +66,13 @@ from core.blockchain.sigs import (
     DEPRECATED_SIG_EVENT_STAKED,
     SIG_EVENT_STAKED,
     SIG_EVENT_WITHDRAWN,
+    SIG_FUNC_APPROVE_AND_CALL_SENDER,
+    SIG_FUNC_AIR_DROPPED_STAKE,
+    SIG_FUNC_STAKE,
+    SIG_FUNC_STAKE_WITH_SENDER,
     TRANSFER,
 )
+from core.common import seconds_to_days
 from core.models import (
     AssetBlock,
     Block,
@@ -399,6 +412,41 @@ def maybe_store_transfer_record(log, block):
     return transfer
 
 
+def calc_apy(daily_rate, days):
+    """ Calculate the APY for a given duration and rate as given by OGN Staking
+    contract """
+
+    yearly_rate = Decimal(daily_rate) * Decimal(365)
+
+    return yearly_rate / Decimal(days)
+
+
+def human_duration_yield(duration, rate):
+    """ Take duration and rate as given in a tx or event and return human-useful
+    values of days, APY """
+
+    if type(duration) == str:
+        if not is_hex(duration):
+            raise ValueError('Unexpected value for duration')
+        duration = int(duration, 16)
+
+    if type(rate) == str:
+        if not is_hex(rate):
+            raise ValueError('Unexpected value for rate')
+        rate = int(rate, 16)
+
+    # Convert duration from seconds to days
+    days = seconds_to_days(duration)
+
+    # Scale from false-decimal to actual
+    daily_rate = Decimal(rate / E_18)
+
+    # Calculate Yield for the duration
+    apy = calc_apy(daily_rate, days)
+
+    return days, apy
+
+
 def maybe_store_stake_withdrawn_record(log, block):
     # Must be a Staked or Withdrawn event
     if (
@@ -423,28 +471,127 @@ def maybe_store_stake_withdrawn_record(log, block):
     is_updated_staked_event = log["topics"][0] == SIG_EVENT_STAKED
     is_withdrawn_event = log["topics"][0] == SIG_EVENT_WITHDRAWN
     is_staked_event = log["topics"][0] == DEPRECATED_SIG_EVENT_STAKED or is_updated_staked_event
+    staker = add_0x_prefix(log["topics"][1][-40:])
 
     duration = 0
     rate = 0
+    stake_type = 0
+    amount = 0
 
-    if is_updated_staked_event:
-        # store duration in days
-        duration = int(slot(log["data"], 1), 16) / (24 * 60 * 60)
-        # convert rate back to yearly rate
-        rate = Decimal(
-            int(slot(log["data"], 2), 16) / E_18
-        ) * 365 / Decimal(duration)
+    tx = get_transaction(tx_hash)
+    tx_input = tx.get('input')
+
+    if tx and tx_input and len(tx_input) > 10:
+        call_sig = tx_input[:10]
+
+        # Unpack if it was called through OGN's approveAndCallWithSender...
+        if call_sig == SIG_FUNC_APPROVE_AND_CALL_SENDER[:10]:
+            _, _, selector, calldata = decode_args(
+                'approveAndCallWithSender(address,uint256,bytes4,bytes)',
+                decode_hex('0x{}'.format(tx_input[10:]))
+            )
+
+            call_sig = encode_hex(selector)
+
+            # approveAndCallWithSender always uses `msg.sender` as the first
+            # arg of the subsequent function call.  For our purposes we're
+            # going to assume the `Staked` event we decoded before is correct
+            # and use its `user` argument.  Otherwise, we'd have to figure out
+            # what sender was before in the call chain or rely on the
+            # expectation that `tx.origin` is the same as `msg.sender`, which
+            # is less likely to be true than the event being wrong.
+            #
+            # Ref: https://github.com/OriginProtocol/origin/blob/master/packages/contracts/contracts/token/OriginToken.sol#L70-L105
+            packed_staker = decode_hex(
+                remove_0x_prefix(staker).rjust(64, '0')
+            )
+            tx_input = encode_hex(selector + packed_staker + calldata)
+
+        # stakeWithSender(address staker, uint256 amount, uint256 duration)
+        if call_sig == SIG_FUNC_STAKE_WITH_SENDER[:10]:
+            _staker, _amount, _duration = decode_args(
+                'stakeWithSender(address,uint256,uint256)',
+                decode_hex(tx_input[10:])
+            )
+
+            if _staker != staker:
+                print(
+                    "Unexpected staker address {} != {}. Something is quite "
+                    "wrong.".format(
+                        staker,
+                        _staker,
+                    )
+                )
+
+            _rate = staking_durationRewardRate(
+                OGN_STAKING,
+                _duration,
+                int(tx['blockNumber'], 16)
+            )
+
+            amount = _amount / E_18
+            duration, rate = human_duration_yield(_duration, _rate)
+
+        # stake(uint256 amount, uint256 duration)
+        elif call_sig == SIG_FUNC_STAKE[:10]:
+            _amount, _duration = decode_args(
+                'stake(uint256,uint256)',
+                decode_hex(tx_input[10:])
+            )
+
+            _rate = staking_durationRewardRate(
+                OGN_STAKING,
+                _duration,
+                int(tx['blockNumber'], 16)
+            )
+
+            amount = _amount / E_18
+            duration, rate = human_duration_yield(_duration, _rate)
+
+        # airDroppedStake(uint256 index, uint8 stakeType,
+        #                 uint256 duration, uint256 rate,
+        #                 uint256 amount,
+        #                 bytes32[] calldata merkleProof)
+        elif call_sig == SIG_FUNC_AIR_DROPPED_STAKE[:10]:
+            (
+                index,
+                stake_type,
+                _duration,
+                _rate,
+                _amount,
+                _,
+            ) = decode_args(
+                'airDroppedStake(uint256,uint8,uint256,uint256,uint256,bytes32[])',
+                decode_hex(tx_input[10:])
+            )
+
+            amount = _amount / E_18
+            duration, rate = human_duration_yield(_duration, _rate)
+
+        else:
+            print(
+                'Do not recognize call signature:',
+                call_sig,
+                file=sys.stderr
+            )
+
+    # Fallback to decoding from newer events if available
+    if duration == 0 and is_updated_staked_event:
+        _duration = slot(log["data"], 1)
+        _rate = slot(log["data"], 2)
+        duration, rate = human_duration_yield(_duration, _rate)
 
     staked = OgnStaked(
         tx_hash=tx_hash,
         log_index=log_index,
         block_time=block.block_time,
-        user_address="0x" + log["topics"][1][-40:],
+        user_address=staker,
         is_staked=is_staked_event,
-        amount=int(slot(log["data"], 0), 16) / 1e18,
+        amount=amount,
         staked_amount=int(slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
         duration=duration,
-        rate=rate
+        rate=rate,
+        stake_type=stake_type,
     )
     staked.save()
     return staked
