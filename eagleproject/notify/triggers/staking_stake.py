@@ -1,8 +1,10 @@
+import sys
 from decimal import Decimal
 from eth_abi import decode_single
 from eth_utils import decode_hex
 from django.db.models import Q
 from core.common import format_ousd_human
+from core.models import OgnStaked
 from core.blockchain.addresses import OGN_STAKING
 from core.blockchain.sigs import (
     SIG_EVENT_STAKED,
@@ -52,10 +54,27 @@ def run_trigger(new_logs):
                 )
             )
         elif ev.topic_0 == SIG_EVENT_STAKED:
+            verb = 'staked'
+
             amount, duration, rate = decode_single(
                 '(uint256,uint256,uint256)',
                 decode_hex(ev.data)
             )
+            stakes = OgnStaked.objects.filter(tx_hash=ev.transaction_hash)
+
+            # There should be a stake in the DB
+            if len(stakes) < 1:
+                print('WARNING: No stakes found in DB', file=sys.stderr)
+
+            # Non-standard stake types
+            elif stakes[0].stake_type == 1:
+                verb = 'claimed as compensation and staked'
+
+            # Currently unused
+            else:
+                print('WARNING: Unsupported stake_type {}'.format(
+                    stakes[0].stake_type
+                ), file=sys.stderr)
 
             duration_dt = timedelta(seconds=duration)
 
@@ -65,8 +84,9 @@ def run_trigger(new_logs):
             events.append(
                 event_normal(
                     "Staked    🥩",
-                    "{} OGN was staked for {} days at {}%".format(
+                    "{} OGN was {} for {} days at {}%".format(
                         format_ousd_human(Decimal(amount) / Decimal(1e18)),
+                        verb,
                         duration_dt.days,
                         apy
                     )
