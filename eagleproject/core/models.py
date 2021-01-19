@@ -211,6 +211,9 @@ class CTokenSnapshot(models.Model):
     # Total amount of outstanding borrows of the underlying in this market
     total_borrows = models.DecimalField(max_digits=64, decimal_places=18)
 
+    # Total amount of reserves of the underlying held in this market
+    total_reserves = models.DecimalField(max_digits=64, decimal_places=18)
+
     # The exchange rate from the underlying to the CToken
     exchange_rate_stored = models.DecimalField(
         max_digits=64,
