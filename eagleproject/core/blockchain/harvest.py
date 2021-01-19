@@ -59,6 +59,7 @@ from core.blockchain.rpc import (
     supplyRatePerBlock,
     totalSupply,
     totalBorrows,
+    totalReserves,
 )
 from core.blockchain.sigs import (
     DEPRECATED_SIG_EVENT_WITHDRAWN,
@@ -659,6 +660,11 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
         s.supply_apy = supply_apy
         s.total_supply = totalSupply(ctoken_address, 8, block_number)
         s.total_borrows = totalBorrows(
+            ctoken_address,
+            underlying_decimals,
+            block_number
+        )
+        s.total_reserves = totalReserves(
             ctoken_address,
             underlying_decimals,
             block_number

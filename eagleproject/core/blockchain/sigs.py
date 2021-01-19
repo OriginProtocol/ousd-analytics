@@ -20,6 +20,7 @@ SIG_FUNC_APPROVE_AND_CALL_SENDER = encode_hex(
 
 # Compound
 SIG_FUNC_TOTAL_BORROWS = encode_hex(keccak(b"totalBorrows()"))
+SIG_FUNC_TOTAL_RESERVES = encode_hex(keccak(b"totalReserves()"))
 SIG_FUNC_EXCHANGE_RATE_STORED = encode_hex(keccak(b"exchangeRateStored()"))
 SIG_FUNC_BORROW_RATE = encode_hex(keccak(b"borrowRatePerBlock()"))
 SIG_FUNC_SUPPLY_RATE = encode_hex(keccak(b"supplyRatePerBlock()"))
