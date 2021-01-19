@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('core', '0026_ctokensnapshot'),
+        ('core', '0027_ognstaked_stake_type'),
     ]
 
     operations = [
