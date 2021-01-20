@@ -21,6 +21,7 @@ CONTRACT_NAMES = {
     "0x159ea2fA3a92DAE6b9f21D6753AA6a8EA5bf77BA": "OUSD Internal",
     "0x8e54f5776ac2d0322d94640e070856a04e446656": "OUSD Internal",
     "0x9c94df9d594ba1eb94430c006c269c314b1a8281": "OUSD Compensation",
+    "0x501804b374ef06fa9c427476147ac09f1551b9a0": "OGN Staking",
     "0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f": "Origin Multisig",
     "0x8a5ff78bfe0de04f5dc1b57d2e1095be697be76e": "Origin Timelock",
     "0x52bebd3d7f37ec4284853fd5861ae71253a7f428": "Origin Minute Timelock",
@@ -175,6 +176,7 @@ EVENT_NAMES = {
     "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7": "ExecuteTransaction",
     "0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f": "QueueTransaction",
     "0x47cee97cb7acd717b3c0aa1435d004cd5b3c8c57d70dbceb4e4458bbd60e39d4": "Claim",
+    "0xb4caaf29adda3eefee3ad552a8e85058589bf834c7466cae4ee58787f70589ed": "Stake"
 }
 
 
