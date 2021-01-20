@@ -24,6 +24,7 @@ SIG_FUNC_TOTAL_RESERVES = encode_hex(keccak(b"totalReserves()"))
 SIG_FUNC_EXCHANGE_RATE_STORED = encode_hex(keccak(b"exchangeRateStored()"))
 SIG_FUNC_BORROW_RATE = encode_hex(keccak(b"borrowRatePerBlock()"))
 SIG_FUNC_SUPPLY_RATE = encode_hex(keccak(b"supplyRatePerBlock()"))
+SIG_FUNC_GET_CASH = encode_hex(keccak(b"getCash()"))
 
 # SingleAssetStaking
 SIG_FUNC_DURATION_REWARD_RATE = encode_hex(
