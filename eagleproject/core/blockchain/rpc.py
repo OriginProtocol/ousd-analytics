@@ -21,6 +21,7 @@ from core.blockchain.sigs import (
     SIG_FUNC_BORROW_RATE,
     SIG_FUNC_DURATION_REWARD_RATE,
     SIG_FUNC_EXCHANGE_RATE_STORED,
+    SIG_FUNC_GET_CASH,
     SIG_FUNC_SUPPLY_RATE,
     SIG_FUNC_TOTAL_BORROWS,
     SIG_FUNC_TOTAL_RESERVES,
@@ -128,6 +129,15 @@ def totalBorrows(coin_contract, decimals, block="latest"):
 
 def totalReserves(coin_contract, decimals, block="latest"):
     signature = SIG_FUNC_TOTAL_RESERVES[:10]
+    payload = ""
+    data = call(coin_contract, signature, payload, block)
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+        math.pow(10, decimals)
+    )
+
+
+def getCash(coin_contract, decimals, block="latest"):
+    signature = SIG_FUNC_GET_CASH[:10]
     payload = ""
     data = call(coin_contract, signature, payload, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
