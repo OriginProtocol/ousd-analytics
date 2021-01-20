@@ -32,4 +32,5 @@ urlpatterns = [
     path("notifygc", notify_views.gc),
     # path('admin/', admin.site.urls),
     path("api/v1/staking_stats", core_views.staking_stats),
+    path("api/v1/staking_stats_by_duration", core_views.staking_stats_by_duration),
 ]

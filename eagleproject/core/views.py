@@ -335,3 +335,23 @@ def staking_stats(request):
             "lockupSum": float(total_staked) if total_staked else 0,
         }
         return JsonResponse(data)
+
+
+def staking_stats_by_duration(request):
+    with connection.cursor() as cursor:
+        query = """
+        select duration as "Duration", sum(amount) as "Total Staked" from core_ognstaked 
+        where 
+            is_staked = true 
+            and rate > 0 
+            and block_time + interval '1 day' * duration > now()
+        group by duration;
+        """
+        cursor.execute(query)
+        stats = cursor.fetchall()
+
+        data = {
+            "success": True,
+            "data": stats,
+        }
+        return JsonResponse(data)
