@@ -80,12 +80,20 @@ def dashboard(request):
             "label": "redeems",
         },
         {
+            "topic": "0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1",
+            "label": "rebases",
+        },
+        {
             "topic": "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7",
             "label": "governance",
         },
         {
             "topic": "0xd78ad95fa46c994b6551d0da85fc275fe613ce37657fb8d5e3d130840159d822",
             "label": "swaps",
+        },
+        {
+            "topic": "0x47cee97cb7acd717b3c0aa1435d004cd5b3c8c57d70dbceb4e4458bbd60e39d4",
+            "label": "claims",
         },
     ]
 

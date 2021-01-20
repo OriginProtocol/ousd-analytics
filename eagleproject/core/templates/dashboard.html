@@ -451,6 +451,9 @@
                             {% else %}
                                 {{log.data|slot_1|dec_6|floatformat:2}}  <abbr>USDT</abbr> for {{log.data|slot_2|dec_18|floatformat:2}} <abbr>OUSD</abbr>
                             {% endif %}
+                        {% elif log.topic_0 == "0x47cee97cb7acd717b3c0aa1435d004cd5b3c8c57d70dbceb4e4458bbd60e39d4" %}
+                            🍰 <strong>Claim</strong>
+                            {{log.data|slot_0|dec_18|floatformat:2}} <abbr>OUSD</abbr> for <small>{{log.topic_1|long_address_name}}</small>
                         {% else %}
                             <strong>{{log.topic_0|event_name}}</strong>
                             {% if log.topic_1 %}

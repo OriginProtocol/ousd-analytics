@@ -14,10 +14,13 @@ register = template.Library()
 
 CONTRACT_NAMES = {
     "0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70": "Vault",
-    "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86": "OUSD",
-    "0x159ea2fA3a92DAE6b9f21D6753AA6a8EA5bf77BA": "OUSD Internal",
+    "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70": "Vault Core",
     "0xE54f14FC3fBc5915D070DE4758bcF591541BD1c3": "Vault Core",
     "0x84fB09fCb6fc5cc0DBA13FE5CF87A613e34a386a": "Vault Admin",
+    "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86": "OUSD",
+    "0x159ea2fA3a92DAE6b9f21D6753AA6a8EA5bf77BA": "OUSD Internal",
+    "0x8e54f5776ac2d0322d94640e070856a04e446656": "OUSD Internal",
+    "0x9c94df9d594ba1eb94430c006c269c314b1a8281": "OUSD Compensation",
     "0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f": "Origin Multisig",
     "0x8a5ff78bfe0de04f5dc1b57d2e1095be697be76e": "Origin Timelock",
     "0x52bebd3d7f37ec4284853fd5861ae71253a7f428": "Origin Minute Timelock",
@@ -149,6 +152,7 @@ SIGNATURES = {
     "0x372aa224": "setPriceProvider(address)",
     "0x8ec489a2": "setVaultBuffer(uint256)",
     "0x10d1e85c": "uniswapV2Call(address,uint256,uint256,bytes)",
+    "0x1e83409a": "claim(address)",
 }
 
 EVENT_NAMES = {
@@ -170,6 +174,7 @@ EVENT_NAMES = {
     "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925": "Approval(address,address,uint256)",
     "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7": "ExecuteTransaction",
     "0x76e2796dc3a81d57b0e8504b647febcbeeb5f4af818e164f11eef8131a6a763f": "QueueTransaction",
+    "0x47cee97cb7acd717b3c0aa1435d004cd5b3c8c57d70dbceb4e4458bbd60e39d4": "Claim",
 }
 
 
