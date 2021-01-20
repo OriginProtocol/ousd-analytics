@@ -64,4 +64,5 @@ CONTRACT_ADDR_TO_NAME = {
     CDAI: 'cDAI',
     CUSDT: 'cUSDT',
     CUSDC: 'cUSDC',
+    COMPENSATION_CLAIMS: 'Compensation Claims',
 }
