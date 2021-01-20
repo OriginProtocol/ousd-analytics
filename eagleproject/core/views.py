@@ -8,7 +8,7 @@ from core.blockchain.addresses import (
     OUSD,
     OUSD_USDT_UNISWAP,
     OUSD_USDT_SUSHI,
-    SNOWSWAP,
+    COMPENSATION_CLAIMS,
 )
 from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
@@ -136,7 +136,7 @@ def supply(request):
     pools_config = [
         ("Uniswap OUSD/USDT", OUSD_USDT_UNISWAP, False),
         ("Sushi OUSD/USDT", OUSD_USDT_SUSHI, False),
-        ("Snowswap", SNOWSWAP, True),
+        ("OUSD Compensation", COMPENSATION_CLAIMS, False),
     ]
     pools = []
     totals_by_rebasing = {True: Decimal(0), False: Decimal(0)}
@@ -153,7 +153,7 @@ def supply(request):
     pools = sorted(pools, key=lambda pool: 0-pool["amount"])
 
     s = _latest_snapshot()
-    other_rebasing = s.rebasing_reported_supply() - totals_by_rebasing[is_rebasing]
+    other_rebasing = s.rebasing_reported_supply() - totals_by_rebasing[True]
     other_non_rebasing = s.non_rebasing_reported_supply() - totals_by_rebasing[False]
 
     return _cache(30, render(request, "supply.html", locals()))
