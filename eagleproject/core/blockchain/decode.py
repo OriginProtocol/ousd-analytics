@@ -1,7 +1,7 @@
 import re
 from eth_abi import decode_single
 
-SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,]*)\)$'
+SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,\[\]]*)\)$'
 
 
 def slot(value, i):
