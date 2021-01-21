@@ -24,4 +24,5 @@ cloud_sql_proxy
 eagleproject/.env
 eagleproject/.env*
 *env.sh
+.build_env.sh
 test*.py

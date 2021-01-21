@@ -14,6 +14,12 @@ import os
 from pathlib import Path
 import environ
 
+try:
+    import envkey  # noqa: F401
+except ValueError as err:
+    if 'ENVKEY missing' not in str(err):
+        raise err
+
 env = environ.Env(
     # set casting, default value
     DEBUG=(bool, False),
