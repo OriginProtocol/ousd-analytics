@@ -1,7 +1,8 @@
 steps:
 - id: 'Decrypt secrets required for deployment'
-  name: 'gcr.io/cloud-builders/gcloud'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   args:
+    - gcloud
     - kms
     - decrypt
     - --ciphertext-file=./eagleproject/app.yaml.enc
@@ -9,6 +10,6 @@ steps:
     - --location=global
     - --keyring=origin
     - --key=cloudbuild
-- name: "gcr.io/cloud-builders/gcloud"
-  args: ["app", "deploy"]
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args: ['gcloud', app', 'deploy']
 timeout: "1600s"
