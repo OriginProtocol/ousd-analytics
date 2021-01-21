@@ -11,5 +11,6 @@ steps:
     - --keyring=origin
     - --key=cloudbuild
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  dir: ./eagleproject
   args: ['gcloud', 'app', 'deploy']
 timeout: "1600s"
