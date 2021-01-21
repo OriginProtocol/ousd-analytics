@@ -11,13 +11,26 @@ steps:
     - --keyring=origin
     - --key=cloudbuild
 
+- id: 'Decrypt env required for build'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - kms
+    - decrypt
+    - --ciphertext-file=./eagleproject/.build_env.sh.enc
+    - --plaintext-file=./eagleproject/.build_env.sh
+    - --location=global
+    - --keyring=origin
+    - --key=cloudbuild
+
 - id: 'Install requirements, collectstatic, run migrations'
   name: 'python:3.8'
   dir: ./eagleproject
-  entrypoint: sh
+  entrypoint: bash
   args:
     - '-c'
     - |
+      source .build_env.sh && \
       python3 -m pip install -r requirements.txt && \
       python3 ./manage.py collectstatic --noinput && \
       python3 ./manage.py migrate
