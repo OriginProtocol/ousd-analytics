@@ -13,6 +13,7 @@ steps:
 
 - id: 'Install requirements'
   name: 'python:3.8'
+  dir: ./eagleproject
   entrypoint: python3
   args: ['-m', 'pip', 'install', '-r', 'requirements.txt']
 
