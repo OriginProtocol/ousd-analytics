@@ -11,5 +11,5 @@ steps:
     - --keyring=origin
     - --key=cloudbuild
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', app', 'deploy']
+  args: ['gcloud', 'app', 'deploy']
 timeout: "1600s"
