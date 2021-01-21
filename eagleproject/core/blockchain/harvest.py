@@ -46,6 +46,7 @@ from core.blockchain.rpc import (
     get_block,
     get_transaction,
     get_transaction_receipt,
+    getCash,
     ogn_staking_total_outstanding,
     open_oracle_price,
     ousd_rebasing_credits,
@@ -660,6 +661,11 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
         s.supply_apy = supply_apy
         s.total_supply = totalSupply(ctoken_address, 8, block_number)
         s.total_borrows = totalBorrows(
+            ctoken_address,
+            underlying_decimals,
+            block_number
+        )
+        s.total_cash = getCash(
             ctoken_address,
             underlying_decimals,
             block_number

@@ -218,6 +218,9 @@ class CTokenSnapshot(models.Model):
     # Total amount of reserves of the underlying held in this market
     total_reserves = models.DecimalField(max_digits=64, decimal_places=18)
 
+    # Total known balance of this contract in terms of the underlying
+    total_cash = models.DecimalField(max_digits=64, decimal_places=18)
+
     # The exchange rate from the underlying to the CToken
     exchange_rate_stored = models.DecimalField(
         max_digits=64,
