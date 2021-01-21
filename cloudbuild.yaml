@@ -1,8 +1,8 @@
 steps:
 - id: 'Decrypt secrets required for deployment'
   name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
   args:
-    - gcloud
     - kms
     - decrypt
     - --ciphertext-file=./eagleproject/app.yaml.enc
@@ -11,23 +11,34 @@ steps:
     - --keyring=origin
     - --key=cloudbuild
 
-- id: 'Install requirements'
+- id: 'Install requirements, collectstatic, run migrations'
   name: 'python:3.8'
   dir: ./eagleproject
-  entrypoint: python3
-  args: ['-m', 'pip', 'install', '-r', 'requirements.txt']
+  entrypoint: sh
+  args: |
+    - '-c'
+    - |
+      python3 -m pip install -r requirements.txt && \
+      python3 ./manage.py collectstatic --noinput && \
+      python3 ./manage.py migrate
 
-- id: 'Collect static files'
-  name: 'python:3.8'
-  dir: ./eagleproject
-  entrypoint: python3
-  args: ['./manage.py', 'collectstatic', '--noinput']
+# - id: 'Install requirements'
+#   name: 'python:3.8'
+#   dir: ./eagleproject
+#   entrypoint: python3
+#   args: ['-m', 'pip', 'install', '-r', 'requirements.txt']
 
-- id: 'Run migrations'
-  name: 'python:3.8'
-  dir: ./eagleproject
-  entrypoint: python3
-  args: ['./manage.py', 'migrate']
+# - id: 'Collect static files'
+#   name: 'python:3.8'
+#   dir: ./eagleproject
+#   entrypoint: python3
+#   args: ['./manage.py', 'collectstatic', '--noinput']
+
+# - id: 'Run migrations'
+#   name: 'python:3.8'
+#   dir: ./eagleproject
+#   entrypoint: python3
+#   args: ['./manage.py', 'migrate']
 
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   dir: ./eagleproject
