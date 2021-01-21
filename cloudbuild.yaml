@@ -10,6 +10,24 @@ steps:
     - --location=global
     - --keyring=origin
     - --key=cloudbuild
+
+- id: 'Install requirements'
+  name: 'python:3.8'
+  entrypoint: python3
+  args: ['-m', 'pip', 'install', '-r', 'requirements.txt']
+
+- id: 'Collect static files'
+  name: 'python:3.8'
+  dir: ./eagleproject
+  entrypoint: python3
+  args: ['./manage.py', 'collectstatic', '--noinput']
+
+- id: 'Run migrations'
+  name: 'python:3.8'
+  dir: ./eagleproject
+  entrypoint: python3
+  args: ['./manage.py', 'migrate']
+
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   dir: ./eagleproject
   args: ['gcloud', 'app', 'deploy']
