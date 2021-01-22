@@ -1,5 +1,5 @@
 /static
 *.env
-.build_env.sh
 *env.sh
 app.yaml
+.envkey

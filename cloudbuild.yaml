@@ -17,8 +17,8 @@ steps:
   args:
     - kms
     - decrypt
-    - --ciphertext-file=./eagleproject/.build_env.sh.enc
-    - --plaintext-file=./eagleproject/.build_env.sh
+    - --ciphertext-file=./eagleproject/.envkey.enc
+    - --plaintext-file=./eagleproject/.envkey
     - --location=global
     - --keyring=origin
     - --key=cloudbuild
@@ -30,14 +30,7 @@ steps:
   args:
     - '-c'
     - |
-      cat .build_env.sh
-      source .build_env.sh
-
-      if [[ -z "$ENVKEY" ]]; then
-        echo "ENVKEY not set. Cannot continue build!"
-        exit 1
-      fi
-
+      export ENVKEY=$(cat .envkey)
       python3 -m pip install -r requirements.txt && \
       python3 ./manage.py collectstatic --noinput && \
       python3 ./manage.py migrate
