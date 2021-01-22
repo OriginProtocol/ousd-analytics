@@ -33,7 +33,7 @@ steps:
       source .build_env.sh
 
       if [[ -z "$ENVKEY" ]]; then
-        echo "ENVKEY not set"
+        echo "ENVKEY not set. Cannot continue build!"
         exit 1
       fi
 
