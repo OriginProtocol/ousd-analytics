@@ -35,7 +35,7 @@ steps:
       export ENVKEY=$(cat .envkey)
 
       # Run CloudSQL Proxy
-      cloud_sql_proxy \
+      /cloud_sql_proxy \
         -instances="origin-214503:us-west2:ousd-analytics-w" \
         -dir=/cloudsql &
       
