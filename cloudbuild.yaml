@@ -30,6 +30,7 @@ steps:
   args:
     - '-c'
     - |
+      cat .build_env.sh
       source .build_env.sh
 
       if [[ -z "$ENVKEY" ]]; then
