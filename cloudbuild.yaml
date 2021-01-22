@@ -34,8 +34,6 @@ steps:
   name: 'python:3.8'
   dir: ./eagleproject
   entrypoint: bash
-  # env:
-  #   - DATABASE_HOST_OVERRIDE=/tmp/cloudsql/origin-214503:us-west2:ousd-analytics-w
   args:
     - '-c'
     - |
