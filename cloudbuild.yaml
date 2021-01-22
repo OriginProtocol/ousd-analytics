@@ -1,4 +1,11 @@
 steps:
+- id: Install cloud_sql_proxy
+  name: gcr.io/cloud-builders/wget
+  entrypoint: bash
+  args:
+    - -c
+    - wget -O ./cloud_sql_proxy https://storage.googleapis.com/cloudsql-proxy/v1.15/cloud_sql_proxy.linux.386 && chmod +x ./cloud_sql_proxy
+
 - id: 'Decrypt secrets required for deployment'
   name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
@@ -35,7 +42,7 @@ steps:
       export ENVKEY=$(cat .envkey)
 
       # Run CloudSQL Proxy
-      /cloud_sql_proxy \
+      ../cloud_sql_proxy \
         -instances="origin-214503:us-west2:ousd-analytics-w" \
         -dir=/cloudsql &
       
