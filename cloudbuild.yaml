@@ -30,7 +30,13 @@ steps:
   args:
     - '-c'
     - |
-      source .build_env.sh && \
+      source .build_env.sh
+
+      if [[ -z "$ENVKEY" ]]; then
+        echo "ENVKEY not set"
+        exit 1
+      fi
+
       python3 -m pip install -r requirements.txt && \
       python3 ./manage.py collectstatic --noinput && \
       python3 ./manage.py migrate
