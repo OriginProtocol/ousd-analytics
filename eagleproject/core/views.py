@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
-from django.db.models import Q
+from django.db.models import Q, Sum
 from core.blockchain.addresses import (
     OUSD,
     OUSD_USDT_UNISWAP,
@@ -31,7 +31,7 @@ from core.blockchain.rpc import (
     rebasing_credits_per_token,
     totalSupply,
 )
-from core.models import Log, SupplySnapshot
+from core.models import Log, SupplySnapshot, OgnStaked
 
 BLOCKS_PER_DAY = 6500
 
@@ -338,20 +338,15 @@ def staking_stats(request):
 
 
 def staking_stats_by_duration(request):
-    with connection.cursor() as cursor:
-        query = """
-        select duration as "Duration", sum(amount) as "Total Staked" from core_ognstaked 
-        where 
-            is_staked = true 
-            and rate > 0 
-            and block_time + interval '1 day' * duration > now()
-        group by duration;
-        """
-        cursor.execute(query)
-        stats = cursor.fetchall()
+    cutoff = datetime.datetime.now() - datetime.timedelta(days=1)
+    stats = OgnStaked.objects.values('duration').annotate(
+        total_staked=Sum('amount')
+    ).filter(is_staked=True, rate__gt=0, block_time__gt=cutoff)
 
-        data = {
-            "success": True,
-            "data": stats,
-        }
-        return JsonResponse(data)
+    return JsonResponse({
+        "success": True,
+        "data": [
+            [row['duration'], float(row['total_staked'])]
+            for row in stats
+        ],
+    })
