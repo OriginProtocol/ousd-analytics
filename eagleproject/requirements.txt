@@ -19,6 +19,7 @@ numpy==1.19.4
 parsimonious==0.8.1
 pathspec==0.8.0
 psycopg2-binary==2.8.6
+py-multihash==2.0.1
 pycryptodome==3.9.8
 python-dotenv==0.15.0
 pytz==2020.1

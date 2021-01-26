@@ -63,6 +63,7 @@ class Log(models.Model):
     topic_0 = models.CharField(max_length=255, db_index=True, blank=True)
     topic_1 = models.CharField(max_length=255, db_index=True, blank=True)
     topic_2 = models.CharField(max_length=255, db_index=True, blank=True)
+    topic_3 = models.CharField(max_length=255, db_index=True, blank=True)
     data = models.TextField(max_length=256, blank=True)
     block_number = models.IntegerField(db_index=True)
     log_index = models.IntegerField(db_index=True)

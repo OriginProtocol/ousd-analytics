@@ -52,6 +52,7 @@ DEPRECATED_SIG_EVENT_STAKED = encode_hex(keccak(b"Staked(address,uint256)"))
 DEPRECATED_SIG_EVENT_WITHDRAWN = encode_hex(
     keccak(b"Withdrawn(address,uint256)")
 )
+SIG_EVENT_STAKING_PAUSED = encode_hex(keccak(b"Paused(address,bool)"))
 
 # OUSD
 SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
@@ -130,3 +131,30 @@ SIG_EVENT_VOTE_CAST = encode_hex(keccak(b"VoteCast(address,uint256,bool,uint256)
 SIG_EVENT_PROPOSAL_CANCELED = encode_hex(keccak(b"ProposalCanceled(uint256)"))
 SIG_EVENT_PROPOSAL_QUEUED = encode_hex(keccak(b"ProposalQueued(uint256,uint256)"))
 SIG_EVENT_PROPOSAL_EXECUTED = encode_hex(keccak(b"ProposalExecuted(uint256)"))
+
+# Aave LendingPool
+SIG_EVENT_PAUSED = encode_hex(keccak(b"Paused()"))
+SIG_EVENT_UNPAUSED = encode_hex(keccak(b"Unpaused()"))
+
+# Aave AaveProtoGovernance
+SIG_EVENT_AAVE_PROPOSAL_CREATED = encode_hex(keccak(
+    b"ProposalCreated(uint256,bytes32,bytes32,uint256,uint256,uint256,uint256,uint256,address)"
+))
+SIG_EVENT_STATUS_CHANGE_TO_VOTING = encode_hex(
+    keccak(b"StatusChangeToVoting(uint256,uint256)")
+)
+SIG_EVENT_STATUS_CHANGE_TO_VALIDATING = encode_hex(
+    keccak(b"StatusChangeToValidating(uint256)")
+)
+SIG_EVENT_STATUS_CHANGE_TO_EXECUTED = encode_hex(
+    keccak(b"StatusChangeToExecuted(uint256)")
+)
+SIG_EVENT_WINS_YES = encode_hex(
+    keccak(b"YesWins(uint256,uint256,uint256,uint256)")
+)
+SIG_EVENT_WINS_NO = encode_hex(
+    keccak(b"NoWins(uint256,uint256,uint256,uint256)")
+)
+SIG_EVENT_WINS_ABSTAIN = encode_hex(
+    keccak(b"AbstainWins(uint256,uint256,uint256,uint256)")
+)

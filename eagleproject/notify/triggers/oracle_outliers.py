@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 
 from core.models import OracleSnapshot
 from core.blockchain.addresses import MIX_ORACLE, CHAINLINK_ORACLE, OPEN_ORACLE
-from core.common import format_deimal
+from core.common import format_decimal
 from notify.events import event_normal
 
 # Blocks per week
@@ -110,7 +110,7 @@ def run_trigger(snapshot_cursor, latest_snapshot_block, oracle_snapshots):
 
     if outliers:
         for snap in outliers:
-            price = format_deimal(snap.price)
+            price = format_decimal(snap.price)
 
             events.append(
                 event_normal(

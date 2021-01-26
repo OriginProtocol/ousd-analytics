@@ -86,7 +86,9 @@ def transactions(block_number):
 
 def logs(block_number):
     """ Get all event logs since given block """
-    return Log.objects.filter(block_number__gt=block_number)
+    return Log.objects.filter(
+        block_number__gt=block_number
+    ).order_by('block_number', 'transaction_index', 'log_index')
 
 
 def latest_ogn_staking_snap():

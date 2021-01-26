@@ -1,17 +1,17 @@
-from eth_hash.auto import keccak
-from eth_utils import encode_hex
 from eth_abi import decode_single
-from django.db.models import Q
+from core.blockchain.addresses import OGN_STAKING
+from core.blockchain.sigs import SIG_EVENT_STAKING_PAUSED
 from notify.events import event_high
 
-SIG_EVENT_PAUSED = encode_hex(keccak(b"Paused(address indexed,bool)"))
 FALSE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000000"
 TRUE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000001"
 
 
 def get_pause_events(logs):
     """ Get DepositsPaused/DepositsUnpaused events """
-    return logs.filter(topic_0=SIG_EVENT_PAUSED).order_by('block_number')
+    return logs.filter(address=OGN_STAKING).filter(
+        topic_0=SIG_EVENT_STAKING_PAUSED
+    ).order_by('block_number')
 
 
 def run_trigger(new_logs):

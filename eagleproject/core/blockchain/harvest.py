@@ -240,6 +240,7 @@ def ensure_log_record(raw_log):
         topic_0="",
         topic_1="",
         topic_2="",
+        topic_3="",
     )
     # This doesn't do anything?
     # if len(raw_log["data"]) >= 10:
@@ -250,6 +251,8 @@ def ensure_log_record(raw_log):
         log.topic_1 = raw_log["topics"][1]
     if len(raw_log["topics"]) >= 3:
         log.topic_2 = raw_log["topics"][2]
+    if len(raw_log["topics"]) == 4:
+        log.topic_3 = raw_log["topics"][3]
     log.save()
     return log
 
