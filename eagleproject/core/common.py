@@ -1,6 +1,8 @@
+import multihash
 from math import pow
 from enum import Enum
 from decimal import Decimal
+from eth_utils import remove_0x_prefix
 
 from core.blockchain.const import DECIMALS_FOR_SYMBOL
 
@@ -92,7 +94,7 @@ def format_token_human(symbol, value, places=4):
 format_ogn_human = format_ousd_human
 
 
-def format_deimal(v):
+def format_decimal(v):
     """ Format a Decimal to a string, stripping off unnecessary trailing zeros
     """
     sign, digits, price_exp = v.as_tuple()
@@ -100,7 +102,7 @@ def format_deimal(v):
     price_decimal = digits[price_exp:]
     dec_leftpad = abs(price_exp) - len(price_decimal)
     return "{}.{}{}".format(
-        ''.join(map(str, price_whole)),
+        number_string_comma(''.join(map(str, price_whole))),
         '0' * dec_leftpad,
         ''.join(map(str, price_decimal)).rstrip('0')
     )
@@ -116,3 +118,14 @@ def dict_append(d, k, v):
 
 def seconds_to_days(v):
     return v / SECONDS_IN_DAY
+
+
+def decode_ipfs_hash(hex_hash):
+    """ Decode a Base58 IPFS hash from a 32 byte hex string """
+    if hex_hash.startswith('0x'):
+        hex_hash = remove_0x_prefix(hex_hash)
+    if not hex_hash.startswith('1220'):
+        hex_hash = '1220' + hex_hash
+    return multihash.to_b58_string(
+        multihash.from_hex_string(hex_hash)
+    )
