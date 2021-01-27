@@ -1,4 +1,5 @@
 import sys
+from datetime import timedelta
 from decimal import Decimal
 from eth_abi import decode_single
 from eth_utils import decode_hex
@@ -12,9 +13,11 @@ from core.blockchain.sigs import (
     DEPRECATED_SIG_EVENT_STAKED,
     DEPRECATED_SIG_EVENT_WITHDRAWN,
 )
+from core.logging import get_logger
 from notify.events import event_normal
-from datetime import timedelta
 from notify.triggers.staking_rates import DAYS_365_SECONDS
+
+log = get_logger(__name__)
 
 
 def get_stake_withdrawn_events(logs):
@@ -64,7 +67,7 @@ def run_trigger(new_logs):
 
             # There should be a stake in the DB
             if len(stakes) < 1:
-                print('WARNING: No stakes found in DB', file=sys.stderr)
+                log.warning('No stakes found in DB', file=sys.stderr)
 
             # Non-standard stake types
             elif stakes[0].stake_type == 1:
@@ -72,7 +75,7 @@ def run_trigger(new_logs):
 
             # Currently unused
             else:
-                print('WARNING: Unsupported stake_type {}'.format(
+                log.warning('Unsupported stake_type {}'.format(
                     stakes[0].stake_type
                 ), file=sys.stderr)
 

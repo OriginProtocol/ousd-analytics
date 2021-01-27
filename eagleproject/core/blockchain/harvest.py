@@ -75,6 +75,7 @@ from core.blockchain.sigs import (
     TRANSFER,
 )
 from core.common import seconds_to_days
+from core.logging import get_logger
 from core.models import (
     AssetBlock,
     AaveLendingPoolCoreSnapshot,
@@ -91,6 +92,8 @@ from core.models import (
     SupplySnapshot,
     Transaction,
 )
+
+log = get_logger(__name__)
 
 
 def build_asset_block(symbol, block_number):
@@ -206,7 +209,7 @@ def ensure_all_transactions(block_number):
 
 
 def download_logs_from_contract(contract, start_block, end_block):
-    print("D", contract, start_block, end_block)
+    log.info("D", contract, start_block, end_block)
     data = request(
         "eth_getLogs",
         [
@@ -521,7 +524,7 @@ def maybe_store_stake_withdrawn_record(log, block):
             )
 
             if _staker != staker:
-                print(
+                log.warning(
                     "Unexpected staker address {} != {}. Something is quite "
                     "wrong.".format(
                         staker,
@@ -575,11 +578,7 @@ def maybe_store_stake_withdrawn_record(log, block):
             duration, rate = human_duration_yield(_duration, _rate)
 
         else:
-            print(
-                'Do not recognize call signature:',
-                call_sig,
-                file=sys.stderr
-            )
+            log.warning('Do not recognize call signature: {}'.format(call_sig))
 
     # Fallback to decoding from newer events if available
     if duration == 0 and is_updated_staked_event:
@@ -637,7 +636,7 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
     ctoken_address = COMPOUND_FOR_SYMBOL.get(underlying_symbol)
 
     if not ctoken_address:
-        print('ERROR: Unknown underlying asset for cToken', file=sys.stderr)
+        log.error('Unknown underlying asset for cToken')
         return None
 
     underlying_decimals = DECIMALS_FOR_SYMBOL[underlying_symbol]
@@ -694,7 +693,7 @@ def ensure_aave_snapshot(underlying_symbol, block_number):
     asset_address = CONTRACT_FOR_SYMBOL.get(underlying_symbol)
 
     if not asset_address:
-        print('ERROR: Unknown underlying asset for Aave snapshot', file=sys.stderr)
+        log.error('Unknown underlying asset for Aave snapshot')
         return None
 
     q = AaveLendingPoolCoreSnapshot.objects.filter(

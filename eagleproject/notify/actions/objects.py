@@ -5,6 +5,9 @@ from time import sleep
 from django.conf import settings
 from django.core.mail import send_mail
 from core.common import Severity
+from core.logging import get_logger
+
+log = get_logger(__name__)
 
 SEVERITY_COLOR = {
     Severity.CRITICAL: int('FF0000', 16),
@@ -43,7 +46,7 @@ class Email(Action):
 
         else:
             # If we're not configured, don't die, but don't be silent
-            print('E-mail not configured', file=sys.stderr)
+            log.warning('E-mail not configured')
 
 
 class DiscordWebhook(Action):
@@ -94,7 +97,7 @@ class DiscordWebhook(Action):
                     # These long ones might be duplicate messages during my
                     # testing and may not show up IRL
                     if retry_after > 30:
-                        print(
+                        log.error(
                             'Discord rate limit wait of {}sec is too long!  '
                             'Skipping. ({})'.format(
                                 retry_after,
@@ -103,13 +106,12 @@ class DiscordWebhook(Action):
                         )
                         break
 
-                    print(
+                    log.warning(
                         'Discord rate limited us.  Retrying in {} seconds '
                         '(global: {})'.format(
                             retry_after,
                             response.get('global', False),
-                        ),
-                        file=sys.stderr
+                        )
                     )
 
                     sleep(retry_after)
@@ -119,15 +121,14 @@ class DiscordWebhook(Action):
                     break
 
                 else:
-                    print(
+                    log.error(
                         'Error executing webhook ({}): {}'.format(
                             r.status_code,
                             r.text
-                        ),
-                        file=sys.stderr
+                        )
                     )
                     break
 
         else:
             # If we're not configured, don't die, but don't be silent
-            print('Discord webhook is not configured', file=sys.stderr)
+            log.info('Discord webhook is not configured')

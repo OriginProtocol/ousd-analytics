@@ -2,8 +2,11 @@ import sys
 from datetime import datetime, timedelta
 from django.http import HttpResponse
 
+from core.logging import get_logger
 from notify.models import EventSeen
 from notify.main import run_all
+
+log = get_logger(__name__)
 
 
 def run_triggers(request):
@@ -19,7 +22,9 @@ def gc(request):
         EventSeen.objects.filter(
             last_seen__gt=datetime.utcnow() - timedelta(hours=2)
         ).delete()
-    except Exception as err:
-        print(err, file=sys.stderr)
+    except Exception:
+        log.exception(
+            "Exception occurred trying to do event garbage collection"
+        )
 
     return HttpResponse("ok")

@@ -18,7 +18,10 @@ from core.blockchain.sigs import (
     SIG_EVENT_WINS_ABSTAIN,
 )
 from core.common import format_token_human, decode_ipfs_hash
+from core.logging import get_logger
 from notify.events import event_high, event_normal
+
+log = get_logger(__name__)
 
 HEADER_PATTERN = r'^([\w\d_]+): (.+)'
 
@@ -31,7 +34,7 @@ def fetch_ipfs_json(ipfs_hash):
     r = requests.get('https://ipfs.io/ipfs/{}'.format(ipfs_hash))
 
     if r.status_code != 200:
-        print('Failed to fetch file from IPFS: {}'.format(ipfs_hash))
+        log.error('Failed to fetch file from IPFS: {}'.format(ipfs_hash))
         return {}
 
     return r.json()
