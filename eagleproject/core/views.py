@@ -6,6 +6,7 @@ from django.db import connection
 from django.db.models import Q, Sum
 from core.blockchain.addresses import (
     OUSD,
+    USDT,
     OUSD_USDT_UNISWAP,
     OUSD_USDT_SUSHI,
     COMPENSATION_CLAIMS,
@@ -247,6 +248,15 @@ def tx_debug(request, tx_hash):
     transaction = ensure_transaction_and_downstream(tx_hash)
     logs = Log.objects.filter(transaction_hash=tx_hash)
     return _cache(1200, render(request, "debug_tx.html", locals()))
+
+
+def powermint(request):
+    ousd_uniswap = balanceOf(OUSD, OUSD_USDT_UNISWAP, 18)
+    usdt_uniswap = balanceOf(USDT, OUSD_USDT_UNISWAP, 6)
+    eth_usd = 1300
+    apr = Decimal(_get_trailing_apr())
+    current_gas_price = 70
+    return render(request, "powermint.html", locals())
 
 
 def _cache(seconds, response):
