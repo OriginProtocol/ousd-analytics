@@ -1,3 +1,4 @@
+import pytz
 from django import template
 from django.template.defaultfilters import stringfilter
 from django.utils import timezone
@@ -7,8 +8,9 @@ from eth_abi import decode_single
 from core.blockchain.addresses import DAI, OUSD, USDC, USDT
 from core.blockchain.const import E_6, E_8, E_18
 from core.blockchain.decode import slot
-import pytz
+from core.logging import get_logger
 
+log = get_logger(__name__)
 
 register = template.Library()
 
@@ -345,7 +347,7 @@ def trace_annotation(trace):
 
     elif signature == "0xfeaf968c":
         s = "0x" + trace["result"]["output"][2 + 64 : 2 + 64 + 64]
-        print(s)
+        log.debug(s)
         value = Decimal(int(s, 16)) / E_8
         return "CHAIN %f" % value
 

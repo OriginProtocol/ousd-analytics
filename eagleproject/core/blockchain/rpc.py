@@ -31,6 +31,9 @@ from core.blockchain.sigs import (
     SIG_FUNC_TOTAL_RESERVES,
     SIG_FUNC_TOTAL_SUPPLY,
 )
+from core.logging import get_logger
+
+log = get_logger(__name__)
 
 
 def request(method, params):
@@ -53,13 +56,13 @@ def request(method, params):
 
     except JSONDecodeError as err:
         try:
-            print(r.text, file=sys.stderr)
+            log.error(r.text)
         except Exception:
             pass
         raise err
 
     except Exception as err:
-        print(err, file=sys.stderr)
+        log.error(err)
         raise err
 
 
@@ -242,7 +245,7 @@ def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
             math.pow(10, decimals)
         )
     except Exception:
-        print("ERROR: balanceOfUnderlying failed")
+        log.error("balanceOfUnderlying failed")
         return Decimal(0)
 
 
@@ -255,7 +258,7 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
             math.pow(10, decimals)
         )
     except Exception:
-        print("ERROR: strategyCheckBalance failed")
+        log.error("strategyCheckBalance failed")
         return Decimal(0)
 
 

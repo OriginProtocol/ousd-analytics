@@ -90,20 +90,41 @@ TEMPLATES = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': os.getenv('LOG_LEVEL', 'INFO'),
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
             'propagate': False,
+        },
+        'requests': {
+            'handlers': ['console'],
+            'level': os.environ.get('REQUESTS_LOG_LEVEL', 'WARNING'),
+            'propagate': True,
+        },
+        'urllib3': {
+            'handlers': ['console'],
+            'level': os.environ.get('REQUESTS_LOG_LEVEL', 'WARNING'),
+            'propagate': True,
         },
     },
 }

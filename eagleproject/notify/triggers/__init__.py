@@ -30,6 +30,7 @@ from datetime import datetime
 from importlib import import_module
 from django.db.models import Max
 
+from core.logging import get_logger
 from core.models import (
     AaveLendingPoolCoreSnapshot,
     CTokenSnapshot,
@@ -42,6 +43,8 @@ from core.models import (
     Transaction,
 )
 from notify.models import CursorId, NotifyCursor
+
+log = get_logger(__name__)
 
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
@@ -96,7 +99,7 @@ def latest_ogn_staking_snap():
     try:
         return OgnStakingSnapshot.objects.all().order_by('-block_number')[0]
     except Exception as e:
-        print('e:', e)
+        log.error(str(e))
         return None
 
 
