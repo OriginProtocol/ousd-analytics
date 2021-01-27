@@ -3,7 +3,7 @@ from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 from notify.events import event_low
 
 HIGH_RATE = Decimal(0.15)  # 15%
-LOW_RATE = Decimal(0.01)  # 1%
+LOW_RATE = Decimal(0.03)  # 3%
 
 
 def run_trigger(ctoken_snapshots):
@@ -11,7 +11,6 @@ def run_trigger(ctoken_snapshots):
     events = []
 
     for snap in ctoken_snapshots:
-        print('snap.supply_apy:', snap.supply_apy)
         if snap.supply_apy > HIGH_RATE:
             events.append(event_low(
                 "Compound Supply Rate   📈",
