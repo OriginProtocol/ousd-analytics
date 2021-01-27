@@ -15,12 +15,12 @@ def encode_args(signature, args):
 
     if not match:
         # TODO: Better way to represent this?
-        return None
+        return ""
 
     try:
         types_string = match.groups()[1]
     except IndexError:
-        return None
+        return ""
 
     # Tag the arg types from the signature and decode calldata accordingly
     types = [x.strip() for x in types_string.split(',')]
