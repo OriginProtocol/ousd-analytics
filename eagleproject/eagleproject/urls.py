@@ -24,13 +24,15 @@ urlpatterns = [
     path("address/<slug:address>", core_views.address, name="address"),
     path("apr", core_views.apr_index),
     path("supply", core_views.supply),
+    path("powermint", core_views.powermint),
+
     path("reload", core_views.reload),
+    path("runtriggers", notify_views.run_triggers),
+    path("notifygc", notify_views.gc),
+
     path("api/v1/apr/trailing", core_views.api_apr_trailing),
     path("api/v1/ratios", core_views.api_ratios),
     path("api/v1/speed_test", core_views.api_speed_test),
-    path("runtriggers", notify_views.run_triggers),
-    path("notifygc", notify_views.gc),
-    # path('admin/', admin.site.urls),
     path("api/v1/staking_stats", core_views.staking_stats),
     path("api/v1/staking_stats_by_duration", core_views.staking_stats_by_duration),
 ]
