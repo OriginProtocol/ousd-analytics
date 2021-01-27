@@ -13,7 +13,7 @@
 
 <p>
   Currently assuming {{current_gas_price}} GWIE gas price and ${{eth_usd}} ETH.
-  Using live uniswap prices.
+  Live uniswap prices. Live trailing seven day APR.
 </p>
 
 <p>All lines are cost per dollar, including gas prices, any fees, and any slippage.</p>
@@ -33,7 +33,7 @@
 
   let usdt = parseFloat('{{usdt_uniswap}}'.replace(/,/g,''))
   let ousd = parseFloat('{{ousd_uniswap}}'.replace(/,/g,''))
-  let weeklyApr = 0.22 / 50.0
+  let weeklyApr = parseFloat('{{apr}}'.replace(/,/g,'')) / 100.0 / 50.0
   let gasPrice = 70.0
   let ethereumPrice = 1300.0
 
