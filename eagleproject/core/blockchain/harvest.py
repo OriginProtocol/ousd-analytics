@@ -209,7 +209,7 @@ def ensure_all_transactions(block_number):
 
 
 def download_logs_from_contract(contract, start_block, end_block):
-    log.info("D", contract, start_block, end_block)
+    log.info("D {} {} {}".format(contract, start_block, end_block))
     data = request(
         "eth_getLogs",
         [
