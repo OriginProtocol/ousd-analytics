@@ -35,4 +35,5 @@ urlpatterns = [
     path("api/v1/speed_test", core_views.api_speed_test),
     path("api/v1/staking_stats", core_views.staking_stats),
     path("api/v1/staking_stats_by_duration", core_views.staking_stats_by_duration),
+    path("api/v1/pools", core_views.coingecko_pools),
 ]

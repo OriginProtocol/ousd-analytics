@@ -121,7 +121,7 @@ def apr_index(request):
     ) + [latest_block_number]
     rows = []
     last_snapshot = None
-    
+
     for block_number in block_numbers:
         if block_number < START_OF_OUSD_V2:
             continue
@@ -194,6 +194,22 @@ def api_ratios(request):
     })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(30, response)
+
+
+def active_stake_stats():
+    """ Get stats of the active stakes grouped by duration """
+    return OgnStaked.objects.values('duration').annotate(
+        total_staked=Sum('amount')
+    ).filter(
+        is_staked=True,
+        rate__gt=0,
+        block_time__gt=(
+            datetime.datetime.now() - ExpressionWrapper(
+                F('duration'),
+                output_field=DateTimeField()
+            )
+        )
+    )
 
 
 def address(request, address):
@@ -361,18 +377,7 @@ def staking_stats(request):
 
 
 def staking_stats_by_duration(request):
-    stats = OgnStaked.objects.values('duration').annotate(
-        total_staked=Sum('amount')
-    ).filter(
-        is_staked=True,
-        rate__gt=0,
-        block_time__gt=(
-            datetime.datetime.now() - ExpressionWrapper(
-                F('duration'),
-                output_field=DateTimeField()
-            )
-        )
-    )
+    stats = active_stake_stats()
 
     return JsonResponse({
         "success": True,
@@ -381,3 +386,50 @@ def staking_stats_by_duration(request):
             for row in stats
         ],
     })
+
+
+def coingecko_pools(request):
+    """ API for CoinGecko to consume to get details about OUSD and OGN """
+    ousd_liquidity = totalSupply(OUSD, 18)
+    ousd_apy = _get_trailing_apy()
+    ogn_stats = active_stake_stats()
+    ogn_30_liquidity = 0
+    ogn_90_liquidity = 0
+    ogn_365_liquidity = 0
+
+    for stat in ogn_stats:
+        if stat['duration'] == 30:
+            ogn_30_liquidity = stat['total_staked']
+        elif stat['duration'] == 90:
+            ogn_90_liquidity = stat['total_staked']
+        elif stat['duration'] == 365:
+            ogn_365_liquidity = stat['total_staked']
+
+    return _cache(
+        60,
+        JsonResponse(
+            [
+                {
+                    "identifier": "OUSD Vault",
+                    "liquidity_locked": float(ousd_liquidity),
+                    "apy": ousd_apy,
+                },
+                {
+                    "identifier": "OGN 30-day Staking",
+                    "liquidity_locked": float(ogn_30_liquidity),
+                    "apy": 7.5,
+                },
+                {
+                    "identifier": "OGN 90-day Staking",
+                    "liquidity_locked": float(ogn_90_liquidity),
+                    "apy": 12.5,
+                },
+                {
+                    "identifier": "OGN 365-day Staking",
+                    "liquidity_locked": float(ogn_365_liquidity),
+                    "apy": 25.0,
+                }
+            ],
+            safe=False
+        )
+    )
