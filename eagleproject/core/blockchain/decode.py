@@ -1,5 +1,5 @@
 import re
-from eth_abi import decode_single
+from eth_abi import decode_single, encode_single
 
 SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,\[\]]*)\)$'
 
@@ -7,6 +7,31 @@ SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,\[\]]*)\)$'
 def slot(value, i):
     """Get the x 256bit field from a data string"""
     return value[2 + i * 64:2 + (i + 1) * 64]
+
+
+def encode_args(signature, args):
+    """ Encode call arguments for an RPC call """
+    match = re.match(SIG_PATTERN, signature)
+
+    if not match:
+        # TODO: Better way to represent this?
+        return ""
+
+    try:
+        types_string = match.groups()[1]
+    except IndexError:
+        return ""
+
+    # Tag the arg types from the signature and decode calldata accordingly
+    types = [x.strip() for x in types_string.split(',')]
+    arg_sig = '({})'.format(','.join(types))
+
+    if not types:
+        return ""
+
+    assert len(types) == len(args), "args do not match signature"
+
+    return encode_single(arg_sig, args).hex()
 
 
 def decode_args(signature, calldata):

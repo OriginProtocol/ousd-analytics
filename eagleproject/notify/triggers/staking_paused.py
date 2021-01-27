@@ -1,10 +1,8 @@
 from eth_abi import decode_single
 from core.blockchain.addresses import OGN_STAKING
 from core.blockchain.sigs import SIG_EVENT_STAKING_PAUSED
+from core.blockchain.const import TRUE_256BIT
 from notify.events import event_high
-
-FALSE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000000"
-TRUE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000001"
 
 
 def get_pause_events(logs):

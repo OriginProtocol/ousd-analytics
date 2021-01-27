@@ -15,10 +15,12 @@ from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
     COMPOUND_FOR_SYMBOL,
     START_OF_OUSD_V2,
+    AAVE_ASSETS,
 )
 from core.blockchain.harvest import (
     ensure_all_transactions,
     ensure_asset,
+    ensure_aave_snapshot,
     ensure_ctoken_snapshot,
     ensure_latest_logs,
     ensure_oracle_snapshot,
@@ -278,6 +280,9 @@ def _reload(block_number):
 
     for symbol in COMPOUND_FOR_SYMBOL:
         ensure_ctoken_snapshot(symbol, block_number)
+
+    for symbol in AAVE_ASSETS:
+        ensure_aave_snapshot(symbol, block_number)
 
 
 def _latest_snapshot():

@@ -35,6 +35,7 @@ from core.blockchain.const import (
 )
 from core.blockchain.decode import decode_args, slot
 from core.blockchain.rpc import (
+    AaveLendingPoolCore,
     balanceOf,
     balanceOfUnderlying,
     borrowRatePerBlock,
@@ -76,6 +77,7 @@ from core.blockchain.sigs import (
 from core.common import seconds_to_days
 from core.models import (
     AssetBlock,
+    AaveLendingPoolCoreSnapshot,
     Block,
     CTokenSnapshot,
     DebugTx,
@@ -681,6 +683,56 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
         s.exchange_rate_stored = exchnageRateStored(
             ctoken_address,
             block_number
+        )
+        s.save()
+
+        return s
+
+
+def ensure_aave_snapshot(underlying_symbol, block_number):
+    """ Get a snapshot of the Aave LendingPoolCore reserve for an asset """
+    asset_address = CONTRACT_FOR_SYMBOL.get(underlying_symbol)
+
+    if not asset_address:
+        print('ERROR: Unknown underlying asset for Aave snapshot', file=sys.stderr)
+        return None
+
+    q = AaveLendingPoolCoreSnapshot.objects.filter(
+        asset=asset_address,
+        block_number=block_number
+    )
+
+    if q.count():
+        return q.first()
+
+    else:
+
+        s = AaveLendingPoolCoreSnapshot()
+        s.block_number = block_number
+        s.asset = asset_address
+        s.borrowing_enabled = AaveLendingPoolCore.isReserveBorrowingEnabled(
+            asset_address
+        )
+        s.available_liquidity = AaveLendingPoolCore.getReserveAvailableLiquidity(
+            asset_address
+        )
+        s.total_borrows_stable = AaveLendingPoolCore.getReserveTotalBorrowsStable(
+            asset_address
+        )
+        s.total_borrows_variable = AaveLendingPoolCore.getReserveTotalBorrowsVariable(
+            asset_address
+        )
+        s.total_liquidity = AaveLendingPoolCore.getReserveTotalLiquidity(
+            asset_address
+        )
+        s.current_liquidity_rate = AaveLendingPoolCore.getReserveCurrentLiquidityRate(
+            asset_address
+        )
+        s.variable_borrow_rate = AaveLendingPoolCore.getReserveCurrentVariableBorrowRate(
+            asset_address
+        )
+        s.stable_borrow_rate = AaveLendingPoolCore.getReserveCurrentStableBorrowRate(
+            asset_address
         )
         s.save()
 
