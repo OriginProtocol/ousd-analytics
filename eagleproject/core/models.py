@@ -230,3 +230,56 @@ class CTokenSnapshot(models.Model):
 
     class Meta:
         unique_together = ('block_number', 'address')
+
+
+class AaveLendingPoolCoreSnapshot(models.Model):
+    """ Snapshot of Aave's LendingPoolCore (v1) """
+
+    block_number = models.IntegerField(db_index=True)
+
+    # The underlying asset address for the reserve
+    asset = models.CharField(max_length=42, db_index=True)
+
+    # borrowingEnabled = true means users can borrow from this reserve
+    borrowing_enabled = models.BooleanField()
+
+    # The available liquidity is the balance of the core contract
+    available_liquidity = models.DecimalField(max_digits=64, decimal_places=18)
+
+    # The total liquidity is the balance of the core contract + total borrows
+    total_liquidity = models.DecimalField(max_digits=64, decimal_places=18)
+
+    # the current supply rate.
+    current_liquidity_rate = models.DecimalField(
+        max_digits=64,
+        decimal_places=27,
+    )
+
+    # the total borrows of the reserve at a stable rate. Expressed in the
+    # underlying currency
+    total_borrows_stable = models.DecimalField(
+        max_digits=64,
+        decimal_places=18,
+    )
+
+    # the total borrows of the reserve at a variable rate. Expressed in the
+    # underlying currency
+    total_borrows_variable = models.DecimalField(
+        max_digits=64,
+        decimal_places=18,
+    )
+
+    # the current variable borrow rate
+    variable_borrow_rate = models.DecimalField(
+        max_digits=64,
+        decimal_places=27,
+    )
+
+    # the current stable borrow rate
+    stable_borrow_rate = models.DecimalField(
+        max_digits=64,
+        decimal_places=27,
+    )
+
+    class Meta:
+        unique_together = ('block_number', 'asset')

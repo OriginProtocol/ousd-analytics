@@ -5,14 +5,18 @@ import requests
 from decimal import Decimal
 from json.decoder import JSONDecodeError
 from eth_abi import encode_single
+from eth_hash.auto import keccak
+from eth_utils import encode_hex
 
 from core.blockchain.addresses import (
+    AAVE_LENDING_POOL_CORE_V1,
     CHAINLINK_ORACLE,
     OGN_STAKING,
     OPEN_ORACLE,
     OUSD,
 )
-from core.blockchain.const import E_6, E_8, E_18
+from core.blockchain.const import E_6, E_8, E_18, E_27, TRUE_256BIT
+from core.blockchain.decode import encode_args
 from core.blockchain.sigs import (
     OPEN_ORACLE_PRICE,
     CHAINLINK_ETH_USD_PRICE,
@@ -65,6 +69,37 @@ def call(to, signature, payload, block="latest"):
         block if block == "latest" else hex(block),
     ]
     return request("eth_call", params)
+
+
+def call_by_sig(
+        address,
+        signature,
+        args,
+        block="latest") -> dict:
+    """ Do an eth_call given a string function signature and an arg array """
+    payload = encode_args(signature, args)
+    sig_hash = encode_hex(keccak(signature.encode('utf-8')))[:10]
+    return call(address, sig_hash, payload, block)
+
+
+def call_and_return_wad(
+        address,
+        signature,
+        args,
+        block="latest") -> Decimal:
+    """ Make an RPC call and return a "wad" value (18 decimals) """
+    data = call_by_sig(address, signature, args, block)
+    return Decimal(int(data["result"], 16)) / E_18
+
+
+def call_and_return_ray(
+        address,
+        signature,
+        args,
+        block="latest") -> Decimal:
+    """ Make an RPC call and return a "ray" value (27 decimals) """
+    data = call_by_sig(address, signature, args, block)
+    return Decimal(int(data["result"], 16)) / E_27
 
 
 def storage_at(address, slot, block="latest"):
@@ -267,3 +302,83 @@ def staking_durationRewardRate(address, duration, block="latest"):
     payload = encode_single("(uint256)", [duration]).hex()
     data = call(address, signature, payload, block)
     return Decimal(int(data["result"], 16))
+
+
+class AaveLendingPoolCore:
+    """ LendingPoolCore calls """
+
+    @staticmethod
+    def isReserveBorrowingEnabled(address, block="latest") -> bool:
+        data = call_by_sig(
+            AAVE_LENDING_POOL_CORE_V1,
+            "isReserveBorrowingEnabled(address)",
+            [address],
+            block
+        )
+        return data["result"] == TRUE_256BIT
+
+    @staticmethod
+    def getReserveAvailableLiquidity(address, decimals=18, block="latest") -> Decimal:
+        return call_and_return_wad(
+            AAVE_LENDING_POOL_CORE_V1,
+            "getReserveAvailableLiquidity(address)",
+            [address],
+            block=block
+        )
+
+    @staticmethod
+    def getReserveTotalBorrowsStable(address, decimals=18, block="latest") -> Decimal:
+        return call_and_return_wad(
+            AAVE_LENDING_POOL_CORE_V1,
+            "getReserveTotalBorrowsStable(address)",
+            [address],
+            block=block
+        )
+
+    @staticmethod
+    def getReserveTotalBorrowsVariable(address, block="latest") -> Decimal:
+        return call_and_return_wad(
+            AAVE_LENDING_POOL_CORE_V1,
+            "getReserveTotalBorrowsVariable(address)",
+            [address],
+            block=block
+        )
+
+    @staticmethod
+    def getReserveTotalLiquidity(address, block="latest") -> Decimal:
+        return call_and_return_wad(
+            AAVE_LENDING_POOL_CORE_V1,
+            "getReserveTotalLiquidity(address)",
+            [address],
+            block=block
+        )
+
+    @staticmethod
+    def getReserveCurrentLiquidityRate(address, block="latest") -> Decimal:
+        # Return value is a "Ray" false decimal.  See: ds-math
+        return call_and_return_ray(
+            AAVE_LENDING_POOL_CORE_V1,
+            "getReserveCurrentLiquidityRate(address)",
+            [address],
+            block=block
+        )
+
+    @staticmethod
+    def getReserveCurrentVariableBorrowRate(address, block="latest") -> Decimal:
+        # Return value is a "Ray" false decimal.  See: ds-math
+        return call_and_return_ray(
+            AAVE_LENDING_POOL_CORE_V1,
+            "getReserveCurrentVariableBorrowRate(address)",
+            [address],
+            block=block
+        )
+
+    @staticmethod
+    def getReserveCurrentStableBorrowRate(address, block="latest") -> Decimal:
+        # Return value is a "Ray" false decimal.  See: ds-math
+        return call_and_return_ray(
+            AAVE_LENDING_POOL_CORE_V1,
+            "getReserveCurrentStableBorrowRate(address)",
+            [address],
+            block=block
+        )
