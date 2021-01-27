@@ -44,7 +44,7 @@ from core.models import (
 )
 from notify.models import CursorId, NotifyCursor
 
-log = get_logger('notify.triggers')
+log = get_logger(__name__)
 
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
