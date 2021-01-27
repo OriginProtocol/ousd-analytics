@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum, ExpressionWrapper, DateTimeField
 from core.blockchain.addresses import (
     OUSD,
     OUSD_USDT_UNISWAP,
@@ -346,10 +346,18 @@ def staking_stats(request):
 
 
 def staking_stats_by_duration(request):
-    cutoff = datetime.datetime.now() - datetime.timedelta(days=1)
     stats = OgnStaked.objects.values('duration').annotate(
         total_staked=Sum('amount')
-    ).filter(is_staked=True, rate__gt=0, block_time__gt=cutoff)
+    ).filter(
+        is_staked=True,
+        rate__gt=0,
+        block_time__gt=(
+            datetime.datetime.now() - ExpressionWrapper(
+                F('duration'),
+                output_field=DateTimeField()
+            )
+        )
+    )
 
     return JsonResponse({
         "success": True,
