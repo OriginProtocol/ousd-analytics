@@ -28,9 +28,10 @@ import logging
 from pathlib import Path
 from datetime import datetime
 from importlib import import_module
-from django.db.models import Max, Subquery
+from django.db.models import Max
 
 from core.models import (
+    AaveLendingPoolCoreSnapshot,
     CTokenSnapshot,
     Block,
     Log,
@@ -116,6 +117,20 @@ def recent_ctoken_snapshots(snap_count=5):
     ).order_by('-block_number', 'address')
 
 
+def recent_aave_reserve_snapshots(snap_count=5):
+    return AaveLendingPoolCoreSnapshot.objects.filter(
+        block_number__in=AaveLendingPoolCoreSnapshot.objects.order_by(
+            '-block_number'
+        ).values('block_number')[:snap_count]
+    ).order_by('-block_number', 'asset')
+
+
+def aave_reserve_snapshots(block_number):
+    return AaveLendingPoolCoreSnapshot.objects.filter(
+        block_number=block_number
+    )
+
+
 def run_all_triggers():
     """ Run all triggers """
     events = []
@@ -177,7 +192,11 @@ def run_all_triggers():
         "ctoken_snapshots": lambda: ctoken_snapshots(
             snapshot_block_number
         ),
-        "recent_ctoken_snapshots": lambda: recent_ctoken_snapshots()
+        "recent_ctoken_snapshots": lambda: recent_ctoken_snapshots(),
+        "aave_reserve_snapshots": lambda: aave_reserve_snapshots(
+            snapshot_block_number
+        ),
+        "recent_aave_reserve_snapshots": lambda: recent_aave_reserve_snapshots(),
     }
 
     for mod in mods:
