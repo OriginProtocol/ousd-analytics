@@ -8,11 +8,12 @@ from notify.models import EventSeen
 class Event:
     """ An event worthy of an action """
     def __init__(self, title, details, severity=Severity.NORMAL,
-                 stamp=datetime.utcnow()):
+                 stamp=datetime.utcnow(), tags=['default']):
         self._severity = severity or Severity.NORMAL
         self._title = title
         self._details = details
         self._stamp = stamp
+        self._tags = tags
 
     def __str__(self):
         return "{} [{}] {}: {}".format(
@@ -57,25 +58,47 @@ class Event:
     def stamp(self):
         return self._stamp
 
+    @property
+    def tags(self):
+        return self._tags
 
-def event_critical(title, details, stamp=datetime.utcnow()):
+
+def event_critical(title, details, stamp=datetime.utcnow(), tags=None):
     """ Create a critical severity event """
-    return Event(title, details, stamp=stamp, severity=Severity.CRITICAL)
+    return Event(
+        title,
+        details,
+        stamp=stamp,
+        severity=Severity.CRITICAL,
+        tags=tags
+    )
 
 
-def event_high(title, details, stamp=datetime.utcnow()):
+def event_high(title, details, stamp=datetime.utcnow(), tags=None):
     """ Create a high severity event """
-    return Event(title, details, stamp=stamp, severity=Severity.HIGH)
+    return Event(
+        title,
+        details,
+        stamp=stamp,
+        severity=Severity.HIGH,
+        tags=tags
+    )
 
 
-def event_normal(title, details, stamp=datetime.utcnow()):
+def event_normal(title, details, stamp=datetime.utcnow(), tags=None):
     """ Create a normal severity event """
-    return Event(title, details, stamp=stamp, severity=Severity.NORMAL)
+    return Event(
+        title,
+        details,
+        stamp=stamp,
+        severity=Severity.NORMAL,
+        tags=tags
+    )
 
 
-def event_low(title, details, stamp=datetime.utcnow()):
+def event_low(title, details, stamp=datetime.utcnow(), tags=None):
     """ Create a low severity event """
-    return Event(title, details, stamp=stamp, severity=Severity.LOW)
+    return Event(title, details, stamp=stamp, severity=Severity.LOW, tags=tags)
 
 
 def seen_filter(events, since):
@@ -101,3 +124,8 @@ def seen_filter(events, since):
             })
 
     return filtered
+
+
+def tag_filter(events, tag):
+    """ Filter out any event not tagged with `tag` """
+    return filter(lambda e: tag in e.tags, events)

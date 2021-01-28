@@ -129,3 +129,13 @@ def decode_ipfs_hash(hex_hash):
     return multihash.to_b58_string(
         multihash.from_hex_string(hex_hash)
     )
+
+
+def first(it, match):
+    """ Find first element of iter to match match """
+    if not callable(match):
+        match = lambda x: x == match
+    for i in it:
+        if match(i):
+            return i
+    return None
