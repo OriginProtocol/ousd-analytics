@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
-from django.db.models import F, Q, Sum, ExpressionWrapper, DateTimeField
+from django.db.models import F, Q, Sum, ExpressionWrapper, DateTimeField, DurationField
 from core.blockchain.addresses import (
     OUSD,
     USDT,
@@ -204,10 +204,7 @@ def active_stake_stats():
         is_staked=True,
         rate__gt=0,
         block_time__gt=(
-            ExpressionWrapper(
-                datetime.datetime.now() - F('duration'),
-                output_field=DateTimeField()
-            )
+            datetime.datetime.now() - F('staked_duration')
         )
     )
 

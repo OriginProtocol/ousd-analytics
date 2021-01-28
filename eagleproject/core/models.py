@@ -1,5 +1,6 @@
-from django.db import models
+from datetime import timedelta
 from decimal import Decimal
+from django.db import models
 
 
 class AssetBlock(models.Model):
@@ -179,6 +180,7 @@ class OgnStaked(models.Model):
     amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     staked_amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     duration = models.IntegerField(default=0)
+    staked_duration = models.DurationField(default=timedelta(days=0))
     rate = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     stake_type = models.IntegerField(default=0)
 
