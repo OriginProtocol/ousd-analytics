@@ -1,5 +1,4 @@
-import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from decimal import Decimal
 from django.conf import settings
 from eth_utils import (
@@ -595,6 +594,7 @@ def maybe_store_stake_withdrawn_record(log, block):
         amount=amount,
         staked_amount=int(slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
         duration=duration,
+        staked_duration=timedelta(days=duration),
         rate=rate,
         stake_type=stake_type,
     )
