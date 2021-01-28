@@ -2,9 +2,11 @@ from decimal import Decimal
 from statistics import mean
 from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 from core.common import dict_append
-from notify.events import event_critical, event_high
+from notify.events import event_critical, event_high, event_normal
 
-PERCENT_DIFF_THRESHOLD = Decimal(0.05)
+PERCENT_DIFF_THRESHOLD_NOTICE = Decimal(0.02)
+PERCENT_DIFF_THRESHOLD_WARNING = Decimal(0.5)
+PERCENT_DIFF_THRESHOLD_CRITICAL = Decimal(0.10)
 
 
 def get_past_comparison(reserve_snaps):
@@ -33,33 +35,73 @@ def run_trigger(recent_aave_reserve_snapshots):
     for asset in snaps:
         total_liquidity_comp = get_past_comparison(snaps[asset])
         total_liquidity_current = snaps[asset][0].total_liquidity
-        diff_threshold = total_liquidity_comp * PERCENT_DIFF_THRESHOLD
+        notice_diff_threshold = (
+            total_liquidity_comp * PERCENT_DIFF_THRESHOLD_NOTICE
+        )
+        warning_diff_threshold = (
+            total_liquidity_comp * PERCENT_DIFF_THRESHOLD_WARNING
+        )
+        critical_diff_threshold = (
+            total_liquidity_comp * PERCENT_DIFF_THRESHOLD_CRITICAL
+        )
+
+        ev_func = event_normal
+        title = ""
+        msg = ""
+        threshold = 0
 
         if total_liquidity_current < total_liquidity_comp:
             diff = total_liquidity_comp - total_liquidity_current
 
-            if diff > diff_threshold:
-                events.append(event_critical(
-                    "Aave Liquidity Fluctuation   🚨",
+            if diff > critical_diff_threshold:
+                ev_func = event_critical
+                threshold = critical_diff_threshold
+
+            elif diff > warning_diff_threshold:
+                ev_func = event_high
+                threshold = warning_diff_threshold
+
+            elif diff > notice_diff_threshold:
+                ev_func = event_normal
+                threshold = notice_diff_threshold
+
+            if threshold:
+                title = "Aave Liquidity Fluctuation   🚨"
+                msg = (
                     "The LendingPoolCore {} reserve has dropped more than {}% "
                     "between snapshots. This could indicate issues or a rush "
                     "on capital.".format(
                         CONTRACT_ADDR_TO_NAME.get(asset, asset),
-                        round(PERCENT_DIFF_THRESHOLD * Decimal(100))
+                        round(threshold * Decimal(100))
                     )
-                ))
+                )
 
         else:
             diff = total_liquidity_current - total_liquidity_comp
 
-            if diff > diff_threshold:
-                events.append(event_high(
-                    "Aave Liquidity Fluctuation   🚨",
+            if diff > critical_diff_threshold:
+                ev_func = event_critical
+                threshold = critical_diff_threshold
+
+            elif diff > warning_diff_threshold:
+                ev_func = event_high
+                threshold = warning_diff_threshold
+
+            elif diff > notice_diff_threshold:
+                ev_func = event_normal
+                threshold = notice_diff_threshold
+
+            if threshold:
+                title = "Aave Liquidity Fluctuation   🚨"
+                msg = (
                     "The LendingPoolCore {} reserve has gained more than {}% "
                     "between snapshots.".format(
                         CONTRACT_ADDR_TO_NAME.get(asset, asset),
-                        round(PERCENT_DIFF_THRESHOLD * Decimal(100))
+                        round(threshold * Decimal(100))
                     )
-                ))
+                )
+
+        if threshold:
+            events.append(ev_func(title, msg))
 
     return events
