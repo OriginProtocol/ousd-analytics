@@ -143,7 +143,7 @@ def run_trigger(recent_ctoken_snapshots):
             events.append(ev_func(
                 title,
                 msg,
-                block_number=snaps[ctoken_address].block_number
+                block_number=snaps[ctoken_address][0].block_number
             ))
 
     return events
