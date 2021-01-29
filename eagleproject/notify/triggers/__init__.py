@@ -48,44 +48,7 @@ log = get_logger(__name__)
 
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
-#SKIP_TRIGGERS = ['noop']
-# TODO: Debug
-SKIP_TRIGGERS = [
-    'noop',
-    'oracle_outliers',
-    'ousd_burns',
-    'ousd_outliers',
-    'ousd_totalsupply',
-    'vault_newasset',
-    'vault_oracle',
-    'vault_strategies',
-    'vault_capital',
-    'failed_transactions',
-    'ousd_mint',
-    'ousd_burn',
-    'staking_stake',
-    'governor_proposals',
-    'proxy_upgraded',
-    'governable_transfer',
-    # 'strategy_deposit',
-    # 'strategy_ptokens',
-    # 'strategy_rewards',
-    'compound_governoralpha_proposals',
-    'compound_timelock_admin',
-    'compound_timelock_delay',
-    'compound_timelock_transactions',
-    'vault_rebase_pause',
-    'vault_buffer',
-    'vault_fees',
-    'vault_supplydiff',
-    #'staking_paused',
-    #'staking_buffer',
-    #'staking_stake',
-    #'staking_deposit',
-    #'staking_rewards',
-    #'staking_rates',
-    'aave_proto_governance',
-]
+SKIP_TRIGGERS = ['noop']
 log = logging.getLogger('notify.triggers')
 
 
