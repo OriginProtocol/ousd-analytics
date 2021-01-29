@@ -1,10 +1,9 @@
-import sys
 import json
 import requests
 from time import sleep
 from django.conf import settings
 from django.core.mail import send_mail
-from core.common import Severity
+from core.common import Severity, first
 from core.logging import get_logger
 
 log = get_logger(__name__)
@@ -14,6 +13,9 @@ SEVERITY_COLOR = {
     Severity.HIGH: int('FF981A', 16),
     Severity.NORMAL: int('1A82FF', 16),
     Severity.LOW: int('1AFF8A', 16),
+}
+TAG_WEBHOOK_OVERRIDE = {
+    'ogn': settings.OGN_DISCORD_WEBHOOK_URL
 }
 
 
@@ -51,10 +53,11 @@ class Email(Action):
 
 class DiscordWebhook(Action):
     def __init__(self, summary, details, severity=Severity.NORMAL,
-                 color=SEVERITY_COLOR[Severity.NORMAL]):
+                 color=SEVERITY_COLOR[Severity.NORMAL], tags=None):
         super().__init__(summary, details, severity)
         self.color = color
         self.severity = severity
+        self.tags = tags
 
     def _is_configured(self):
         return settings.DISCORD_WEBHOOK_URL is not None
@@ -62,6 +65,19 @@ class DiscordWebhook(Action):
     def execute(self):
 
         if self._is_configured():
+            url = settings.DISCORD_WEBHOOK_URL
+
+            # Look for an override
+            if (
+                self.tags
+                and any([tag in TAG_WEBHOOK_OVERRIDE for tag in self.tags])
+            ):
+                tag_match = first(
+                    self.tags,
+                    lambda t: t in TAG_WEBHOOK_OVERRIDE
+                )
+                url = TAG_WEBHOOK_OVERRIDE[tag_match]
+
             payload = {
                 "username": settings.DISCORD_BOT_NAME or "analyticsbot",
                 "avatar_url": "https://i.stack.imgur.com/RUxfR.jpg",
@@ -83,7 +99,7 @@ class DiscordWebhook(Action):
             # Retry request in specific cases
             while True:
                 r = requests.post(
-                    settings.DISCORD_WEBHOOK_URL,
+                    url,
                     headers={"Content-Type": "application/json"},
                     data=json.dumps(payload)
                 )
