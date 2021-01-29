@@ -12,7 +12,7 @@ def run_trigger(ctoken_snapshots):
 
     for snap in ctoken_snapshots:
         if snap.supply_apy > HIGH_RATE:
-            events.append(event_low(
+            ev = event_low(
                 "Compound Supply Rate   📈",
                 "The cToken {} has an unusually high supply APY of {}%".format(
                     CONTRACT_ADDR_TO_NAME.get(
@@ -21,10 +21,12 @@ def run_trigger(ctoken_snapshots):
                     ),
                     round(snap.supply_apy * Decimal(100), 2)
                 )
-            ))
+            )
+            ev.vague_hash = True
+            events.append(ev)
 
         elif snap.supply_apy < LOW_RATE:
-            events.append(event_low(
+            ev = event_low(
                 "Compound Supply Rate   📉",
                 "The cToken {} has an unusually low supply APY of {}%".format(
                     CONTRACT_ADDR_TO_NAME.get(
@@ -33,6 +35,8 @@ def run_trigger(ctoken_snapshots):
                     ),
                     round(snap.supply_apy * Decimal(100), 2)
                 )
-            ))
+            )
+            ev.vague_hash = True
+            events.append(ev)
 
     return events
