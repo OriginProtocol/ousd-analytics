@@ -32,12 +32,13 @@ def event_order_comp(a, b) -> int:
 class Event:
     """ An event worthy of an action """
     def __init__(self, title, details, severity=Severity.NORMAL,
-                 stamp=datetime.utcnow(), block_number=0,
+                 stamp=datetime.utcnow(), tags=['default'], block_number=0,
                  transaction_index=0, log_index=0):
         self._severity = severity or Severity.NORMAL
         self._title = title
         self._details = details
         self._stamp = stamp
+        self._tags = tags
         self._block_number = block_number
         self._transaction_index = transaction_index
         self._log_index = log_index
@@ -99,9 +100,12 @@ class Event:
     def stamp(self):
         return self._stamp
 
+    @property
+    def tags(self):
+        return self._tags
 
 
-def event_critical(title, details, stamp=datetime.utcnow(),
+def event_critical(title, details, stamp=datetime.utcnow(), tags=None,
                    block_number=0, transaction_index=0, log_index=0):
     """ Create a critical severity event """
     return Event(
@@ -116,7 +120,7 @@ def event_critical(title, details, stamp=datetime.utcnow(),
     )
 
 
-def event_high(title, details, stamp=datetime.utcnow(),
+def event_high(title, details, stamp=datetime.utcnow(), tags=None,
                block_number=0, transaction_index=0, log_index=0):
     """ Create a high severity event """
     return Event(
@@ -131,7 +135,7 @@ def event_high(title, details, stamp=datetime.utcnow(),
     )
 
 
-def event_normal(title, details, stamp=datetime.utcnow(),
+def event_normal(title, details, stamp=datetime.utcnow(), tags=None,
                  block_number=0, transaction_index=0, log_index=0):
     """ Create a normal severity event """
     return Event(
@@ -146,7 +150,7 @@ def event_normal(title, details, stamp=datetime.utcnow(),
     )
 
 
-def event_low(title, details, stamp=datetime.utcnow(),
+def event_low(title, details, stamp=datetime.utcnow(), tags=None,
               block_number=0, transaction_index=0, log_index=0):
     """ Create a low severity event """
     return Event(

@@ -5,6 +5,7 @@ from notify.events import event_critical, event_high, event_normal, event_low
 LOW_YELLOW = 2000000
 LOW_ORANGE = 1000000
 LOW_RED = 500000
+EVENT_TAGS = ['ogn']
 
 
 def run_trigger(ogn_staking_snapshot):
@@ -28,6 +29,7 @@ def run_trigger(ogn_staking_snapshot):
                 "Impossible staking condition   ⁉️",
                 "OGN Staking has less OGN than expected rewards "
                 "({} OGN)".format(diff),
+                tags=EVENT_TAGS,
                 block_number=block_number
             )
         )
@@ -39,6 +41,7 @@ def run_trigger(ogn_staking_snapshot):
                 "OGN Staking contract rewards buffer down to {}".format(
                     format_ogn_human(diff)
                 ),
+                tags=EVENT_TAGS,
                 block_number=block_number
             )
         )
@@ -49,6 +52,7 @@ def run_trigger(ogn_staking_snapshot):
                 "OGN Staking contract rewards buffer down to {}".format(
                     format_ogn_human(diff)
                 ),
+                tags=EVENT_TAGS,
                 block_number=block_number
             )
         )
@@ -59,6 +63,7 @@ def run_trigger(ogn_staking_snapshot):
                 "OGN Staking contract rewards buffer down to {}".format(
                     format_ogn_human(diff)
                 ),
+                tags=EVENT_TAGS,
                 block_number=block_number
             )
         )
@@ -70,6 +75,7 @@ def run_trigger(ogn_staking_snapshot):
                 "OGN Staking contract rewards buffer down to {}".format(
                     format_ogn_human(diff)
                 ),
+                tags=EVENT_TAGS,
                 block_number=block_number
             )
         )

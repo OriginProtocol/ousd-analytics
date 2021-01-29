@@ -18,6 +18,8 @@ from notify.triggers.staking_rates import DAYS_365_SECONDS
 
 log = get_logger(__name__)
 
+EVENT_TAGS = ['ogn']
+
 
 def get_stake_withdrawn_events(logs):
     """ Get Stake/Withdrawn events """
@@ -53,6 +55,7 @@ def run_trigger(new_logs):
                         format_ousd_human(Decimal(amount) / Decimal(1e18)),
                         "staked" if is_staked else "withdrawn",
                     ),
+                    tags=EVENT_TAGS,
                     block_number=ev.block_number,
                     transaction_index=ev.transaction_index,
                     log_index=ev.log_index
@@ -95,6 +98,7 @@ def run_trigger(new_logs):
                         duration_dt.days,
                         apy
                     ),
+                    tags=EVENT_TAGS,
                     block_number=ev.block_number,
                     transaction_index=ev.transaction_index,
                     log_index=ev.log_index
@@ -112,6 +116,7 @@ def run_trigger(new_logs):
                     "{} OGN was withdrawn".format(
                         format_ousd_human(Decimal(amount) / Decimal(1e18))
                     ),
+                    tags=EVENT_TAGS,
                     block_number=ev.block_number,
                     transaction_index=ev.transaction_index,
                     log_index=ev.log_index

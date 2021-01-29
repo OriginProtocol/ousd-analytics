@@ -30,6 +30,7 @@ def create_actions_from_events(events):
             details=ev.details,
             severity=ev.severity,
             color=SEVERITY_COLOR[ev.severity],
+            tags=ev.tags,
         ))
 
         if ev.severity > highest_severity:

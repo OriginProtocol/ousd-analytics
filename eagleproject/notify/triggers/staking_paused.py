@@ -4,6 +4,8 @@ from core.blockchain.sigs import SIG_EVENT_STAKING_PAUSED
 from core.blockchain.const import TRUE_256BIT
 from notify.events import event_high
 
+EVENT_TAGS = ['ogn']
+
 
 def get_pause_events(logs):
     """ Get DepositsPaused/DepositsUnpaused events """
@@ -27,6 +29,7 @@ def run_trigger(new_logs):
                     "paused" if is_pause else "unpaused",
                     address,
                 ),
+                tags=EVENT_TAGS,
                 block_number=ev.block_number,
                 transaction_index=ev.transaction_index,
                 log_index=ev.log_index

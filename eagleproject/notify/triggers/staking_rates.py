@@ -5,6 +5,7 @@ from eth_utils import encode_hex, decode_hex
 from eth_abi import decode_single
 from notify.events import event_high
 
+EVENT_TAGS = ['ogn']
 SIG_EVENT_NEW_DURATIONS = encode_hex(
     keccak(b"NewDurations(address,uint256[])")
 )
@@ -57,6 +58,7 @@ def run_trigger(new_logs):
             event_high(
                 "OGN Staking Rates Changed   🧮",
                 durations_string,
+                tags=EVENT_TAGS,
                 block_number=ev.block_number,
                 transaction_index=ev.transaction_index,
                 log_index=ev.log_index

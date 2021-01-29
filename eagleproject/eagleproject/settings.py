@@ -189,6 +189,10 @@ EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS") == "true"
 ADMINS = [("Engineering", "engineering@originprotocol.com")]
 DISCORD_BOT_NAME = os.environ.get("DISCORD_BOT_NAME", "OUSD Analytics Bot")
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+OGN_DISCORD_WEBHOOK_URL = os.environ.get(
+    "OGN_DISCORD_WEBHOOK_URL",
+    DISCORD_WEBHOOK_URL
+)
 # Comma delimited User IDs (e.g. 'Mike Shultz#5937' is '386238710255058954')
 # You can get this by Right clicking the name and "Copy ID" with developer mode
 DISCORD_WEBHOOK_AT = os.environ.get("DISCORD_WEBHOOK_AT")
