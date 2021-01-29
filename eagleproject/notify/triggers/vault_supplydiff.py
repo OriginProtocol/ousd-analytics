@@ -23,7 +23,10 @@ def run_trigger(new_logs):
             "Vault Max Supply Differential Changed   🔢",
             "Vault supply differential limiter has been changed to {}".format(
                 Decimal(diff) / Decimal(1e18)
-            )
+            ),
+            block_number=ev.block_number,
+            transaction_index=ev.transaction_index,
+            log_index=ev.log_index
         ))
 
     return events

@@ -3,15 +3,12 @@ from decimal import Decimal
 from eth_hash.auto import keccak
 from eth_utils import encode_hex, decode_hex
 from eth_abi import decode_single
-from django.db.models import Q
 from notify.events import event_high
 
 SIG_EVENT_NEW_DURATIONS = encode_hex(
     keccak(b"NewDurations(address,uint256[])")
 )
 SIG_EVENT_NEW_RATES = encode_hex(keccak(b"NewRates(address,uint256[])"))
-FALSE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000000"
-TRUE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000001"
 DAYS_365_SECONDS = 31536000
 
 
@@ -57,7 +54,13 @@ def run_trigger(new_logs):
             )
 
         events.append(
-            event_high("OGN Staking Rates Changed   🧮", durations_string)
+            event_high(
+                "OGN Staking Rates Changed   🧮",
+                durations_string,
+                block_number=ev.block_number,
+                transaction_index=ev.transaction_index,
+                log_index=ev.log_index
+            )
         )
 
     return events

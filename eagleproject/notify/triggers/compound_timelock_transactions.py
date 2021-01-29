@@ -62,7 +62,10 @@ def run_trigger(new_logs):
                 CONTRACT_ADDR_TO_NAME.get(target, target),
                 eta,
                 call,
-            )
+            ),
+            block_number=ev.block_number,
+            transaction_index=ev.transaction_index,
+            log_index=ev.log_index
         ))
 
     return events

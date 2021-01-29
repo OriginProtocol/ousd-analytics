@@ -42,7 +42,10 @@ def run_trigger(new_logs):
                         format_token_human(asset_name, amount),
                         asset_name,
                         contract_name,
-                    )
+                    ),
+                    block_number=ev.block_number,
+                    transaction_index=ev.transaction_index,
+                    log_index=ev.log_index
                 )
             )
 
@@ -54,7 +57,10 @@ def run_trigger(new_logs):
                         format_token_human(asset_name, amount),
                         asset_name,
                         contract_name,
-                    )
+                    ),
+                    block_number=ev.block_number,
+                    transaction_index=ev.transaction_index,
+                    log_index=ev.log_index
                 )
             )
 

@@ -26,7 +26,10 @@ def run_trigger(new_logs):
                 "OGN Staking was {} by {}".format(
                     "paused" if is_pause else "unpaused",
                     address,
-                )
+                ),
+                block_number=ev.block_number,
+                transaction_index=ev.transaction_index,
+                log_index=ev.log_index
             )
         )
 

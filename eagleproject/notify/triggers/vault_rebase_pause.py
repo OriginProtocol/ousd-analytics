@@ -27,7 +27,10 @@ def run_trigger(new_logs):
                 "Rebases Paused   ⏸️" if is_pause else "Rebases Unpaused   ▶️",
                 "OUSD Vault rebases have been {}".format(
                     "paused" if is_pause else "unpaused",
-                )
+                ),
+                block_number=ev.block_number,
+                transaction_index=ev.transaction_index,
+                log_index=ev.log_index
             )
         )
 

@@ -95,6 +95,12 @@ def run_trigger(new_logs):
         else:
             raise Exception("Impossible!")
 
-        events.append(event_high(title, details))
+        events.append(event_high(
+            title,
+            details,
+            block_number=ev.block_number,
+            transaction_index=ev.transaction_index,
+            log_index=ev.log_index
+        ))
 
     return events

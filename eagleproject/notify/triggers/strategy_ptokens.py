@@ -46,7 +46,10 @@ def run_trigger(new_logs):
                         contract_name,
                         asset_name,
                         ptoken,
-                    )
+                    ),
+                    block_number=ev.block_number,
+                    transaction_index=ev.transaction_index,
+                    log_index=ev.log_index
                 )
             )
 
@@ -60,7 +63,10 @@ def run_trigger(new_logs):
                         contract_name,
                         asset_name,
                         ptoken,
-                    )
+                    ),
+                    block_number=ev.block_number,
+                    transaction_index=ev.transaction_index,
+                    log_index=ev.log_index
                 )
             )
 

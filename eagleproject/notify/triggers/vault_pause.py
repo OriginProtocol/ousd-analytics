@@ -28,7 +28,10 @@ def run_trigger(new_logs):
                 "Pause   ⏸️" if is_pause else "Unpause   ▶️",
                 "OUSD Vault was {}".format(
                     "paused" if is_pause else "unpaused",
-                )
+                ),
+                block_number=ev.block_number,
+                transaction_index=ev.transaction_index,
+                log_index=ev.log_index
             )
         )
 

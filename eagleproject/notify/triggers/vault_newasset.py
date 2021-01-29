@@ -23,7 +23,10 @@ def run_trigger(new_logs):
                 "A new asset can be used to mint OUSD: "
                 "https://etherscan.io/token/{}".format(
                     asset_address,
-                )
+                ),
+                block_number=ev.block_number,
+                transaction_index=ev.transaction_index,
+                log_index=ev.log_index
             )
         )
 

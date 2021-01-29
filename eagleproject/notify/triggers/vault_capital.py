@@ -26,7 +26,10 @@ def run_trigger(new_logs):
                 "Capital Paused   ⏸️" if is_pause else "Capital Unpaused   ▶️",
                 "OUSD Vault capital has been {}".format(
                     "paused" if is_pause else "unpaused",
-                )
+                ),
+                block_number=ev.block_number,
+                transaction_index=ev.transaction_index,
+                log_index=ev.log_index
             )
         )
 

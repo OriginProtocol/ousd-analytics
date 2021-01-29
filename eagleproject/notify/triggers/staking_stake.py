@@ -1,4 +1,3 @@
-import sys
 from datetime import timedelta
 from decimal import Decimal
 from eth_abi import decode_single
@@ -53,7 +52,10 @@ def run_trigger(new_logs):
                     "{} OGN was {}".format(
                         format_ousd_human(Decimal(amount) / Decimal(1e18)),
                         "staked" if is_staked else "withdrawn",
-                    )
+                    ),
+                    block_number=ev.block_number,
+                    transaction_index=ev.transaction_index,
+                    log_index=ev.log_index
                 )
             )
         elif ev.topic_0 == SIG_EVENT_STAKED:
@@ -67,7 +69,7 @@ def run_trigger(new_logs):
 
             # There should be a stake in the DB
             if len(stakes) < 1:
-                log.warning('No stakes found in DB', file=sys.stderr)
+                log.warning('No stakes found in DB')
 
             # Non-standard stake types
             elif stakes[0].stake_type == 1:
@@ -77,7 +79,7 @@ def run_trigger(new_logs):
             else:
                 log.warning('Unsupported stake_type {}'.format(
                     stakes[0].stake_type
-                ), file=sys.stderr)
+                ))
 
             duration_dt = timedelta(seconds=duration)
 
@@ -92,7 +94,10 @@ def run_trigger(new_logs):
                         verb,
                         duration_dt.days,
                         apy
-                    )
+                    ),
+                    block_number=ev.block_number,
+                    transaction_index=ev.transaction_index,
+                    log_index=ev.log_index
                 )
             )
         elif ev.topic_0 == SIG_EVENT_WITHDRAWN:
@@ -106,7 +111,10 @@ def run_trigger(new_logs):
                     "Withdrawn 🍰",
                     "{} OGN was withdrawn".format(
                         format_ousd_human(Decimal(amount) / Decimal(1e18))
-                    )
+                    ),
+                    block_number=ev.block_number,
+                    transaction_index=ev.transaction_index,
+                    log_index=ev.log_index
                 )
             )
 

@@ -23,7 +23,10 @@ def run_trigger(new_logs):
         events.append(event_high(
             "{} has been upgraded   🆙".format(contract),
             "**Proxy**: {}\n"
-            "**New implementation**: {}\n".format(ev.address, implementation)
+            "**New implementation**: {}\n".format(ev.address, implementation),
+            block_number=ev.block_number,
+            transaction_index=ev.transaction_index,
+            log_index=ev.log_index
         ))
 
     return events
