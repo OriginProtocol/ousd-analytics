@@ -10,14 +10,6 @@ def slot(value, i):
     return value[2 + i * 64:2 + (i + 1) * 64]
 
 
-def to_hex(v):
-    if type(v) == str:
-        return add_0x_prefix(v)
-    if type(v) == bytes:
-        return encode_hex(v)
-    raise ValueError("Unable to coax type {} to hex string".format(type(v)))
-
-
 def bytes32s_to_hex(types, args):
     """ Encode bytes32 args to hex. types array contains types matching the
     values in args
