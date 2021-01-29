@@ -55,15 +55,15 @@ def run_trigger(recent_aave_reserve_snapshots):
 
             if diff > critical_diff_threshold:
                 ev_func = event_critical
-                threshold = critical_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_CRITICAL
 
             elif diff > warning_diff_threshold:
                 ev_func = event_high
-                threshold = warning_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_WARNING
 
             elif diff > notice_diff_threshold:
                 ev_func = event_normal
-                threshold = notice_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_NOTICE
 
             if threshold:
                 title = "Aave Liquidity Fluctuation   🚨"
@@ -81,15 +81,15 @@ def run_trigger(recent_aave_reserve_snapshots):
 
             if diff > critical_diff_threshold:
                 ev_func = event_critical
-                threshold = critical_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_CRITICAL
 
             elif diff > warning_diff_threshold:
                 ev_func = event_high
-                threshold = warning_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_WARNING
 
             elif diff > notice_diff_threshold:
                 ev_func = event_normal
-                threshold = notice_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_NOTICE
 
             if threshold:
                 title = "Aave Liquidity Fluctuation   🚨"
