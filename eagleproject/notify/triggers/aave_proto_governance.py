@@ -161,9 +161,7 @@ def run_trigger(new_logs):
                     decode_ipfs_hash(encode_hex(ipfs_hash)),
                     aip_link,
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_STATUS_CHANGE_TO_VALIDATING:
@@ -176,9 +174,7 @@ def run_trigger(new_logs):
                 "challenges".format(
                     proposal_id
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_STATUS_CHANGE_TO_VOTING:
@@ -195,9 +191,7 @@ def run_trigger(new_logs):
                 "Aave proposal #{} is now in voting stage".format(
                     proposal_id
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_STATUS_CHANGE_TO_EXECUTED:
@@ -209,9 +203,7 @@ def run_trigger(new_logs):
                 "Aave proposal #{} has now been resolved".format(
                     proposal_id
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_WINS_YES:
@@ -233,9 +225,7 @@ def run_trigger(new_logs):
                 "Aave proposal #{} has been passed".format(
                     proposal_id
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_WINS_NO:
@@ -257,9 +247,7 @@ def run_trigger(new_logs):
                 "Aave proposal #{} has been rejected".format(
                     proposal_id
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_WINS_ABSTAIN:
@@ -281,9 +269,7 @@ def run_trigger(new_logs):
                 "Aave proposal #{} has been rejected by abstention".format(
                     proposal_id
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
     return events

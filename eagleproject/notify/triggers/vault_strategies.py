@@ -71,9 +71,7 @@ def run_trigger(new_logs):
         events.append(event_high(
             title,
             description,
-            block_number=ev.block_number,
-            transaction_index=ev.transaction_index,
-            log_index=ev.log_index
+            log_model=ev
         ))
 
     return events

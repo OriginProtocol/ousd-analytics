@@ -33,9 +33,7 @@ def run_trigger(new_logs):
                 "contract: {}".format(
                     admin_address
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_NEW_PENDING_ADMIN:
@@ -45,9 +43,7 @@ def run_trigger(new_logs):
                 " contract and is currently waiting to be claimed.".format(
                     admin_address
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
     return events

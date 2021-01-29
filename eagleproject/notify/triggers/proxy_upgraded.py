@@ -24,9 +24,7 @@ def run_trigger(new_logs):
             "{} has been upgraded   🆙".format(contract),
             "**Proxy**: {}\n"
             "**New implementation**: {}\n".format(ev.address, implementation),
-            block_number=ev.block_number,
-            transaction_index=ev.transaction_index,
-            log_index=ev.log_index
+            log_model=ev
         ))
 
     return events

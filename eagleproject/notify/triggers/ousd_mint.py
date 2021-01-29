@@ -30,9 +30,7 @@ def run_trigger(new_logs):
                     format_ousd_human(Decimal(value) / Decimal(1e18)),
                     "minted" if is_mint else "redeemed",
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             )
         )
 

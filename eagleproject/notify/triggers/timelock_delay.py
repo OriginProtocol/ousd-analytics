@@ -28,9 +28,7 @@ def run_trigger(new_logs):
             "Timelock delay has been changed to {}".format(
                 delay
             ),
-            block_number=ev.block_number,
-            transaction_index=ev.transaction_index,
-            log_index=ev.log_index
+            log_model=ev
         ))
 
     return events

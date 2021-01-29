@@ -21,9 +21,7 @@ def run_trigger(new_logs):
         events.append(event_normal(
             "Vault Strategist Changed   🕴️",
             "The new vault strategist is {} ".format(address),
-            block_number=ev.block_number,
-            transaction_index=ev.transaction_index,
-            log_index=ev.log_index
+            log_model=ev
         ))
 
     return events

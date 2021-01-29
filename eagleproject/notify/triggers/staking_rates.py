@@ -59,9 +59,7 @@ def run_trigger(new_logs):
                 "OGN Staking Rates Changed   🧮",
                 durations_string,
                 tags=EVENT_TAGS,
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             )
         )
 

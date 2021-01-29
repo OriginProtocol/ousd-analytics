@@ -33,9 +33,7 @@ def run_trigger(new_logs):
                     former_governor,
                     new_governor
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         if ev.topic_0 == SIG_EVENT_TRANSFER:
@@ -48,9 +46,7 @@ def run_trigger(new_logs):
                     former_governor,
                     new_governor
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
     return events

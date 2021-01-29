@@ -30,9 +30,7 @@ def run_trigger(new_logs):
                 "Vault Allocate Threshold Changed   🥧",
                 "OUSD Vault allocation deposit threshold was changed to {} "
                 "units".format(threshold),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_REBASE_THRESHOLD:
@@ -40,9 +38,7 @@ def run_trigger(new_logs):
                 "Vault Rebase Threshold Changed   🍱",
                 "OUSD Vault rebase threshold was changed to {} "
                 "units".format(threshold),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         else:

@@ -74,9 +74,7 @@ def run_trigger(new_logs):
                     '\n - '.join(decode_calls(signatures, calldatas)),
                     '{} - {}'.format(start_block, end_block),
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_PROPOSAL_CANCELED:
@@ -87,9 +85,7 @@ def run_trigger(new_logs):
                 "Compound GovernorAlpha proposal #{} has been canceled".format(
                     proposal_id
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_PROPOSAL_QUEUED:
@@ -107,9 +103,7 @@ def run_trigger(new_logs):
                     proposal_id,
                     eta,
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_PROPOSAL_EXECUTED:
@@ -120,9 +114,7 @@ def run_trigger(new_logs):
                 "Compound GovernorAlpha proposal #{} has been executed".format(
                     proposal_id,
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             ))
 
         # This is a ton of noise that's probably irrelevant to us.  Will leave

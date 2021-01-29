@@ -49,9 +49,7 @@ def run_trigger(new_logs):
                     reward_token,
                     contract_name,
                 ),
-                block_number=ev.block_number,
-                transaction_index=ev.transaction_index,
-                log_index=ev.log_index
+                log_model=ev
             )
         )
 

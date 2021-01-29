@@ -106,8 +106,15 @@ class Event:
 
 
 def event_critical(title, details, stamp=datetime.utcnow(), tags=None,
-                   block_number=0, transaction_index=0, log_index=0):
+                   block_number=0, transaction_index=0, log_index=0,
+                   log_model=None):
     """ Create a critical severity event """
+
+    if log_model is not None:
+        block_number = log_model.block_number
+        transaction_index = log_model.transaction_index
+        log_index = log_model.log_index
+
     return Event(
         title,
         details,
@@ -121,8 +128,15 @@ def event_critical(title, details, stamp=datetime.utcnow(), tags=None,
 
 
 def event_high(title, details, stamp=datetime.utcnow(), tags=None,
-               block_number=0, transaction_index=0, log_index=0):
+               block_number=0, transaction_index=0, log_index=0,
+               log_model=None):
     """ Create a high severity event """
+
+    if log_model is not None:
+        block_number = log_model.block_number
+        transaction_index = log_model.transaction_index
+        log_index = log_model.log_index
+
     return Event(
         title,
         details,
@@ -136,8 +150,15 @@ def event_high(title, details, stamp=datetime.utcnow(), tags=None,
 
 
 def event_normal(title, details, stamp=datetime.utcnow(), tags=None,
-                 block_number=0, transaction_index=0, log_index=0):
+                 block_number=0, transaction_index=0, log_index=0,
+                 log_model=None):
     """ Create a normal severity event """
+
+    if log_model is not None:
+        block_number = log_model.block_number
+        transaction_index = log_model.transaction_index
+        log_index = log_model.log_index
+
     return Event(
         title,
         details,
@@ -151,8 +172,15 @@ def event_normal(title, details, stamp=datetime.utcnow(), tags=None,
 
 
 def event_low(title, details, stamp=datetime.utcnow(), tags=None,
-              block_number=0, transaction_index=0, log_index=0):
+              block_number=0, transaction_index=0, log_index=0,
+              log_model=None):
     """ Create a low severity event """
+
+    if log_model is not None:
+        block_number = log_model.block_number
+        transaction_index = log_model.transaction_index
+        log_index = log_model.log_index
+
     return Event(
         title,
         details,

@@ -56,9 +56,7 @@ def run_trigger(new_logs):
                         "staked" if is_staked else "withdrawn",
                     ),
                     tags=EVENT_TAGS,
-                    block_number=ev.block_number,
-                    transaction_index=ev.transaction_index,
-                    log_index=ev.log_index
+                    log_model=ev
                 )
             )
         elif ev.topic_0 == SIG_EVENT_STAKED:
@@ -99,9 +97,7 @@ def run_trigger(new_logs):
                         apy
                     ),
                     tags=EVENT_TAGS,
-                    block_number=ev.block_number,
-                    transaction_index=ev.transaction_index,
-                    log_index=ev.log_index
+                    log_model=ev
                 )
             )
         elif ev.topic_0 == SIG_EVENT_WITHDRAWN:
@@ -117,9 +113,7 @@ def run_trigger(new_logs):
                         format_ousd_human(Decimal(amount) / Decimal(1e18))
                     ),
                     tags=EVENT_TAGS,
-                    block_number=ev.block_number,
-                    transaction_index=ev.transaction_index,
-                    log_index=ev.log_index
+                    log_model=ev
                 )
             )
 

@@ -47,9 +47,7 @@ def run_trigger(new_logs):
                         asset_name,
                         ptoken,
                     ),
-                    block_number=ev.block_number,
-                    transaction_index=ev.transaction_index,
-                    log_index=ev.log_index
+                    log_model=ev
                 )
             )
 
@@ -64,9 +62,7 @@ def run_trigger(new_logs):
                         asset_name,
                         ptoken,
                     ),
-                    block_number=ev.block_number,
-                    transaction_index=ev.transaction_index,
-                    log_index=ev.log_index
+                    log_model=ev
                 )
             )
 
