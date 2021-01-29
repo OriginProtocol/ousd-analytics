@@ -1,4 +1,5 @@
 import re
+from eth_utils import add_0x_prefix, encode_hex
 from eth_abi import decode_single, encode_single
 
 SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,\[\]]*)\)$'
@@ -7,6 +8,31 @@ SIG_PATTERN = r'^([A-Za-z_0-9]+)\(([0-9A-Za-z_,\[\]]*)\)$'
 def slot(value, i):
     """Get the x 256bit field from a data string"""
     return value[2 + i * 64:2 + (i + 1) * 64]
+
+
+def to_hex(v):
+    if type(v) == str:
+        return add_0x_prefix(v)
+    if type(v) == bytes:
+        return encode_hex(v)
+    raise ValueError("Unable to coax type {} to hex string".format(type(v)))
+
+
+def bytes32s_to_hex(types, args):
+    """ Encode bytes32 args to hex. types array contains types matching the
+    values in args
+    """
+    if 'bytes32' not in types:
+        return args
+
+    if type(args) == tuple:
+        args = list(args)
+
+    for i, typ in enumerate(types):
+        if typ == 'bytes32':
+            args[i] = encode_hex(args[i])
+
+    return args
 
 
 def encode_args(signature, args):
@@ -71,6 +97,7 @@ def decode_call(signature, calldata):
     # Tag the arg types from the signature and decode calldata accordingly
     types = [x.strip() for x in types_string.split(',')]
     args = decode_single('({})'.format(','.join(types)), calldata)
+    args = bytes32s_to_hex(types, args)
 
     # Assemble a human-readable function call with arg values
     return '{}({})'.format(func, ','.join([str(v) for v in args]))
