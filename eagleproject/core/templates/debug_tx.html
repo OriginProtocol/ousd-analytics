@@ -8,11 +8,23 @@
 {% block content %}
 <h1>Debug Transaction</h1>
 
-<p>{{transaction.tx_hash}}</p>
+<p>
+    {{transaction.tx_hash}}
+    <a href="https://etherscan.io/tx/{{transaction.tx_hash}}" class="etherscan-logo-link" onclick="window.open(this.href); return false">Etherscan Transaction {{transaction.tx_hash}}</a>
+</p>
 <p>{{transaction.block_time|local_time}} ⎯ Block {{transaction.block_number}}</p>
 
 <style>
     .no-wrap td { white-space: nowrap; }
+    .etherscan-logo-link {
+        text-indent: -9999px;
+        background-image: url('/static/core/img/etherscan_logo.png');
+        background-size: 20px 20px;
+        text-indent: -9999px;
+        height: 20px;
+        width: 20px;
+        display: inline-block;
+    }
 </style>
 
 <h3>Events</h3>

@@ -193,6 +193,20 @@
         color: var(--blue-grey);
     }
 
+    .etherscan-logo-link {
+        text-indent: -9999px;
+        background-image: url('/static/core/img/etherscan_logo.png');
+        background-size: 20px 20px;
+        text-indent: -9999px;
+        height: 20px;
+        width: 20px;
+        display: block;
+    }
+
+    .strategy-links {
+        margin-top: 1rem;
+    }
+
     footer {
         box-shadow: 0 -1px 0 0 var(--powder-blue);
         background-color: var(--pale-grey);
@@ -314,6 +328,9 @@
             <span class="value">{{asset.compstrat_holding|floatformat:2}}</span>
         </div>
         {% endfor %}
+        <div class="strategy-links">
+            <a href="https://etherscan.io/address/0xd5433168ed0b1f7714819646606db509d9d8ec1f" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Compound Strategy</a>
+        </div>
     </div>
     <div class="module">
         <div class="label">
@@ -338,6 +355,9 @@
             <span class="value">{{asset.aavestrat_holding|floatformat:2}}</span>
         </div>
         {% endfor %}
+        <div class="strategy-links">
+            <a href="https://etherscan.io/address/0x9f2b18751376cf6a3432eb158ba5f9b1abd2f7ce" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Aave Strategy</a>
+        </div>
     </div>
 </div>
 
@@ -468,6 +488,7 @@
                     <td>
                         {% ifchanged %}
                             <a href="/tx/debug/{{log.transaction_hash}}" class="transaction-hash address">{{log.transaction_hash}}</a>
+                            <a href="https://etherscan.io/tx/{{log.transaction_hash}}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan Transaction {{log.transaction_hash}}</a>
                         {% endifchanged %}
                     </td>
                 </tr>
