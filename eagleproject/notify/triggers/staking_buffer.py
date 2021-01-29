@@ -16,6 +16,7 @@ def run_trigger(ogn_staking_snapshot):
     if ogn_staking_snapshot is None:
         return events
 
+    block_number = ogn_staking_snapshot.block_number
     balance = ogn_staking_snapshot.ogn_balance
     outstanding = ogn_staking_snapshot.total_outstanding
     diff = balance - outstanding
@@ -26,7 +27,8 @@ def run_trigger(ogn_staking_snapshot):
             event_critical(
                 "Impossible staking condition   ⁉️",
                 "OGN Staking has less OGN than expected rewards "
-                "({} OGN)".format(diff)
+                "({} OGN)".format(diff),
+                block_number=block_number
             )
         )
     elif diff < LOW_RED:
@@ -36,7 +38,8 @@ def run_trigger(ogn_staking_snapshot):
                 "Critical OGN Staking contract buffer   🟥",
                 "OGN Staking contract rewards buffer down to {}".format(
                     format_ogn_human(diff)
-                )
+                ),
+                block_number=block_number
             )
         )
     elif diff < LOW_ORANGE:
@@ -45,7 +48,8 @@ def run_trigger(ogn_staking_snapshot):
                 "Low OGN Staking contract buffer   🟧",
                 "OGN Staking contract rewards buffer down to {}".format(
                     format_ogn_human(diff)
-                )
+                ),
+                block_number=block_number
             )
         )
     elif diff < LOW_YELLOW:
@@ -54,7 +58,8 @@ def run_trigger(ogn_staking_snapshot):
                 "OGN Staking contract buffer   🟨",
                 "OGN Staking contract rewards buffer down to {}".format(
                     format_ogn_human(diff)
-                )
+                ),
+                block_number=block_number
             )
         )
     # Debug only
@@ -64,7 +69,8 @@ def run_trigger(ogn_staking_snapshot):
                 "Nominal OGN Staking contract buffer   🟩",
                 "OGN Staking contract rewards buffer down to {}".format(
                     format_ogn_human(diff)
-                )
+                ),
+                block_number=block_number
             )
         )
 
