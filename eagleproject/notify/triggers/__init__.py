@@ -233,8 +233,5 @@ def run_all_triggers():
         snapshot_cursor.save()
 
     events.sort()
-    print(','.join([
-        '{}-{}-{}'.format(x._block_number, x._transaction_index, x._log_index)
-        for x in events
-    ]))
+
     return events
