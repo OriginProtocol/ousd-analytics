@@ -94,17 +94,24 @@ def format_token_human(symbol, value, places=4):
 format_ogn_human = format_ousd_human
 
 
-def format_decimal(v):
+def format_decimal(v, max_decimals=None):
     """ Format a Decimal to a string, stripping off unnecessary trailing zeros
     """
     sign, digits, price_exp = v.as_tuple()
     price_whole = digits[:price_exp] if len(digits) > abs(price_exp) else (0,)
     price_decimal = digits[price_exp:]
     dec_leftpad = abs(price_exp) - len(price_decimal)
-    return "{}.{}{}".format(
-        number_string_comma(''.join(map(str, price_whole))),
+    dec_string = "{}{}".format(
         '0' * dec_leftpad,
         ''.join(map(str, price_decimal)).rstrip('0')
+    )
+
+    if max_decimals and len(dec_string) > max_decimals:
+        dec_string = dec_string[:max_decimals]
+
+    return "{}.{}".format(
+        number_string_comma(''.join(map(str, price_whole))),
+        dec_string,
     )
 
 

@@ -182,7 +182,7 @@ def getCash(coin_contract, decimals, block="latest"):
     )
 
 
-def exchnageRateStored(coin_contract, block="latest"):
+def exchangeRateStored(coin_contract, block="latest"):
     signature = SIG_FUNC_EXCHANGE_RATE_STORED[:10]
     payload = ""
     data = call(coin_contract, signature, payload, block)

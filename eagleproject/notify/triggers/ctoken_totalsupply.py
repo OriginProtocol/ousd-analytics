@@ -1,12 +1,24 @@
 from decimal import Decimal
+from enum import Enum
 from statistics import mean
 from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
-from core.common import dict_append
+from core.blockchain.const import (
+    CTOKEN_DECIMALS,
+    DECIMALS_FOR_SYMBOL,
+    SYMBOL_FOR_COMPOUND,
+)
+from core.blockchain.conversion import ctoken_to_underlying
+from core.common import dict_append, format_decimal
 from notify.events import event_critical, event_high, event_normal
 
 PERCENT_DIFF_THRESHOLD_NOTICE = Decimal(0.05)
 PERCENT_DIFF_THRESHOLD_WARNING = Decimal(0.10)
 PERCENT_DIFF_THRESHOLD_CRITICAL = Decimal(0.15)
+
+
+class Direction(Enum):
+    GAIN = 'gain'
+    LOSS = 'loss'
 
 
 def get_past_comparison(ctoken_snaps):
@@ -22,6 +34,34 @@ def get_past_comparison(ctoken_snaps):
         return mean([x.total_supply for x in ctoken_snaps[1:]])
 
     return ctoken_snaps[1].total_supply
+
+
+def create_message(action, ctoken_name, diff, diff_underlying, symbol,
+                   pct_threshold, emoji):
+    dir_symbol = "+" if action == Direction.GAIN else "-"
+    dir_desc = "gained" if action == Direction.GAIN else "lost"
+    title = "Compound cToken Total Supply Fluctuation   {}".format(emoji)
+    msg = (
+        "The cToken {} has {} more than ({}%) between "
+        "snapshots.\n\n"
+        "c{}: {}{}\n"
+        "{} (approx): {}{}".format(
+            ctoken_name,
+            dir_desc,
+            round(pct_threshold * Decimal(100)),
+            symbol,
+            dir_symbol,
+            format_decimal(diff, max_decimals=CTOKEN_DECIMALS),
+            symbol,
+            dir_symbol,
+            format_decimal(
+                diff_underlying,
+                max_decimals=DECIMALS_FOR_SYMBOL.get(symbol, 4)
+            ),
+        )
+    )
+
+    return title, msg
 
 
 def run_trigger(recent_ctoken_snapshots):
@@ -48,95 +88,78 @@ def run_trigger(recent_ctoken_snapshots):
         title = ""
         msg = ""
         ev_func = event_normal
+        emoji = "🚨"
+        threshold = None
+        underlying_symbol = SYMBOL_FOR_COMPOUND.get(ctoken_address, '')
 
         if total_supply_current < total_supply_comp:
             diff = total_supply_comp - total_supply_current
+            direction = Direction.LOSS
 
             if diff > critical_diff_threshold:
                 ev_func = event_critical
-                title = "Compound cToken Total Supply Fluctuation   🚨"
-                msg = (
-                    "The cToken {} has dropped more than {}% between "
-                    "snapshots. This could indicate issues or a rush on "
-                    "capital.".format(
-                        CONTRACT_ADDR_TO_NAME.get(
-                            ctoken_address,
-                            ctoken_address
-                        ),
-                        round(PERCENT_DIFF_THRESHOLD_CRITICAL * Decimal(100))
-                    )
-                )
+                threshold = PERCENT_DIFF_THRESHOLD_CRITICAL
             elif diff > warning_diff_threshold:
                 ev_func = event_high
-                title = "Compound cToken Total Supply Fluctuation   🚨"
-                msg = (
-                    "The cToken {} has dropped more than {}% between "
-                    "snapshots. This could indicate issues or a rush on "
-                    "capital.".format(
-                        CONTRACT_ADDR_TO_NAME.get(
-                            ctoken_address,
-                            ctoken_address
-                        ),
-                        round(PERCENT_DIFF_THRESHOLD_WARNING * Decimal(100))
-                    )
-                )
+                threshold = PERCENT_DIFF_THRESHOLD_WARNING
             elif diff > notice_diff_threshold:
                 ev_func = event_normal
-                title = "Compound cToken Total Supply Fluctuation   📉"
-                msg = (
-                    "The cToken {} has dropped more than {}% between "
-                    "snapshots.".format(
-                        CONTRACT_ADDR_TO_NAME.get(
-                            ctoken_address,
-                            ctoken_address
-                        ),
-                        round(PERCENT_DIFF_THRESHOLD_NOTICE * Decimal(100))
-                    )
+                threshold = PERCENT_DIFF_THRESHOLD_NOTICE
+                emoji = "📉"
+
+            underlying_diff = ctoken_to_underlying(
+                underlying_symbol,
+                diff,
+                snap.block_number
+            )
+
+            if threshold:
+                title, msg = create_message(
+                    direction,
+                    CONTRACT_ADDR_TO_NAME.get(
+                        ctoken_address,
+                        ctoken_address
+                    ),
+                    diff,
+                    underlying_diff,
+                    underlying_symbol,
+                    threshold,
+                    emoji=emoji
                 )
 
         else:
             diff = total_supply_current - total_supply_comp
+            direction = Direction.GAIN
 
             if diff > critical_diff_threshold:
                 ev_func = event_critical
-                title = "Compound cToken Total Supply Fluctuation   🚨"
-                msg = (
-                    "The cToken {} has gained more than {}% between "
-                    "snapshots.".format(
-                        CONTRACT_ADDR_TO_NAME.get(
-                            ctoken_address,
-                            ctoken_address
-                        ),
-                        round(PERCENT_DIFF_THRESHOLD_CRITICAL * Decimal(100))
-                    )
-                )
-
+                threshold = PERCENT_DIFF_THRESHOLD_CRITICAL
             elif diff > warning_diff_threshold:
                 ev_func = event_high
-                title = "Compound cToken Total Supply Fluctuation   🚨"
-                msg = (
-                    "The cToken {} has gained more than {}% between "
-                    "snapshots.".format(
-                        CONTRACT_ADDR_TO_NAME.get(
-                            ctoken_address,
-                            ctoken_address
-                        ),
-                        round(PERCENT_DIFF_THRESHOLD_CRITICAL * Decimal(100))
-                    )
-                )
-
+                threshold = PERCENT_DIFF_THRESHOLD_WARNING
             elif diff > notice_diff_threshold:
                 ev_func = event_normal
-                title = "Compound cToken Total Supply Fluctuation   📈"
-                msg = (
-                    "The cToken {} has gained more than {}% between "
-                    "snapshots.".format(
-                        CONTRACT_ADDR_TO_NAME.get(
-                            ctoken_address,
-                            ctoken_address
-                        ),
-                        round(PERCENT_DIFF_THRESHOLD_CRITICAL * Decimal(100))
-                    )
+                threshold = PERCENT_DIFF_THRESHOLD_NOTICE
+                emoji = "📈"
+
+            underlying_diff = ctoken_to_underlying(
+                underlying_symbol,
+                diff,
+                snap.block_number
+            )
+
+            if threshold:
+                title, msg = create_message(
+                    direction,
+                    CONTRACT_ADDR_TO_NAME.get(
+                        ctoken_address,
+                        ctoken_address
+                    ),
+                    diff,
+                    underlying_diff,
+                    underlying_symbol,
+                    threshold,
+                    emoji=emoji
                 )
 
         if title:

@@ -42,7 +42,7 @@ from core.blockchain.rpc import (
     chainlink_tokEthPrice,
     # chainlink_tokUsdPrice,
     debug_trace_transaction,
-    exchnageRateStored,
+    exchangeRateStored,
     get_block,
     get_transaction,
     get_transaction_receipt,
@@ -656,6 +656,12 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
         borrow_apy = borrow_rate * Decimal(BLOCKS_PER_YEAR)
         supply_apy = supply_rate * Decimal(BLOCKS_PER_YEAR)
 
+        total_supply = totalSupply(ctoken_address, 8, block_number)
+        exchange_rate_stored = exchangeRateStored(
+            ctoken_address,
+            block_number
+        )
+
         s = CTokenSnapshot()
         s.block_number = block_number
         s.address = ctoken_address
@@ -663,7 +669,7 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
         s.borrow_apy = borrow_apy
         s.supply_rate = supply_rate
         s.supply_apy = supply_apy
-        s.total_supply = totalSupply(ctoken_address, 8, block_number)
+        s.total_supply = total_supply
         s.total_borrows = totalBorrows(
             ctoken_address,
             underlying_decimals,
@@ -679,10 +685,7 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
             underlying_decimals,
             block_number
         )
-        s.exchange_rate_stored = exchnageRateStored(
-            ctoken_address,
-            block_number
-        )
+        s.exchange_rate_stored = exchange_rate_stored
         s.save()
 
         return s
