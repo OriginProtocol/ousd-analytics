@@ -42,6 +42,7 @@ class Event:
         self._block_number = block_number
         self._transaction_index = transaction_index
         self._log_index = log_index
+        self.vague_hash = False
 
     def __str__(self):
         return "{} [{}] {}: {}".format(
@@ -79,7 +80,8 @@ class Event:
         h = SHA3_256.new()
         h.update(self._severity.value.to_bytes(1, byteorder='big'))
         h.update(self.title.encode('utf-8'))
-        h.update(self._details.encode('utf-8'))
+        if not self.vague_hash:
+            h.update(self._details.encode('utf-8'))
         return h.hexdigest()
 
     """ Props are intentionally read-only to make this object immutable """
