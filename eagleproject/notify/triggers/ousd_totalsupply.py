@@ -3,6 +3,9 @@ from eth_abi import decode_single
 from eth_utils import decode_hex
 from django.db.models import Q
 from core.common import format_ousd_human
+from core.blockchain.addresses import OUSD
+from core.blockchain.const import E_18
+from core.blockchain.rpc import totalSupply
 from core.blockchain.sigs import (
     SIG_EVENT_MINT,
     SIG_EVENT_REDEEM,
@@ -43,11 +46,21 @@ def run_trigger(new_logs):
             decode_hex(ev.data)
         )
 
+        total_supply_converted = Decimal(total_supply) / E_18
+        prev_total_supply = totalSupply(OUSD, 18, block=ev.block_number - 1)
+        diff = Decimal(total_supply_converted - prev_total_supply)
+
+        mod = "+"
+        if total_supply < prev_total_supply:
+            mod = "-"
+
         events.append(
             event_normal(
                 "Total supply updated   👛",
-                "Total supply is now {} OUSD".format(
-                    format_ousd_human(Decimal(total_supply) / Decimal(1e18)),
+                "Total supply is now {} OUSD ({}{} OUSD)".format(
+                    format_ousd_human(total_supply_converted),
+                    mod,
+                    format_ousd_human(diff),
                 )
             )
         )
