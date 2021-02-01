@@ -5,15 +5,43 @@ from core.common import Severity
 from notify.models import EventSeen
 
 
+def event_order_comp(a, b) -> int:
+    """ Compare to Events for ordering """
+
+    if a._block_number < b._block_number:
+        return -1
+
+    if a._block_number > b._block_number:
+        return 1
+
+    if a._transaction_index < b._transaction_index:
+        return -1
+
+    if a._transaction_index > b._transaction_index:
+        return 1
+
+    if a._log_index < b._log_index:
+        return -1
+
+    if a._log_index > b._log_index:
+        return 1
+
+    return 0
+
+
 class Event:
     """ An event worthy of an action """
     def __init__(self, title, details, severity=Severity.NORMAL,
-                 stamp=datetime.utcnow(), tags=['default']):
+                 stamp=datetime.utcnow(), tags=['default'], block_number=0,
+                 transaction_index=0, log_index=0):
         self._severity = severity or Severity.NORMAL
         self._title = title
         self._details = details
         self._stamp = stamp
         self._tags = tags
+        self._block_number = block_number
+        self._transaction_index = transaction_index
+        self._log_index = log_index
 
     def __str__(self):
         return "{} [{}] {}: {}".format(
@@ -24,13 +52,27 @@ class Event:
         )
 
     def __eq__(self, other):
+        """ Used for deduping equality, not ordering.  """
         return hash(self) == hash(other)
 
     def __ne__(self, other):
+        """ Used for deduping equality, not ordering.  """
         return hash(self) != hash(other)
 
     def __hash__(self):
         return int(self.hash(), 16)
+
+    def __lt__(self, other):
+        return event_order_comp(self, other) < 0
+
+    def __gt__(self, other):
+        return event_order_comp(self, other) > 0
+
+    def __le__(self, other):
+        return event_order_comp(self, other) <= 0
+
+    def __ge__(self, other):
+        return event_order_comp(self, other) >= 0
 
     def hash(self):
         """ Return a unique hash for this event, excluding timestamp """
@@ -63,42 +105,92 @@ class Event:
         return self._tags
 
 
-def event_critical(title, details, stamp=datetime.utcnow(), tags=None):
+def event_critical(title, details, stamp=datetime.utcnow(), tags=None,
+                   block_number=0, transaction_index=0, log_index=0,
+                   log_model=None):
     """ Create a critical severity event """
+
+    if log_model is not None:
+        block_number = log_model.block_number
+        transaction_index = log_model.transaction_index
+        log_index = log_model.log_index
+
     return Event(
         title,
         details,
         stamp=stamp,
         severity=Severity.CRITICAL,
-        tags=tags
+        tags=tags,
+        block_number=block_number,
+        transaction_index=transaction_index,
+        log_index=log_index,
     )
 
 
-def event_high(title, details, stamp=datetime.utcnow(), tags=None):
+def event_high(title, details, stamp=datetime.utcnow(), tags=None,
+               block_number=0, transaction_index=0, log_index=0,
+               log_model=None):
     """ Create a high severity event """
+
+    if log_model is not None:
+        block_number = log_model.block_number
+        transaction_index = log_model.transaction_index
+        log_index = log_model.log_index
+
     return Event(
         title,
         details,
         stamp=stamp,
         severity=Severity.HIGH,
-        tags=tags
+        tags=tags,
+        block_number=block_number,
+        transaction_index=transaction_index,
+        log_index=log_index,
     )
 
 
-def event_normal(title, details, stamp=datetime.utcnow(), tags=None):
+def event_normal(title, details, stamp=datetime.utcnow(), tags=None,
+                 block_number=0, transaction_index=0, log_index=0,
+                 log_model=None):
     """ Create a normal severity event """
+
+    if log_model is not None:
+        block_number = log_model.block_number
+        transaction_index = log_model.transaction_index
+        log_index = log_model.log_index
+
     return Event(
         title,
         details,
         stamp=stamp,
         severity=Severity.NORMAL,
-        tags=tags
+        tags=tags,
+        block_number=block_number,
+        transaction_index=transaction_index,
+        log_index=log_index,
     )
 
 
-def event_low(title, details, stamp=datetime.utcnow(), tags=None):
+def event_low(title, details, stamp=datetime.utcnow(), tags=None,
+              block_number=0, transaction_index=0, log_index=0,
+              log_model=None):
     """ Create a low severity event """
-    return Event(title, details, stamp=stamp, severity=Severity.LOW, tags=tags)
+
+    if log_model is not None:
+        block_number = log_model.block_number
+        transaction_index = log_model.transaction_index
+        log_index = log_model.log_index
+
+    return Event(
+        title,
+        details,
+        stamp=stamp,
+        severity=Severity.LOW,
+        tags=tags,
+        block_number=block_number,
+        transaction_index=transaction_index,
+        log_index=log_index,
+    )
 
 
 def seen_filter(events, since):
@@ -124,8 +216,3 @@ def seen_filter(events, since):
             })
 
     return filtered
-
-
-def tag_filter(events, tag):
-    """ Filter out any event not tagged with `tag` """
-    return filter(lambda e: tag in e.tags, events)

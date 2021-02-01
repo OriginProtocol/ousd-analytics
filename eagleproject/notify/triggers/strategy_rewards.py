@@ -48,7 +48,8 @@ def run_trigger(new_logs):
                     format_token_human('COMP', amount),
                     reward_token,
                     contract_name,
-                )
+                ),
+                log_model=ev
             )
         )
 

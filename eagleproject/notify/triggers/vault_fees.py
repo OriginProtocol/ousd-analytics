@@ -24,7 +24,8 @@ def run_trigger(new_logs):
 
         events.append(event_normal(
             "Vault Redeem Fee Updated   🦴",
-            "OUSD Vault redeem fee was changed to {}%".format(bps)
+            "OUSD Vault redeem fee was changed to {}%".format(bps),
+            log_model=ev
         ))
 
     return events

@@ -20,7 +20,8 @@ def run_trigger(ctoken_snapshots):
                         snap.address
                     ),
                     round(snap.supply_apy * Decimal(100), 2)
-                )
+                ),
+                block_number=snap.block_number
             ))
 
         elif snap.supply_apy < LOW_RATE:
@@ -32,7 +33,8 @@ def run_trigger(ctoken_snapshots):
                         snap.address
                     ),
                     round(snap.supply_apy * Decimal(100), 2)
-                )
+                ),
+                block_number=snap.block_number
             ))
 
     return events

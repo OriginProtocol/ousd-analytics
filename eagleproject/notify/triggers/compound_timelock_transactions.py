@@ -62,7 +62,8 @@ def run_trigger(new_logs):
                 CONTRACT_ADDR_TO_NAME.get(target, target),
                 eta,
                 call,
-            )
+            ),
+            log_model=ev
         ))
 
     return events

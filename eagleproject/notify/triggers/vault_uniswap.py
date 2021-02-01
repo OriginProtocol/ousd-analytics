@@ -20,7 +20,8 @@ def run_trigger(new_logs):
 
         events.append(event_normal(
             "Vault Uniswap V2 Router Address Changed   🦄",
-            "Uniswap V2 Router was changed to {} ".format(address)
+            "Uniswap V2 Router was changed to {} ".format(address),
+            log_model=ev
         ))
 
     return events

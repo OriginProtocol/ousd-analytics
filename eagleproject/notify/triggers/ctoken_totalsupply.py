@@ -140,6 +140,10 @@ def run_trigger(recent_ctoken_snapshots):
                 )
 
         if title:
-            events.append(ev_func(title, msg))
+            events.append(ev_func(
+                title,
+                msg,
+                block_number=snaps[ctoken_address][0].block_number
+            ))
 
     return events

@@ -29,7 +29,8 @@ def run_trigger(new_logs):
                 "OUSD Vault buffer was changed to {}%".format(
                     # Always whole numbers?
                     Decimal(buffer_percent_bigint) / Decimal(1e18)
-                )
+                ),
+                log_model=ev
             )
         )
 

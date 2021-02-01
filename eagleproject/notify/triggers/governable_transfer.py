@@ -32,7 +32,8 @@ def run_trigger(new_logs):
                     ev.address,
                     former_governor,
                     new_governor
-                )
+                ),
+                log_model=ev
             ))
 
         if ev.topic_0 == SIG_EVENT_TRANSFER:
@@ -44,7 +45,8 @@ def run_trigger(new_logs):
                     ev.address,
                     former_governor,
                     new_governor
-                )
+                ),
+                log_model=ev
             ))
 
     return events

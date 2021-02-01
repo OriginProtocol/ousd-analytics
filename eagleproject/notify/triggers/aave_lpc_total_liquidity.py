@@ -102,6 +102,8 @@ def run_trigger(recent_aave_reserve_snapshots):
                 )
 
         if threshold:
-            events.append(ev_func(title, msg))
+            events.append(
+                ev_func(title, msg, block_number=snaps[asset].block_number)
+            )
 
     return events

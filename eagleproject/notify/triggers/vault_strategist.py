@@ -20,7 +20,8 @@ def run_trigger(new_logs):
 
         events.append(event_normal(
             "Vault Strategist Changed   🕴️",
-            "The new vault strategist is {} ".format(address)
+            "The new vault strategist is {} ".format(address),
+            log_model=ev
         ))
 
     return events

@@ -22,7 +22,8 @@ def run_trigger(new_logs):
 
         events.append(event_normal(
             "Vault Oracle Changed   🧙",
-            "OUSD Vault oracle was changed to {}%".format(oracle_address)
+            "OUSD Vault oracle was changed to {}%".format(oracle_address),
+            log_model=ev
         ))
 
     return events

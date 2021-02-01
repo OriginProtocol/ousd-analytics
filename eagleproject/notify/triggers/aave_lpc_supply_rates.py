@@ -20,7 +20,8 @@ def run_trigger(aave_reserve_snapshots):
                         snap.asset
                     ),
                     round(snap.current_liquidity_rate * Decimal(100), 2)
-                )
+                ),
+                block_number=snap.block_number
             ))
 
         elif snap.current_liquidity_rate < LOW_RATE:
@@ -32,7 +33,8 @@ def run_trigger(aave_reserve_snapshots):
                         snap.asset
                     ),
                     round(snap.current_liquidity_rate * Decimal(100), 2)
-                )
+                ),
+                block_number=snap.block_number
             ))
 
     return events

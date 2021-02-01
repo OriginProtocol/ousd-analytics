@@ -68,6 +68,10 @@ def run_trigger(new_logs):
             for i, address in enumerate(addresses):
                 description += '\n{} {}'.format(address, weights[i])
 
-        events.append(event_high(title, description))
+        events.append(event_high(
+            title,
+            description,
+            log_model=ev
+        ))
 
     return events
