@@ -55,15 +55,15 @@ def run_trigger(recent_ctoken_snapshots):
 
             if diff > critical_diff_threshold:
                 ev_func = event_critical
-                threshold = critical_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_CRITICAL
 
             elif diff > warning_diff_threshold:
                 ev_func = event_high
-                threshold = warning_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_WARNING
 
             elif diff > notice_diff_threshold:
                 ev_func = event_normal
-                threshold = notice_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_NOTICE
 
             if threshold:
                 title = "Compound cToken Total Borrows Fluctuation   🚨"
@@ -83,15 +83,15 @@ def run_trigger(recent_ctoken_snapshots):
 
             if diff > critical_diff_threshold:
                 ev_func = event_critical
-                threshold = critical_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_CRITICAL
 
             elif diff > warning_diff_threshold:
                 ev_func = event_high
-                threshold = warning_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_WARNING
 
             elif diff > notice_diff_threshold:
                 ev_func = event_normal
-                threshold = notice_diff_threshold
+                threshold = PERCENT_DIFF_THRESHOLD_NOTICE
 
             if threshold:
                 title = "Compound cToken Total Borrows Fluctuation   🚨"
