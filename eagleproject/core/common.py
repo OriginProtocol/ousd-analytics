@@ -9,6 +9,11 @@ from core.blockchain.const import DECIMALS_FOR_SYMBOL
 SECONDS_IN_DAY = 24 * 60 * 60
 
 
+class Direction(Enum):
+    GAIN = 'gain'
+    LOSS = 'loss'
+
+
 class OrderedEnum(Enum):
     def __ge__(self, other):
         if self.__class__ is other.__class__:
