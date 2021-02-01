@@ -53,7 +53,10 @@ def run_trigger(new_transfers):
                     "{} burned {} OUSD".format(
                         burn.from_address,
                         burn.amount
-                    )
+                    ),
+                    block_number=burn.tx_hash.block_number,
+                    transaction_index=burn.tx_hash.transaction_index,
+                    log_index=burn.log_index,
                 )
             )
 

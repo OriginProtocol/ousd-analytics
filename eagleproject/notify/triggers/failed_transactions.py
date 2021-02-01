@@ -8,7 +8,7 @@ from core.blockchain.harvest import ensure_transaction_and_downstream
 from notify.events import event_normal
 
 
-def tx_error_event(tx_hash, contract_name):
+def tx_error_event(tx_hash, contract_name, block_number=0, transaction_index=0):
     """ Create an event for a transaction error
 
     TODO: Make this more intelligent and informative
@@ -19,7 +19,9 @@ def tx_error_event(tx_hash, contract_name):
         "https://etherscan.io/tx/{}".format(
             contract_name,
             tx_hash,
-        )
+        ),
+        block_number=block_number,
+        transaction_index=transaction_index
     )
 
 
@@ -51,6 +53,11 @@ def run_trigger(latest_block, transaction_cursor):
             ensure_transaction_and_downstream(tx.tx_hash)
 
             # Create an event
-            events.append(tx_error_event(tx.tx_hash, name))
+            events.append(tx_error_event(
+                tx.tx_hash,
+                name,
+                block_number=tx.block_number,
+                transaction_index=tx.data.get('transaction_index', 0)
+            ))
 
     return events

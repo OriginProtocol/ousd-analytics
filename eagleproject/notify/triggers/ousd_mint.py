@@ -29,7 +29,8 @@ def run_trigger(new_logs):
                 "{} OUSD was {}".format(
                     format_ousd_human(Decimal(value) / Decimal(1e18)),
                     "minted" if is_mint else "redeemed",
-                )
+                ),
+                log_model=ev
             )
         )
 

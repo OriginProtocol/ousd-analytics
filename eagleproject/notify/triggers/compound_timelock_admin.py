@@ -32,7 +32,8 @@ def run_trigger(new_logs):
                 "A new admin has been set for the Compound Timelock "
                 "contract: {}".format(
                     admin_address
-                )
+                ),
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_NEW_PENDING_ADMIN:
@@ -42,7 +43,8 @@ def run_trigger(new_logs):
                 "Timelock governor contract and is currently waiting to be "
                 "claimed.".format(
                     admin_address
-                )
+                ),
+                log_model=ev
             ))
 
     return events

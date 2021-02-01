@@ -42,7 +42,8 @@ def run_trigger(new_logs):
                         format_token_human(asset_name, amount),
                         asset_name,
                         contract_name,
-                    )
+                    ),
+                    log_model=ev
                 )
             )
 
@@ -54,7 +55,8 @@ def run_trigger(new_logs):
                         format_token_human(asset_name, amount),
                         asset_name,
                         contract_name,
-                    )
+                    ),
+                    log_model=ev
                 )
             )
 

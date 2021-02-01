@@ -29,7 +29,8 @@ def run_trigger(new_logs):
                     "paused" if is_pause else "unpaused",
                     address,
                 ),
-                tags=EVENT_TAGS
+                tags=EVENT_TAGS,
+                log_model=ev
             )
         )
 

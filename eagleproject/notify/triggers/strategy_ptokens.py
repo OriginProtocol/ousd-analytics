@@ -46,7 +46,8 @@ def run_trigger(new_logs):
                         contract_name,
                         asset_name,
                         ptoken,
-                    )
+                    ),
+                    log_model=ev
                 )
             )
 
@@ -60,7 +61,8 @@ def run_trigger(new_logs):
                         contract_name,
                         asset_name,
                         ptoken,
-                    )
+                    ),
+                    log_model=ev
                 )
             )
 

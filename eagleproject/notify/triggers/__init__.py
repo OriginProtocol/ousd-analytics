@@ -232,4 +232,6 @@ def run_all_triggers():
         snapshot_cursor.last_update = datetime.utcnow()
         snapshot_cursor.save()
 
+    events.sort()
+
     return events

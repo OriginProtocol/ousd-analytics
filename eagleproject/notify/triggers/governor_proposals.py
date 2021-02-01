@@ -95,6 +95,10 @@ def run_trigger(new_logs):
         else:
             raise Exception("Impossible!")
 
-        events.append(event_high(title, details))
+        events.append(event_high(
+            title,
+            details,
+            log_model=ev
+        ))
 
     return events

@@ -28,7 +28,8 @@ def run_trigger(new_logs):
                 "Pause   ⏸️" if is_pause else "Unpause   ▶️",
                 "OUSD Vault was {}".format(
                     "paused" if is_pause else "unpaused",
-                )
+                ),
+                log_model=ev
             )
         )
 

@@ -20,7 +20,8 @@ def run_trigger(ctoken_snapshots):
                         snap.address
                     ),
                     round(snap.supply_apy * Decimal(100), 2)
-                )
+                ),
+                block_number=snap.block_number
             )
             ev.vague_hash = True
             events.append(ev)
@@ -34,7 +35,8 @@ def run_trigger(ctoken_snapshots):
                         snap.address
                     ),
                     round(snap.supply_apy * Decimal(100), 2)
-                )
+                ),
+                block_number=snap.block_number
             )
             ev.vague_hash = True
             events.append(ev)

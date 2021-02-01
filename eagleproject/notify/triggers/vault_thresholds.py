@@ -29,14 +29,16 @@ def run_trigger(new_logs):
             events.append(event_normal(
                 "Vault Allocate Threshold Changed   🥧",
                 "OUSD Vault allocation deposit threshold was changed to {} "
-                "units".format(threshold)
+                "units".format(threshold),
+                log_model=ev
             ))
 
         elif ev.topic_0 == SIG_EVENT_REBASE_THRESHOLD:
             events.append(event_normal(
                 "Vault Rebase Threshold Changed   🍱",
                 "OUSD Vault rebase threshold was changed to {} "
-                "units".format(threshold)
+                "units".format(threshold),
+                log_model=ev
             ))
 
         else:
