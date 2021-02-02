@@ -1,5 +1,4 @@
 import requests
-from urllib.parse import urljoin
 
 from core.logging import get_logger
 

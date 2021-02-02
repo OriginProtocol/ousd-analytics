@@ -17,15 +17,17 @@ from core.blockchain.const import (
     START_OF_OUSD_V2,
     AAVE_ASSETS,
 )
-from core.blockchain.harvest import (
-    ensure_all_transactions,
+from core.blockchain.harvest.snapshots import (
     ensure_asset,
     ensure_aave_snapshot,
     ensure_ctoken_snapshot,
-    ensure_latest_logs,
     ensure_oracle_snapshot,
     ensure_staking_snapshot,
     ensure_supply_snapshot,
+)
+from core.blockchain.harvest.transactions import (
+    ensure_all_transactions,
+    ensure_latest_logs,
     ensure_transaction_and_downstream,
 )
 from core.blockchain.rpc import (

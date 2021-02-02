@@ -4,11 +4,14 @@ from core.blockchain.addresses import (
     TIMELOCK,
     VAULT,
 )
-from core.blockchain.harvest import ensure_transaction_and_downstream
+from core.blockchain.harvest.transactions import (
+    ensure_transaction_and_downstream
+)
 from notify.events import event_normal
 
 
-def tx_error_event(tx_hash, contract_name, block_number=0, transaction_index=0):
+def tx_error_event(tx_hash, contract_name, block_number=0,
+                   transaction_index=0):
     """ Create an event for a transaction error
 
     TODO: Make this more intelligent and informative
