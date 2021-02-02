@@ -1,12 +1,45 @@
 from decimal import Decimal
 from statistics import mean
 from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
-from core.common import dict_append
+from core.blockchain.const import (
+    CTOKEN_DECIMALS,
+    DECIMALS_FOR_SYMBOL,
+    SYMBOL_FOR_COMPOUND,
+)
+from core.blockchain.conversion import ctoken_to_underlying
+from core.common import Direction, dict_append, format_decimal
 from notify.events import event_critical, event_high, event_normal
 
 PERCENT_DIFF_THRESHOLD_NOTICE = Decimal(0.05)
 PERCENT_DIFF_THRESHOLD_WARNING = Decimal(0.10)
 PERCENT_DIFF_THRESHOLD_CRITICAL = Decimal(0.15)
+
+
+def create_message(action, ctoken_name, diff, diff_underlying, symbol,
+                   pct_threshold, emoji):
+    dir_symbol = "+" if action == Direction.GAIN else "-"
+    dir_desc = "gained" if action == Direction.GAIN else "lost"
+    title = "Compound cToken Total Borrows Fluctuation   {}".format(emoji)
+    msg = (
+        "The cToken {} borrows have {} more than ({}%) between snapshots.\n\n"
+        "c{}: {}{}\n"
+        "{} (approx): {}{}".format(
+            ctoken_name,
+            dir_desc,
+            round(pct_threshold * Decimal(100)),
+            symbol,
+            dir_symbol,
+            format_decimal(diff, max_decimals=CTOKEN_DECIMALS),
+            symbol,
+            dir_symbol,
+            format_decimal(
+                diff_underlying,
+                max_decimals=DECIMALS_FOR_SYMBOL.get(symbol, 4)
+            ),
+        )
+    )
+
+    return title, msg
 
 
 def get_past_comparison(ctoken_snaps):
@@ -49,6 +82,7 @@ def run_trigger(recent_ctoken_snapshots):
         title = ""
         msg = ""
         threshold = 0
+        underlying_symbol = SYMBOL_FOR_COMPOUND.get(ctoken_address, '')
 
         if total_borrows_current < total_borrows_comp:
             diff = total_borrows_comp - total_borrows_current
@@ -65,17 +99,24 @@ def run_trigger(recent_ctoken_snapshots):
                 ev_func = event_normal
                 threshold = PERCENT_DIFF_THRESHOLD_NOTICE
 
+            underlying_diff = ctoken_to_underlying(
+                underlying_symbol,
+                diff,
+                snap.block_number
+            )
+
             if threshold:
-                title = "Compound cToken Total Borrows Fluctuation   🚨"
-                msg = (
-                    "The cToken {} borrows have dropped more than {}% between "
-                    "snapshots.".format(
-                        CONTRACT_ADDR_TO_NAME.get(
-                            ctoken_address,
-                            ctoken_address
-                        ),
-                        round(threshold * Decimal(100))
-                    )
+                title, msg = create_message(
+                    Direction.LOSS,
+                    CONTRACT_ADDR_TO_NAME.get(
+                        ctoken_address,
+                        ctoken_address
+                    ),
+                    diff,
+                    underlying_diff,
+                    underlying_symbol,
+                    threshold,
+                    "🚨",
                 )
 
         else:
@@ -93,17 +134,24 @@ def run_trigger(recent_ctoken_snapshots):
                 ev_func = event_normal
                 threshold = PERCENT_DIFF_THRESHOLD_NOTICE
 
+            underlying_diff = ctoken_to_underlying(
+                underlying_symbol,
+                diff,
+                snap.block_number
+            )
+
             if threshold:
-                title = "Compound cToken Total Borrows Fluctuation   🚨"
-                msg = (
-                    "The cToken {} has gained more than {}% borrows between "
-                    "snapshots.".format(
-                        CONTRACT_ADDR_TO_NAME.get(
-                            ctoken_address,
-                            ctoken_address
-                        ),
-                        round(threshold * Decimal(100))
-                    )
+                title, msg = create_message(
+                    Direction.GAIN,
+                    CONTRACT_ADDR_TO_NAME.get(
+                        ctoken_address,
+                        ctoken_address
+                    ),
+                    diff,
+                    underlying_diff,
+                    underlying_symbol,
+                    threshold,
+                    "🚨",
                 )
 
         if threshold:
