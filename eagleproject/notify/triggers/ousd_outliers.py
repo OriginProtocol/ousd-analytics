@@ -90,7 +90,10 @@ def run_trigger(transfers, new_transfers):
                         transfer.from_address,
                         format_ousd_human(transfer.amount),
                         transfer.tx_hash_id,
-                    )
+                    ),
+                    block_number=transfer.tx_hash.block_number,
+                    transaction_index=transfer.tx_hash.transaction_index,
+                    log_index=transfer.log_index,
                 )
             )
 

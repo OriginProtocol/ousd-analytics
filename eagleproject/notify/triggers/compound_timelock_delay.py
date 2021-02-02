@@ -27,7 +27,8 @@ def run_trigger(new_logs):
             "Compound Timelock delay changed   👮",
             "Compound Timelock delay has been changed to {}".format(
                 delay
-            )
+            ),
+            log_model=ev
         ))
 
     return events

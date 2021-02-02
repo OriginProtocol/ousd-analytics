@@ -55,7 +55,8 @@ def run_trigger(new_logs):
                         format_ousd_human(Decimal(amount) / Decimal(1e18)),
                         "staked" if is_staked else "withdrawn",
                     ),
-                    tags=EVENT_TAGS
+                    tags=EVENT_TAGS,
+                    log_model=ev
                 )
             )
         elif ev.topic_0 == SIG_EVENT_STAKED:
@@ -95,7 +96,8 @@ def run_trigger(new_logs):
                         duration_dt.days,
                         apy
                     ),
-                    tags=EVENT_TAGS
+                    tags=EVENT_TAGS,
+                    log_model=ev
                 )
             )
         elif ev.topic_0 == SIG_EVENT_WITHDRAWN:
@@ -110,7 +112,8 @@ def run_trigger(new_logs):
                     "{} OGN was withdrawn".format(
                         format_ousd_human(Decimal(amount) / Decimal(1e18))
                     ),
-                    tags=EVENT_TAGS
+                    tags=EVENT_TAGS,
+                    log_model=ev
                 )
             )
 

@@ -121,7 +121,8 @@ def run_trigger(snapshot_cursor, latest_snapshot_block, oracle_snapshots):
                         snap.ticker_left,
                         price,
                         snap.ticker_right,
-                    )
+                    ),
+                    block_number=snap.block_number
                 )
             )
 
