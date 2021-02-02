@@ -34,7 +34,11 @@ from core.blockchain.rpc import (
     rebasing_credits_per_token,
     totalSupply,
 )
+from core.coingecko import get_price
+from core.logging import get_logger
 from core.models import Log, SupplySnapshot, OgnStaked
+
+log = get_logger(__name__)
 
 BLOCKS_PER_DAY = 6500
 
@@ -402,28 +406,34 @@ def coingecko_pools(request):
         elif stat['duration'] == 365:
             ogn_365_liquidity = stat['total_staked']
 
+    ousd_price = get_price("OUSD").get('usd', 0)
+    ogn_price = get_price("OGN").get('usd', 0)
+
+    log.debug("CoinGecko OUSD Price: {}".format(ousd_price))
+    log.debug("CoinGecko OGN Price: {}".format(ogn_price))
+
     return _cache(
         60,
         JsonResponse(
             [
                 {
                     "identifier": "OUSD Vault",
-                    "liquidity_locked": float(ousd_liquidity),
+                    "liquidity_locked": float(ousd_liquidity) * ousd_price,
                     "apy": ousd_apy,
                 },
                 {
                     "identifier": "OGN 30-day Staking",
-                    "liquidity_locked": float(ogn_30_liquidity),
+                    "liquidity_locked": float(ogn_30_liquidity) * ogn_price,
                     "apy": 7.5,
                 },
                 {
                     "identifier": "OGN 90-day Staking",
-                    "liquidity_locked": float(ogn_90_liquidity),
+                    "liquidity_locked": float(ogn_90_liquidity) * ogn_price,
                     "apy": 12.5,
                 },
                 {
                     "identifier": "OGN 365-day Staking",
-                    "liquidity_locked": float(ogn_365_liquidity),
+                    "liquidity_locked": float(ogn_365_liquidity) * ogn_price,
                     "apy": 25.0,
                 }
             ],
