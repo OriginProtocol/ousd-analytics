@@ -116,7 +116,7 @@ def recent_ctoken_snapshots(snap_count=5):
     return CTokenSnapshot.objects.filter(
         block_number__in=CTokenSnapshot.objects.order_by(
             '-block_number'
-        ).values('block_number')[:snap_count]
+        ).values('block_number').distinct()[:snap_count]
     ).order_by('-block_number', 'address')
 
 
@@ -124,7 +124,7 @@ def recent_aave_reserve_snapshots(snap_count=5):
     return AaveLendingPoolCoreSnapshot.objects.filter(
         block_number__in=AaveLendingPoolCoreSnapshot.objects.order_by(
             '-block_number'
-        ).values('block_number')[:snap_count]
+        ).values('block_number').distinct()[:snap_count]
     ).order_by('-block_number', 'asset')
 
 
