@@ -99,7 +99,6 @@ def maybe_store_transfer_record(log, block):
     log_index = int(log["logIndex"], 16)
 
     params = {
-        "log_index": log_index,
         "block_time": block.block_time,
         "from_address": "0x" + log["topics"][1][-40:],
         "to_address": "0x" + log["topics"][2][-40:],
@@ -108,6 +107,7 @@ def maybe_store_transfer_record(log, block):
 
     transfer, created = OusdTransfer.objects.get_or_create(
         tx_hash_id=tx_hash,
+        log_index=log_index,
         defaults=params
     )
 
