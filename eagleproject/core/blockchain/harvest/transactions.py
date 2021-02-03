@@ -98,14 +98,19 @@ def maybe_store_transfer_record(log, block):
     tx_hash = log["transactionHash"]
     log_index = int(log["logIndex"], 16)
 
-    try:
-        return OusdTransfer.objects.get(
-            tx_hash=tx_hash,
-            log_index=log_index
-        )
+    transfer, created = OusdTransfer.objects.get_or_create(
+        tx_hash_id=tx_hash,
+        defaults={
+            "log_index": log_index,
+            "block_time": block.block_time,
+            "from_address": "0x" + log["topics"][1][-40:],
+            "to_address": "0x" + log["topics"][2][-40:],
+            "amount": int(slot(log["data"], 0), 16) / E_18,
+        }
+    )
 
-    except OusdTransfer.DoesNotExist:
-        transfer = OusdTransfer(
+    if not created:
+        transfer.conditional_update(
             tx_hash_id=tx_hash,
             log_index=log_index,
             block_time=block.block_time,
@@ -113,8 +118,8 @@ def maybe_store_transfer_record(log, block):
             to_address="0x" + log["topics"][2][-40:],
             amount=int(slot(log["data"], 0), 16) / E_18,
         )
-        transfer.save()
-        return transfer
+
+    return transfer
 
 
 def ensure_transaction_and_downstream(tx_hash):
@@ -123,20 +128,27 @@ def ensure_transaction_and_downstream(tx_hash):
     block = None
     receipt = None
 
-    try:
-        db_tx = Transaction.objects.get(pk=tx_hash)
-        receipt = db_tx.receipt_data
-        block = ensure_block(db_tx.block_number)
+    raw_transaction = get_transaction(tx_hash)
+    receipt = get_transaction_receipt(tx_hash)
+    debug = debug_trace_transaction(tx_hash)
 
-    except Transaction.DoesNotExist:
-        raw_transaction = get_transaction(tx_hash)
-        receipt = get_transaction_receipt(tx_hash)
-        debug = debug_trace_transaction(tx_hash)
+    block_number = int(raw_transaction["blockNumber"], 16)
 
-        block_number = int(raw_transaction["blockNumber"], 16)
-        block = ensure_block(block_number)
+    block = ensure_block(block_number)
 
-        db_tx = Transaction(
+    db_tx, created = Transaction.objects.get_or_create(
+        tx_hash=tx_hash,
+        defaults={
+            "block_number": block_number,
+            "block_time": block.block_time,
+            "data": raw_transaction,
+            "receipt_data": receipt,
+            "debug_data": debug,
+        }
+    )
+
+    if not created:
+        db_tx.conditional_update(
             tx_hash=tx_hash,
             block_number=block_number,
             block_time=block.block_time,
@@ -144,7 +156,6 @@ def ensure_transaction_and_downstream(tx_hash):
             receipt_data=receipt,
             debug_data=debug,
         )
-        db_tx.save()
 
     for log in receipt["logs"]:
         ensure_log_record(log)
@@ -158,42 +169,51 @@ def ensure_log_record(raw_log):
     block_number = int(raw_log["blockNumber"], 16)
     log_index = int(raw_log["logIndex"], 16)
 
-    try:
-        return Log.objects.get(
-            block_number=block_number,
-            transaction_hash=raw_log["transactionHash"],
-            log_index=log_index,
-        )
+    log = None
+    topic_0 = ""
+    topic_1 = ""
+    topic_2 = ""
+    topic_3 = ""
 
-    except Log.DoesNotExist:
-        pass
+    if len(raw_log["topics"]) >= 1:
+        topic_0 = raw_log["topics"][0]
+    if len(raw_log["topics"]) >= 2:
+        topic_1 = raw_log["topics"][1]
+    if len(raw_log["topics"]) >= 3:
+        topic_2 = raw_log["topics"][2]
+    if len(raw_log["topics"]) == 4:
+        topic_3 = raw_log["topics"][3]
 
-    log = Log(
-        address=raw_log["address"],
+    log, created = Log.objects.get_or_create(
         block_number=block_number,
-        log_index=log_index,
         transaction_hash=raw_log["transactionHash"],
-        transaction_index=int(raw_log["transactionIndex"], 16),
-        data=raw_log["data"],
-        event_name="",
-        topic_0="",
-        topic_1="",
-        topic_2="",
-        topic_3="",
+        log_index=log_index,
+        defaults={
+            "address": raw_log["address"],
+            "transaction_index": int(raw_log["transactionIndex"], 16),
+            "data": raw_log["data"],
+            "event_name": "",
+            "topic_0": topic_0,
+            "topic_1": topic_1,
+            "topic_2": topic_2,
+            "topic_3": topic_3,
+        }
     )
 
-    # This doesn't do anything?
-    # if len(raw_log["data"]) >= 10:
-    #     signature = raw_log["data"][0:10]
-    if len(raw_log["topics"]) >= 1:
-        log.topic_0 = raw_log["topics"][0]
-    if len(raw_log["topics"]) >= 2:
-        log.topic_1 = raw_log["topics"][1]
-    if len(raw_log["topics"]) >= 3:
-        log.topic_2 = raw_log["topics"][2]
-    if len(raw_log["topics"]) == 4:
-        log.topic_3 = raw_log["topics"][3]
-    log.save()
+    if not created:
+        log.conditional_update(
+            address=raw_log["address"],
+            block_number=block_number,
+            log_index=log_index,
+            transaction_hash=raw_log["transactionHash"],
+            transaction_index=int(raw_log["transactionIndex"], 16),
+            data=raw_log["data"],
+            event_name="",
+            topic_0=topic_0,
+            topic_1=topic_1,
+            topic_2=topic_2,
+            topic_3=topic_3,
+        )
 
     return log
 

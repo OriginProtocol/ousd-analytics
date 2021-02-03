@@ -2,6 +2,10 @@ from datetime import timedelta
 from decimal import Decimal
 from django.db import models
 
+from core.logging import get_logger
+
+log = get_logger(__name__)
+
 
 class AssetBlock(models.Model):
     symbol = models.CharField(max_length=8, db_index=True)
@@ -285,3 +289,39 @@ class AaveLendingPoolCoreSnapshot(models.Model):
 
     class Meta:
         unique_together = ('block_number', 'asset')
+
+
+###############################################################################
+# Monkeypatching dragons below
+###############################################################################
+
+
+def conditional_update(self, **kwargs):
+    """ Update if the given kwargs do not match this model's prop values
+
+    Note: This function is used as a monkeypatch method for the Django Model
+    class
+    """
+    save = False
+
+    for k, v in kwargs.items():
+        if not hasattr(self, k):
+            raise KeyError('Model does not have prop {}'.format(k))
+
+        if getattr(self, k) != v:
+            setattr(self, k, v)
+
+            if not save:
+                save = True
+
+    if save:
+        log.debug('Updating {} model data...'.format(self.__class__.__name__))
+        self.save()
+        return 1
+
+    return 0
+
+
+Log.add_to_class("conditional_update", conditional_update)
+Transaction.add_to_class("conditional_update", conditional_update)
+OusdTransfer.add_to_class("conditional_update", conditional_update)
