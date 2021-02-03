@@ -13,20 +13,14 @@ from core.blockchain.addresses import (
 )
 from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
-    COMPOUND_FOR_SYMBOL,
     START_OF_OUSD_V2,
-    AAVE_ASSETS,
 )
+from core.blockchain.harvest import reload_all, refresh_transactions, snap
 from core.blockchain.harvest.snapshots import (
     ensure_asset,
-    ensure_aave_snapshot,
-    ensure_ctoken_snapshot,
-    ensure_oracle_snapshot,
-    ensure_staking_snapshot,
     ensure_supply_snapshot,
 )
 from core.blockchain.harvest.transactions import (
-    ensure_all_transactions,
     ensure_latest_logs,
     ensure_transaction_and_downstream,
 )
@@ -111,9 +105,21 @@ def dashboard(request):
 
 def reload(request):
     latest = latest_block()
-    _reload(latest - 2)
+    reload_all(latest - 2)
     # Disable the reach-back for the time being
-    # _reload(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
+    # reload_all(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
+    return HttpResponse("ok")
+
+
+def take_snapshot(request):
+    latest = latest_block()
+    snap(latest - 2)
+    return HttpResponse("ok")
+
+
+def fetch_transactions(request):
+    latest = latest_block()
+    refresh_transactions(latest - 2)
     return HttpResponse("ok")
 
 
@@ -284,24 +290,6 @@ def _cache(seconds, response):
     response.setdefault("Cache-Control", "public, max-age=%d" % seconds)
     response.setdefault("Vary", "Accept-Encoding")
     return response
-
-
-def _reload(block_number):
-    ensure_asset("DAI", block_number)
-    ensure_asset("USDT", block_number)
-    ensure_asset("USDC", block_number)
-    ensure_asset("COMP", block_number)
-    ensure_latest_logs(block_number)
-    ensure_supply_snapshot(block_number)
-    ensure_staking_snapshot(block_number)
-    ensure_all_transactions(block_number)
-    ensure_oracle_snapshot(block_number)
-
-    for symbol in COMPOUND_FOR_SYMBOL:
-        ensure_ctoken_snapshot(symbol, block_number)
-
-    for symbol in AAVE_ASSETS:
-        ensure_aave_snapshot(symbol, block_number)
 
 
 def _latest_snapshot():

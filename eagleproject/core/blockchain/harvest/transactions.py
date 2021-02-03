@@ -76,7 +76,11 @@ def ensure_all_transactions(block_number):
                 pointers[address].last_block,
                 block_number
             ):
-                ensure_transaction_and_downstream(tx.get('hash'))
+                if tx.get('hash') is None:
+                    logger.error('No transaction hash found from Etherscan')
+                    continue
+
+                ensure_transaction_and_downstream(tx['hash'])
 
             pointers[address].last_block = block_number
             pointers[address].save()
@@ -84,74 +88,86 @@ def ensure_all_transactions(block_number):
 
 def maybe_store_transfer_record(log, block):
     # Must be a transfer event
-    if (
-        log["topics"][0]
-        != TRANSFER
-    ):
+    if log["topics"][0] != TRANSFER:
         return None
+
     # Must be on OUSD
     if log["address"] != "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86":
         return None
+
     tx_hash = log["transactionHash"]
     log_index = int(log["logIndex"], 16)
-    db_transfer = list(
-        OusdTransfer.objects.filter(tx_hash=tx_hash, log_index=log_index)
-    )
-    if len(db_transfer) > 0:
-        return db_transfer[0]
 
-    transfer = OusdTransfer(
-        tx_hash_id=tx_hash,
-        log_index=log_index,
-        block_time=block.block_time,
-        from_address="0x" + log["topics"][1][-40:],
-        to_address="0x" + log["topics"][2][-40:],
-        amount=int(slot(log["data"], 0), 16) / E_18,
-    )
-    transfer.save()
-    return transfer
+    try:
+        return OusdTransfer.objects.get(
+            tx_hash=tx_hash,
+            log_index=log_index
+        )
+
+    except OusdTransfer.DoesNotExist:
+        transfer = OusdTransfer(
+            tx_hash_id=tx_hash,
+            log_index=log_index,
+            block_time=block.block_time,
+            from_address="0x" + log["topics"][1][-40:],
+            to_address="0x" + log["topics"][2][-40:],
+            amount=int(slot(log["data"], 0), 16) / E_18,
+        )
+        transfer.save()
+        return transfer
 
 
 def ensure_transaction_and_downstream(tx_hash):
-    db_tx = list(Transaction.objects.filter(tx_hash=tx_hash))
-    if len(db_tx) > 0:
-        return db_tx[0]
+    """ Ensure that there's a transaction record """
+    db_tx = None
+    block = None
+    receipt = None
 
-    raw_transaction = get_transaction(tx_hash)
-    receipt = get_transaction_receipt(tx_hash)
-    debug = debug_trace_transaction(tx_hash)
+    try:
+        db_tx = Transaction.objects.get(pk=tx_hash)
+        receipt = db_tx.receipt_data
+        block = ensure_block(db_tx.block_number)
 
-    block_number = int(raw_transaction["blockNumber"], 16)
-    block = ensure_block(block_number)
+    except Transaction.DoesNotExist:
+        raw_transaction = get_transaction(tx_hash)
+        receipt = get_transaction_receipt(tx_hash)
+        debug = debug_trace_transaction(tx_hash)
 
-    transaction = Transaction(
-        tx_hash=tx_hash,
-        block_number=block_number,
-        block_time=block.block_time,
-        data=raw_transaction,
-        receipt_data=receipt,
-        debug_data=debug,
-    )
-    transaction.save()
+        block_number = int(raw_transaction["blockNumber"], 16)
+        block = ensure_block(block_number)
+
+        db_tx = Transaction(
+            tx_hash=tx_hash,
+            block_number=block_number,
+            block_time=block.block_time,
+            data=raw_transaction,
+            receipt_data=receipt,
+            debug_data=debug,
+        )
+        db_tx.save()
 
     for log in receipt["logs"]:
         ensure_log_record(log)
         maybe_store_transfer_record(log, block)
         maybe_store_stake_withdrawn_record(log, block)
 
-    return transaction
+    return db_tx
 
 
 def ensure_log_record(raw_log):
     block_number = int(raw_log["blockNumber"], 16)
     log_index = int(raw_log["logIndex"], 16)
-    log = Log.objects.filter(
-        block_number=block_number,
-        transaction_hash=raw_log["transactionHash"],
-        log_index=log_index,
-    )
-    if log:
-        return log
+
+    try:
+        return Log.objects.get(
+            block_number=block_number,
+            transaction_hash=raw_log["transactionHash"],
+            log_index=log_index,
+        )
+
+    except Log.DoesNotExist:
+        pass
+
     log = Log(
         address=raw_log["address"],
         block_number=block_number,
@@ -165,6 +181,7 @@ def ensure_log_record(raw_log):
         topic_2="",
         topic_3="",
     )
+
     # This doesn't do anything?
     # if len(raw_log["data"]) >= 10:
     #     signature = raw_log["data"][0:10]
@@ -177,6 +194,7 @@ def ensure_log_record(raw_log):
     if len(raw_log["topics"]) == 4:
         log.topic_3 = raw_log["topics"][3]
     log.save()
+
     return log
 
 
@@ -229,11 +247,11 @@ def maybe_store_stake_withdrawn_record(log, block):
 
     tx_hash = log["transactionHash"]
     log_index = int(log["logIndex"], 16)
-    db_staked = list(
-        OgnStaked.objects.filter(tx_hash=tx_hash, log_index=log_index)
-    )
-    if len(db_staked) > 0:
-        return db_staked[0]
+
+    try:
+        return OgnStaked.objects.get(tx_hash=tx_hash, log_index=log_index)
+    except OgnStaked.DoesNotExist:
+        pass
 
     is_updated_staked_event = log["topics"][0] == SIG_EVENT_STAKED
     is_withdrawn_event = log["topics"][0] == SIG_EVENT_WITHDRAWN
