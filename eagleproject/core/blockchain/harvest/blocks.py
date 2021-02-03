@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from core.blockchain.rpc import (
     get_block,
 )
@@ -16,7 +16,10 @@ def ensure_block(block_number):
         return blocks[0]
     else:
         raw_block = get_block(block_number)
-        block_time = datetime.utcfromtimestamp(int(raw_block["timestamp"], 16))
+        block_time = datetime.fromtimestamp(
+            int(raw_block["timestamp"], 16),
+            timezone.utc
+        )
         block = Block(block_number=block_number, block_time=block_time)
         block.save()
         return block
