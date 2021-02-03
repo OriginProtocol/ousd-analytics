@@ -98,26 +98,21 @@ def maybe_store_transfer_record(log, block):
     tx_hash = log["transactionHash"]
     log_index = int(log["logIndex"], 16)
 
+    params = {
+        "log_index": log_index,
+        "block_time": block.block_time,
+        "from_address": "0x" + log["topics"][1][-40:],
+        "to_address": "0x" + log["topics"][2][-40:],
+        "amount": int(slot(log["data"], 0), 16) / E_18,
+    }
+
     transfer, created = OusdTransfer.objects.get_or_create(
         tx_hash_id=tx_hash,
-        defaults={
-            "log_index": log_index,
-            "block_time": block.block_time,
-            "from_address": "0x" + log["topics"][1][-40:],
-            "to_address": "0x" + log["topics"][2][-40:],
-            "amount": int(slot(log["data"], 0), 16) / E_18,
-        }
+        defaults=params
     )
 
     if not created:
-        transfer.conditional_update(
-            tx_hash_id=tx_hash,
-            log_index=log_index,
-            block_time=block.block_time,
-            from_address="0x" + log["topics"][1][-40:],
-            to_address="0x" + log["topics"][2][-40:],
-            amount=int(slot(log["data"], 0), 16) / E_18,
-        )
+        transfer.conditional_update(**params)
 
     return transfer
 
@@ -136,26 +131,21 @@ def ensure_transaction_and_downstream(tx_hash):
 
     block = ensure_block(block_number)
 
+    params = {
+        "block_number": block_number,
+        "block_time": block.block_time,
+        "data": raw_transaction,
+        "receipt_data": receipt,
+        "debug_data": debug,
+    }
+
     db_tx, created = Transaction.objects.get_or_create(
         tx_hash=tx_hash,
-        defaults={
-            "block_number": block_number,
-            "block_time": block.block_time,
-            "data": raw_transaction,
-            "receipt_data": receipt,
-            "debug_data": debug,
-        }
+        defaults=params
     )
 
     if not created:
-        db_tx.conditional_update(
-            tx_hash=tx_hash,
-            block_number=block_number,
-            block_time=block.block_time,
-            data=raw_transaction,
-            receipt_data=receipt,
-            debug_data=debug,
-        )
+        db_tx.conditional_update(**params)
 
     for log in receipt["logs"]:
         ensure_log_record(log)
@@ -184,36 +174,26 @@ def ensure_log_record(raw_log):
     if len(raw_log["topics"]) == 4:
         topic_3 = raw_log["topics"][3]
 
+    params = {
+        "address": raw_log["address"],
+        "transaction_index": int(raw_log["transactionIndex"], 16),
+        "data": raw_log["data"],
+        "event_name": "",
+        "topic_0": topic_0,
+        "topic_1": topic_1,
+        "topic_2": topic_2,
+        "topic_3": topic_3,
+    }
+
     log, created = Log.objects.get_or_create(
         block_number=block_number,
         transaction_hash=raw_log["transactionHash"],
         log_index=log_index,
-        defaults={
-            "address": raw_log["address"],
-            "transaction_index": int(raw_log["transactionIndex"], 16),
-            "data": raw_log["data"],
-            "event_name": "",
-            "topic_0": topic_0,
-            "topic_1": topic_1,
-            "topic_2": topic_2,
-            "topic_3": topic_3,
-        }
+        defaults=params
     )
 
     if not created:
-        log.conditional_update(
-            address=raw_log["address"],
-            block_number=block_number,
-            log_index=log_index,
-            transaction_hash=raw_log["transactionHash"],
-            transaction_index=int(raw_log["transactionIndex"], 16),
-            data=raw_log["data"],
-            event_name="",
-            topic_0=topic_0,
-            topic_1=topic_1,
-            topic_2=topic_2,
-            topic_3=topic_3,
-        )
+        log.conditional_update(**params)
 
     return log
 
@@ -267,11 +247,6 @@ def maybe_store_stake_withdrawn_record(log, block):
 
     tx_hash = log["transactionHash"]
     log_index = int(log["logIndex"], 16)
-
-    try:
-        return OgnStaked.objects.get(tx_hash=tx_hash, log_index=log_index)
-    except OgnStaked.DoesNotExist:
-        pass
 
     is_updated_staked_event = log["topics"][0] == SIG_EVENT_STAKED
     is_withdrawn_event = log["topics"][0] == SIG_EVENT_WITHDRAWN
@@ -382,18 +357,26 @@ def maybe_store_stake_withdrawn_record(log, block):
         _rate = slot(log["data"], 2)
         duration, rate = human_duration_yield(_duration, _rate)
 
-    staked = OgnStaked(
+    params = {
+        "block_time": block.block_time,
+        "user_address": staker,
+        "is_staked": is_staked_event,
+        "amount": amount,
+        "staked_amount": int(slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
+        "duration": duration,
+        "staked_duration": timedelta(days=duration),
+        "rate": rate,
+        "stake_type": stake_type,
+    }
+
+    staked, created = OgnStaked.objects.get_or_create(
         tx_hash=tx_hash,
         log_index=log_index,
-        block_time=block.block_time,
-        user_address=staker,
-        is_staked=is_staked_event,
-        amount=amount,
-        staked_amount=int(slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
-        duration=duration,
-        staked_duration=timedelta(days=duration),
-        rate=rate,
-        stake_type=stake_type,
+        defaults=params,
     )
-    staked.save()
+
+    if not created:
+        staked.conditional_update(**params)
+        staked.save()
+
     return staked

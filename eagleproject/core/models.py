@@ -325,3 +325,4 @@ def conditional_update(self, **kwargs):
 Log.add_to_class("conditional_update", conditional_update)
 Transaction.add_to_class("conditional_update", conditional_update)
 OusdTransfer.add_to_class("conditional_update", conditional_update)
+OgnStaked.add_to_class("conditional_update", conditional_update)
