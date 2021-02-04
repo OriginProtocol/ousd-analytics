@@ -27,6 +27,8 @@ urlpatterns = [
     path("powermint", core_views.powermint),
 
     path("reload", core_views.reload),
+    path("snap", core_views.take_snapshot),
+    path("fetch", core_views.fetch_transactions),
     path("runtriggers", notify_views.run_triggers),
     path("notifygc", notify_views.gc),
 
