@@ -362,7 +362,8 @@ def maybe_store_stake_withdrawn_record(log, block):
         "user_address": staker,
         "is_staked": is_staked_event,
         "amount": amount,
-        "staked_amount": int(slot(log["data"], 1), 16) / 1e18 if is_withdrawn_event else 0,
+        # This is apparently withdrawn amount and the name makes no sense
+        "staked_amount": int(slot(log["data"], 1), 16) / E_18 if is_withdrawn_event else 0,
         "duration": duration,
         "staked_duration": timedelta(days=duration),
         "rate": rate,
