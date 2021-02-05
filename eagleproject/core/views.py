@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
-from django.db.models import F, Q, Sum
+from django.db.models import F, Q, Sum, Case, When, Value, IntegerField
 from core.blockchain.addresses import (
     OUSD,
     USDT,
@@ -31,6 +31,7 @@ from core.blockchain.rpc import (
     totalSupply,
 )
 from core.coingecko import get_price
+from core.common import dict_append
 from core.logging import get_logger
 from core.models import Log, SupplySnapshot, OgnStaked
 
@@ -210,15 +211,89 @@ def api_ratios(request):
 
 def active_stake_stats():
     """ Get stats of the active stakes grouped by duration """
-    return OgnStaked.objects.values('duration').annotate(
-        total_staked=Sum('amount')
-    ).filter(
-        is_staked=True,
-        rate__gt=0,
-        block_time__gt=(
-            datetime.datetime.now() - F('staked_duration')
-        )
-    )
+    utc_now = datetime.datetime.now(tz=datetime.timezone.utc)
+
+    """ Trying to do aggregate math and Withdraw inferences here.  This data is
+    a dict of OgnStaked with user_address as key.  We should be able to filter
+    out matured and withdrawn OgnStaked instances after collection using their
+    maturity dates/blocks.
+
+    Afterwards, we can put them all into buckets of 30, 90, 365 day running
+    totals of active stakes.
+    """
+    user_aggreate = {}
+    nonsense_users = []
+    total_30 = 0
+    total_90 = 0
+    total_365 = 0
+
+    all_stakes = OgnStaked.objects.order_by('block_time').all()
+
+    for stake in all_stakes:
+        dict_append(user_aggreate, stake.user_address, stake)
+
+    # This is an expensive filter to remove withdrawn stakes
+    for user_address in user_aggreate.keys():
+        active_stakes = []
+        running_total = 0
+
+        for stake in user_aggreate[user_address]:
+            if stake.is_staked:
+                active_stakes.append(stake)
+                running_total += stake.amount
+
+            elif not stake.is_staked:
+                matured_stakes = [
+                    x
+                    for x in active_stakes
+                    if x.block_time + x.staked_duration < utc_now
+                ]
+                mature_so_far = sum([x.amount for x in matured_stakes])
+
+                if mature_so_far != stake.staked_amount:
+                    log.error(
+                        'Stakes make no sense!  Withdraw {} does not match '
+                        'previous stakes of {}. User: {}'.format(
+                            stake.staked_amount,
+                            mature_so_far,
+                            user_address,
+                        )
+                    )
+                    # If this happens, something is fucked
+                    nonsense_users.append(user_address)
+                    break
+
+                else:
+                    active_stakes = set(active_stakes) - set(matured_stakes)
+                    running_total -= mature_so_far
+
+        user_aggreate[user_address] = active_stakes
+
+    for address in nonsense_users:
+        del user_aggreate[address]
+
+    # Now we need to bucket all active stakes
+    for user_address in user_aggreate.keys():
+        for stake in user_aggreate[user_address]:
+            if stake.staked_duration == datetime.timedelta(days=30):
+                total_30 += stake.amount
+            elif stake.staked_duration == datetime.timedelta(days=90):
+                total_90 += stake.amount
+            elif stake.staked_duration == datetime.timedelta(days=365):
+                total_365 += stake.amount
+            else:
+                log.error(
+                    'Unknown stake duration of {}. Excluding from '
+                    'totals.'.format(
+                        stake.staked_duration
+                    )
+                )
+
+    return [
+        {'duration': 30, 'total_staked': total_30},
+        {'duration': 90, 'total_staked': total_90},
+        {'duration': 365, 'total_staked': total_365},
+    ]
 
 
 def address(request, address):
