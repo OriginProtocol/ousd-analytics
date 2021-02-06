@@ -145,6 +145,7 @@ def apr_index(request):
                 s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio
             ) - Decimal(1)
             s.apr = Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
+            s.unboosted = (s.computed_supply - s.non_rebasing_supply) / s.computed_supply * s.apr
             s.gain = change * (s.computed_supply - s.non_rebasing_supply)
         rows.append(s)
         last_snapshot = s
