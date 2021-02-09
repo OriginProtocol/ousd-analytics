@@ -1,5 +1,6 @@
 from core.blockchain.const import AAVE_ASSETS, COMPOUND_FOR_SYMBOL
 from core.blockchain.harvest.snapshots import (
+    ensure_3pool_snapshot,
     ensure_aave_snapshot,
     ensure_asset,
     ensure_ctoken_snapshot,
@@ -33,6 +34,8 @@ def snap(block_number):
 
     for symbol in AAVE_ASSETS:
         ensure_aave_snapshot(symbol, block_number)
+
+    ensure_3pool_snapshot(block_number)
 
 
 def reload_all(block_number):

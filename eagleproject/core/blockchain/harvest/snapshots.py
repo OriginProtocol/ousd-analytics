@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime
 
 from core.blockchain.addresses import (
     CHAINLINK_ORACLE,
@@ -20,6 +21,7 @@ from core.blockchain.const import (
 )
 from core.blockchain.rpc import (
     AaveLendingPoolCore,
+    ThreePool,
     balanceOf,
     balanceOfUnderlying,
     borrowRatePerBlock,
@@ -49,6 +51,7 @@ from core.models import (
     OgnStakingSnapshot,
     OracleSnapshot,
     SupplySnapshot,
+    ThreePoolSnapshot,
 )
 
 logger = get_logger(__name__)
@@ -336,6 +339,33 @@ def ensure_aave_snapshot(underlying_symbol, block_number):
         )
         s.stable_borrow_rate = AaveLendingPoolCore.getReserveCurrentStableBorrowRate(
             asset_address
+        )
+        s.save()
+
+        return s
+
+
+def ensure_3pool_snapshot(block_number):
+    """ Get a snapshot of 3pool """
+
+    try:
+        return ThreePoolSnapshot.objects.get(block_number=block_number)
+
+    except ThreePoolSnapshot.DoesNotExist:
+        balances = ThreePool.get_all_balances(block_number)
+
+        s = ThreePoolSnapshot()
+        s.block_number = block_number
+        s.dai_balance = balances.get("DAI")
+        s.usdc_balance = balances.get("USDC")
+        s.usdt_balance = balances.get("USDT")
+        s.initial_a = ThreePool.initial_A(block_number)
+        s.future_a = ThreePool.future_A(block_number)
+        s.initial_a_time = datetime.utcfromtimestamp(
+            ThreePool.initial_A_time(block_number)
+        )
+        s.future_a_time = datetime.utcfromtimestamp(
+            ThreePool.future_A_time(block_number)
         )
         s.save()
 

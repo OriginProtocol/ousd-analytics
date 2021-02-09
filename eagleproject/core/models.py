@@ -291,6 +291,22 @@ class AaveLendingPoolCoreSnapshot(models.Model):
         unique_together = ('block_number', 'asset')
 
 
+class ThreePoolSnapshot(models.Model):
+    """ Snapshot of Curve's 3Pool """
+
+    block_number = models.IntegerField(db_index=True, unique=True)
+
+    dai_balance = models.DecimalField(max_digits=64, decimal_places=18)
+    usdc_balance = models.DecimalField(max_digits=64, decimal_places=18)
+    usdt_balance = models.DecimalField(max_digits=64, decimal_places=18)
+
+    initial_a = models.DecimalField(max_digits=64, decimal_places=18)
+    future_a = models.DecimalField(max_digits=64, decimal_places=18)
+
+    initial_a_time = models.DateTimeField()
+    future_a_time = models.DateTimeField()
+
+
 ###############################################################################
 # Monkeypatching dragons below
 ###############################################################################
