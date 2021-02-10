@@ -3,7 +3,7 @@ import requests
 from time import sleep
 from django.conf import settings
 from django.core.mail import send_mail
-from core.common import Severity, first
+from core.common import Severity, first, truncate_elipsis
 from core.logging import get_logger
 
 log = get_logger(__name__)
@@ -84,7 +84,7 @@ class DiscordWebhook(Action):
                 "embeds": [
                     {
                         "title": self.summary,
-                        "description": self.details,
+                        "description": truncate_elipsis(self.details),
                         "color": self.color,
                     }
                 ]
