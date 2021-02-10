@@ -29,6 +29,7 @@ OGN_STAKING = "0x501804b374ef06fa9c427476147ac09f1551b9a0"
 # Strategies
 STRATCOMP = "0xd5433168ed0b1f7714819646606db509d9d8ec1f"
 STRATAAVEDAI = "0x9f2b18751376cf6a3432eb158ba5f9b1abd2f7ce"
+STRAT3POOL = "0x3c5fe0a3922777343cbd67d3732fcdc9f2fa6f2f"
 
 OUSD_USDT_UNISWAP = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71"
 OUSD_USDT_SUSHI = "0xe4455fdec181561e9ffe909dde46aaeaedc55283"
@@ -74,6 +75,7 @@ CONTRACT_ADDR_TO_NAME = {
     OGN_STAKING: 'OGN Staking',
     STRATCOMP: 'Compound Strategy',
     STRATAAVEDAI: 'Aave Strategy',
+    STRAT3POOL: '3Pool Strategy',
     COMPOUND_TIMELOCK: 'Compound Timelock',
     COMPOUND_GOVERNOR_ALPHA: 'Compound GovernorAlpha',
     COMPOUND_COMPTROLLER: 'Compound Comptroller/Unitroller',

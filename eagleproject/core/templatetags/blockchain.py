@@ -48,12 +48,13 @@ CONTRACT_NAMES = {
     "0x47211b1d1f6da45aaee06f877266e072cf8baa74": "CompoundStrategy",  # Outdated
     "0xfceea3923dd126d8fb3873389187307519c1de37": "CompoundStrategy Internal",  # Outdated
     "0x5b57e808b0ddcf097e25c5f5e3d8d3c2b0d26319": "CompoundStrategy Internal",  # Outdated
-    "0xe40e09cd6725e542001fcb900d9dfea447b529c0": "3PoolStrategy USDT",
+    "0xe40e09cd6725e542001fcb900d9dfea447b529c0": "3PoolStrategy USDT",  # Outdated
     "0x75bc09f72db1663ed35925b89de2b5212b9b6cb3": "3PoolStrategy USDT Internal",  # Outdated
-    "0x641e3b5b081fb2fb8b43d5a163649312a28e23da": "3PoolStrategy USDT Internal",
-    "0x67023c56548ba15ad3542e65493311f19adfdd6d": "3PoolStrategy USDC",
-    "0x96e89b021e4d72b680bb0400ff504eb5f4a24327": "3PoolStrategy USDC Internal",
+    "0x641e3b5b081fb2fb8b43d5a163649312a28e23da": "3PoolStrategy USDT Internal",  # Outdated
+    "0x67023c56548ba15ad3542e65493311f19adfdd6d": "3PoolStrategy USDC",  # Outdated
+    "0x96e89b021e4d72b680bb0400ff504eb5f4a24327": "3PoolStrategy USDC Internal",  # Outdated
     "0xf92b0de25660c18bedaa55795986781d7899b0f9": "3PoolStrategy USDC Internal",  # Outdated
+    "0x3c5fe0a3922777343cbd67d3732fcdc9f2fa6f2f": "3Pool Strategy",
     "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3": "CompoundStrategy DIA",
     "0xfaf23bd848126521064184282e8ad344490ba6f0": "CompoundStrategy DIA Internal",
     "0x051caefa90adf261b8e8200920c83778b7b176b6": "AaveStrategy",
