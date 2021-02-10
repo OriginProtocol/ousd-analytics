@@ -16,7 +16,10 @@ from core.blockchain.sigs import (
     SIG_EVENT_PROPOSAL_EXECUTED,
     SIG_EVENT_VOTE_CAST,
 )
+from core.common import truncate_elipsis
 from notify.events import event_high
+
+DISCORD_EMBED_DESCRIPTION_LIMIT = 2048
 
 
 def get_events(logs):
@@ -28,6 +31,29 @@ def get_events(logs):
         | Q(topic_0=SIG_EVENT_PROPOSAL_EXECUTED)
         | Q(topic_0=SIG_EVENT_VOTE_CAST)
     ).order_by('block_number')
+
+
+def create_prop_details(proposal_id, description, proposer, targets,
+                        signatures, calldatas, start_block, end_block):
+    return (
+        "A new proposal ({}) has been submitted for Compound Governor"
+        "\n\n"
+        "**Description**: \n\n{}\n\n"
+        "**Proposer**: {}\n"
+        "**Targets**: {}\n"
+        "**Calls**: \n - {}\n"
+        "**Block Range**: {}".format(
+            proposal_id,
+            description,
+            proposer,
+            ', '.join([
+                CONTRACT_ADDR_TO_NAME.get(target, target)
+                for target in set(targets)
+            ]),
+            '\n - '.join(decode_calls(signatures, calldatas)),
+            '{} - {}'.format(start_block, end_block),
+        )
+    )
 
 
 def run_trigger(new_logs):
@@ -53,27 +79,39 @@ def run_trigger(new_logs):
                 decode_hex(ev.data)
             )
 
+            details = create_prop_details(
+                proposal_id,
+                description,
+                proposer,
+                targets,
+                signatures,
+                calldatas,
+                start_block,
+                end_block,
+            )
+
+            # If the message is too long, truncate description only
+            if len(details) > DISCORD_EMBED_DESCRIPTION_LIMIT:
+                diff = len(details) - DISCORD_EMBED_DESCRIPTION_LIMIT
+                details = create_prop_details(
+                    proposal_id,
+                    truncate_elipsis(
+                        description,
+                        max_length=len(description) - diff
+                    ),
+                    proposer,
+                    targets,
+                    signatures,
+                    calldatas,
+                    start_block,
+                    end_block,
+                )
+
             events.append(event_high(
                 "Compound Governor Proposal Created ({})   🗳️ 🆕".format(
                     proposal_id
                 ),
-                "A new proposal ({}) has been submitted for Compound Governor"
-                "\n\n"
-                "**Description**: \n\n{}\n\n"
-                "**Proposer**: {}\n"
-                "**Targets**: {}\n"
-                "**Calls**: \n - {}\n"
-                "**Block Range**: {}".format(
-                    proposal_id,
-                    description,
-                    proposer,
-                    ', '.join([
-                        CONTRACT_ADDR_TO_NAME.get(target, target)
-                        for target in set(targets)
-                    ]),
-                    '\n - '.join(decode_calls(signatures, calldatas)),
-                    '{} - {}'.format(start_block, end_block),
-                ),
+                details,
                 log_model=ev
             ))
 

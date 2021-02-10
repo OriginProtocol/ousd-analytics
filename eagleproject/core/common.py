@@ -151,3 +151,10 @@ def first(it, match):
         if match(i):
             return i
     return None
+
+
+def truncate_elipsis(v, max_length=2048, elipsis=" ..."):
+    """ Truncate a string to max_length and append elipsis to the end """
+    if len(v) <= max_length:
+        return v
+    return v[:max_length - len(elipsis)] + elipsis
