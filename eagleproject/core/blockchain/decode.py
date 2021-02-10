@@ -40,6 +40,9 @@ def encode_args(signature, args):
     except IndexError:
         return ""
 
+    if not types_string:
+        return ""
+
     # Tag the arg types from the signature and decode calldata accordingly
     types = [x.strip() for x in types_string.split(',')]
     arg_sig = '({})'.format(','.join(types))

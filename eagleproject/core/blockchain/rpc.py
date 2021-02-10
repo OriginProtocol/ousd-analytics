@@ -1,20 +1,29 @@
 import os
 import math
+import json
 import requests
 from decimal import Decimal
 from json.decoder import JSONDecodeError
-from eth_abi import encode_single
+from eth_abi import encode_single, decode_single
 from eth_hash.auto import keccak
-from eth_utils import encode_hex
+from eth_utils import encode_hex, decode_hex
 
 from core.blockchain.addresses import (
     AAVE_LENDING_POOL_CORE_V1,
     CHAINLINK_ORACLE,
+    CURVE_3POOL,
     OGN_STAKING,
     OPEN_ORACLE,
     OUSD,
 )
-from core.blockchain.const import E_6, E_8, E_18, E_27, TRUE_256BIT
+from core.blockchain.const import (
+    E_6,
+    E_8,
+    E_18,
+    E_27,
+    SYMBOL_FOR_CONTRACT,
+    TRUE_256BIT,
+)
 from core.blockchain.decode import encode_args
 from core.blockchain.sigs import (
     OPEN_ORACLE_PRICE,
@@ -70,6 +79,7 @@ def call(to, signature, payload, block="latest"):
         {"to": to, "data": signature + payload},
         block if block == "latest" else hex(block),
     ]
+    log.debug("RPC call params: {}".format(json.dumps(params)))
     return request("eth_call", params)
 
 
@@ -384,3 +394,63 @@ class AaveLendingPoolCore:
             [address],
             block=block
         )
+
+
+class ThreePool:
+    """ RPC Calls for Curve's 3pool """
+
+    @staticmethod
+    def coins(index, block="latest"):
+        data = call_by_sig(CURVE_3POOL, "coins(uint256)", [index], block=block)
+        print('data:', data)
+        result = data["result"]
+        print('result:', result)
+        return decode_single("address", decode_hex(result))
+
+    @staticmethod
+    def get_all_coins(block="latest"):
+        return [
+            ThreePool.coins(0),
+            ThreePool.coins(1),
+            ThreePool.coins(2),
+        ]
+
+    @staticmethod
+    def balances(index, block="latest"):
+        data = call_by_sig(CURVE_3POOL, "balances(uint256)", [index], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
+
+    @staticmethod
+    def get_all_balances(block="latest"):
+        coins = ThreePool.get_all_coins(block)
+
+        return {
+            SYMBOL_FOR_CONTRACT[coins[0]]: ThreePool.balances(0),
+            SYMBOL_FOR_CONTRACT[coins[1]]: ThreePool.balances(1),
+            SYMBOL_FOR_CONTRACT[coins[2]]: ThreePool.balances(2),
+        }
+
+    @staticmethod
+    def initial_A(block="latest"):
+        data = call_by_sig(CURVE_3POOL, "initial_A()", [], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
+
+    @staticmethod
+    def future_A(block="latest"):
+        data = call_by_sig(CURVE_3POOL, "future_A()", [], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
+
+    @staticmethod
+    def initial_A_time(block="latest"):
+        data = call_by_sig(CURVE_3POOL, "initial_A_time()", [], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
+
+    @staticmethod
+    def future_A_time(block="latest"):
+        data = call_by_sig(CURVE_3POOL, "future_A_time()", [], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
