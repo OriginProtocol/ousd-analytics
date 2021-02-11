@@ -17,6 +17,7 @@ from core.blockchain.addresses import (
     OUSD,
 )
 from core.blockchain.const import (
+    DECIMALS_FOR_SYMBOL,
     E_6,
     E_8,
     E_18,
@@ -402,9 +403,7 @@ class ThreePool:
     @staticmethod
     def coins(index, block="latest"):
         data = call_by_sig(CURVE_3POOL, "coins(uint256)", [index], block=block)
-        print('data:', data)
         result = data["result"]
-        print('result:', result)
         return decode_single("address", decode_hex(result))
 
     @staticmethod
@@ -425,11 +424,18 @@ class ThreePool:
     def get_all_balances(block="latest"):
         coins = ThreePool.get_all_coins(block)
 
-        return {
-            SYMBOL_FOR_CONTRACT[coins[0]]: ThreePool.balances(0),
-            SYMBOL_FOR_CONTRACT[coins[1]]: ThreePool.balances(1),
-            SYMBOL_FOR_CONTRACT[coins[2]]: ThreePool.balances(2),
-        }
+        retval = {}
+
+        for i, coin in enumerate(coins):
+            symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
+            decimals = DECIMALS_FOR_SYMBOL[symbol]
+            retval[symbol] = Decimal(
+                ThreePool.balances(i)
+            ) / Decimal(
+                math.pow(10, decimals)
+            )
+
+        return retval
 
     @staticmethod
     def initial_A(block="latest"):
