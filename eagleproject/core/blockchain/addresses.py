@@ -65,6 +65,17 @@ CURVE_CRV_TOKEN = "0xd533a949740bb3306d119cc777fa900ba034cd52"
 CURVE_3CRV_TOKEN = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 CURVE_3POOL = "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7"
 
+# Curve Governance
+
+# This is kinda confusing and I never got an answer from Curve discord but they
+# have two voting contracts "installed" in their Aragon DAO app.  They are
+# exactly the same (bytecode/source) but have slightly different parameters.
+
+# This contract needs 51% support to pass
+CURVE_ARAGON_51 = "0xe478de485ad2fe566d49342cbd03e49ed7db3356"
+# This contract needs 60% support to pass
+CURVE_ARAGON_60 = "0xbcff8b0b9419b9a88c44546519b1e909cf330399"
+
 # Name resolution
 CONTRACT_ADDR_TO_NAME = {
     OUSD: 'OUSD Token',
@@ -87,4 +98,6 @@ CONTRACT_ADDR_TO_NAME = {
     CURVE_CRV_TOKEN: 'CRV Token',
     CURVE_3CRV_TOKEN: '3CRV Token',
     CURVE_3POOL: '3Pool Swap Contract',
+    CURVE_ARAGON_51: 'Curve Aragon Voting (51%)',
+    CURVE_ARAGON_60: 'Curve Aragon Voting (60%)',
 }
