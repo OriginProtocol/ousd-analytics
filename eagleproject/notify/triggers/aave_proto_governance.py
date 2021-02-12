@@ -1,6 +1,5 @@
 """ Trigger for timelock admin changes """
 import re
-import requests
 from decimal import Decimal
 from django.db.models import Q
 from eth_utils import decode_hex, encode_hex
@@ -18,26 +17,13 @@ from core.blockchain.sigs import (
     SIG_EVENT_WINS_ABSTAIN,
 )
 from core.common import format_token_human, decode_ipfs_hash
+from core.ipfs import fetch_ipfs_json
 from core.logging import get_logger
 from notify.events import event_high, event_normal
 
 log = get_logger(__name__)
 
 HEADER_PATTERN = r'^([\w\d_]+): (.+)'
-
-
-def fetch_ipfs_json(ipfs_hash):
-    """ Fetch a JSON IPFS object """
-    if not ipfs_hash:
-        return {}
-
-    r = requests.get('https://ipfs.io/ipfs/{}'.format(ipfs_hash))
-
-    if r.status_code != 200:
-        log.error('Failed to fetch file from IPFS: {}'.format(ipfs_hash))
-        return {}
-
-    return r.json()
 
 
 def parse_prop_headers(prop_json):

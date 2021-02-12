@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.db.models import Q
 from eth_utils import decode_hex
 from eth_abi import decode_single
@@ -12,6 +13,8 @@ from core.blockchain.sigs import (
     SIG_EVENT_EXECUTE_VOTE,
     SIG_EVENT_SCRIPT_RESULT,
 )
+from core.common import format_token_human, format_timedelta
+from core.ipfs import strip_terrible_ipfs_prefix, fetch_ipfs_json
 from notify.events import event_high
 
 
@@ -46,7 +49,7 @@ def run_trigger(new_logs):
             vote_id = decode_single('(uint256)', decode_hex(ev.topic_1))[0]
             creator = decode_single('(address)', decode_hex(ev.topic_2))[0]
             (
-                metadata,
+                metadata_hash,
                 min_balance,
                 min_time,
                 total_supply,
@@ -56,19 +59,24 @@ def run_trigger(new_logs):
                 decode_hex(ev.data)
             )
 
+            metadata = fetch_ipfs_json(
+                strip_terrible_ipfs_prefix(metadata_hash)
+            )
+
             details = (
-                "Creator: {} ({})\n"
-                "Metadata: {}\n"
-                "Minimum balance: {}\n"
-                "Minimum time: {}\n"
-                "Total supply: {}\n"
+                "**Creator**: {} \n"
+                "**Creator Voting Power: {} veCRV\n"
+                "**Minimum time**: {}\n"
+                "**Minimum vote balance**: {} veCRV\n"
+                "**Total supply**: {} veCRV\n"
+                "**Metadata**: {}\n"
             ).format(
                 creator,
-                creator_voting_power,
-                metadata,
-                min_balance,
-                min_time,
-                total_supply,
+                format_token_human('veCRV', creator_voting_power),
+                format_timedelta(timedelta(seconds=min_time)),
+                format_token_human('veCRV', min_balance),
+                format_token_human('veCRV', total_supply),
+                metadata.get('text', 'NO METADATA TEXT FOUND.'),
             )
 
             events.append(event_high(

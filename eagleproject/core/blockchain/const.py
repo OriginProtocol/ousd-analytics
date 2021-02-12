@@ -44,6 +44,8 @@ DECIMALS_FOR_SYMBOL = {
     "USDT": 6,
     "USDC": 6,
     "AAVE": 18,
+    "CRV": 18,
+    "veCRV": 18,
 }
 
 THREEPOOLINDEX_FOR_ASSET = {

@@ -158,3 +158,22 @@ def truncate_elipsis(v, max_length=2048, elipsis=" ..."):
     if len(v) <= max_length:
         return v
     return v[:max_length - len(elipsis)] + elipsis
+
+
+def format_timedelta(v):
+    """ Format a timedelta object to a string """
+    out = ""
+    days = v.days
+    hours, rem = divmod(v.seconds, 3600)
+    minutes, seconds = divmod(rem, 60)
+
+    if days:
+        out += " {} days".format(days)
+    if hours:
+        out += " {} hours".format(hours)
+    if minutes:
+        out += "{} minutes".format(minutes)
+    if seconds:
+        out += "{} seconds".format(seconds)
+
+    return out.strip()
