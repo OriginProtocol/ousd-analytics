@@ -65,17 +65,17 @@ def run_trigger(new_logs):
 
             details = (
                 "**Creator**: {} \n"
-                "**Creator Voting Power: {} veCRV\n"
-                "**Minimum time**: {}\n"
+                "**Creator Voting Power**: {} veCRV\n"
                 "**Minimum vote balance**: {} veCRV\n"
-                "**Total supply**: {} veCRV\n"
+                "**Current total supply**: {} veCRV\n"
+                "**Minimum time**: {}\n"
                 "**Metadata**: {}\n"
             ).format(
                 creator,
                 format_token_human('veCRV', creator_voting_power),
-                format_timedelta(timedelta(seconds=min_time)),
                 format_token_human('veCRV', min_balance),
                 format_token_human('veCRV', total_supply),
+                format_timedelta(timedelta(seconds=min_time)),
                 metadata.get('text', 'NO METADATA TEXT FOUND.'),
             )
 
@@ -121,7 +121,14 @@ def run_trigger(new_logs):
             #     decode_hex(ev.data),
             # )
 
-            # TODO: Decode this further?
+            """ TODO: Decode this further?  Right now I don't think it's worth
+            the effort, though we're putting a bit of trust into the prop that
+            it's nothing nefarious.  Might be worth coming back to this.  Only
+            problem is that it appears to be EVM-level instructions...
+
+            Ref: https://hack.aragon.org/docs/evmscript_EVMScriptRunner
+            Ref: https://github.com/aragon/aragonOS/blob/f3ae59b00f73984e562df00129c925339cd069ff/contracts/evmscript/EVMScriptRunner.sol#L34-L100
+            """
             # print('script', script)
             # print('input_data:', input_data)
             # print('return_data:', return_data)
