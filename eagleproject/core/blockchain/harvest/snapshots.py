@@ -10,6 +10,7 @@ from core.blockchain.addresses import (
     OUSD,
     STRATAAVEDAI,
     STRATCOMP,
+    STRAT3POOL,
     VAULT,
 )
 from core.blockchain.const import (
@@ -61,6 +62,7 @@ def build_asset_block(symbol, block_number):
     symbol = symbol.upper()
     compstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
+    threepoolstrat_holding = Decimal(0)
 
     if block_number == "latest" or block_number > 11060000:
         if symbol == "USDC":
@@ -95,6 +97,19 @@ def build_asset_block(symbol, block_number):
                 block_number,
             )
 
+    # 3pool
+    if (
+        block_number == "latest"
+        or block_number > 11831747
+        and symbol in ("USDC", "USDT", "DAI")
+    ):
+        threepoolstrat_holding += strategyCheckBalance(
+            STRAT3POOL,
+            CONTRACT_FOR_SYMBOL[symbol],
+            DECIMALS_FOR_SYMBOL[symbol],
+            block_number,
+        )
+
     ora_tok_usd_min = (
         0 if symbol == "COMP" else priceUSDMint(VAULT, symbol, block_number)
     )
@@ -114,7 +129,7 @@ def build_asset_block(symbol, block_number):
             block_number,
         ),
         compstrat_holding=compstrat_holding,
-        threepoolstrat_holding=Decimal(0),
+        threepoolstrat_holding=threepoolstrat_holding,
         aavestrat_holding=aavestrat_holding,
     )
 
