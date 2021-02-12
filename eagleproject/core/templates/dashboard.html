@@ -331,7 +331,7 @@
         </div>
         {% endfor %}
         <div class="strategy-links">
-            <a href="https://etherscan.io/address/0xd5433168ed0b1f7714819646606db509d9d8ec1f" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Compound Strategy</a>
+            <a href="https://etherscan.io/address/{{ stratcomp_address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Compound Strategy</a>
         </div>
     </div>
     <div class="module">
@@ -345,6 +345,9 @@
             <span class="value">{{asset.threepoolstrat_holding|floatformat:2}}</span>
         </div>
         {% endfor %}
+        <div class="strategy-links">
+            <a href="https://etherscan.io/address/{{ strat3pool_address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Curve 3Pool Strategy</a>
+        </div>
     </div>
     <div class="module">
         <div class="label">
@@ -358,7 +361,7 @@
         </div>
         {% endfor %}
         <div class="strategy-links">
-            <a href="https://etherscan.io/address/0x9f2b18751376cf6a3432eb158ba5f9b1abd2f7ce" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Aave Strategy</a>
+            <a href="https://etherscan.io/address/{{ strataavedai_address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Aave Strategy</a>
         </div>
     </div>
 </div>

@@ -10,6 +10,9 @@ from core.blockchain.addresses import (
     OUSD_USDT_UNISWAP,
     OUSD_USDT_SUSHI,
     COMPENSATION_CLAIMS,
+    STRAT3POOL,
+    STRATCOMP,
+    STRATAAVEDAI,
 )
 from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
@@ -100,6 +103,10 @@ def dashboard(request):
             "label": "claims",
         },
     ]
+
+    strat3pool_address = STRAT3POOL
+    stratcomp_address = STRATCOMP
+    strataavedai_address = STRATAAVEDAI
 
     return _cache(20, render(request, "dashboard.html", locals()))
 
