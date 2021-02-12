@@ -15,7 +15,7 @@ from core.blockchain.sigs import (
 )
 from core.common import format_token_human, format_timedelta
 from core.ipfs import strip_terrible_ipfs_prefix, fetch_ipfs_json
-from notify.events import event_high
+from notify.events import event_high, event_normal
 
 
 def get_events(logs):
@@ -133,7 +133,7 @@ def run_trigger(new_logs):
             # print('input_data:', input_data)
             # print('return_data:', return_data)
 
-            events.append(event_high(
+            events.append(event_normal(
                 "{} - Execution Result   🗳️ 🪣".format(
                     CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
                 ),
