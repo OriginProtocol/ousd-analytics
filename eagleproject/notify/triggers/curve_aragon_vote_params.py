@@ -15,10 +15,11 @@ from core.blockchain.sigs import (
     SIG_EVENT_CHANGE_MIN_QUORUM,
     SIG_EVENT_MIN_BALANCE_SET,
     SIG_EVENT_MIN_TIME_SET,
-    # TODO - what are?
-    #SIG_EVENT_RECOVER_TO_VAULT,
-    #SIG_EVENT_CLAIMED_TOKENS,
-    #SIG_EVENT_NEW_CLONE_TOKEN,
+    # Following 2 events deal with funds accidentally sent to contract.  meh
+    # SIG_EVENT_RECOVER_TO_VAULT,
+    # SIG_EVENT_CLAIMED_TOKENS,
+    # Creates clone of the MiniMeToken (not currently used in Voting contract)
+    # SIG_EVENT_NEW_CLONE_TOKEN,
     SIG_EVENT_SET_APP,
 )
 from core.common import format_token_human, format_timedelta
