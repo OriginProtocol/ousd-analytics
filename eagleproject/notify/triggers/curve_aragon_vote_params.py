@@ -1,3 +1,5 @@
+from decimal import Decimal
+from datetime import timedelta
 from django.db.models import Q
 from eth_utils import decode_hex
 from eth_abi import decode_single
@@ -7,6 +9,7 @@ from core.blockchain.addresses import (
     CURVE_ARAGON_60,
     CONTRACT_ADDR_TO_NAME,
 )
+from core.blockchain.const import E_18
 from core.blockchain.sigs import (
     SIG_EVENT_CHANGE_SUPPORT_REQUIRED,
     SIG_EVENT_CHANGE_MIN_QUORUM,
@@ -18,7 +21,8 @@ from core.blockchain.sigs import (
     #SIG_EVENT_NEW_CLONE_TOKEN,
     SIG_EVENT_SET_APP,
 )
-from notify.events import event_high
+from core.common import format_token_human, format_timedelta
+from notify.events import event_high, event_normal
 
 
 def get_events(logs):
@@ -54,7 +58,7 @@ def run_trigger(new_logs):
                 ),
                 "{}% support is now required for a vote pass. \n\n"
                 "NOTE: This is unexpected due to two contracts for different "
-                "voting levels.".format(support_required),
+                "voting levels.".format(Decimal(support_required) / E_18),
                 log_model=ev
             ))
 
@@ -65,12 +69,12 @@ def run_trigger(new_logs):
                 decode_hex(ev.data)
             )[0]
 
-            events.append(event_high(
+            events.append(event_normal(
                 "{} - Support Minimum Quorum   🎚️".format(
                     CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
                 ),
-                "{}% quorum is now required for a vote.".format(
-                    support_required
+                "{}% quorum (yeas out of total supply) is now required for a vote.".format(
+                    Decimal(min_quorum) / E_18
                 ),
                 log_model=ev
             ))
@@ -82,13 +86,13 @@ def run_trigger(new_logs):
                 decode_hex(ev.data)
             )[0]
 
-            # TODO: Min balance for what, exactly?
-            events.append(event_high(
+            events.append(event_normal(
                 "{} - Minimum Balance   🎚️".format(
                     CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
                 ),
-                "{} minimum balance is now required for SOMETHING.".format(
-                    min_balance
+                "Minimum balance of {} is now required to create a governance "
+                "vote.".format(
+                    format_token_human('veCRV', min_balance)
                 ),
                 log_model=ev
             ))
@@ -100,13 +104,13 @@ def run_trigger(new_logs):
                 decode_hex(ev.data)
             )[0]
 
-            # TODO: Min time for what, exactly?
-            events.append(event_high(
+            events.append(event_normal(
                 "{} - Minimum Time   🕓".format(
                     CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
                 ),
-                "{} minimum time is now required for SOMETHING.".format(
-                    min_time
+                "Governance vote creation rate limit has been changed to "
+                "{}.".format(
+                    format_timedelta(timedelta(seconds=min_time))
                 ),
                 log_model=ev
             ))
@@ -126,14 +130,12 @@ def run_trigger(new_logs):
                 decode_hex(ev.data)
             )[0]
 
-            # TODO: Min time for what, exactly?
             events.append(event_high(
-                "{} - New App Set   🕓".format(
+                "{} - New App Set   📛".format(
                     CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
                 ),
                 "A new Aragon app has been set for the Curve Voting Fork. "
-                "This probably indicates that the Aragon app has been "
-                "upgraded?\n\n"
+                "This is expected to only happen on app creation.\n\n"
                 "Namespace: {}\n"
                 "App ID: {}\n"
                 "App Address: {}\n".format(
