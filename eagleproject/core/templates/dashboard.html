@@ -265,8 +265,10 @@
         {% endif %}
         </div>
         <div class="{% if extra_assets < 0 %}negative{% endif %}">
+            {% if extra_assets > 0 %}
             {{extra_assets|floatformat:2}}
             <small>OUSD</small>
+            {% endif %}
         </div>
     </div>
 </div>
