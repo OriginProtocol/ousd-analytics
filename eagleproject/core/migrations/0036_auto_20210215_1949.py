@@ -3,14 +3,12 @@
 from django.db import migrations
 
 
-class Migration(migrations.Migration):
-
-    dependencies = [
-        ('core', '0035_threepoolsnapshot'),
-    ]
-
-    operations = [
-        migrations.RunSQL(
+def dedupe(apps, schema_editor):
+    print('schema_editor:', schema_editor)
+    print('schema_editor.connection:', schema_editor.connection)
+    print('schema_editor.connection.vendor:', schema_editor.connection.vendor)
+    if schema_editor.connection.vendor.startswith('postgres'):
+        schema_editor.execute(
             "DELETE FROM core_log cl1 "
             "WHERE cl1.id = ("
             "    SELECT MAX(scl1.id)"
@@ -25,8 +23,49 @@ class Migration(migrations.Migration):
             "    AND cl1.block_number = scl1.block_number "
             "    AND cl1.transaction_index = scl1.transaction_index "
             "    AND cl1.log_index = scl1.log_index "
-            ");",
-        ),
+            ");"
+        )
+
+    else:
+        schema_editor.execute("""
+            CREATE TABLE IF NOT EXISTS "core_log_036" (
+                "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+                "address" varchar(255) NOT NULL,
+                "event_name" varchar(255) NOT NULL,
+                "topic_0" varchar(255) NOT NULL,
+                "topic_1" varchar(255) NOT NULL,
+                "topic_2" varchar(255) NOT NULL,
+                "topic_3" varchar(255) NOT NULL,
+                "data" text NOT NULL,
+                "block_number" integer NOT NULL,
+                "log_index" integer NOT NULL,
+                "transaction_hash" varchar(255) NOT NULL,
+                "transaction_index" integer NOT NULL
+            );
+        """)
+        schema_editor.execute("""
+            INSERT INTO core_log_036 (id, address, event_name, topic_0,
+            topic_1, topic_2, topic_3, data, block_number, log_index,
+            transaction_hash, transaction_index)
+            SELECT DISTINCT MIN(id), address, event_name, topic_0, topic_1,
+            topic_2, topic_3, data, block_number, log_index, transaction_hash,
+            transaction_index
+            FROM core_log
+            GROUP BY address, event_name, topic_0, topic_1, topic_2, topic_3,
+            data, block_number, log_index, transaction_hash, transaction_index;
+        """)
+        schema_editor.execute("ALTER TABLE core_log RENAME TO core_log_old;")
+        schema_editor.execute("ALTER TABLE core_log_036 RENAME TO core_log;")
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('core', '0035_threepoolsnapshot'),
+    ]
+
+    operations = [
+        migrations.RunPython(dedupe),
         migrations.AlterUniqueTogether(
             name='log',
             unique_together={('block_number', 'transaction_index', 'log_index')},
