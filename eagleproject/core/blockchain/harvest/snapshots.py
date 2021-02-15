@@ -1,5 +1,5 @@
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timezone
 
 from core.blockchain.addresses import (
     CHAINLINK_ORACLE,
@@ -376,11 +376,13 @@ def ensure_3pool_snapshot(block_number):
         s.usdt_balance = balances.get("USDT")
         s.initial_a = ThreePool.initial_A(block_number)
         s.future_a = ThreePool.future_A(block_number)
-        s.initial_a_time = datetime.utcfromtimestamp(
-            ThreePool.initial_A_time(block_number)
+        s.initial_a_time = datetime.fromtimestamp(
+            ThreePool.initial_A_time(block_number),
+            tz=timezone.utc
         )
-        s.future_a_time = datetime.utcfromtimestamp(
-            ThreePool.future_A_time(block_number)
+        s.future_a_time = datetime.fromtimestamp(
+            ThreePool.future_A_time(block_number),
+            tz=timezone.utc
         )
         s.save()
 
