@@ -158,6 +158,7 @@ def ensure_transaction_and_downstream(tx_hash):
 def ensure_log_record(raw_log):
     block_number = int(raw_log["blockNumber"], 16)
     log_index = int(raw_log["logIndex"], 16)
+    transaction_index = int(raw_log["transactionIndex"], 16)
 
     log = None
     topic_0 = ""
@@ -176,7 +177,7 @@ def ensure_log_record(raw_log):
 
     params = {
         "address": raw_log["address"],
-        "transaction_index": int(raw_log["transactionIndex"], 16),
+        "transaction_index": transaction_index,
         "data": raw_log["data"],
         "event_name": "",
         "topic_0": topic_0,
@@ -187,7 +188,7 @@ def ensure_log_record(raw_log):
 
     log, created = Log.objects.get_or_create(
         block_number=block_number,
-        transaction_index=raw_log["transactionIndex"],
+        transaction_index=transaction_index,
         log_index=log_index,
         defaults=params
     )
