@@ -91,6 +91,7 @@ class Log(models.Model):
         indexes = [
             models.Index(fields=["block_number"]),
         ]
+        unique_together = ('block_number', 'transaction_index', 'log_index')
 
 
 class SupplySnapshot(models.Model):

@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.db import connection
-from django.db.models import F, Q, Sum, Case, When, Value, IntegerField
+from django.db.models import Q
 from core.blockchain.addresses import (
     OUSD,
     USDT,
@@ -24,7 +24,6 @@ from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
 )
 from core.blockchain.harvest.transactions import (
-    ensure_latest_logs,
     ensure_transaction_and_downstream,
 )
 from core.blockchain.rpc import (
@@ -46,6 +45,7 @@ BLOCKS_PER_DAY = 6500
 def dashboard(request):
     block_number = _latest_snapshot_block_number()
 
+    # These probably won't harvest since block_number comes from snapshots
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
@@ -64,8 +64,6 @@ def dashboard(request):
     total_value = sum(x.redeem_value() for x in assets)
     extra_assets = total_assets - total_supply
     extra_value = total_value - total_supply
-
-    ensure_latest_logs(block_number)
 
     logs_q = Log.objects.all()
     topic = request.GET.get("topic_0")

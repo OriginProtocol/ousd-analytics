@@ -187,7 +187,7 @@ def ensure_log_record(raw_log):
 
     log, created = Log.objects.get_or_create(
         block_number=block_number,
-        transaction_hash=raw_log["transactionHash"],
+        transaction_index=raw_log["transactionIndex"],
         log_index=log_index,
         defaults=params
     )
