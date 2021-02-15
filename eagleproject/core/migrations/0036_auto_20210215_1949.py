@@ -4,9 +4,6 @@ from django.db import migrations
 
 
 def dedupe(apps, schema_editor):
-    print('schema_editor:', schema_editor)
-    print('schema_editor.connection:', schema_editor.connection)
-    print('schema_editor.connection.vendor:', schema_editor.connection.vendor)
     if schema_editor.connection.vendor.startswith('postgres'):
         schema_editor.execute(
             "DELETE FROM core_log cl1 "
