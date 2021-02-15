@@ -11,6 +11,8 @@ from core.blockchain.addresses import (
     CDAI,
     CUSDC,
     CUSDT,
+    CURVE_ARAGON_51,
+    CURVE_ARAGON_60,
     DAI,
     GOVERNOR,
     OGN_STAKING,
@@ -42,6 +44,8 @@ DECIMALS_FOR_SYMBOL = {
     "USDT": 6,
     "USDC": 6,
     "AAVE": 18,
+    "CRV": 18,
+    "veCRV": 18,
 }
 
 THREEPOOLINDEX_FOR_ASSET = {
@@ -76,6 +80,8 @@ LOG_CONTRACTS = [
     # AAVE_LENDING_POOL_CORE_V1,
     # AAVE_LENDING_POOL_V1,
     AAVE_PROTO_GOVERNANCE_V1,
+    CURVE_ARAGON_51,
+    CURVE_ARAGON_60,
 ]
 ETHERSCAN_CONTRACTS = [GOVERNOR, OUSD, VAULT, TIMELOCK]
 

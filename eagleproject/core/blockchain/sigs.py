@@ -158,3 +158,26 @@ SIG_EVENT_WINS_NO = encode_hex(
 SIG_EVENT_WINS_ABSTAIN = encode_hex(
     keccak(b"AbstainWins(uint256,uint256,uint256,uint256)")
 )
+
+# Curve Aragon Voting fork (governance)
+SIG_EVENT_START_VOTE = encode_hex(keccak(
+    b"StartVote(uint256,address,string,uint256,uint256,uint256,uint256)"
+))
+SIG_EVENT_EXECUTE_VOTE = encode_hex(keccak(b"ExecuteVote(uint256)"))
+SIG_EVENT_CHANGE_SUPPORT_REQUIRED = encode_hex(
+    keccak(b"ChangeSupportRequired(uint64)")
+)
+SIG_EVENT_CHANGE_MIN_QUORUM = encode_hex(keccak(b"ChangeMinQuorum(uint64)"))
+SIG_EVENT_MIN_BALANCE_SET = encode_hex(keccak(b"MinimumBalanceSet(uint256)"))
+SIG_EVENT_MIN_TIME_SET = encode_hex(keccak(b"MinimumTimeSet(uint256)"))
+SIG_EVENT_SCRIPT_RESULT = encode_hex(
+    keccak(b"ScriptResult(address,bytes,bytes,bytes)")
+)
+SIG_EVENT_RECOVER_TO_VAULT = encode_hex(
+    keccak(b"RecoverToVault(address,address,uint256)")
+)
+SIG_EVENT_SET_APP = encode_hex(keccak(b"SetApp(bytes32,bytes32,address)"))
+SIG_EVENT_CLAIMED_TOKENS = encode_hex(
+    keccak(b"ClaimedTokens(address,address,uint)")
+)
+SIG_EVENT_NEW_CLONE_TOKEN = encode_hex(keccak(b"NewCloneToken(address,uint)"))
