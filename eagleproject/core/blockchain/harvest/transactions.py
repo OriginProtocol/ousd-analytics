@@ -177,6 +177,7 @@ def ensure_log_record(raw_log):
 
     params = {
         "address": raw_log["address"],
+        "transaction_hash": raw_log["transactionHash"],
         "transaction_index": transaction_index,
         "data": raw_log["data"],
         "event_name": "",
