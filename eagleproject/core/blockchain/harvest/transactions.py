@@ -353,6 +353,14 @@ def maybe_store_stake_withdrawn_record(log, block):
         else:
             logger.warning('Do not recognize call signature: {}'.format(call_sig))
 
+            """ In certain cases, we're unable to decode the function call
+            because it's wrapped by something else.  For instance, a wallet
+            proxy contract.  We'll try to fall back to the amount from the
+            event if available
+            """
+            if amount < 1:
+                amount = int(slot(log["data"], 0), 16) / E_18
+
     # Fallback to decoding from newer events if available
     if duration == 0 and is_updated_staked_event:
         _duration = slot(log["data"], 1)
