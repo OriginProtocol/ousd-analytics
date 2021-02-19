@@ -13,7 +13,7 @@
 
 <p>
   Currently assuming {{current_gas_price}} GWIE gas price and ${{eth_usd}} ETH.
-  Live uniswap prices. Live trailing seven day APR.
+  Live uniswap prices. Live trailing seven day APY.
 </p>
 
 <p>All lines are cost per dollar, including gas prices, any fees, and any slippage.</p>
@@ -33,9 +33,9 @@
 
   let usdt = parseFloat('{{usdt_uniswap}}'.replace(/,/g,''))
   let ousd = parseFloat('{{ousd_uniswap}}'.replace(/,/g,''))
-  let weeklyApr = parseFloat('{{apr}}'.replace(/,/g,'')) / 100.0 / 50.0
-  let gasPrice = 70.0
-  let ethereumPrice = 1300.0
+  let weeklyApr = parseFloat('{{current_gas_price}}'.replace(/,/g,'')) / 100.0 / 50.0
+  let gasPrice = parseFloat('{{apr}}'.replace(/,/g,''))
+  let ethereumPrice = parseFloat('{{eth_usd}}'.replace(/,/g,''))
 
   const chartRange = d3.range(100, 40000, 100)
   let height = 300
@@ -64,11 +64,13 @@
   const gasCost = (gas) => gas * 0.000000001 * ethereumPrice * gasPrice
   const prices = (f) => chartRange.map((a, i)=>{ return {amount: a, perDollar: f(a, i)} })
 
+  let otcBuy = prices((a)=> a / (a + gasCost(81353) ) )
+  let otcSell = prices((a)=> ( a + gasCost(81775 )) / a )
   let uniswapBuy = prices((a)=> a / (buyUniswap(ousd, usdt, a) + gasCost(150000) ) )
   let uniswapSell = prices((a)=> (buyUniswap(usdt, ousd, a)+ gasCost(150000 )) / a )
   let mintData = prices((a)=> a / (a + gasCost(mintGasCost(a))));
   let redeemData = prices((a)=> a / (a * 0.995 - gasCost(redeemGasCost(a))));
-  let bestMint = prices((a,i)=> Math.max(mintData[i].perDollar, uniswapBuy[i].perDollar) )
+  let bestMint = prices((a,i)=> Math.max(mintData[i].perDollar, uniswapBuy[i].perDollar, otcBuy[i].perDollar) )
   let weeklyMintReturn = (w) => prices((_,i)=>bestMint[i].perDollar * (1 + weeklyApr * w))
 
   const line = d3.line()
@@ -81,7 +83,7 @@
     .range([margin.left, width - margin.right])
 
   const y = d3.scaleLinear()
-    .domain([0.95, 1.05]).nice()
+    .domain([0.98, 1.02]).nice()
     .range([height - margin.bottom, margin.top])
 
   const xAxis = g => g
@@ -209,7 +211,7 @@
   svg.append("path")
       .datum(mintData)
       .attr("fill", "none")
-      .attr("stroke", "black")
+      .attr("stroke", "#367af6")
       .attr("stroke-width", 1.5)
       .attr("stroke-linejoin", "round")
       .attr("stroke-linecap", "round")
@@ -217,6 +219,24 @@
   
   svg.append("path")
       .datum(redeemData)
+      .attr("fill", "none")
+      .attr("stroke", "#367af6")
+      .attr("stroke-width", 1.5)
+      .attr("stroke-linejoin", "round")
+      .attr("stroke-linecap", "round")
+      .attr("d", line);
+
+  svg.append("path")
+      .datum(otcBuy)
+      .attr("fill", "none")
+      .attr("stroke", "black")
+      .attr("stroke-width", 1.5)
+      .attr("stroke-linejoin", "round")
+      .attr("stroke-linecap", "round")
+      .attr("d", line);
+  
+  svg.append("path")
+      .datum(otcSell)
       .attr("fill", "none")
       .attr("stroke", "black")
       .attr("stroke-width", 1.5)
