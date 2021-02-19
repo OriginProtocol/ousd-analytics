@@ -113,6 +113,7 @@ class SupplySnapshot(models.Model):
         max_digits=64, decimal_places=18, default=0
     )
     apr = Decimal(0)  # Not persisted
+    apy = Decimal(0)  # Not persisted
     gain = Decimal(0)  # Not persisted
 
     def rebasing_reported_supply(self):

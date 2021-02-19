@@ -9,13 +9,13 @@
 
 <h1>APY {{seven_day_apy|floatformat:2}}% <small>seven day average</small></h1>
 
-<p>Daily APR for the last thirty days:</p>
+<p>Daily APY for the last thirty days:</p>
 
 <table class="table table-right">
     <thead>
         <tr>
             <th>Block</th>
-            <th>APR</th>
+            <th>APY</th>
             <th>Boost</th>
             <th>Unboosted</th>
             <th>Aprx. Yield</th>
@@ -30,7 +30,7 @@
     {% for row in rows %}    
         <tr>
             <td>{% if row.block_number == latest_block_number %}Today So Far{% else %}{{row.block_number}}{% endif %}</td>
-            <td><strong>{{row.apr|floatformat:2}}%</strong></td>
+            <td><strong>{{row.apy|floatformat:2}}%</strong></td>
             <td>{{row.non_rebasing_boost_percentage|floatformat:1}}%</td>
             <td>{{row.unboosted|floatformat:2}}%</td>
             <td><strong>{{row.gain|floatformat:2}}</strong></td>
