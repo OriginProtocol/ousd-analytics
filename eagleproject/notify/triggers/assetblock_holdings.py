@@ -37,7 +37,7 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
                 log.debug("No asset blocks for last week, skipping")
                 continue
 
-            previous = last_week[0]
+            previous = last_week[-1]
 
         current = latest[0]
 
@@ -82,7 +82,7 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
                 event_func = event_low
                 threshold_percent = round(PERCENT_INFO * Decimal(100))
 
-            if event_func is not None:
+            if threshold_percent:
                 events.append(event_func(
                     "{} {} {}".format(
                         change_string,
