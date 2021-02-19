@@ -90,16 +90,16 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
                         'Gain' if diff > 0 else 'Loss',
                     ),
                     "OUSD Bot just saw a change of {}% in {} ({})\n\n"
-                    "**Current**: {} (block {})\n"
                     "**Previous**: {} (block {})\n"
+                    "**Current**: {} (block {})\n"
                     "**Change**: {}".format(
                         threshold_percent,
                         name,
                         symbol,
-                        format_decimal(current_holding, 4),
-                        current.block_number,
                         format_decimal(previous_holding, 4),
                         previous.block_number,
+                        format_decimal(current_holding, 4),
+                        current.block_number,
                         format_decimal(diff, 4),
                     )
                 ))
