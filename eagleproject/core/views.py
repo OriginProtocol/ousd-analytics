@@ -130,35 +130,8 @@ def fetch_transactions(request):
 
 
 def apr_index(request):
-    STEP = BLOCKS_PER_DAY
-    NUM_STEPS = 31
-    latest_block_number = _latest_snapshot_block_number()
-    end_block_number = latest_block_number - (latest_block_number % STEP)
-    block_numbers = list(
-        range(end_block_number - (NUM_STEPS - 1) * STEP, end_block_number + 1, STEP)
-    ) + [latest_block_number]
-    rows = []
-    last_snapshot = None
-
-    for block_number in block_numbers:
-        if block_number < START_OF_OUSD_V2:
-            continue
-        s = ensure_supply_snapshot(block_number)
-        if last_snapshot:
-            blocks = s.block_number - last_snapshot.block_number
-            change = (
-                s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio
-            ) - Decimal(1)
-            s.apr = Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
-            s.unboosted = (s.computed_supply - s.non_rebasing_supply) / s.computed_supply * s.apr
-            s.gain = change * (s.computed_supply - s.non_rebasing_supply)
-        rows.append(s)
-        last_snapshot = s
-    rows.reverse()
+    rows = _daily_rows(30)
     seven_day_apy = _get_trailing_apy()
-
-    # drop last row with incomplete information
-    rows = rows[:-1]
     return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
 
@@ -381,6 +354,36 @@ def _latest_snapshot_block_number():
     return _latest_snapshot().block_number
 
 
+def _daily_rows(steps):
+    STEP = BLOCKS_PER_DAY
+    latest_block_number = _latest_snapshot_block_number()
+    end_block_number = latest_block_number - (latest_block_number % STEP)
+    block_numbers = list(
+        range(end_block_number - (steps) * STEP, end_block_number + 1, STEP)
+    ) + [latest_block_number]
+    rows = []
+    last_snapshot = None
+
+    for block_number in block_numbers:
+        if block_number < START_OF_OUSD_V2:
+            continue
+        s = ensure_supply_snapshot(block_number)
+        if last_snapshot:
+            blocks = s.block_number - last_snapshot.block_number
+            change = (
+                s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio
+            ) - Decimal(1)
+            s.apr = Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
+            s.apy = _to_apy(s.apr, 1)
+            s.unboosted = _to_apy((s.computed_supply - s.non_rebasing_supply) / s.computed_supply * s.apr, 1)
+            s.gain = change * (s.computed_supply - s.non_rebasing_supply)
+        rows.append(s)
+        last_snapshot = s
+    rows.reverse()
+    # drop last row with incomplete information
+    rows = rows[:-1]
+    return rows
+
 PREV_APR = None
 
 
@@ -419,9 +422,13 @@ def _get_trailing_apr():
 
 def _get_trailing_apy():
     apr = Decimal(_get_trailing_apr())
-    periods_per_year = Decimal(365.25 / 7.0)
-    apy = ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
+    apy = _to_apy(apr, 7.0)
     return round(apy, 2)
+
+def _to_apy(apr, days):
+    periods_per_year = Decimal(365.25 / days)
+    return ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
+
 
 
 def staking_stats(request):
