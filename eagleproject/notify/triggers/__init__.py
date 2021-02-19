@@ -26,12 +26,13 @@ Every trigger should implement:
 import inspect
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from importlib import import_module
 from django.db.models import Max
 
 from core.logging import get_logger
 from core.models import (
+    AssetBlock,
     AaveLendingPoolCoreSnapshot,
     CTokenSnapshot,
     Block,
@@ -134,6 +135,33 @@ def aave_reserve_snapshots(block_number):
     )
 
 
+def past_asset_blocks(after=datetime.now() - timedelta(days=7),
+                      until_block=None):
+    """ Get previous asset blocks after `after` """
+    try:
+        first_block_after = Block.objects.filter(
+            block_time__gte=after
+        ).order_by('block_number')[0]
+    except IndexError:
+        return []
+
+    ablocks = AssetBlock.objects.filter(
+        block_number__gte=first_block_after.block_number
+    )
+
+    if until_block:
+        ablocks = ablocks.filter(block_number__lt=until_block)
+
+    return ablocks.order_by('block_number')
+
+
+def latest_asset_blocks(after_block_number):
+    """ Get previous asset blocks after `after_block_number` """
+    return AssetBlock.objects.filter(
+        block_number__gt=after_block_number
+    ).order_by('block_number')
+
+
 def run_all_triggers():
     """ Run all triggers """
     events = []
@@ -156,7 +184,7 @@ def run_all_triggers():
         cursor_id=CursorId.TRANSFERS,
         defaults={
             "block_number": block_number,
-            "last_update": datetime.utcnow(),
+            "last_update": datetime.now(tz=timezone.utc),
         }
     )
 
@@ -164,7 +192,7 @@ def run_all_triggers():
         cursor_id=CursorId.TRANSACTIONS,
         defaults={
             "block_number": block_number,
-            "last_update": datetime.utcnow(),
+            "last_update": datetime.now(tz=timezone.utc),
         }
     )
 
@@ -172,7 +200,7 @@ def run_all_triggers():
         cursor_id=CursorId.SNAPSHOT,
         defaults={
             "block_number": snapshot_block_number,
-            "last_update": datetime.utcnow(),
+            "last_update": datetime.now(tz=timezone.utc),
         }
     )
 
@@ -200,6 +228,12 @@ def run_all_triggers():
             snapshot_block_number
         ),
         "recent_aave_reserve_snapshots": lambda: recent_aave_reserve_snapshots(),
+        "latest_asset_blocks": lambda: latest_asset_blocks(
+            snapshot_cursor.block_number
+        ),
+        "last_week_asset_blocks": lambda: past_asset_blocks(
+            until_block=snapshot_cursor.block_number
+        ),
     }
 
     for mod in mods:
@@ -219,17 +253,17 @@ def run_all_triggers():
 
     if transfer_cursor.block_number != block_number:
         transfer_cursor.block_number = block_number
-        transfer_cursor.last_update = datetime.utcnow()
+        transfer_cursor.last_update = datetime.now(tz=timezone.utc)
         transfer_cursor.save()
 
     if transaction_cursor.block_number != block_number:
         transaction_cursor.block_number = block_number
-        transaction_cursor.last_update = datetime.utcnow()
+        transaction_cursor.last_update = datetime.now(tz=timezone.utc)
         transaction_cursor.save()
 
     if snapshot_cursor.block_number != snapshot_block_number:
         snapshot_cursor.block_number = snapshot_block_number
-        snapshot_cursor.last_update = datetime.utcnow()
+        snapshot_cursor.last_update = datetime.now(tz=timezone.utc)
         snapshot_cursor.save()
 
     events.sort()

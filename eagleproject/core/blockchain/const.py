@@ -39,12 +39,13 @@ CONTRACT_FOR_SYMBOL = {
 SYMBOL_FOR_CONTRACT = {v: k for (k, v) in CONTRACT_FOR_SYMBOL.items()}
 
 DECIMALS_FOR_SYMBOL = {
+    "AAVE": 18,
     "COMP": 18,
+    "CRV": 18,
     "DAI": 18,
+    "OUSD": 18,
     "USDT": 6,
     "USDC": 6,
-    "AAVE": 18,
-    "CRV": 18,
     "veCRV": 18,
 }
 
