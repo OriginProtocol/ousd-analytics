@@ -63,13 +63,22 @@ def run_trigger(new_logs):
                 strip_terrible_ipfs_prefix(metadata_hash)
             )
 
+            """ 51% Voting contract is for contract deployments and 60% Voting
+            contract is for parameter changes
+            """
+            vote_url = 'https://dao.curve.fi/vote/{}/{}'.format(
+                'ownership' if ev.address == CURVE_ARAGON_51 else 'parameter',
+                vote_id,
+            )
+
             details = (
                 "**Creator**: {} \n"
                 "**Creator Voting Power**: {} veCRV\n"
                 "**Minimum vote balance**: {} veCRV\n"
                 "**Current total supply**: {} veCRV\n"
                 "**Minimum time**: {}\n"
-                "**Metadata**: {}\n"
+                "**Metadata**: {}\n\n"
+                "{}"
             ).format(
                 creator,
                 format_token_human('veCRV', creator_voting_power),
@@ -77,6 +86,7 @@ def run_trigger(new_logs):
                 format_token_human('veCRV', total_supply),
                 format_timedelta(timedelta(seconds=min_time)),
                 metadata.get('text', 'NO METADATA TEXT FOUND.'),
+                vote_url,
             )
 
             events.append(event_high(
