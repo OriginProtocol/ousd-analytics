@@ -33,6 +33,7 @@ urlpatterns = [
     path("notifygc", notify_views.gc),
 
     path("api/v1/apr/trailing", core_views.api_apr_trailing),
+    path("api/v1/apr/history", core_views.api_apr_history),
     path("api/v1/ratios", core_views.api_ratios),
     path("api/v1/speed_test", core_views.api_speed_test),
     path("api/v1/staking_stats", core_views.staking_stats),

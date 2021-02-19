@@ -173,6 +173,22 @@ def api_apr_trailing(request):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
+def api_apr_history(request):
+    apr = _get_trailing_apr()
+    if apr < 0:
+        apr = "0"
+    apy = _get_trailing_apy()
+    if apy < 0:
+        apy = 0
+    days = _daily_rows(7)
+    response = JsonResponse({
+        "apr": apr,
+        "apy": apy,
+        "daily": [{'apy':x.apy} for x in days],
+        })
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return _cache(120, response)
+
 
 def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
