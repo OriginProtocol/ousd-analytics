@@ -180,7 +180,7 @@ def api_apr_history(request):
     apy = _get_trailing_apy()
     if apy < 0:
         apy = 0
-    days = _daily_rows(7)
+    days = _daily_rows(8)
     response = JsonResponse({
         "apr": apr,
         "apy": apy,
