@@ -25,6 +25,7 @@ urlpatterns = [
     path("apr", core_views.apr_index),
     path("supply", core_views.supply),
     path("powermint", core_views.powermint),
+    path("flipper", core_views.flipper),
 
     path("reload", core_views.reload),
     path("snap", core_views.take_snapshot),

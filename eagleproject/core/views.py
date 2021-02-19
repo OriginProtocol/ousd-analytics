@@ -161,6 +161,9 @@ def supply(request):
 
     return _cache(30, render(request, "supply.html", locals()))
 
+def flipper(request):
+    return render(request, "flipper.html", locals())
+
 
 def api_apr_trailing(request):
     apr = _get_trailing_apr()
