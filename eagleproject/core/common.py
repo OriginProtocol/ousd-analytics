@@ -67,7 +67,7 @@ def number_string_comma(v):
     return out
 
 
-def format_ousd_human(value, places=4):
+def format_usd_human(value, places=4):
     if value == Decimal(0):
         return '0'
 
@@ -78,6 +78,9 @@ def format_ousd_human(value, places=4):
         number_string_comma(''.join(map(str, digits[:exp]))),
         ''.join(map(str, digits[exp:])).rstrip('0') or '00'
     )
+
+
+format_ousd_human = format_usd_human
 
 
 def format_token_human(symbol, value, places=4):
@@ -151,6 +154,14 @@ def first(it, match):
         if match(i):
             return i
     return None
+
+
+def all_zero(iter):
+    """ Check if all items in an iterable are 0 """
+    for x in iter:
+        if x != 0:
+            return False
+    return True
 
 
 def truncate_elipsis(v, max_length=2048, elipsis=" ..."):

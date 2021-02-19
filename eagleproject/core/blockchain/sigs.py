@@ -82,6 +82,15 @@ SIG_EVENT_STRATEGIST = encode_hex(keccak(b"StrategistUpdated(address)"))
 SIG_EVENT_MAX_SUPPLY_DIFF = encode_hex(keccak(b"MaxSupplyDiffChanged(uint256)"))
 SIG_EVENT_DEFAULT_STRATEGY = encode_hex(keccak(b"AssetDefaultStrategyUpdated(address,address)"))
 SIG_EVENT_STRATEGY_APPROVED = encode_hex(keccak(b"StrategyApproved(address)"))
+SIG_EVENT_YIELD_DISTRIBUTION = encode_hex(
+    keccak(b"YieldDistribution(address,uint256,uint256)")
+)
+SIG_EVENT_TRUSTEE_FEE_CHANGED = encode_hex(
+    keccak(b"TrusteeFeeBpsChanged(uint256)")
+)
+SIG_EVENT_TRUSTEE_ADDRESS_CHANGED = encode_hex(
+    keccak(b"TrusteeAddressChanged(address)")
+)
 
 # Governable
 SIG_EVENT_PENDING_TRANSFER = encode_hex(keccak(b"PendingGovernorshipTransfer(address,address)"))

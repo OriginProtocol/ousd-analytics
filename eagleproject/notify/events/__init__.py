@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from Crypto.Hash import SHA3_256
 
 from core.common import Severity
@@ -203,7 +203,7 @@ def seen_filter(events, since):
     hashes_since = [
         x.event_hash
         for x in EventSeen.objects.filter(
-            last_seen__gt=datetime.utcnow() - since
+            last_seen__gt=datetime.now(tz=timezone.utc) - since
         ).only('event_hash')
     ]
 
@@ -214,7 +214,7 @@ def seen_filter(events, since):
             filtered.append(ev)
 
             EventSeen.objects.update_or_create(event_hash=ev.hash(), defaults={
-                'last_seen': datetime.utcnow()
+                'last_seen': datetime.now(tz=timezone.utc)
             })
 
     return filtered
