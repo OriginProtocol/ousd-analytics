@@ -49,7 +49,7 @@ log = get_logger(__name__)
 
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
-SKIP_TRIGGERS = ['noop', 'assetblock_holdings']
+SKIP_TRIGGERS = ['noop']
 log = logging.getLogger('notify.triggers')
 
 
