@@ -24,17 +24,17 @@ def run_trigger(aave_reserve_snapshots):
                 block_number=snap.block_number
             ))
 
-        elif snap.current_liquidity_rate < LOW_RATE:
-            events.append(event_low(
-                "Aave Supply Rate   📉",
-                "Aave {} has an unusually low supply APY of {}%".format(
-                    CONTRACT_ADDR_TO_NAME.get(
-                        snap.asset,
-                        snap.asset
-                    ),
-                    round(snap.current_liquidity_rate * Decimal(100), 2)
-                ),
-                block_number=snap.block_number
-            ))
+        # elif snap.current_liquidity_rate < LOW_RATE:
+        #     events.append(event_low(
+        #         "Aave Supply Rate   📉",
+        #         "Aave {} has an unusually low supply APY of {}%".format(
+        #             CONTRACT_ADDR_TO_NAME.get(
+        #                 snap.asset,
+        #                 snap.asset
+        #             ),
+        #             round(snap.current_liquidity_rate * Decimal(100), 2)
+        #         ),
+        #         block_number=snap.block_number
+        #     ))
 
     return events
