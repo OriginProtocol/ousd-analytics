@@ -131,7 +131,8 @@ def fetch_transactions(request):
 
 
 def apr_index(request):
-    rows = _daily_rows(30)
+    latest_block_number = _latest_snapshot_block_number()
+    rows = _daily_rows(30, latest_block_number)
     seven_day_apy = _get_trailing_apy()
     return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
@@ -184,7 +185,8 @@ def api_apr_history(request):
     apy = _get_trailing_apy()
     if apy < 0:
         apy = 0
-    days = _daily_rows(8)
+    latest_block_number = _latest_snapshot_block_number()
+    days = _daily_rows(8, latest_block_number)
     response = JsonResponse({
         "apr": apr,
         "apy": apy,
@@ -374,9 +376,8 @@ def _latest_snapshot_block_number():
     return _latest_snapshot().block_number
 
 
-def _daily_rows(steps):
+def _daily_rows(steps, latest_block_number):
     STEP = BLOCKS_PER_DAY
-    latest_block_number = _latest_snapshot_block_number()
     end_block_number = latest_block_number - (latest_block_number % STEP)
     block_numbers = list(
         range(end_block_number - (steps) * STEP, end_block_number + 1, STEP)

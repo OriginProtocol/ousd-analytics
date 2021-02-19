@@ -29,7 +29,7 @@
     </thead>
     {% for row in rows %}    
         <tr>
-            <td>{% if row.block_number == latest_block_number %}Today So Far{% else %}{{row.block_number}}{% endif %}</td>
+            <td>{% if row.block_number == latest_block_number %}<small>Today So Far</small>{% else %}{{row.block_number}}{% endif %}</td>
             <td><strong>{{row.apy|floatformat:2}}%</strong></td>
             <td>{{row.non_rebasing_boost_percentage|floatformat:1}}%</td>
             <td>{{row.unboosted|floatformat:2}}%</td>
