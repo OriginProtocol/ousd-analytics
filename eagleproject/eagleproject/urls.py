@@ -13,8 +13,8 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
 from django.urls import path
+from django.views.generic import RedirectView
 from core import views as core_views
 from notify import views as notify_views
 
@@ -22,11 +22,12 @@ urlpatterns = [
     path("", core_views.dashboard),
     path("tx/debug/<slug:tx_hash>", core_views.tx_debug),
     path("address/<slug:address>", core_views.address, name="address"),
-    path("apr", core_views.apr_index),
+    path("apy", core_views.apr_index, name="apy"),
+    path("apr", RedirectView.as_view(pattern_name="apy", permanent=True)),
     path("supply", core_views.supply),
     path("powermint", core_views.powermint),
-    path("flipper", core_views.flipper),
-    path("swap", core_views.flipper),
+    path("swap", core_views.flipper, name="swap"),
+    path("flipper", RedirectView.as_view(pattern_name="swap", permanent=True)),
 
     path("reload", core_views.reload),
     path("snap", core_views.take_snapshot),
