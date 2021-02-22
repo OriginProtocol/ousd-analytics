@@ -27,6 +27,7 @@ CONTRACT_NAMES = {
     "0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f": "Origin Multisig",
     "0x8a5ff78bfe0de04f5dc1b57d2e1095be697be76e": "Origin Timelock",
     "0x52bebd3d7f37ec4284853fd5861ae71253a7f428": "Origin Minute Timelock",
+    "0xcecad69d7d4ed6d52efcfa028af8732f27e08f70": "OUSD Swap",
     "0xdac17f958d2ee523a2206206994597c13d831ec7": "USDT",
     "0x6b175474e89094c44da98b954eedeac495271d0f": "DAI",
     "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": "USDC",
