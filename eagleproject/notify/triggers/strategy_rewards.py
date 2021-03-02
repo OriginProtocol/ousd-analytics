@@ -6,7 +6,11 @@ Events:
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.blockchain.addresses import STRATCOMP, CONTRACT_ADDR_TO_NAME
+from core.blockchain.addresses import (
+    STRATCOMP,
+    STRAT3POOL,
+    CONTRACT_ADDR_TO_NAME,
+)
 from core.common import format_token_human
 from core.blockchain.sigs import SIG_EVENT_REWARDS_COLLECTED
 from notify.events import event_normal
@@ -40,6 +44,8 @@ def run_trigger(new_logs):
         reward_token = '[UKNOWN]'
         if ev.address == STRATCOMP:
             reward_token = 'COMP'
+        elif ev.address == STRAT3POOL:
+            reward_token = 'CRV'
 
         events.append(
             event_normal(
