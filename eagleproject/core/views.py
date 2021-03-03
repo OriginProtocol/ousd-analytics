@@ -265,7 +265,7 @@ def active_stake_stats():
                     break
 
                 else:
-                    active_stakes = set(active_stakes) - set(matured_stakes)
+                    active_stakes = list(set(active_stakes) - set(matured_stakes))
                     running_total -= mature_so_far
 
         user_aggreate[user_address] = active_stakes
