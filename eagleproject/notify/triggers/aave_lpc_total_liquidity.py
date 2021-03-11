@@ -4,9 +4,9 @@ from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 from core.common import dict_append
 from notify.events import event_critical, event_high, event_normal
 
-PERCENT_DIFF_THRESHOLD_NOTICE = Decimal(0.02)
-PERCENT_DIFF_THRESHOLD_WARNING = Decimal(0.5)
-PERCENT_DIFF_THRESHOLD_CRITICAL = Decimal(0.10)
+PERCENT_DIFF_THRESHOLD_NOTICE = Decimal(0.05)
+PERCENT_DIFF_THRESHOLD_WARNING = Decimal(0.10)
+PERCENT_DIFF_THRESHOLD_CRITICAL = Decimal(0.15)
 
 
 def get_past_comparison(reserve_snaps):

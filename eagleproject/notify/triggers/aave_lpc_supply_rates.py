@@ -2,7 +2,7 @@ from decimal import Decimal
 from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 from notify.events import event_low
 
-HIGH_RATE = Decimal(0.15)  # 15%
+HIGH_RATE = Decimal(0.18)  # 18%
 LOW_RATE = Decimal(0.03)  # 3%
 
 
