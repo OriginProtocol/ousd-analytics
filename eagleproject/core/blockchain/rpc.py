@@ -35,6 +35,8 @@ from core.blockchain.sigs import (
     SIG_FUNC_DURATION_REWARD_RATE,
     SIG_FUNC_EXCHANGE_RATE_STORED,
     SIG_FUNC_GET_CASH,
+    SIG_FUNC_PRICE_USD_MINT,
+    SIG_FUNC_PRICE_USD_REDEEM,
     SIG_FUNC_SUPPLY_RATE,
     SIG_FUNC_TOTAL_BORROWS,
     SIG_FUNC_TOTAL_RESERVES,
@@ -295,16 +297,16 @@ def ogn_staking_total_outstanding(block):
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
-def priceUSDMint(coin_contract, symbol, block="latest"):
-    signature = "0x686b37ca"  # priceUSDMint(string)
-    payload = encode_single("(string)", [symbol]).hex()
+def priceUSDMint(coin_contract, assetAddress, block="latest"):
+    signature = SIG_FUNC_PRICE_USD_MINT[:10]  # priceUSDMint(address)
+    payload = encode_single("(address)", [assetAddress]).hex()
     data = call(coin_contract, signature, payload, block)
     return Decimal(int(data["result"], 16)) / E_18
 
 
-def priceUSDRedeem(coin_contract, symbol, block="latest"):
-    signature = "0x29a903ec"  # priceUSDRedeem(string)
-    payload = encode_single("(string)", [symbol]).hex()
+def priceUSDRedeem(coin_contract, assetAddress, block="latest"):
+    signature = SIG_FUNC_PRICE_USD_REDEEM[:10]  # priceUSDRedeem(address)
+    payload = encode_single("(address)", [assetAddress]).hex()
     data = call(coin_contract, signature, payload, block)
     return Decimal(int(data["result"], 16)) / E_18
 

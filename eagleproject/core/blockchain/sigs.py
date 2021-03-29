@@ -60,6 +60,8 @@ SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
 )
 
 # Vault
+SIG_FUNC_PRICE_USD_MINT = encode_hex(keccak(b"priceUSDMint(address)"))
+SIG_FUNC_PRICE_USD_REDEEM = encode_hex(keccak(b"priceUSDRedeem(address)"))
 SIG_EVENT_MINT = encode_hex(keccak(b"Mint(address,uint256)"))
 SIG_EVENT_REDEEM = encode_hex(keccak(b"Redeem(address,uint256)"))
 SIG_EVENT_CAPITAL_PAUSED = encode_hex(keccak(b"CapitalPaused()"))
