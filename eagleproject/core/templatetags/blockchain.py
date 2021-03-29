@@ -49,6 +49,7 @@ CONTRACT_NAMES = {
     "0x47211b1d1f6da45aaee06f877266e072cf8baa74": "CompoundStrategy",  # Outdated
     "0xfceea3923dd126d8fb3873389187307519c1de37": "CompoundStrategy Internal",  # Outdated
     "0x5b57e808b0ddcf097e25c5f5e3d8d3c2b0d26319": "CompoundStrategy Internal",  # Outdated
+    "0xd5433168ed0b1f7714819646606db509d9d8ec1f": "CompoundStrategy",
     "0xe40e09cd6725e542001fcb900d9dfea447b529c0": "3PoolStrategy USDT",  # Outdated
     "0x75bc09f72db1663ed35925b89de2b5212b9b6cb3": "3PoolStrategy USDT Internal",  # Outdated
     "0x641e3b5b081fb2fb8b43d5a163649312a28e23da": "3PoolStrategy USDT Internal",  # Outdated
@@ -56,8 +57,8 @@ CONTRACT_NAMES = {
     "0x96e89b021e4d72b680bb0400ff504eb5f4a24327": "3PoolStrategy USDC Internal",  # Outdated
     "0xf92b0de25660c18bedaa55795986781d7899b0f9": "3PoolStrategy USDC Internal",  # Outdated
     "0x3c5fe0a3922777343cbd67d3732fcdc9f2fa6f2f": "3Pool Strategy",
-    "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3": "CompoundStrategy DIA",
-    "0xfaf23bd848126521064184282e8ad344490ba6f0": "CompoundStrategy DIA Internal",
+    "0x12115a32a19e4994c2ba4a5437c22cef5abb59c3": "CompoundStrategy DIA",  # Outdated
+    "0xfaf23bd848126521064184282e8ad344490ba6f0": "CompoundStrategy DIA Internal",  # Outdated
     "0x051caefa90adf261b8e8200920c83778b7b176b6": "AaveStrategy",
     "0x5d9aa9f977e47ea0bfe61ba8b8f535aba02be135": "AaveStrategy Internal",
     "0x986b5e1e1755e3c2440e960477f25201b0a8bbd4": "Chainlink USDC ETH",
