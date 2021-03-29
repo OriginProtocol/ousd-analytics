@@ -356,9 +356,9 @@ def tx_debug(request, tx_hash):
 def powermint(request):
     ousd_uniswap = balanceOf(OUSD, OUSD_USDT_UNISWAP, 18)
     usdt_uniswap = balanceOf(USDT, OUSD_USDT_UNISWAP, 6)
-    eth_usd = 1300
+    eth_usd = 1780
     apr = Decimal(_get_trailing_apr())
-    current_gas_price = 70
+    current_gas_price = 150
     return render(request, "powermint.html", locals())
 
 

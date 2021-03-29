@@ -18,11 +18,13 @@
 
 <p>All lines are cost per dollar, including gas prices, any fees, and any slippage.</p>
 
-<p>Black bottom line is OUSD dapp mint cost.</p>
-<p>Black top line is OUSD dapp redeem cost.</p>
+<p>Black bottom line is OUSD swap buy cost.</p>
+<p>Black top line is OUSD swap sell cost.</p>
+<p>Blue bottom line is OUSD dapp mint cost.</p>
+<p>Blue top line is OUSD dapp redeem cost.</p>
 <p>Pink bottom line is Uniswap buy OUSD cost.</p>
 <p>Pink top line is Uniswap sell OUSD cost.</p>
-<p>Grey lines represent 1 week of OUSD APY yield.</p>
+<p>Grey lines represent 1 month of OUSD APY yield.</p>
 
 
 <style>
@@ -33,8 +35,8 @@
 
   let usdt = parseFloat('{{usdt_uniswap}}'.replace(/,/g,''))
   let ousd = parseFloat('{{ousd_uniswap}}'.replace(/,/g,''))
-  let weeklyApr = parseFloat('{{current_gas_price}}'.replace(/,/g,'')) / 100.0 / 50.0
-  let gasPrice = parseFloat('{{apr}}'.replace(/,/g,''))
+  let monthlyApr = parseFloat('{{apr}}'.replace(/,/g,'')) / 100.0 / 12.0
+  let gasPrice = parseFloat('{{current_gas_price}}'.replace(/,/g,''))
   let ethereumPrice = parseFloat('{{eth_usd}}'.replace(/,/g,''))
 
   const chartRange = d3.range(100, 40000, 100)
@@ -45,14 +47,14 @@
 
 
   const mintGasCost = (a) => {
-    if(a < 1000) { return 160000}
-    else if (a < 25000) { return 285000}
-    else { return 1000000 }
+    if(a < 1000) { return 115000}
+    else if (a < 25000) { return 500000}
+    else { return 2286390 }
   }
   const redeemGasCost = (a) => {
-    if(a < 1000) { return 747809}
+    if(a < 1000) { return 730000}
     if(a < 25000) { return 1500000}
-    else { return 2000000 }
+    else { return 2200000 }
   }
   const buyUniswap = (a, b, aDiff) => {
     const k = (a * b)
@@ -71,7 +73,7 @@
   let mintData = prices((a)=> a / (a + gasCost(mintGasCost(a))));
   let redeemData = prices((a)=> a / (a * 0.995 - gasCost(redeemGasCost(a))));
   let bestMint = prices((a,i)=> Math.max(mintData[i].perDollar, uniswapBuy[i].perDollar, otcBuy[i].perDollar) )
-  let weeklyMintReturn = (w) => prices((_,i)=>bestMint[i].perDollar * (1 + weeklyApr * w))
+  let monthlyMintReturn = (w) => prices((_,i)=>bestMint[i].perDollar * (1 + monthlyApr * w))
 
   const line = d3.line()
     .defined(d => !isNaN(d.amount) && d.perDollar > 0.95)
@@ -83,7 +85,7 @@
     .range([margin.left, width - margin.right])
 
   const y = d3.scaleLinear()
-    .domain([0.98, 1.02]).nice()
+    .domain([0.95, 1.05]).nice()
     .range([height - margin.bottom, margin.top])
 
   const xAxis = g => g
@@ -119,7 +121,7 @@
     .attr("d", line);
 
     svg.append("path")
-    .datum(weeklyMintReturn(1))
+    .datum(monthlyMintReturn(1))
     .attr("fill", "none")
     .attr("stroke", "grey")
     .attr("stroke-width", 0.25)
@@ -128,7 +130,7 @@
     .attr("d", line);
 
     svg.append("path")
-    .datum(weeklyMintReturn(2))
+    .datum(monthlyMintReturn(2))
     .attr("fill", "none")
     .attr("stroke", "grey")
     .attr("stroke-width", 0.25)
@@ -137,7 +139,7 @@
     .attr("d", line);
 
     svg.append("path")
-    .datum(weeklyMintReturn(3))
+    .datum(monthlyMintReturn(3))
     .attr("fill", "none")
     .attr("stroke", "grey")
     .attr("stroke-width", 0.25)
@@ -146,7 +148,7 @@
     .attr("d", line);
 
     svg.append("path")
-    .datum(weeklyMintReturn(4))
+    .datum(monthlyMintReturn(4))
     .attr("fill", "none")
     .attr("stroke", "grey")
     .attr("stroke-width", 1.0)
@@ -155,7 +157,7 @@
     .attr("d", line);
   
   svg.append("path")
-    .datum(weeklyMintReturn(5))
+    .datum(monthlyMintReturn(5))
     .attr("fill", "none")
     .attr("stroke", "grey")
     .attr("stroke-width", 0.25)
@@ -164,7 +166,7 @@
     .attr("d", line);
 
     svg.append("path")
-    .datum(weeklyMintReturn(6))
+    .datum(monthlyMintReturn(6))
     .attr("fill", "none")
     .attr("stroke", "grey")
     .attr("stroke-width", 0.25)
@@ -173,7 +175,7 @@
     .attr("d", line);
 
     svg.append("path")
-    .datum(weeklyMintReturn(7))
+    .datum(monthlyMintReturn(7))
     .attr("fill", "none")
     .attr("stroke", "grey")
     .attr("stroke-width", 0.25)
@@ -182,7 +184,7 @@
     .attr("d", line);
 
     svg.append("path")
-    .datum(weeklyMintReturn(8))
+    .datum(monthlyMintReturn(8))
     .attr("fill", "none")
     .attr("stroke", "grey")
     .attr("stroke-width", 1.0)
