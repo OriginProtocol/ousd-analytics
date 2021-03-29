@@ -111,10 +111,18 @@ def build_asset_block(symbol, block_number):
         )
 
     ora_tok_usd_min = (
-        0 if symbol == "COMP" else priceUSDMint(VAULT, symbol, block_number)
+        0 if symbol == "COMP" else priceUSDMint(
+            VAULT,
+            CONTRACT_FOR_SYMBOL[symbol],
+            block_number
+        )
     )
     ora_tok_usd_max = (
-        0 if symbol == "COMP" else priceUSDRedeem(VAULT, symbol, block_number)
+        0 if symbol == "COMP" else priceUSDRedeem(
+            VAULT,
+            CONTRACT_FOR_SYMBOL[symbol],
+            block_number
+        )
     )
 
     return AssetBlock(
