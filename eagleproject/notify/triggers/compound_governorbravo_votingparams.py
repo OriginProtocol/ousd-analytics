@@ -11,7 +11,7 @@ from core.blockchain.sigs import (
     SIG_EVENT_VOTING_PERIOD_SET,
     SIG_EVENT_PROPOSAL_THRESHOLD_SET,
 )
-from notify.events import event_high
+from notify.events import event_normal
 
 DISCORD_EMBED_DESCRIPTION_LIMIT = 2048
 
@@ -36,7 +36,7 @@ def run_trigger(new_logs):
                 decode_hex(ev.data)
             )
 
-            events.append(event_high(
+            events.append(event_normal(
                 "Compound GovernorBravo voting delay changed   🗳️ 🕖",
                 "Compound GovernorBravo voting delay changed from {} blocks to {} blocks".format(
                     old_delay, new_delay
@@ -50,7 +50,7 @@ def run_trigger(new_logs):
                 decode_hex(ev.data)
             )
 
-            events.append(event_high(
+            events.append(event_normal(
                 "Compound GovernorBravo voting delay changed   🗳️ 🕗",
                 "Compound GovernorBravo voting period changed from {} blocks to {} blocks".format(
                     old_period, new_period
@@ -67,7 +67,7 @@ def run_trigger(new_logs):
             old_human = Decimal(old_threshold) / E_18
             new_human = Decimal(new_threshold) / E_18
 
-            events.append(event_high(
+            events.append(event_normal(
                 "Compound GovernorBravo voting threshold changed   🗳️ 🪙",
                 "Compound GovernorBravo voting threshold changed from {} COMP to {} COMP".format(
                     old_human, new_human
