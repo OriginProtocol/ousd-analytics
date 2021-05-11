@@ -134,14 +134,31 @@ SIG_EVENT_QUEUE_TRANSACTION = encode_hex(
     keccak(b"QueueTransaction(bytes32,address,uint256,string,bytes,uint256)")
 )
 
-# Compound GovernorAlpha
+# Compound GovernorAlpha, GovernorBravo
 SIG_EVENT_PROPOSAL_CREATED = encode_hex(
     keccak(b"ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)")
 )
+# VoteCast(address voter, uint proposalId, bool support, uint votes);
 SIG_EVENT_VOTE_CAST = encode_hex(keccak(b"VoteCast(address,uint256,bool,uint256)"))
 SIG_EVENT_PROPOSAL_CANCELED = encode_hex(keccak(b"ProposalCanceled(uint256)"))
 SIG_EVENT_PROPOSAL_QUEUED = encode_hex(keccak(b"ProposalQueued(uint256,uint256)"))
 SIG_EVENT_PROPOSAL_EXECUTED = encode_hex(keccak(b"ProposalExecuted(uint256)"))
+
+# Compound GovernorBravo specific
+# VoteCast(address indexed voter, uint proposalId, uint8 support, uint votes, string reason);
+SIG_EVENT_VOTE_CAST_BRAVO = encode_hex(keccak(b"VoteCast(address,uint,uint8,uint256,string)"))
+# NewImplementation(address oldImplementation, address newImplementation);
+SIG_EVENT_NEW_IMPLEMENTATION_BRAVO = encode_hex(keccak(b"NewImplementation(address,address)"))
+# VotingDelaySet(uint oldVotingDelay, uint newVotingDelay)
+SIG_EVENT_VOTING_DELAY_SET = encode_hex(keccak(b"VotingDelaySet(uint,uint)"))
+# VotingPeriodSet(uint oldVotingPeriod, uint newVotingPeriod)
+SIG_EVENT_VOTING_PERIOD_SET = encode_hex(keccak(b"VotingPeriodSet(uint,uint)"))
+# ProposalThresholdSet(uint oldProposalThreshold, uint newProposalThreshold)
+SIG_EVENT_PROPOSAL_THRESHOLD_SET = encode_hex(keccak(b"ProposalThresholdSet(uint,uint)"))
+# NewPendingAdmin(address oldPendingAdmin, address newPendingAdmin)
+SIG_EVENT_NEW_PENDING_ADMIN_BRAVO = encode_hex(keccak(b"NewPendingAdmin(address,address)"))
+# NewAdmin(address oldAdmin, address newAdmin)
+SIG_EVENT_NEW_ADMIN_BRAVO = encode_hex(keccak(b"NewAdmin(address,address)"))
 
 # Aave LendingPool
 SIG_EVENT_PAUSED = encode_hex(keccak(b"Paused()"))
