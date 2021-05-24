@@ -63,7 +63,7 @@ def dashboard(request):
     total_comp = comp.total()
     total_supply = totalSupply(OUSD, 18, block_number)
     total_value = sum(x.redeem_value() for x in assets)
-    extra_assets = total_assets - total_supply
+    extra_assets = (total_assets - total_supply) * Decimal(0.9)
     extra_value = total_value - total_supply
 
     logs_q = Log.objects.filter(address__in=OUSD_CONTRACTS)
