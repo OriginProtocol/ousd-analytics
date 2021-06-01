@@ -156,15 +156,15 @@ def ensure_supply_snapshot(block_number):
 
         s = SupplySnapshot()
         s.block_number = block_number
-        s.non_rebasing_credits = Decimal(0)
+        s.non_rebasing_credits = Decimal(0)  # No longer used in contract
         s.credits = ousd_rebasing_credits(block_number) + s.non_rebasing_credits
         s.computed_supply = dai + usdt + usdc
         s.reported_supply = totalSupply(OUSD, 18, block_number)
         s.non_rebasing_supply = ousd_non_rebasing_supply(block_number)
         s.credits_ratio = s.computed_supply / s.credits
-        s.rebasing_credits_ratio = (s.computed_supply - s.non_rebasing_supply) / (
-            s.credits - s.non_rebasing_credits
-        )
+        future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.1)
+        next_rebase_supply = s.computed_supply - s.non_rebasing_supply - future_fee
+        s.rebasing_credits_ratio = next_rebase_supply / s.credits
         s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
         s.save()
         return s
