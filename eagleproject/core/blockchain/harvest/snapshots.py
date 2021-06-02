@@ -65,14 +65,7 @@ def build_asset_block(symbol, block_number):
     threepoolstrat_holding = Decimal(0)
 
     if block_number == "latest" or block_number > 11060000:
-        if symbol == "USDC":
-            compstrat_holding += balanceOfUnderlying(
-                COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMP,
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
-        elif symbol == "USDT":
+        if symbol in ["USDC", "USDT", "DAI"]:
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
                 STRATCOMP,
