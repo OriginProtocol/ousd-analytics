@@ -69,8 +69,7 @@ def run_trigger(recent_aave_reserve_snapshots):
                 title = "Aave Liquidity Fluctuation   🚨"
                 msg = (
                     "The LendingPoolCore {} reserve has dropped more than {}% "
-                    "between snapshots. This could indicate issues or a rush "
-                    "on capital.".format(
+                    "between snapshots.".format(
                         CONTRACT_ADDR_TO_NAME.get(asset, asset),
                         round(threshold * Decimal(100))
                     )
