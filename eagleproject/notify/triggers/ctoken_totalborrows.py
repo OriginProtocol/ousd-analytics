@@ -10,9 +10,18 @@ from core.blockchain.conversion import ctoken_to_underlying
 from core.common import Direction, dict_append, format_decimal
 from notify.events import event_critical, event_high, event_normal
 
-PERCENT_DIFF_THRESHOLD_NOTICE = Decimal(0.05)
-PERCENT_DIFF_THRESHOLD_WARNING = Decimal(0.10)
-PERCENT_DIFF_THRESHOLD_CRITICAL = Decimal(0.15)
+PERCENT_DIFF_THRESHOLD_NOTICE = {
+    'default': Decimal(0.05),
+    'usdt': Decimal(0.1),
+}
+PERCENT_DIFF_THRESHOLD_WARNING = {
+    'default': Decimal(0.10),
+    'usdt': Decimal(0.2),
+}
+PERCENT_DIFF_THRESHOLD_CRITICAL = {
+    'default': Decimal(0.15),
+    'usdt': Decimal(0.3),
+}
 
 
 def create_message(action, ctoken_name, diff, diff_underlying, symbol,
@@ -67,37 +76,44 @@ def run_trigger(recent_ctoken_snapshots):
         dict_append(snaps, snap.address, snap)
 
     for ctoken_address in snaps:
-        total_borrows_comp = get_past_comparison(snaps[ctoken_address])
-        total_borrows_current = snaps[ctoken_address][0].total_borrows
-        notice_diff_threshold = (
-            total_borrows_comp * PERCENT_DIFF_THRESHOLD_NOTICE
-        )
-        warning_diff_threshold = (
-            total_borrows_comp * PERCENT_DIFF_THRESHOLD_WARNING
-        )
-        critical_diff_threshold = (
-            total_borrows_comp * PERCENT_DIFF_THRESHOLD_CRITICAL
-        )
-
         title = ""
         msg = ""
         threshold = 0
         underlying_symbol = SYMBOL_FOR_COMPOUND.get(ctoken_address, '')
+
+        threshold_notice = PERCENT_DIFF_THRESHOLD_NOTICE.get(
+            underlying_symbol,
+            PERCENT_DIFF_THRESHOLD_NOTICE['default']
+        )
+        threshold_warning = PERCENT_DIFF_THRESHOLD_WARNING.get(
+            underlying_symbol,
+            PERCENT_DIFF_THRESHOLD_WARNING['default']
+        )
+        threshold_critical = PERCENT_DIFF_THRESHOLD_CRITICAL.get(
+            underlying_symbol,
+            PERCENT_DIFF_THRESHOLD_CRITICAL['default']
+        )
+
+        total_borrows_comp = get_past_comparison(snaps[ctoken_address])
+        total_borrows_current = snaps[ctoken_address][0].total_borrows
+        notice_diff_threshold = total_borrows_comp * threshold_notice
+        warning_diff_threshold = total_borrows_comp * threshold_warning
+        critical_diff_threshold = total_borrows_comp * threshold_critical
 
         if total_borrows_current < total_borrows_comp:
             diff = total_borrows_comp - total_borrows_current
 
             if diff > critical_diff_threshold:
                 ev_func = event_critical
-                threshold = PERCENT_DIFF_THRESHOLD_CRITICAL
+                threshold = threshold_critical
 
             elif diff > warning_diff_threshold:
                 ev_func = event_high
-                threshold = PERCENT_DIFF_THRESHOLD_WARNING
+                threshold = threshold_warning
 
             elif diff > notice_diff_threshold:
                 ev_func = event_normal
-                threshold = PERCENT_DIFF_THRESHOLD_NOTICE
+                threshold = threshold_notice
 
             underlying_diff = ctoken_to_underlying(
                 underlying_symbol,
@@ -124,15 +140,15 @@ def run_trigger(recent_ctoken_snapshots):
 
             if diff > critical_diff_threshold:
                 ev_func = event_critical
-                threshold = PERCENT_DIFF_THRESHOLD_CRITICAL
+                threshold = threshold_critical
 
             elif diff > warning_diff_threshold:
                 ev_func = event_high
-                threshold = PERCENT_DIFF_THRESHOLD_WARNING
+                threshold = threshold_warning
 
             elif diff > notice_diff_threshold:
                 ev_func = event_normal
-                threshold = PERCENT_DIFF_THRESHOLD_NOTICE
+                threshold = threshold_notice
 
             underlying_diff = ctoken_to_underlying(
                 underlying_symbol,
