@@ -29,4 +29,4 @@ jobs:
       env:
         SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
-        args: --file=./eagleproject/requirements.txt --package-manager=pip --severity-threshold=high
+        args: --severity-threshold=high
