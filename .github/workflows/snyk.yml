@@ -4,10 +4,11 @@ jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - name: Run Snyk to check for vulnerabilities
-      - run:  |
-              npm install -g snyk
-              snyk auth {{ token }}
-              pip install -r ./eagleproject/requirements.txt
-              snyk test --file=./eagleproject/requirements.txt
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: npm install -g snyk
+      - run: snyk auth {{ token }}
+      - run: pip install -r ./eagleproject/requirements.txt
+      - run: snyk test --file=./eagleproject/requirements.txt
