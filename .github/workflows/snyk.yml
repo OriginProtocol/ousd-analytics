@@ -5,6 +5,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - name: install dependencies
+        run: |
+          cd eagleproject
+          pip install -r ./requirements.txt 
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/python-3.6@master
         env:
