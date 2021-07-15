@@ -9,6 +9,6 @@ jobs:
         with:
           node-version: '14'
       - run: npm install -g snyk
-      - run: snyk auth {{ token }}
+      - run: snyk auth ${{ secrets.SNYK_TOKEN }}
       - run: pip install -r ./eagleproject/requirements.txt
       - run: snyk test --file=./eagleproject/requirements.txt
