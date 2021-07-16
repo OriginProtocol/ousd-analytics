@@ -1,0 +1,14 @@
+name: Snyk push gate
+on: push
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+      - run: npm install -g snyk
+      - run: snyk auth ${{ secrets.SNYK_TOKEN }}
+      - run: pip install -r ./eagleproject/requirements.txt
+      - run: snyk test --file=./eagleproject/requirements.txt --policy-path=./.snyk --severity-threshold=high
