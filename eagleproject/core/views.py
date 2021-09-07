@@ -113,8 +113,6 @@ def dashboard(request):
 def reload(request):
     latest = latest_block()
     reload_all(latest - 2)
-    # Disable the reach-back for the time being
-    # reload_all(latest - 2 - BLOCKS_PER_DAY * 7)  # Week ago, for APR
     return HttpResponse("ok")
 
 
@@ -133,7 +131,7 @@ def fetch_transactions(request):
 def apr_index(request):
     latest_block_number = _latest_snapshot_block_number()
     rows = _daily_rows(30, latest_block_number)
-    seven_day_apy = _get_trailing_apy()
+    apy = _get_trailing_apy()
     return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
 
@@ -419,7 +417,7 @@ def _get_trailing_apr():
     on rebases, making this method less acurate. It's bit iffy using it
     on only one day, but that's the data we have at the moment.
     """
-    days = 7.00
+    days = 30.00
 
     # Check cache first
     global PREV_APR
@@ -443,7 +441,7 @@ def _get_trailing_apr():
 
 def _get_trailing_apy():
     apr = Decimal(_get_trailing_apr())
-    apy = _to_apy(apr, 7.0)
+    apy = _to_apy(apr, 30.0)
     return round(apy, 2)
 
 def _to_apy(apr, days):
