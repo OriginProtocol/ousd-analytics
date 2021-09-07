@@ -131,7 +131,7 @@ def fetch_transactions(request):
 def apr_index(request):
     latest_block_number = _latest_snapshot_block_number()
     rows = _daily_rows(30, latest_block_number)
-    seven_day_apy = _get_trailing_apy() # Todo, change once DAPP updated
+    apy = _get_trailing_apy()
     return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
 
