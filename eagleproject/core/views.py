@@ -213,7 +213,7 @@ def api_address_yield(request, address):
     data = _address_transfers(address)
     response = JsonResponse({
         "address": data['address'],
-        "yield_balance": "{:.2f}".format(data['yield_balance']),
+        "lifetime_yield": "{:.2f}".format(data['yield_balance']),
     })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return response
@@ -315,7 +315,13 @@ def address(request, address):
 def _address_transfers(address):
     long_address = address.replace("0x", "0x000000000000000000000000")
     latest_block_number = _latest_snapshot_block_number()
-    block_number = latest_block_number - 4
+    # We want to avoid the case where the listener hasn't picked up a
+    # transactions yet, but the user's balance has increased or decreased
+    # due to a transfer. This would make a hugely wrong lifetime earned amount
+    # 
+    # We refresh the DB every minute, so we will do two minutes worth of
+    # blocks - conservatively 120 / 10 = 12 blocks.
+    block_number = latest_block_number - 12
     transfers = (Log.objects
         .filter(address=OUSD, topic_0=TRANSFER)
         .filter(Q(topic_1=long_address) | Q(topic_2=long_address))
