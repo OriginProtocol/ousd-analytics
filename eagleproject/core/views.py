@@ -207,6 +207,17 @@ def api_ratios(request):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(30, response)
 
+def api_address_yield(request, address):
+    if address != address.lower():
+        return redirect("api_address_yield", address=address.lower())
+    data = _address_transfers(address)
+    response = JsonResponse({
+        "address": data['address'],
+        "lifetime_yield": "{:.2f}".format(data['yield_balance']),
+    })
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return response
+
 
 def active_stake_stats():
     """ Get stats of the active stakes grouped by duration """
@@ -298,12 +309,24 @@ def active_stake_stats():
 def address(request, address):
     if address != address.lower():
         return redirect("address", address=address.lower())
+    data = _address_transfers(address)
+    return render(request, "address.html", data)
+
+def _address_transfers(address):
     long_address = address.replace("0x", "0x000000000000000000000000")
     latest_block_number = _latest_snapshot_block_number()
+    # We want to avoid the case where the listener hasn't picked up a
+    # transactions yet, but the user's balance has increased or decreased
+    # due to a transfer. This would make a hugely wrong lifetime earned amount
+    # 
+    # We refresh the DB every minute, so we will do two minutes worth of
+    # blocks - conservatively 120 / 10 = 12 blocks.
+    block_number = latest_block_number - 12
     transfers = (Log.objects
         .filter(address=OUSD, topic_0=TRANSFER)
         .filter(Q(topic_1=long_address) | Q(topic_2=long_address))
         .filter(block_number__gte=START_OF_OUSD_V2)
+        .filter(block_number__lte=block_number)
     )
     transfers_in = sum([
         x.ousd_value()
@@ -313,11 +336,18 @@ def address(request, address):
     transfers_out = sum(
         [x.ousd_value() for x in transfers if x.topic_1 == long_address]
     )
-    current_balance = balanceOf(OUSD, address, 18)
+    current_balance = balanceOf(OUSD, address, 18, block=block_number)
     non_yield_balance = transfers_in - transfers_out
     yield_balance = current_balance - non_yield_balance
-    return render(request, "address.html", locals())
-
+    return {
+        'address': address,
+        'transfers': transfers,
+        'transfers_in': transfers_in,
+        'transfers_out': transfers_out,
+        'current_balance': current_balance,
+        'non_yield_balance': non_yield_balance,
+        'yield_balance': yield_balance,
+    }
 
 def _my_assets(address, block_number):
     dai = ensure_asset("DAI", block_number)
