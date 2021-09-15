@@ -18,6 +18,8 @@ from django.views.generic import RedirectView
 from core import views as core_views
 from notify import views as notify_views
 
+redirect_to_ousd_dapp = RedirectView.as_view(url='https://ousd.com/', permanent=True)
+
 urlpatterns = [
     path("", core_views.dashboard),
     path("tx/debug/<slug:tx_hash>", core_views.tx_debug),
@@ -25,9 +27,6 @@ urlpatterns = [
     path("apy", core_views.apr_index, name="apy"),
     path("apr", RedirectView.as_view(pattern_name="apy", permanent=True)),
     path("supply", core_views.supply),
-    path("powermint", core_views.powermint),
-    path("swap", core_views.flipper, name="swap"),
-    path("flipper", RedirectView.as_view(pattern_name="swap", permanent=True)),
 
     path("reload", core_views.reload),
     path("snap", core_views.take_snapshot),
@@ -43,4 +42,9 @@ urlpatterns = [
     path("api/v1/staking_stats_by_duration", core_views.staking_stats_by_duration),
     path("api/v1/pools", core_views.coingecko_pools),
     path("api/v1/address/<slug:address>/yield", core_views.api_address_yield, name="api_address_yield"),
+
+    # Retired URLS
+    path("powermint", redirect_to_ousd_dapp),
+    path("swap", redirect_to_ousd_dapp),
+    path("flipper", redirect_to_ousd_dapp),
 ]
