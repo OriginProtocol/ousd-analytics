@@ -1,4 +1,5 @@
 from datetime import timedelta
+from multiprocessing import Process
 from django.conf import settings
 from eth_utils import (
     decode_hex,
@@ -218,20 +219,29 @@ def download_logs_from_contract(contract, start_block, end_block):
 
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
+    processes = []
     for contract in LOG_CONTRACTS:
-        pointer = None
-        if contract not in pointers:
-            pointer = LogPointer(contract=contract, last_block=START_OF_EVERYTHING)
-            pointer.save()
-        else:
-            pointer = pointers[contract]
-        start_block = pointer.last_block + 1
-        while start_block <= upto:
-            end_block = min(start_block + 1000, upto)
-            download_logs_from_contract(contract, start_block, end_block)
-            pointer.last_block = end_block
-            pointer.save()
-            start_block = pointer.last_block + 1
+        p = Process(target=ensure_latest_logs_for_contract, args=(contract, pointers, upto))
+        p.start()
+        processes.append(p)
+    for p in processes:
+        p.join()
+
+
+def ensure_latest_logs_for_contract(contract, pointers, upto):
+    pointer = None
+    if contract not in pointers:
+        pointer = LogPointer(contract=contract, last_block=START_OF_EVERYTHING)
+        pointer.save()
+    else:
+        pointer = pointers[contract]
+    start_block = pointer.last_block + 1
+    while start_block <= upto:
+        end_block = min(start_block + 1000, upto)
+        download_logs_from_contract(contract, start_block, end_block)
+        pointer.last_block = end_block
+        pointer.save()
+        start_block = pointer.last_block + 1    
 
 
 def maybe_store_stake_withdrawn_record(log, block):
