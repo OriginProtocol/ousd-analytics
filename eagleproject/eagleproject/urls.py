@@ -42,6 +42,7 @@ urlpatterns = [
     path("api/v1/staking_stats_by_duration", core_views.staking_stats_by_duration),
     path("api/v1/pools", core_views.coingecko_pools),
     path("api/v1/address/<slug:address>/yield", core_views.api_address_yield, name="api_address_yield"),
+    path("api/v1/address/", core_views.api_address),
 
     # Retired URLS
     path("powermint", redirect_to_ousd_dapp),
