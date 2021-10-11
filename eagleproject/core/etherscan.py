@@ -30,5 +30,4 @@ def get_contract_transactions(address, from_block, end_block):
             )
         )
 
-    print("RESULT", len(r.json().get("result")))
     return r.json().get("result")

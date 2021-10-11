@@ -15,8 +15,8 @@ from core.blockchain.harvest.transactions import (
 
 
 def refresh_transactions(block_number):
+    ensure_latest_logs(block_number)
     ensure_all_transactions(block_number)
-    # ensure_latest_logs(block_number)
 
 
 def snap(block_number):
