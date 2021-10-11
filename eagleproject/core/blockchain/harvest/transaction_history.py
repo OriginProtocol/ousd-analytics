@@ -131,12 +131,10 @@ def upsert_report(week_option, month_option, year, report, block_start_number, b
             setattr(analyticsReport, key, params.get(key))
         analyticsReport.save()
 
-def create_time_interval_report_for_previous_week():
+def create_time_interval_report_for_previous_week(week_override):
     year_number = datetime.now().year
     # number of the week in a year - for the previous week
-    # TODO: change this back
-    # week_number = int(datetime.now().strftime("%W")) - 1
-    week_number = 33
+    week_number = week_override if week_override is not None else int(datetime.now().strftime("%W")) - 1
 
     # TODO: this will work incorrectly when the week falls on new year
     week_interval = "{year}-W{week}".format(year = year_number, week=week_number)
@@ -166,11 +164,9 @@ def create_time_interval_report_for_previous_week():
         end_time
     )
 
-def create_time_interval_report_for_previous_month():
+def create_time_interval_report_for_previous_month(month_override):
     # number of the month in a year - for the previous month
-    # month_number = int(datetime.now().strftime("%m")) - 1
-    # TODO UNDO THIS LINE
-    month_number = 10
+    month_number = month_override if month_override is not None else int(datetime.now().strftime("%m")) - 1
     year_number = datetime.now().year + (-1 if month_number == 12 else 0)
 
     month_interval = "{year}-m{month}".format(year=year_number, month=month_number)
@@ -219,17 +215,13 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
 
     all_addresses = fetch_all_holders()
 
-    # print("FROM TO", from_block, to_block)
     rebase_logs = get_rebase_logs(from_block, to_block)
-    # print("rebase logs query", len(rebase_logs), from_block, to_block)
-    # print("rebase logs", len(rebase_logs), rebase_logs[0] if len(rebase_logs) > 0 else '', rebase_logs[-1] if len(rebase_logs) > 0 else '')
 
     manager = Manager()
     analysis_list = manager.list()
 
-    # TODO: change back
-    #for chunk in chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM):
-    for chunk in chunks(all_addresses[:500], ACCOUNT_ANALYZE_PARALLELISM):
+    #for chunk in chunks(all_addresses[:500], ACCOUNT_ANALYZE_PARALLELISM):
+    for chunk in chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM):
         analyze_account_in_parallel(analysis_list, chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
 
 

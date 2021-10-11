@@ -240,13 +240,8 @@ def download_logs_from_contract(contract, start_block, end_block):
         ],
     )
 
-    tx_hashes = []
     for tx_hash in set([x["transactionHash"] for x in data["result"]]):
-        tx_hashes.append(tx_hash)
-
-    # do we perhaps not want to go parallel in this case that is used in production?
-    # in the interest of avoiding race conditions
-    ensure_transaction_and_downsteam_hashes(tx_hashes)
+        ensure_transaction_and_downstream(tx_hash)
 
 
 def ensure_latest_logs(upto):
