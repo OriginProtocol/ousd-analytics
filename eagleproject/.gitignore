@@ -3,3 +3,4 @@
 *env.sh
 app.yaml
 .envkey
+*.DS_Store
