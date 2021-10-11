@@ -6,6 +6,9 @@ from binascii import unhexlify
 from decimal import Decimal
 from eth_abi import decode_single
 from core.blockchain.addresses import DAI, OUSD, USDC, USDT
+from core.blockchain.harvest.transactions import (
+    explode_log_data,
+)
 from core.blockchain.const import E_6, E_8, E_18
 from core.blockchain.decode import slot
 from core.logging import get_logger
@@ -269,11 +272,7 @@ def slot_3(value):
 
 @register.filter
 def explode_data(value):
-    count = len(value) // 64
-    out = []
-    for i in range(0, count):
-        out.append(dec_18(value[2 + i * 64 : 2 + i * 64 + 64]))
-    return out
+    return explode_log_data(value)
 
 
 def _snarf_input_symbol(trace):

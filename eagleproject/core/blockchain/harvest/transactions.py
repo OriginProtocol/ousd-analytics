@@ -26,6 +26,11 @@ from core.blockchain.rpc import (
     request,
     staking_durationRewardRate,
 )
+
+from core.blockchain.utils import (
+    chunks,
+)
+
 from core.blockchain.sigs import (
     DEPRECATED_SIG_EVENT_WITHDRAWN,
     DEPRECATED_SIG_EVENT_STAKED,
@@ -50,6 +55,9 @@ from core.models import (
 
 logger = get_logger(__name__)
 
+# number of transactions downloaded in parallel
+TRANSACTION_PARALLELISM=30
+
 
 def build_debug_tx(tx_hash):
     data = debug_trace_transaction(tx_hash)
@@ -62,9 +70,7 @@ def ensure_all_transactions(block_number):
     and transactions that do not generate logs.
     """
     pointers = {x.contract: x for x in EtherscanPointer.objects.all()}
-
     if settings.ETHERSCAN_API_KEY:
-
         for address in ETHERSCAN_CONTRACTS:
             if address not in pointers:
                 pointers[address] = EtherscanPointer.objects.create(
@@ -72,6 +78,7 @@ def ensure_all_transactions(block_number):
                     last_block=0,
                 )
 
+            tx_hashes = []
             for tx in get_contract_transactions(
                 address,
                 pointers[address].last_block,
@@ -80,8 +87,9 @@ def ensure_all_transactions(block_number):
                 if tx.get('hash') is None:
                     logger.error('No transaction hash found from Etherscan')
                     continue
+                tx_hashes.append(tx['hash'])
 
-                ensure_transaction_and_downstream(tx['hash'])
+            ensure_transaction_and_downsteam_hashes(tx_hashes)
 
             pointers[address].last_block = block_number
             pointers[address].save()
@@ -117,6 +125,12 @@ def maybe_store_transfer_record(log, block):
 
     return transfer
 
+def explode_log_data(value):
+    count = len(value) // 64
+    out = []
+    for i in range(0, count):
+        out.append(int(value[2 + i * 64 : 2 + i * 64 + 64], 16)/1e18)
+    return out
 
 def ensure_transaction_and_downstream(tx_hash):
     """ Ensure that there's a transaction record """
@@ -129,7 +143,6 @@ def ensure_transaction_and_downstream(tx_hash):
     debug = debug_trace_transaction(tx_hash)
 
     block_number = int(raw_transaction["blockNumber"], 16)
-
     block = ensure_block(block_number)
 
     params = {
@@ -200,6 +213,19 @@ def ensure_log_record(raw_log):
 
     return log
 
+def ensure_transaction_and_downsteam_hashes(tx_hashes):
+    for chunk in chunks(tx_hashes, TRANSACTION_PARALLELISM):
+        ensure_transaction_and_downsteam_in_paralel(chunk)
+
+def ensure_transaction_and_downsteam_in_paralel(tx_hashes):
+    print("Processing {} transactions".format(len(tx_hashes)))
+    processes = []
+    for tx_hash in tx_hashes:
+        p = Process(target=ensure_transaction_and_downstream, args=(tx_hash, ))
+        p.start()
+        processes.append(p)
+    for p in processes:
+        p.join()
 
 def download_logs_from_contract(contract, start_block, end_block):
     logger.info("D {} {} {}".format(contract, start_block, end_block))
@@ -213,8 +239,14 @@ def download_logs_from_contract(contract, start_block, end_block):
             }
         ],
     )
+
+    tx_hashes = []
     for tx_hash in set([x["transactionHash"] for x in data["result"]]):
-        ensure_transaction_and_downstream(tx_hash)
+        tx_hashes.append(tx_hash)
+
+    # do we perhaps not want to go parallel in this case that is used in production?
+    # in the interest of avoiding race conditions
+    ensure_transaction_and_downsteam_hashes(tx_hashes)
 
 
 def ensure_latest_logs(upto):

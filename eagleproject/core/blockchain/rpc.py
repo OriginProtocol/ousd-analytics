@@ -150,6 +150,18 @@ def get_transaction_receipt(tx_hash):
     return data["result"]
 
 
+def creditsBalanceOf(holder, block="latest"):
+    signature = encode_hex(keccak(b"creditsBalanceOf(address)"))[:10]
+    payload = encode_single("(address)", [holder]).hex()
+    data = call(OUSD, signature, payload, block)
+
+    return (Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+        math.pow(10, 18)
+    ),
+        Decimal(int(data["result"][64 + 2 : 2 * 64 + 2], 16)) / Decimal(
+        math.pow(10, 18)
+    ))
+
 def balanceOf(coin_contract, holder, decimals, block="latest"):
     signature = "0x70a08231"
     payload = encode_single("(address)", [holder]).hex()

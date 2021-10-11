@@ -27,6 +27,12 @@ from core.blockchain.harvest.snapshots import (
 from core.blockchain.harvest.transactions import (
     ensure_transaction_and_downstream,
 )
+from core.blockchain.harvest.transaction_history import (
+    create_time_interval_report,
+    create_time_interval_report_for_previous_week,
+    create_time_interval_report_for_previous_month
+)
+
 from core.blockchain.rpc import (
     balanceOf,
     latest_block,
@@ -371,8 +377,14 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
+def reports(request):
+    logs = Log.objects.filter(transaction_hash=tx_hash)
+    return _cache(1200, render(request, "debug_tx.html", locals()))
 
 def tx_debug(request, tx_hash):
+    #create_time_interval_report()
+    create_time_interval_report_for_previous_week()
+    #create_time_interval_report_for_previous_month()
     transaction = ensure_transaction_and_downstream(tx_hash)
     logs = Log.objects.filter(transaction_hash=tx_hash)
     return _cache(1200, render(request, "debug_tx.html", locals()))
