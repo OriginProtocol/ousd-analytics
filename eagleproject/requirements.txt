@@ -1,11 +1,11 @@
 appdirs==1.4.4
-asgiref==3.2.10
+asgiref==3.3.2
 black==20.8b1
 certifi==2020.6.20
 chardet==3.0.4
 click==7.1.2
 cytoolz==0.10.1
-Django==3.1.12
+Django==3.2.8
 django-environ==0.4.5
 envkey==1.2.5
 eth-abi==2.1.1
