@@ -350,7 +350,7 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     if rebase_logs is None:
         rebase_logs = get_rebase_logs(from_block, to_block)
 
-    previous_tansfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, from_block_time)
+    previous_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, from_block_time)
     transfer_logs = get_transfer_logs(account, from_block_time, to_block_time)
     credit_balance, credits_per_token = creditsBalanceOf(account, to_block)
     ousd_balance = calculate_balance(credit_balance, credits_per_token)
@@ -359,6 +359,6 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     # sort transfer and rebase logs by block number descending
     balance_logs.sort(key=lambda log: -log.block_number)
     balance_logs = enrich_transfer_logs(balance_logs)
-    return (ensure_ousd_balance(credit_balance, balance_logs), previous_tansfer_logs, ousd_balance)
+    return (ensure_ousd_balance(credit_balance, balance_logs), previous_transfer_logs, ousd_balance)
     
 
