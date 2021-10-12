@@ -1,5 +1,7 @@
 from decimal import Decimal
-
+from datetime import (
+    datetime,
+)
 from core.blockchain.addresses import (
     AAVE_LENDING_POOL_CORE_V1,
     AAVE_LENDING_POOL_V1,
@@ -29,6 +31,7 @@ from core.blockchain.addresses import (
     VAULT,
 )
 
+START_OF_EVERYTHING_TIME = datetime.strptime("18-9-2020", "%d-%m-%Y")
 START_OF_EVERYTHING = 10884500
 START_OF_OUSD_V2 = 11596940
 

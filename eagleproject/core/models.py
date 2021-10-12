@@ -240,6 +240,37 @@ class CTokenSnapshot(models.Model):
         unique_together = ('block_number', 'address')
 
 
+class AnalyticsReport(models.Model):
+    # A report either represents a time interval of a week or a month. For that
+    # reason year property shall always be populated, with the combination of either
+    # month property or week property. Months go from 1-12 and weeks go from 0-53
+    # or whatever amount of weeks a certain year has
+
+    week = models.IntegerField(null=True)
+    month = models.IntegerField(null=True)
+    year = models.IntegerField(db_index=True)
+
+    # starting and ending block of the report
+    block_start = models.IntegerField()
+    block_end = models.IntegerField()
+
+    # starting and ending time of the report
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+
+    # Total number of accounts analyzed - number of accounts that have ever held OUSD
+    accounts_analyzed = models.IntegerField()
+    # Number of accounts holding OUSD in a given time period
+    accounts_holding_ousd = models.IntegerField()
+    # Number of accounts holding more than 100 OUSD in a given time period
+    accounts_holding_more_than_100_ousd = models.IntegerField()
+    # Number of new accounts holding OUSD in a given time period
+    new_accounts = models.IntegerField()
+    # Number of accounts that have increased their OUSD holdings ignoring rebases
+    accounts_with_non_rebase_balance_increase = models.IntegerField()
+    # Number of accounts that have decreased their OUSD holdings ignoring rebases
+    accounts_with_non_rebase_balance_decrease = models.IntegerField()
+
 class AaveLendingPoolCoreSnapshot(models.Model):
     """ Snapshot of Aave's LendingPoolCore (v1) """
 

@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Anaytics Reports{% endblock %}
+
+
+{% block content %}
+<h1>Anaytics Reports</h1>
+
+<h2>Monthly reports</h2>
+<div>
+    {% for report in monthly_reports %}
+        <div class="report">
+            <table class="w-100">
+                <tr class="w-100">
+                    <td class="col-1"><b>Month/Year:</b></td>
+                    <td class="col-1">{{report.month}}/{{report.year}}</td>
+                    <td class="col-6"></td>
+                </tr>
+            </table>
+            <table>
+                <tr class="w-100">
+                    <td class="col-2"><b>Block start:</b></td>
+                    <td class="col-4">{{report.block_start}}({{report.start_time}})</td>
+                    <td class="col-2"><b>Block end:</b></td>
+                    <td class="col-4">{{report.block_end}}({{report.end_time}})</td>
+                </tr>
+            </table>
+            <table>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts analyzed:</b></td>
+                    <td class="col-6">{{report.accounts_analyzed}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts holding OUSD:</b></td>
+                    <td class="col-6">{{report.accounts_holding_ousd}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts holding more than 100 OUSD:</b></td>
+                    <td class="col-6">{{report.accounts_holding_more_than_100_ousd}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts newly created:</b></td>
+                    <td class="col-6">{{report.new_accounts}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts increasing OUSD balance:</b></td>
+                    <td class="col-6">{{report.accounts_with_non_rebase_balance_increase}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts decreasing OUSD balance:</b></td>
+                    <td class="col-6">{{report.accounts_with_non_rebase_balance_decrease}}</td>
+                </tr>
+            </table>
+        </div>
+    {% endfor %}    
+</div>
+
+<h2>Weekly reports</h2>
+<div>
+    {% for report in weekly_reports %}
+        <div class="report">
+            <table class="w-100">
+                <tr class="w-100">
+                    <td class="col-1"><b>Week/Year:</b></td>
+                    <td class="col-1">{{report.week}}/{{report.year}}</td>
+                    <td class="col-6"></td>
+                </tr>
+            </table>
+            <table>
+                <tr class="w-100">
+                    <td class="col-2"><b>Block start:</b></td>
+                    <td class="col-4">{{report.block_start}}({{report.start_time}})</td>
+                    <td class="col-2"><b>Block end:</b></td>
+                    <td class="col-4">{{report.block_end}}({{report.end_time}})</td>
+                </tr>
+            </table>
+            <table>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts analyzed:</b></td>
+                    <td class="col-6">{{report.accounts_analyzed}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts holding OUSD:</b></td>
+                    <td class="col-6">{{report.accounts_holding_ousd}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts holding more than 100 OUSD:</b></td>
+                    <td class="col-6">{{report.accounts_holding_more_than_100_ousd}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts newly created:</b></td>
+                    <td class="col-6">{{report.new_accounts}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts increasing OUSD balance:</b></td>
+                    <td class="col-6">{{report.accounts_with_non_rebase_balance_increase}}</td>
+                </tr>
+                <tr class="w-100">
+                    <td class="col-3"><b>Accounts decreasing OUSD balance:</b></td>
+                    <td class="col-6">{{report.accounts_with_non_rebase_balance_decrease}}</td>
+                </tr>
+            </table>
+        </div>
+    {% endfor %}    
+</div>
+
+<style>
+    .report {
+        border: 1px solid black;
+        margin-bottom: 20px;
+    }
+
+    .w-100 {
+        width: 100%;
+    }
+    .col-6 {
+        width: 50%;
+    }
+    .col-4 {
+        width: 33%;
+    }
+    .col-3 {
+        width: 25%;
+    }
+    .col-2 {
+        width: 16%;
+    }
+    .col-1 {
+        width: 8%;
+    }
+    .d-flex {
+        display: flex;
+    }
+</style>
+
+
+{% endblock %}
