@@ -9,7 +9,9 @@ from core.blockchain.addresses import (
     OPEN_ORACLE,
     OUSD,
     STRATAAVEDAI,
-    STRATCOMP,
+    STRATAAVE2,
+    STRATCOMP1,
+    STRATCOMP2,
     STRAT3POOL,
     VAULT,
 )
@@ -58,34 +60,68 @@ from core.models import (
 logger = get_logger(__name__)
 
 
+def isbetween(start, end, v):
+    if not isinstance(v, int):
+        return False
+    if v < start:
+        return False
+    if v > end:
+        return False
+    return True
+    
+
 def build_asset_block(symbol, block_number):
     symbol = symbol.upper()
     compstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
     threepoolstrat_holding = Decimal(0)
 
-    if block_number == "latest" or block_number > 11060000:
+    # Compound Strats
+    if isbetween(11060000, 1341000, block_number):
         if symbol in ["USDC", "USDT", "DAI"]:
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
-                STRATCOMP,
+                STRATCOMP1,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
         elif symbol == "COMP":
             compstrat_holding += balanceOf(
                 CONTRACT_FOR_SYMBOL[symbol],
-                STRATCOMP,
+                STRATCOMP1,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+    if block_number == "latest" or block_number > 1341000:
+        if symbol in ["USDC", "USDT", "DAI"]:
+            compstrat_holding += balanceOfUnderlying(
+                COMPOUND_FOR_SYMBOL[symbol],
+                STRATCOMP2,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+        elif symbol == "COMP":
+            compstrat_holding += balanceOf(
+                CONTRACT_FOR_SYMBOL[symbol],
+                STRATCOMP2,
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
 
-    # First AAVE Strat
-    if block_number == "latest" or block_number >= 11096410:
+    # AAVE Strats
+    if isbetween(11096410, 1341000, block_number):
         if symbol == "DAI":
             aavestrat_holding += strategyCheckBalance(
                 STRATAAVEDAI,
                 DAI,
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+    if block_number == "latest" or block_number >= 1341000:
+        if symbol in ["DAI"]:
+            aavestrat_holding += strategyCheckBalance(
+                STRATAAVE2,
+                CONTRACT_FOR_SYMBOL[symbol],
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )

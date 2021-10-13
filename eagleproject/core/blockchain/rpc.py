@@ -278,11 +278,14 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
     try:
         payload = encode_single("(address)", [coin_contract]).hex()
         data = call(strategy, signature, payload, block)
+        if "error" in data:
+            log.error(data['error']['message'])
         return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
             math.pow(10, decimals)
         )
-    except Exception:
+    except Exception as e:
         log.error("strategyCheckBalance failed")
+        log.error(e)
         return Decimal(0)
 
 
