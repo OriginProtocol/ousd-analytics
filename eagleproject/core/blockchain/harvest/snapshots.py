@@ -77,7 +77,7 @@ def build_asset_block(symbol, block_number):
     threepoolstrat_holding = Decimal(0)
 
     # Compound Strats
-    if isbetween(11060000, 1341000, block_number):
+    if isbetween(11060000, 13399969, block_number):
         if symbol in ["USDC", "USDT", "DAI"]:
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
@@ -92,7 +92,7 @@ def build_asset_block(symbol, block_number):
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
-    if block_number == "latest" or block_number > 13369320:
+    if block_number == "latest" or block_number > 13399969:
         if symbol in ["USDC", "USDT", "DAI"]:
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
@@ -109,7 +109,7 @@ def build_asset_block(symbol, block_number):
             )
 
     # AAVE Strats
-    if isbetween(11096410, 1341000, block_number):
+    if isbetween(11096410, 13399969, block_number):
         if symbol == "DAI":
             aavestrat_holding += strategyCheckBalance(
                 STRATAAVEDAI,
@@ -117,7 +117,7 @@ def build_asset_block(symbol, block_number):
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
-    if block_number == "latest" or block_number >= 13369320:
+    if block_number == "latest" or block_number >= 13399969:
         if symbol in ["DAI"]:
             aavestrat_holding += strategyCheckBalance(
                 STRATAAVE2,
