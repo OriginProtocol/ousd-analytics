@@ -92,7 +92,7 @@ def build_asset_block(symbol, block_number):
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
-    if block_number == "latest" or block_number > 1341000:
+    if block_number == "latest" or block_number > 13369320:
         if symbol in ["USDC", "USDT", "DAI"]:
             compstrat_holding += balanceOfUnderlying(
                 COMPOUND_FOR_SYMBOL[symbol],
@@ -117,7 +117,7 @@ def build_asset_block(symbol, block_number):
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
-    if block_number == "latest" or block_number >= 1341000:
+    if block_number == "latest" or block_number >= 13369320:
         if symbol in ["DAI"]:
             aavestrat_holding += strategyCheckBalance(
                 STRATAAVE2,
