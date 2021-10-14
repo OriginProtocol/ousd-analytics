@@ -1,4 +1,5 @@
 from decimal import *
+from django import db
 from multiprocessing import (
     Process,
     Manager,
@@ -256,6 +257,15 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
 
 def analyze_account_in_parallel(analysis_list, accounts, rebase_logs, from_block, to_block, from_block_time, to_block_time):
     print("Analyzing {} accounts".format(len(accounts)))
+    # Multiprocessing copies connection objects between processes because it forks processes
+    # and therefore copies all the file descriptors of the parent process. That being said, 
+    # a connection to the SQL server is just a file, you can see it in linux under /proc//fd/....
+    # any open file will be shared between forked processes.
+    # closing all connections just forces the processes to open new connections within the new 
+    # process.
+    # Not doing this causes PSQL connection errors because multiple processes are using a single connection in 
+    # a non locking manner.
+    db.connections.close_all()
     processes = []
     for account in accounts:
         p = Process(target=analyze_account, args=(analysis_list, account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ))

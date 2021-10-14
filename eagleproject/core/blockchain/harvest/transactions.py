@@ -1,4 +1,5 @@
 from datetime import timedelta
+from django import db
 from multiprocessing import Process
 from django.conf import settings
 from eth_utils import (
@@ -214,12 +215,24 @@ def ensure_log_record(raw_log):
     return log
 
 def ensure_transaction_and_downsteam_hashes(tx_hashes):
+    processed = 0
     for chunk in chunks(tx_hashes, TRANSACTION_PARALLELISM):
-        ensure_transaction_and_downsteam_in_paralel(chunk)
+        ensure_transaction_and_downsteam_in_paralel(chunk, processed)
+        processed += TRANSACTION_PARALLELISM
 
-def ensure_transaction_and_downsteam_in_paralel(tx_hashes):
-    print("Processing {} transactions".format(len(tx_hashes)))
+def ensure_transaction_and_downsteam_in_paralel(tx_hashes, totalProcessed):
+    print("Processing {} transactions of total processed {}".format(len(tx_hashes), totalProcessed))
     processes = []
+
+    # Multiprocessing copies connection objects between processes because it forks processes
+    # and therefore copies all the file descriptors of the parent process. That being said, 
+    # a connection to the SQL server is just a file, you can see it in linux under /proc//fd/....
+    # any open file will be shared between forked processes.
+    # closing all connections just forces the processes to open new connections within the new 
+    # process.
+    # Not doing this causes PSQL connection errors because multiple processes are using a single connection in 
+    # a non locking manner.
+    db.connections.close_all()
     for tx_hash in tx_hashes:
         p = Process(target=ensure_transaction_and_downstream, args=(tx_hash, ))
         p.start()
@@ -240,19 +253,17 @@ def download_logs_from_contract(contract, start_block, end_block):
         ],
     )
 
-    for tx_hash in set([x["transactionHash"] for x in data["result"]]):
-        ensure_transaction_and_downstream(tx_hash)
+    tx_hashes = set([x["transactionHash"] for x in data["result"]])
+
+    ensure_transaction_and_downsteam_hashes(list(tx_hashes))
 
 
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
-    processes = []
+    # TODO: perhaps parallelize this as well but needs testing. Since contract tx hashes
+    # are also being fetched in parallel this could cause explosion of threads / processes.
     for contract in LOG_CONTRACTS:
-        p = Process(target=ensure_latest_logs_for_contract, args=(contract, pointers, upto))
-        p.start()
-        processes.append(p)
-    for p in processes:
-        p.join()
+        ensure_latest_logs_for_contract(contract, pointers, upto)
 
 
 def ensure_latest_logs_for_contract(contract, pointers, upto):
