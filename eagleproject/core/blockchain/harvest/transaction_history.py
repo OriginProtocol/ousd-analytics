@@ -35,7 +35,8 @@ from core.blockchain.utils import (
 
 import calendar
 
-ACCOUNT_ANALYZE_PARALLELISM=30
+
+ACCOUNT_ANALYZE_PARALLELISM=4
 
 class rebase_log:
     # block_number
@@ -106,6 +107,8 @@ def upsert_report(week_option, month_option, year, report, block_start_number, b
         "block_end": block_end_number,
         "start_time": start_time,
         "end_time": end_time,
+        "created_at": datetime.now(),
+        "updated_at": datetime.now(),
         "accounts_analyzed": report.accounts_analyzed,
         "accounts_holding_ousd": report.accounts_holding_ousd,
         "accounts_holding_more_than_100_ousd": report.accounts_holding_more_than_100_ousd,
@@ -129,6 +132,9 @@ def upsert_report(week_option, month_option, year, report, block_start_number, b
 
     if not created:
         for key in params.keys():
+            if key == 'created_at':
+                continue
+
             setattr(analyticsReport, key, params.get(key))
         analyticsReport.save()
 
@@ -136,6 +142,10 @@ def create_time_interval_report_for_previous_week(week_override):
     year_number = datetime.now().year
     # number of the week in a year - for the previous week
     week_number = week_override if week_override is not None else int(datetime.now().strftime("%W")) - 1
+
+    if not should_create_new_report(year_number, None, week_number):
+        print("Report for year: {} and week: {} does not need creation".format(year_number, week_number))
+        return 
 
     # TODO: this will work incorrectly when the week falls on new year
     week_interval = "{year}-W{week}".format(year = year_number, week=week_number)
@@ -165,10 +175,36 @@ def create_time_interval_report_for_previous_week(week_override):
         end_time
     )
 
+def should_create_new_report(year, month_option, week_option):
+    if month_option is not None: 
+        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option))
+    elif week_option is not None: 
+        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option))
+
+    if len(existing_report) == 1:
+        existing_report = existing_report[0]
+
+        # nothing to do here, report is already done
+        if existing_report.status == 'done':
+            return False
+
+        # in seconds
+        report_age = (datetime.now() - existing_report.updated_at.replace(tzinfo=None)).total_seconds()
+
+        # report might still be processing
+        if report_age < 3 * 60 * 60:
+            return False
+
+    return True
+
 def create_time_interval_report_for_previous_month(month_override):
     # number of the month in a year - for the previous month
     month_number = month_override if month_override is not None else int(datetime.now().strftime("%m")) - 1
     year_number = datetime.now().year + (-1 if month_number == 12 else 0)
+
+    if not should_create_new_report(year_number, month_number, None):
+        print("Report for year: {} and month: {} does not need creation".format(year_number, month_number))
+        return 
 
     month_interval = "{year}-m{month}".format(year=year_number, month=month_number)
 
