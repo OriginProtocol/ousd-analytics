@@ -99,7 +99,7 @@ def get_block_number_from_block_time(time, ascending = False):
         raise Exception('Can not find block time {} than {}'.format('younger' if ascending else 'older', str(time)))
     return result[0].block_number
 
-def upsert_report(week_option, month_option, year, report, block_start_number, block_end_number, start_time, end_time):
+def upsert_report(week_option, month_option, year, status, report, block_start_number, block_end_number, start_time, end_time):
     analyticsReport = None
     params = {
         "block_start": block_start_number,
@@ -108,12 +108,13 @@ def upsert_report(week_option, month_option, year, report, block_start_number, b
         "end_time": end_time,
         "created_at": datetime.now(),
         "updated_at": datetime.now(),
-        "accounts_analyzed": report.accounts_analyzed,
-        "accounts_holding_ousd": report.accounts_holding_ousd,
-        "accounts_holding_more_than_100_ousd": report.accounts_holding_more_than_100_ousd,
-        "new_accounts": report.new_accounts,
-        "accounts_with_non_rebase_balance_increase": report.accounts_with_non_rebase_balance_increase,
-        "accounts_with_non_rebase_balance_decrease": report.accounts_with_non_rebase_balance_decrease,
+        "status": status,
+        "accounts_analyzed": report.accounts_analyzed if report is not None else 0,
+        "accounts_holding_ousd": report.accounts_holding_ousd if report is not None else 0,
+        "accounts_holding_more_than_100_ousd": report.accounts_holding_more_than_100_ousd if report is not None else 0,
+        "new_accounts": report.new_accounts if report is not None else 0,
+        "accounts_with_non_rebase_balance_increase": report.accounts_with_non_rebase_balance_increase if report is not None else 0,
+        "accounts_with_non_rebase_balance_decrease": report.accounts_with_non_rebase_balance_decrease if report is not None else 0,
     }
 
     if (week_option != None):
@@ -156,6 +157,19 @@ def create_time_interval_report_for_previous_week(week_override):
 
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
+
+    upsert_report(
+        week_number,
+        None,
+        year_number,
+        "processing",
+        None,
+        block_start_number, 
+        block_end_number,
+        start_time,
+        end_time
+    )
+
     report = create_time_interval_report(
         block_start_number,
         block_end_number,
@@ -167,6 +181,7 @@ def create_time_interval_report_for_previous_week(week_override):
         week_number,
         None,
         year_number,
+        "done",
         report,
         block_start_number, 
         block_end_number,
@@ -216,6 +231,19 @@ def create_time_interval_report_for_previous_month(month_override):
 
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
+
+    upsert_report(
+        None,
+        month_number,
+        year_number,
+        "processing",
+        None,
+        block_start_number, 
+        block_end_number,
+        start_time,
+        end_time
+    )
+
     report = create_time_interval_report(
         block_start_number,
         block_end_number,
@@ -227,6 +255,7 @@ def create_time_interval_report_for_previous_month(month_override):
         None,
         month_number,
         year_number,
+        "done",
         report,
         block_start_number, 
         block_end_number,

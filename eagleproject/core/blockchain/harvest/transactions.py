@@ -59,7 +59,6 @@ logger = get_logger(__name__)
 # number of transactions downloaded in parallel
 TRANSACTION_PARALLELISM=2
 
-
 def build_debug_tx(tx_hash):
     data = debug_trace_transaction(tx_hash)
     return DebugTx(tx_hash=tx_hash, block_number=0, data=data["result"])
