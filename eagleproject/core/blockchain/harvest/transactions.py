@@ -57,7 +57,7 @@ from core.models import (
 logger = get_logger(__name__)
 
 # number of transactions downloaded in parallel
-TRANSACTION_PARALLELISM=4
+TRANSACTION_PARALLELISM=2
 
 
 def build_debug_tx(tx_hash):
