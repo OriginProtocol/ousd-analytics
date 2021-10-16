@@ -402,6 +402,27 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
+report_stats = {
+    'accounts_analyzed': 'Accounts processed',
+    'accounts_holding_ousd': 'Accounts holding OUSD',
+    'accounts_holding_more_than_100_ousd': 'Accounts holding over 100 OUSD',
+    'new_accounts': 'New (first time seen) accounts',
+    'accounts_with_non_rebase_balance_increase': 'Accounts with balance increased',
+    'accounts_with_non_rebase_balance_decrease': 'Accounts with balance decreased',
+}
+
+def send_report_email(summary, report, prev_report, report_type):
+    e = Email(summary, "test", render_to_string('analytics_report_email.html', {
+        'type': report_type,
+        'report': report,
+        'change': calculate_report_change(report, prev_report),
+        'stats': report_stats,
+        'stat_keys': report_stats.keys(),
+    }))
+
+
+    result = e.execute(['grabec@gmail.com'])
+
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
@@ -412,27 +433,8 @@ def test_email(request):
     monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
     report = monthly_reports[0]
 
-    stats = {
-        'accounts_analyzed': 'Accounts processed',
-        'accounts_holding_ousd': 'Accounts holding OUSD',
-        'accounts_holding_more_than_100_ousd': 'Accounts holding over 100 OUSD',
-        'new_accounts': 'New (first time seen) accounts',
-        'accounts_with_non_rebase_balance_increase': 'Accounts with balance increased',
-        'accounts_with_non_rebase_balance_decrease': 'Accounts with balance decreased',
-    }
-
-    e = Email("test", "test", render_to_string('analytics_report_email.html', {
-        'type': 'Weekly',
-        'report': report,
-        'change': calculate_report_change(report, monthly_reports[1] if len(monthly_reports) > 1 else None),
-        'stats': stats,
-        'stat_keys': stats.keys(),
-    }))
-
-
-    result = e.execute()
+    send_report_email('Weekly report', report, monthly_reports[1] if len(monthly_reports) > 1 else None, 'Weekly')
     return HttpResponse("ok")
-    #print("Email result", result)
 
 def tx_debug(request, tx_hash):
     transaction = ensure_transaction_and_downstream(tx_hash)

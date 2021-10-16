@@ -18,16 +18,15 @@ class Email():
             and settings.EMAIL_HOST_PASSWORD is not None
         )
 
-    def execute(self):
+    def execute(self, recipients):
         if self._is_configured():
             from_email = settings.DEFAULT_FROM_EMAIL
-            to = 'grabec@gmail.com'
 
             return mail.send_mail(
                 self.summary,
                 self.plain_text_details,
                 from_email,
-                [to],
+                recipients,
                 fail_silently=False,
                 html_message=self.details
             )

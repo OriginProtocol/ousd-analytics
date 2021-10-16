@@ -309,7 +309,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     decimal_context.prec = 18
     decimal_context.rounding = 'ROUND_DOWN'
 
-    all_addresses = fetch_all_holders()[:1000]
+    all_addresses = fetch_all_holders()
 
     rebase_logs = get_rebase_logs(from_block, to_block)
 
