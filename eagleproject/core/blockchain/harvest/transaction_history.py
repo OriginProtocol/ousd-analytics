@@ -35,8 +35,8 @@ from core.blockchain.utils import (
 
 import calendar
 
-#ACCOUNT_ANALYZE_PARALLELISM=2
-ACCOUNT_ANALYZE_PARALLELISM=30
+ACCOUNT_ANALYZE_PARALLELISM=2
+#ACCOUNT_ANALYZE_PARALLELISM=30
 
 class rebase_log:
     # block_number
