@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
+
 from django.db import connection
 from django.db.models import Q
 from core.blockchain.addresses import (
@@ -30,7 +31,8 @@ from core.blockchain.harvest.transactions import (
 from core.blockchain.harvest.transaction_history import (
     create_time_interval_report,
     create_time_interval_report_for_previous_week,
-    create_time_interval_report_for_previous_month
+    create_time_interval_report_for_previous_month,
+    calculate_report_change
 )
 
 from core.blockchain.rpc import (
@@ -39,10 +41,17 @@ from core.blockchain.rpc import (
     rebasing_credits_per_token,
     totalSupply,
 )
+
+from core.channels.email import (
+    Email
+)
+
 from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
 from core.models import Log, SupplySnapshot, OgnStaked, AnalyticsReport
+
+from django.template.loader import render_to_string
 
 log = get_logger(__name__)
 
@@ -396,7 +405,34 @@ def _my_assets(address, block_number):
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+
     return render(request, "analytics_reports.html", locals())
+
+def test_email(request):
+    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
+    report = monthly_reports[0]
+
+    stats = {
+        'accounts_analyzed': 'Accounts processed',
+        'accounts_holding_ousd': 'Accounts holding OUSD',
+        'accounts_holding_more_than_100_ousd': 'Accounts holding over 100 OUSD',
+        'new_accounts': 'New (first time seen) accounts',
+        'accounts_with_non_rebase_balance_increase': 'Accounts with balance increased',
+        'accounts_with_non_rebase_balance_decrease': 'Accounts with balance decreased',
+    }
+
+    e = Email("test", "test", render_to_string('analytics_report_email.html', {
+        'type': 'Weekly',
+        'report': report,
+        'change': calculate_report_change(report, monthly_reports[1] if len(monthly_reports) > 1 else None),
+        'stats': stats,
+        'stat_keys': stats.keys(),
+    }))
+
+
+    result = e.execute()
+    return HttpResponse("ok")
+    #print("Email result", result)
 
 def tx_debug(request, tx_hash):
     transaction = ensure_transaction_and_downstream(tx_hash)

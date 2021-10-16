@@ -1,0 +1,38 @@
+{% load blockchain %}
+
+<div>
+    <style>
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .table-header: {
+            background-color: #e5e5e5;
+            border: 1px solid black;
+        }
+
+        .green {
+            color: green;
+        }
+
+        .red {
+            color: red;
+        }
+    </style>
+
+    <h2>{{type}} Analytics Report</h2>
+    <h4>start time: {{report.start_time}} end time: {{report.end_time}}</h4>
+
+    <table>
+        <tr>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Stat</td>
+            <td style="min-width:120px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Value</td>
+        </tr>
+        {% for statistic in stat_keys %}
+        <tr>
+            <td>{{stats|dict_value:statistic}}</td>
+            <td>{{report|class_value:statistic}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat:1}}%)</span></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>

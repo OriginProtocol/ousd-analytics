@@ -294,6 +294,28 @@ def local_time(dt):
 def sub(v, arg):
     return v - arg
 
+@register.filter
+def color_style(value):
+    if value > 0:
+         return 'color:green'
+    else:
+        return 'color:red'
+
+@register.filter
+def dict_color_style(dict, stat):
+    if dict[stat] > 0:
+         return 'color:green'
+    else:
+        return 'color:red'
+
+@register.filter
+def class_value(object, key):
+    return getattr(object, key)
+
+@register.filter
+def dict_value(dictionary, key):
+    return dictionary[key]
+
 
 @register.filter
 def trace_annotation(trace):

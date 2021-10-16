@@ -35,7 +35,8 @@ from core.blockchain.utils import (
 
 import calendar
 
-ACCOUNT_ANALYZE_PARALLELISM=2
+#ACCOUNT_ANALYZE_PARALLELISM=2
+ACCOUNT_ANALYZE_PARALLELISM=30
 
 class rebase_log:
     # block_number
@@ -99,6 +100,35 @@ def get_block_number_from_block_time(time, ascending = False):
         raise Exception('Can not find block time {} than {}'.format('younger' if ascending else 'older', str(time)))
     return result[0].block_number
 
+def calculate_report_change(current_report, previous_report):
+    changes = {
+        "accounts_analyzed": 0,
+        "accounts_holding_ousd": 0,
+        "accounts_holding_more_than_100_ousd": 0,
+        "new_accounts": 0,
+        "accounts_with_non_rebase_balance_increase": 0,
+        "accounts_with_non_rebase_balance_decrease": 0
+    }
+
+    def calculate_difference(current_stat, previous_stat):
+        if previous_stat == 0:
+            return 0
+
+        return (current_stat - previous_stat) / previous_stat * 100
+
+    if previous_report is None:
+        return changes
+
+    changes['accounts_analyzed'] = calculate_difference(current_report.accounts_analyzed, previous_report.accounts_analyzed)
+    changes['accounts_holding_ousd'] = calculate_difference(current_report.accounts_holding_ousd, previous_report.accounts_holding_ousd)
+    changes['accounts_holding_more_than_100_ousd'] = calculate_difference(current_report.accounts_holding_more_than_100_ousd, previous_report.accounts_holding_more_than_100_ousd)
+    changes['new_accounts'] = calculate_difference(current_report.new_accounts, previous_report.new_accounts)
+    changes['accounts_with_non_rebase_balance_increase'] = calculate_difference(current_report.accounts_with_non_rebase_balance_increase, previous_report.accounts_with_non_rebase_balance_increase)
+    changes['accounts_with_non_rebase_balance_decrease'] = calculate_difference(current_report.accounts_with_non_rebase_balance_decrease, previous_report.accounts_with_non_rebase_balance_decrease)
+
+    return changes
+
+
 def upsert_report(week_option, month_option, year, status, report, block_start_number, block_end_number, start_time, end_time):
     analyticsReport = None
     params = {
@@ -143,7 +173,7 @@ def create_time_interval_report_for_previous_week(week_override):
     # number of the week in a year - for the previous week
     week_number = week_override if week_override is not None else int(datetime.now().strftime("%W")) - 1
 
-    if not should_create_new_report(year_number, None, week_number):
+    if month_override is None and not should_create_new_report(year_number, None, week_number):
         print("Report for year: {} and week: {} does not need creation".format(year_number, week_number))
         return 
 
@@ -216,7 +246,7 @@ def create_time_interval_report_for_previous_month(month_override):
     month_number = month_override if month_override is not None else int(datetime.now().strftime("%m")) - 1
     year_number = datetime.now().year + (-1 if month_number == 12 else 0)
 
-    if not should_create_new_report(year_number, month_number, None):
+    if month_override is None and not should_create_new_report(year_number, month_number, None):
         print("Report for year: {} and month: {} does not need creation".format(year_number, month_number))
         return 
 
@@ -251,6 +281,7 @@ def create_time_interval_report_for_previous_month(month_override):
         end_time
     )
 
+    print("REPORT RESULT", str(report))
     upsert_report(
         None,
         month_number,
@@ -278,16 +309,17 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     decimal_context.prec = 18
     decimal_context.rounding = 'ROUND_DOWN'
 
-    all_addresses = fetch_all_holders()
+    all_addresses = fetch_all_holders()[:1000]
 
     rebase_logs = get_rebase_logs(from_block, to_block)
 
     manager = Manager()
     analysis_list = manager.list()
 
-    #for chunk in chunks(all_addresses[:500], ACCOUNT_ANALYZE_PARALLELISM):
+    counter = 0
     for chunk in chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM):
-        analyze_account_in_parallel(analysis_list, chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+        analyze_account_in_parallel(analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+        counter += 1
 
 
     accounts_analyzed = len(analysis_list)
@@ -319,8 +351,8 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     return report
 
 
-def analyze_account_in_parallel(analysis_list, accounts, rebase_logs, from_block, to_block, from_block_time, to_block_time):
-    print("Analyzing {} accounts".format(len(accounts)))
+def analyze_account_in_parallel(analysis_list, accounts_already_analyzed, total_accounts, accounts, rebase_logs, from_block, to_block, from_block_time, to_block_time):
+    print("Analyzing {} accounts... progress {}/{}".format(len(accounts), accounts_already_analyzed + len(accounts), total_accounts))
     # Multiprocessing copies connection objects between processes because it forks processes
     # and therefore copies all the file descriptors of the parent process. That being said, 
     # a connection to the SQL server is just a file, you can see it in linux under /proc//fd/....
