@@ -183,7 +183,7 @@ def create_time_interval_report_for_previous_week(week_override):
     # number of the week in a year - for the previous week
     week_number = week_override if week_override is not None else int(datetime.now().strftime("%W")) - 1
 
-    if week_number is None and not should_create_new_report(year_number, None, week_number):
+    if week_override is None and not should_create_new_report(year_number, None, week_number):
         print("Report for year: {} and week: {} does not need creation".format(year_number, week_number))
         return 
 
