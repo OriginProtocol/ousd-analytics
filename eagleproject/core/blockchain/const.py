@@ -110,3 +110,12 @@ E_27 = Decimal(1e27)
 
 FALSE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000000"
 TRUE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000001"
+
+report_stats = {
+    'accounts_analyzed': 'Accounts processed',
+    'accounts_holding_ousd': 'Accounts holding OUSD',
+    'accounts_holding_more_than_100_ousd': 'Accounts holding over 100 OUSD',
+    'new_accounts': 'New (first time seen) accounts',
+    'accounts_with_non_rebase_balance_increase': 'Accounts with balance increased',
+    'accounts_with_non_rebase_balance_decrease': 'Accounts with balance decreased',
+}

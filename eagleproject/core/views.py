@@ -19,6 +19,7 @@ from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
     OUSD_CONTRACTS,
     START_OF_OUSD_V2,
+    report_stats
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
 from core.blockchain.harvest.snapshots import (
@@ -32,7 +33,8 @@ from core.blockchain.harvest.transaction_history import (
     create_time_interval_report,
     create_time_interval_report_for_previous_week,
     create_time_interval_report_for_previous_month,
-    calculate_report_change
+    calculate_report_change,
+    send_report_email
 )
 
 from core.blockchain.rpc import (
@@ -42,16 +44,10 @@ from core.blockchain.rpc import (
     totalSupply,
 )
 
-from core.channels.email import (
-    Email
-)
-
 from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
 from core.models import Log, SupplySnapshot, OgnStaked, AnalyticsReport
-
-from django.template.loader import render_to_string
 
 log = get_logger(__name__)
 
@@ -131,10 +127,12 @@ def reload(request):
     return HttpResponse("ok")
 
 def make_monthly_report(request):
+    print("Make monthly report requested")
     create_time_interval_report_for_previous_month(None)
     return HttpResponse("ok")
 
 def make_weekly_report(request):
+    print("Make weekly report requested")
     create_time_interval_report_for_previous_week(None)
     return HttpResponse("ok")
 
@@ -402,30 +400,28 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
-report_stats = {
-    'accounts_analyzed': 'Accounts processed',
-    'accounts_holding_ousd': 'Accounts holding OUSD',
-    'accounts_holding_more_than_100_ousd': 'Accounts holding over 100 OUSD',
-    'new_accounts': 'New (first time seen) accounts',
-    'accounts_with_non_rebase_balance_increase': 'Accounts with balance increased',
-    'accounts_with_non_rebase_balance_decrease': 'Accounts with balance decreased',
-}
-
-def send_report_email(summary, report, prev_report, report_type):
-    e = Email(summary, "test", render_to_string('analytics_report_email.html', {
-        'type': report_type,
-        'report': report,
-        'change': calculate_report_change(report, prev_report),
-        'stats': report_stats,
-        'stat_keys': report_stats.keys(),
-    }))
-
-
-    result = e.execute(['grabec@gmail.com'])
 
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    stats = report_stats
+    stat_keys = stats.keys()
+
+    enriched_monthly_reports = []
+    for monthly_report in monthly_reports:
+        prev_year = monthly_report.year - 1 if monthly_report.month == 1 else monthly_report.year
+        prev_month = 12 if monthly_report.month == 1 else monthly_report.month - 1
+        prev_report = list(filter(lambda report: report.month == prev_month and report.year == prev_year, monthly_reports))
+        prev_report = prev_report[0] if len(prev_report) > 0 else None
+        enriched_monthly_reports.append((monthly_report, calculate_report_change(monthly_report, prev_report)))
+
+    enriched_weekly_reports = []
+    for weekly_report in weekly_reports:
+        prev_year = weekly_report.year - 1 if weekly_report.week == 0 else weekly_report.year
+        prev_week = 53 if weekly_report.week == 0 else weekly_report.week - 1
+        prev_report = list(filter(lambda report: report.week == prev_week and report.year == prev_year, weekly_reports))
+        prev_report = prev_report[0] if len(prev_report) > 0 else None
+        enriched_weekly_reports.append((weekly_report, calculate_report_change(weekly_report, prev_report)))
 
     return render(request, "analytics_reports.html", locals())
 
@@ -433,7 +429,7 @@ def test_email(request):
     monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
     report = monthly_reports[0]
 
-    send_report_email('Weekly report', report, monthly_reports[1] if len(monthly_reports) > 1 else None, 'Weekly')
+    send_report_email('Monthly report', report, monthly_reports[1] if len(monthly_reports) > 1 else None, 'Monthly')
     return HttpResponse("ok")
 
 def tx_debug(request, tx_hash):

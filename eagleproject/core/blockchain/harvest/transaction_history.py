@@ -26,7 +26,8 @@ from datetime import (
 )
 
 from core.blockchain.const import (
-    START_OF_EVERYTHING_TIME
+    START_OF_EVERYTHING_TIME,
+    report_stats
 )
 
 from core.blockchain.utils import (
@@ -34,6 +35,13 @@ from core.blockchain.utils import (
 )
 
 import calendar
+
+from core.channels.email import (
+    Email
+)
+from django.template.loader import render_to_string
+from django.conf import settings
+
 
 ACCOUNT_ANALYZE_PARALLELISM=2
 #ACCOUNT_ANALYZE_PARALLELISM=30
@@ -168,6 +176,8 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
             setattr(analyticsReport, key, params.get(key))
         analyticsReport.save()
 
+    return analyticsReport
+
 def create_time_interval_report_for_previous_week(week_override):
     year_number = datetime.now().year
     # number of the week in a year - for the previous week
@@ -207,7 +217,7 @@ def create_time_interval_report_for_previous_week(week_override):
         end_time
     )
 
-    upsert_report(
+    db_report = upsert_report(
         week_number,
         None,
         year_number,
@@ -218,6 +228,19 @@ def create_time_interval_report_for_previous_week(week_override):
         start_time,
         end_time
     )
+
+    # if it is a cron job report
+    if week_override is None:
+        # if first week of the year report
+        if (week_number == 0):
+            week_number = 53
+            year_number -= 1
+        else :
+            week_number -= 1
+
+        week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number))
+        preb_db_report = week_before_report[0] if len(week_before_report) != 0 else None
+        send_report_email('Weekly report', db_report, preb_db_report, "Weekly")
 
 def should_create_new_report(year, month_option, week_option):
     if month_option is not None: 
@@ -281,8 +304,7 @@ def create_time_interval_report_for_previous_month(month_override):
         end_time
     )
 
-    print("REPORT RESULT", str(report))
-    upsert_report(
+    db_report = upsert_report(
         None,
         month_number,
         year_number,
@@ -293,6 +315,19 @@ def create_time_interval_report_for_previous_month(month_override):
         start_time,
         end_time
     )
+
+    # if it is a cron job report
+    if month_override is None:
+        # if first month of the year report
+        if (month_number == 1):
+            month_number = 12
+            year_number -= 1
+        else :
+            month_number -= 1
+
+        month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number))
+        preb_db_report = month_before_report[0] if len(month_before_report) != 0 else None
+        send_report_email('Monthly report', db_report, preb_db_report, "Monthly")
 
 # get all accounts that at some point held OUSD
 def fetch_all_holders():
@@ -451,6 +486,18 @@ def ensure_ousd_balance(credit_balance, logs):
             raise Exception('Unexpected object instance', log)
         logs[x] = log
     return logs
+
+def send_report_email(summary, report, prev_report, report_type):
+    e = Email(summary, "test", render_to_string('analytics_report_email.html', {
+        'type': report_type,
+        'report': report,
+        'change': calculate_report_change(report, prev_report),
+        'stats': report_stats,
+        'stat_keys': report_stats.keys(),
+    }))
+
+    emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
+    result = e.execute(emails)
 
 def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time):
     if rebase_logs is None:
