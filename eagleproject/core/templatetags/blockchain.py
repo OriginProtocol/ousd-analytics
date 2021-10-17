@@ -316,6 +316,10 @@ def class_value(object, key):
 def dict_value(dictionary, key):
     return dictionary[key]
 
+@register.filter
+def int_no_comma(value):
+    return str(value)
+
 
 @register.filter
 def trace_annotation(trace):

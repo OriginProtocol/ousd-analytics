@@ -14,7 +14,7 @@
     <div class="report d-flex flex-column w-100">
       <div class="d-flex w-100 py-1">
         <div class="col-2"><b>Month/Year:</b></div>
-        <div class="col-2 black">{{tuple.0.month}}/{{tuple.0.year}}</div>
+        <div class="col-2 black">{{tuple.0.month}}/{{tuple.0.year|int_no_comma}}</div>
       </div>
       <div class="d-flex py-1">
         <div class="col-2"><b>Block start:</b></div>
@@ -42,7 +42,7 @@
     <div class="report d-flex flex-column w-100">
       <div class="d-flex w-100 py-1">
         <div class="col-2"><b>Week/Year:</b></div>
-        <div class="col-2 black">{{tuple.0.week}}/{{tuple.0.year}}</div>
+        <div class="col-2 black">{{tuple.0.week}}/{{tuple.0.year|int_no_comma}}</div>
       </div>
       <div class="d-flex py-1">
         <div class="col-2"><b>Block start:</b></div>
