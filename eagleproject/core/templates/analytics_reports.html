@@ -10,33 +10,27 @@
 
 <h2>Monthly reports</h2>
 <div>
-    {% for tuple in enriched_monthly_reports %}
-        <div class="report">
-            <table class="w-100">
-                <tr class="w-100">
-                    <td class="col-1"><b>Month/Year:</b></td>
-                    <td class="col-1">{{tuple.0.month}}/{{tuple.0.year}}</td>
-                    <td class="col-6"></td>
-                </tr>
-            </table>
-            <table>
-                <tr class="w-100">
-                    <td class="col-2"><b>Block start:</b></td>
-                    <td class="col-4">{{tuple.0.block_start}}({{tuple.0.start_time}})</td>
-                    <td class="col-2"><b>Block end:</b></td>
-                    <td class="col-4">{{tuple.0.block_end}}({{tuple.0.end_time}})</td>
-                </tr>
-            </table>
-            <table>
-                {% for statistic in stat_keys %}
-                    <tr class="w-100">
-                        <td class="col-3"><b>{{stats|dict_value:statistic}}</b></td>
-                        <td class="col-6">{{tuple.0|class_value:statistic}}<span style="{{tuple.1|dict_color_style:statistic}}"> ({{tuple.1|dict_value:statistic|floatformat:1}}%)</span></td>
-                    </tr>
-                {% endfor %}
-            </table>
-        </div>
-    {% endfor %}    
+  {% for tuple in enriched_monthly_reports %}
+    <div class="report d-flex flex-column">
+      <div class="d-flex">
+        <div class="col-1"><b>Month/Year:</b></div>
+        <div class="col-1">{{tuple.0.month}}/{{tuple.0.year}}</div>
+      </div>
+      <div class="d-flex">
+        <div class="col-2"><b>Block start:</b></div>
+        <div class="col-4">{{tuple.0.block_start}}({{tuple.0.start_time}})</div>
+        <div class="col-2"><b>Block end:</b></div>
+        <div class="col-4">{{tuple.0.block_end}}({{tuple.0.end_time}})</div>
+      </div>
+        {% for statistic in stat_keys %}
+          <div class="d-flex">
+            <div class="col-3"><b>{{stats|dict_value:statistic}}</b></div>
+            <div class="col-6">{{tuple.0|class_value:statistic}}<span style="{{tuple.1|dict_color_style:statistic}}"> ({{tuple.1|dict_value:statistic|floatformat:1}}%)</span></div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}    
 </div>
 
 <h2>Weekly reports</h2>
@@ -72,30 +66,12 @@
 
 <style>
     .report {
-        border: 1px solid black;
+        border: 1px solid rgb(130, 147, 164);
         margin-bottom: 20px;
-    }
-
-    .w-100 {
-        width: 100%;
-    }
-    .col-6 {
-        width: 50%;
-    }
-    .col-4 {
-        width: 33%;
-    }
-    .col-3 {
-        width: 25%;
-    }
-    .col-2 {
-        width: 16%;
-    }
-    .col-1 {
-        width: 8%;
-    }
-    .d-flex {
-        display: flex;
+        color: rgb(130, 147, 164);
+        border-radius: 10px;
+        box-shadow: rgb(24 49 64 / 10%) 0px 0px 14px 0px;
+        padding: 20px;
     }
 </style>
 

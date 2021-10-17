@@ -429,7 +429,7 @@ def test_email(request):
     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
     report = weekly_reports[0]
 
-    send_report_email('Monthly report', report, weekly_reports[1] if len(weekly_reports) > 1 else None, 'Weekly')
+    send_report_email('Weekly report', report, weekly_reports[1] if len(weekly_reports) > 1 else None, 'Weekly')
     return HttpResponse("ok")
 
 def tx_debug(request, tx_hash):
