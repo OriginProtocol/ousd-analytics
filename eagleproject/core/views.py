@@ -426,10 +426,10 @@ def reports(request):
     return render(request, "analytics_reports.html", locals())
 
 def test_email(request):
-    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
-    report = monthly_reports[0]
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    report = weekly_reports[0]
 
-    send_report_email('Monthly report', report, monthly_reports[1] if len(monthly_reports) > 1 else None, 'Monthly')
+    send_report_email('Monthly report', report, weekly_reports[1] if len(weekly_reports) > 1 else None, 'Weekly')
     return HttpResponse("ok")
 
 def tx_debug(request, tx_hash):
