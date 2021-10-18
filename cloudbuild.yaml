@@ -61,20 +61,13 @@ steps:
       python3 ./manage.py collectstatic --noinput && \
       python3 ./manage.py migrate
 
-- id: 'Deploy the web facing service'
+- id: 'Deploy the web facing service and worker'
   name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   dir: ./eagleproject
   entrypoint: gcloud
   args:
     - app
     - deploy
-
-- id: 'Deploy worker service'
-  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  dir: ./eagleproject
-  entrypoint: gcloud
-  args:
-    - app
-    - deploy
-    - --appyaml=/workspace/eagleproject/reports_worker.yaml
+    - /workspace/eagleproject/reports_worker.yaml
+    - /workspace/eagleproject/app.yaml
 timeout: "3200s"
