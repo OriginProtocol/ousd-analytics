@@ -74,5 +74,5 @@ steps:
   args:
     - app
     - deploy
-    - reports_worker.yaml
+    - --appyaml=reports_worker.yaml
 timeout: "3200s"
