@@ -61,14 +61,16 @@ steps:
       python3 ./manage.py collectstatic --noinput && \
       python3 ./manage.py migrate
 
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+- id: 'Deploy the web facing service'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   dir: ./eagleproject
   entrypoint: gcloud
   args:
     - app
     - deploy
 
-- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+- id: 'Deploy worker service'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   dir: ./eagleproject
   entrypoint: gcloud
   args:
