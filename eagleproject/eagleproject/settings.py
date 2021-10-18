@@ -186,6 +186,7 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = os.environ.get("EMAIL_PORT", 25)
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS") == "true"
+ENABLE_REPORTS = os.environ.get("ENABLE_REPORTS") == "false"
 
 ADMINS = [("Engineering", "engineering@originprotocol.com")]
 DISCORD_BOT_NAME = os.environ.get("DISCORD_BOT_NAME", "OUSD Analytics Bot")

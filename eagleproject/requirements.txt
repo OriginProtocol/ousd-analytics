@@ -12,6 +12,7 @@ eth-abi==2.1.1
 eth-hash==0.2.0
 eth-typing==2.2.2
 eth-utils==1.9.5
+google-cloud-tasks==2.6.0
 idna==2.10
 mccabe==0.6.1
 mypy-extensions==0.4.3
