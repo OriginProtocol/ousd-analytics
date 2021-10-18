@@ -347,13 +347,21 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     all_addresses = fetch_all_holders()
 
     rebase_logs = get_rebase_logs(from_block, to_block)
+    analysis_list = []
 
-    manager = Manager()
-    analysis_list = manager.list()
+    # manager = Manager()
+    # analysis_list = manager.list()
+
+    # counter = 0
+    # for chunk in chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM):
+    #     analyze_account_in_parallel(analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+    #     counter += 1
+
 
     counter = 0
-    for chunk in chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM):
-        analyze_account_in_parallel(analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+    for account in all_addresses:
+        analyze_account(analysis_list, account, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+        print('Analyzing account {} of {}'.format(counter, len(all_addresses)))
         counter += 1
 
 
