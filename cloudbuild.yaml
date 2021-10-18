@@ -18,6 +18,18 @@ steps:
     - --keyring=origin
     - --key=cloudbuild
 
+- id: 'Decrypt secrets required for deployment 2'
+  name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args:
+    - kms
+    - decrypt
+    - --ciphertext-file=./eagleproject/reports_worker.yaml.enc
+    - --plaintext-file=./eagleproject/reports_worker.yaml
+    - --location=global
+    - --keyring=origin
+    - --key=cloudbuild
+
 - id: 'Decrypt env required for build'
   name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: gcloud
@@ -55,4 +67,12 @@ steps:
   args:
     - app
     - deploy
-timeout: "1600s"
+
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  dir: ./eagleproject
+  entrypoint: gcloud
+  args:
+    - app
+    - deploy
+    - reports_worker.yaml
+timeout: "3200s"

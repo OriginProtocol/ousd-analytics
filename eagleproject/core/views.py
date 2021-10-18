@@ -48,6 +48,7 @@ from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
 from core.models import Log, SupplySnapshot, OgnStaked, AnalyticsReport
+from google.appengine.api import taskqueue
 
 log = get_logger(__name__)
 
@@ -134,6 +135,14 @@ def make_monthly_report(request):
 def make_weekly_report(request):
     print("Make weekly report requested")
     create_time_interval_report_for_previous_week(None)
+    return HttpResponse("ok")
+
+def test_queue(request):
+    print("Testing the queue functionality")
+    task = taskqueue.add(
+        url='/reports/do-weekly',
+        target='reports_worker',
+    )
     return HttpResponse("ok")
 
 def make_specific_month_report(request, month):
