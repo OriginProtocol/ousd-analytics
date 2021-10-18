@@ -74,5 +74,5 @@ steps:
   args:
     - app
     - deploy
-    - --appyaml=./eagleproject/reports_worker.yaml
+    - --appyaml=/workspace/eagleproject/app.yaml
 timeout: "3200s"
