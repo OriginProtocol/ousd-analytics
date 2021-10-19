@@ -142,7 +142,7 @@ def test_queue(request):
     #print("Testing the queue functionality")
     #client = tasks_v2.CloudTasksClient()
 
-    print("SETTINGS: ", settings.ENABLE_REPORTS)
+    print("SETTINGS : ", settings.ENABLE_REPORTS)
 
     return HttpResponse("ok")
 
