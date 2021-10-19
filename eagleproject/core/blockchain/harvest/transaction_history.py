@@ -9,6 +9,7 @@ from core.models import (
     Log,
     OusdTransfer,
     Block,
+    Transaction,
     AnalyticsReport
 )
 from django.db.models import Q
@@ -349,6 +350,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     rebase_logs = get_rebase_logs(from_block, to_block)
     analysis_list = []
 
+    # Uncomment this to enable parallelism
     # manager = Manager()
     # analysis_list = manager.list()
 
@@ -358,6 +360,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     #     counter += 1
 
 
+    # UNCOMENT THIS
     counter = 0
     for account in all_addresses:
         analyze_account(analysis_list, account, rebase_logs, from_block, to_block, from_block_time, to_block_time)
@@ -379,6 +382,8 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         accounts_with_non_rebase_balance_increase += 1 if analysis.has_ousd_increased else 0
         accounts_with_non_rebase_balance_decrease += 1 if analysis.has_ousd_decreased else 0
 
+
+
     report = analytics_report(
         accounts_analyzed,
         accounts_holding_ousd,
@@ -387,6 +392,8 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         accounts_with_non_rebase_balance_increase,
         accounts_with_non_rebase_balance_decrease
     )
+
+    #do_transaction_analytics(from_block, to_block)
 
     # set the values back again
     decimal_context.prec = decimal_prec
@@ -427,6 +434,13 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
     analysis_list.append(
         address_analytics(is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, non_rebase_balance_diff > 0, non_rebase_balance_diff < 0)
     )
+
+def classify_transaction(transaction):
+    return "ladida"
+
+def do_transaction_analytics(from_block, to_block):
+    transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block)
+    print("DEBUG: ", len(list(transactions)))
 
 def get_rebase_logs(from_block, to_block):
     logs = Log.objects.filter(Q(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1") & Q(block_number__gte=from_block) & Q(block_number__lte=to_block))

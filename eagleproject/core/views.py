@@ -129,7 +129,7 @@ def reload(request):
     return HttpResponse("ok")
 
 def make_monthly_report(request):
-    if settings.ENABLE_REPORTS != 'True':
+    if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
@@ -138,7 +138,7 @@ def make_monthly_report(request):
     return HttpResponse("ok")
 
 def make_weekly_report(request):
-    if settings.ENABLE_REPORTS != 'True':
+    if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
             
@@ -146,16 +146,8 @@ def make_weekly_report(request):
     create_time_interval_report_for_previous_week(None)
     return HttpResponse("ok")
 
-def test_queue(request):
-    #print("Testing the queue functionality")
-    #client = tasks_v2.CloudTasksClient()
-
-    print("SETTINGS : ", settings.ENABLE_REPORTS)
-
-    return HttpResponse("ok")
-
 def make_specific_month_report(request, month):
-    if settings.ENABLE_REPORTS != 'True':
+    if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
@@ -163,7 +155,7 @@ def make_specific_month_report(request, month):
     return HttpResponse("ok")
 
 def make_specific_week_report(request, week):
-    if settings.ENABLE_REPORTS != 'True':
+    if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
