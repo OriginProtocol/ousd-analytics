@@ -129,11 +129,19 @@ def reload(request):
     return HttpResponse("ok")
 
 def make_monthly_report(request):
+    if settings.ENABLE_REPORTS != "true":
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
     print("Make monthly report requested")
     create_time_interval_report_for_previous_month(None)
     return HttpResponse("ok")
 
 def make_weekly_report(request):
+    if settings.ENABLE_REPORTS != "true":
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+            
     print("Make weekly report requested")
     create_time_interval_report_for_previous_week(None)
     return HttpResponse("ok")
@@ -147,10 +155,18 @@ def test_queue(request):
     return HttpResponse("ok")
 
 def make_specific_month_report(request, month):
+    if settings.ENABLE_REPORTS != "true":
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
     create_time_interval_report_for_previous_month(month)
     return HttpResponse("ok")
 
 def make_specific_week_report(request, week):
+    if settings.ENABLE_REPORTS != "true":
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+        
     create_time_interval_report_for_previous_week(week)
     return HttpResponse("ok")
 
