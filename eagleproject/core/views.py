@@ -155,6 +155,7 @@ def test_queue(request):
     return HttpResponse("ok")
 
 def make_specific_month_report(request, month):
+    print("Doing specific month, ", type(settings.ENABLE_REPORTS), settings.ENABLE_REPORTS)
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
