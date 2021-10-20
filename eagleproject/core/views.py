@@ -445,7 +445,7 @@ def reports(request):
     return render(request, "analytics_reports.html", locals())
 
 def backfill_internal_transactions(request):
-    transactions = Transaction.objects.filter(internal_transactions={})[:500]
+    transactions = Transaction.objects.filter(internal_transactions={})[:6000]
     total = len(transactions)
     print("All transactions:", total)
     count = 0
