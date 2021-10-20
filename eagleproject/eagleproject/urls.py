@@ -24,7 +24,7 @@ urlpatterns = [
     path("", core_views.dashboard),
     path("tx/debug/<slug:tx_hash>", core_views.tx_debug),
     path("reports", core_views.reports),
-    path("test_email", core_views.test_email),
+    path("backfill_internal_transactions", core_views.backfill_internal_transactions),
     path("reports/do-monthly", core_views.make_monthly_report),
     path("reports/do-weekly", core_views.make_weekly_report),
     path("reports/do-monthly/<int:month>", core_views.make_specific_month_report),

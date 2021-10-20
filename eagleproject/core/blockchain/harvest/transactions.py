@@ -9,7 +9,10 @@ from eth_utils import (
     remove_0x_prefix,
 )
 
-from core.etherscan import get_contract_transactions
+from core.etherscan import (
+    get_contract_transactions,
+    get_internal_txs_bt_txhash
+)
 from core.blockchain.addresses import OGN_STAKING
 from core.blockchain.const import (
     E_18,
@@ -132,6 +135,11 @@ def explode_log_data(value):
         out.append(int(value[2 + i * 64 : 2 + i * 64 + 64], 16)/1e18)
     return out
 
+def get_internal_transactions(tx_hash):
+    data = get_internal_txs_bt_txhash(tx_hash)
+    print("DATA", data)
+    return data
+
 def ensure_transaction_and_downstream(tx_hash):
     """ Ensure that there's a transaction record """
     db_tx = None
@@ -141,6 +149,7 @@ def ensure_transaction_and_downstream(tx_hash):
     raw_transaction = get_transaction(tx_hash)
     receipt = get_transaction_receipt(tx_hash)
     debug = debug_trace_transaction(tx_hash)
+    internal_transactions = get_internal_transactions(tx_hash)
 
     block_number = int(raw_transaction["blockNumber"], 16)
     block = ensure_block(block_number)

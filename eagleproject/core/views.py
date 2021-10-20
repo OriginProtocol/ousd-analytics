@@ -27,6 +27,7 @@ from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
 )
 from core.blockchain.harvest.transactions import (
+    get_internal_transactions,
     ensure_transaction_and_downstream,
 )
 from core.blockchain.harvest.transaction_history import (
@@ -47,7 +48,7 @@ from core.blockchain.rpc import (
 from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
-from core.models import Log, SupplySnapshot, OgnStaked, AnalyticsReport
+from core.models import Log, SupplySnapshot, OgnStaked, AnalyticsReport, Transaction
 from google.cloud import tasks_v2
 from django.conf import settings
 
@@ -443,11 +444,17 @@ def reports(request):
 
     return render(request, "analytics_reports.html", locals())
 
-def test_email(request):
-    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-    report = weekly_reports[0]
+def backfill_internal_transactions(request):
+    transactions = Transaction.objects.filter(internal_transactions={})
+    total = len(transactions)
+    print("All transactions:", total)
+    count = 0
+    for transaction in transactions:
+        count += 1
+        print("DOING THIS TRANSACTION {} on {} and {} to go".format(transaction.tx_hash, count, total - count))
+        transaction.internal_transactions = get_internal_transactions(transaction.tx_hash)
+        transaction.save()
 
-    send_report_email('Weekly report', report, weekly_reports[1] if len(weekly_reports) > 1 else None, 'Weekly')
     return HttpResponse("ok")
 
 def tx_debug(request, tx_hash):

@@ -164,6 +164,7 @@ class Transaction(models.Model):
     data = models.JSONField(default=dict)
     receipt_data = models.JSONField(default=dict)
     debug_data = models.JSONField(default=dict)
+    internal_transactions = models.JSONField(default=dict)
 
 
 class OusdTransfer(models.Model):
