@@ -71,6 +71,17 @@ CURVE_CRV_TOKEN = "0xd533a949740bb3306d119cc777fa900ba034cd52"
 CURVE_3CRV_TOKEN = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 CURVE_3POOL = "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7"
 
+# Various
+
+METAMASK_SWAP_ROUTER = "0x881d40237659c251811cec9c364ef91dc08d300c"
+FLIPPER = "0xcecad69d7d4ed6d52efcfa028af8732f27e08f70"
+UNISWAP_V3_ROUTER = "0xe592427a0aece92de3edee1f18e0157c05861564"
+OX_EXCHANGE = "0xdef1c0ded9bec7f1a1670819833240f027b25eff"
+ONE_INCH_V3 = "0x11111112542d85b3ef69ae05771c2dccff4faa26"
+SUSHISWAP = "0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f"
+UNISWAP_V2 = "0x7a250d5630b4cf539739df2c5dacb4c659f2488d"
+MISTX_ROUTER = "0xa58f22e0766b3764376c92915ba545d583c19dbc"
+
 # Curve Governance
 
 # This is kinda confusing and I never got an answer from Curve discord but they
@@ -109,4 +120,12 @@ CONTRACT_ADDR_TO_NAME = {
     CURVE_ARAGON_60: 'Curve Aragon Voting (60%)',
     GOVERNOR: 'Origin Governor V1',
     GOVERNORV2: 'Origin Governor V2',
+    METAMASK_SWAP_ROUTER: "Metamask Swap Router",
+    FLIPPER: "OUSD Swap",
+    UNISWAP_V3_ROUTER: "Uniswap V3 Router",
+    OX_EXCHANGE: "0x Exchange",
+    ONE_INCH_V3: "1inch V3",
+    SUSHISWAP: "SushiSwap",
+    UNISWAP_V2: "Uniswap V2 Router",
+    MISTX_ROUTER: "MistX Router",
 }

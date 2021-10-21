@@ -51,6 +51,7 @@ from core.logging import get_logger
 from core.models import Log, SupplySnapshot, OgnStaked, AnalyticsReport, Transaction
 from google.cloud import tasks_v2
 from django.conf import settings
+import json
 
 log = get_logger(__name__)
 
@@ -135,7 +136,8 @@ def make_monthly_report(request):
         return HttpResponse("ok")
 
     print("Make monthly report requested")
-    create_time_interval_report_for_previous_month(None)
+    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
+    create_time_interval_report_for_previous_month(None, do_only_transaction_analytics)
     return HttpResponse("ok")
 
 def make_weekly_report(request):
@@ -144,7 +146,8 @@ def make_weekly_report(request):
         return HttpResponse("ok")
             
     print("Make weekly report requested")
-    create_time_interval_report_for_previous_week(None)
+    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
+    create_time_interval_report_for_previous_week(None, do_only_transaction_analytics)
     return HttpResponse("ok")
 
 def make_specific_month_report(request, month):
@@ -152,7 +155,8 @@ def make_specific_month_report(request, month):
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
-    create_time_interval_report_for_previous_month(month)
+    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
+    create_time_interval_report_for_previous_month(month, do_only_transaction_analytics)
     return HttpResponse("ok")
 
 def make_specific_week_report(request, week):
@@ -160,7 +164,8 @@ def make_specific_week_report(request, week):
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
-    create_time_interval_report_for_previous_week(week)
+    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
+    create_time_interval_report_for_previous_week(week, do_only_transaction_analytics)
     return HttpResponse("ok")
 
 
@@ -419,6 +424,11 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
+# def test_email(request):
+#     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     return HttpResponse("ok")
+
 
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
@@ -432,6 +442,7 @@ def reports(request):
         prev_month = 12 if monthly_report.month == 1 else monthly_report.month - 1
         prev_report = list(filter(lambda report: report.month == prev_month and report.year == prev_year, monthly_reports))
         prev_report = prev_report[0] if len(prev_report) > 0 else None
+        monthly_report.transaction_report = json.loads(str(monthly_report.transaction_report))
         enriched_monthly_reports.append((monthly_report, calculate_report_change(monthly_report, prev_report)))
 
     enriched_weekly_reports = []
@@ -440,7 +451,8 @@ def reports(request):
         prev_week = 53 if weekly_report.week == 0 else weekly_report.week - 1
         prev_report = list(filter(lambda report: report.week == prev_week and report.year == prev_year, weekly_reports))
         prev_report = prev_report[0] if len(prev_report) > 0 else None
-        enriched_weekly_reports.append((weekly_report, calculate_report_change(weekly_report, prev_report)))
+        weekly_report.transaction_report = json.loads(str(weekly_report.transaction_report))
+        enriched_weekly_reports.append((weekly_report, calculate_report_change(weekly_report, prev_report), ))
 
     return render(request, "analytics_reports.html", locals())
 

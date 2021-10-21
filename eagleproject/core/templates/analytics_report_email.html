@@ -41,4 +41,55 @@
         </tr>
         {% endfor %}
     </table>
+    {% if report.transaction_report %}
+      <div>
+        <h4>Swap transactions </h4>
+        <table>
+          <tr>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Contract</td>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Swaps</td>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Total OUSD</td>
+          </tr>
+          {% for contract_address, data in report.transaction_report.contracts_swaps.items %}
+          <tr class="d-flex py-1">
+            <td>
+              <a
+                href="https://www.etherscan.com/address/{{ contract_address }}"
+                target="_blank"
+              >
+                <b>{{data|dict_value:"name"}}</b>
+              </a>
+            </td>
+            <td><b>{{data|dict_value:"total_swaps"|int_no_comma}}</b></td>
+            <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}}</b></td>
+          </tr>
+          {% endfor %}
+        </table>
+        <div>
+          <h4>Unknown transactions </h4>
+          <table>
+            <tr>
+              <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Contract</td>
+              <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Transactions</td>
+              <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Total OUSD</td>
+            </tr>
+            {% for contract_address, data in report.transaction_report.contracts_other.items %}
+            <tr class="d-flex py-1">
+              <td>
+                <a
+                  href="https://www.etherscan.com/address/{{ contract_address }}"
+                  target="_blank"
+                >
+                  <b>{{data|dict_value:"name"}}</b>
+                </a>
+              </td>
+              <td><b>{{data|dict_value:"total_transactions"|int_no_comma}}</b></td>
+              <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}}</b></td>
+            </tr>
+          {% endfor %}
+          </table>
+        </div>
+    {% else %}
+      <h3>Contracts report not yet done</h3>
+    {% endif %}
 </div>

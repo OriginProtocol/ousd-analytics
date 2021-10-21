@@ -12,6 +12,11 @@ from core.models import (
     Transaction,
     AnalyticsReport
 )
+
+from core.blockchain.sigs import (
+    TRANSFER,
+)
+
 from django.db.models import Q
 from core.blockchain.harvest.transactions import (
     explode_log_data
@@ -28,7 +33,8 @@ from datetime import (
 
 from core.blockchain.const import (
     START_OF_EVERYTHING_TIME,
-    report_stats
+    report_stats,
+    E_18
 )
 
 from core.blockchain.utils import (
@@ -42,9 +48,11 @@ from core.channels.email import (
 )
 from django.template.loader import render_to_string
 from django.conf import settings
+from core.blockchain.decode import slot
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
+import simplejson as json
 
-
-ACCOUNT_ANALYZE_PARALLELISM=2
+ACCOUNT_ANALYZE_PARALLELISM=30
 #ACCOUNT_ANALYZE_PARALLELISM=30
 
 class rebase_log:
@@ -137,8 +145,7 @@ def calculate_report_change(current_report, previous_report):
 
     return changes
 
-
-def upsert_report(week_option, month_option, year, status, report, block_start_number, block_end_number, start_time, end_time):
+def upsert_report(week_option, month_option, year, status, report, block_start_number, block_end_number, start_time, end_time, do_only_transaction_analytics, transaction_report):
     analyticsReport = None
     params = {
         "block_start": block_start_number,
@@ -154,32 +161,51 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
         "new_accounts": report.new_accounts if report is not None else 0,
         "accounts_with_non_rebase_balance_increase": report.accounts_with_non_rebase_balance_increase if report is not None else 0,
         "accounts_with_non_rebase_balance_decrease": report.accounts_with_non_rebase_balance_decrease if report is not None else 0,
+        "transaction_report": transaction_report
     }
 
-    if (week_option != None):
-        analyticsReport, created = AnalyticsReport.objects.get_or_create(
-            week=week_option,
-            year=year,
-            defaults=params,
-        )
-    else:
-        analyticsReport, created = AnalyticsReport.objects.get_or_create(
-            month=month_option,
-            year=year,
-            defaults=params,
-        )
+    if do_only_transaction_analytics:
+        if week_option != None:
+            analyticsReport = AnalyticsReport.objects.get(
+                week=week_option,
+                year=year
+            )
+        else:
+            analyticsReport = AnalyticsReport.objects.get(
+                month=month_option,
+                year=year
+            )
 
-    if not created:
-        for key in params.keys():
-            if key == 'created_at':
-                continue
+        if analyticsReport is None:
+            raise Exception('Report not found week: {} month: {} year: {}'.format(week_option, month_option, year))
 
-            setattr(analyticsReport, key, params.get(key))
+        analyticsReport.transaction_report = transaction_report
         analyticsReport.save()
+    else:
+        if week_option != None:
+            analyticsReport, created = AnalyticsReport.objects.get_or_create(
+                week=week_option,
+                year=year,
+                defaults=params,
+            )
+        else:
+            analyticsReport, created = AnalyticsReport.objects.get_or_create(
+                month=month_option,
+                year=year,
+                defaults=params,
+            )
+
+        if not created:
+            for key in params.keys():
+                if key == 'created_at':
+                    continue
+
+                setattr(analyticsReport, key, params.get(key))
+            analyticsReport.save()
 
     return analyticsReport
 
-def create_time_interval_report_for_previous_week(week_override):
+def create_time_interval_report_for_previous_week(week_override, do_only_transaction_analytics = False):
     year_number = datetime.now().year
     # number of the week in a year - for the previous week
     week_number = week_override if week_override is not None else int(datetime.now().strftime("%W")) - 1
@@ -199,6 +225,8 @@ def create_time_interval_report_for_previous_week(week_override):
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
 
+    transaction_report = do_transaction_analytics(block_start_number, block_end_number)
+
     upsert_report(
         week_number,
         None,
@@ -208,8 +236,14 @@ def create_time_interval_report_for_previous_week(week_override):
         block_start_number, 
         block_end_number,
         start_time,
-        end_time
+        end_time,
+        do_only_transaction_analytics,
+        transaction_report
     )
+
+    # don't do the general report if not needed
+    if do_only_transaction_analytics:
+        return
 
     report = create_time_interval_report(
         block_start_number,
@@ -227,7 +261,9 @@ def create_time_interval_report_for_previous_week(week_override):
         block_start_number, 
         block_end_number,
         start_time,
-        end_time
+        end_time,
+        do_only_transaction_analytics,
+        transaction_report
     )
 
     # if it is a cron job report
@@ -265,7 +301,7 @@ def should_create_new_report(year, month_option, week_option):
 
     return True
 
-def create_time_interval_report_for_previous_month(month_override):
+def create_time_interval_report_for_previous_month(month_override, do_only_transaction_analytics = False):
     # number of the month in a year - for the previous month
     month_number = month_override if month_override is not None else int(datetime.now().strftime("%m")) - 1
     year_number = datetime.now().year + (-1 if month_number == 12 else 0)
@@ -286,6 +322,8 @@ def create_time_interval_report_for_previous_month(month_override):
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
 
+    transaction_report = do_transaction_analytics(block_start_number, block_end_number)
+
     upsert_report(
         None,
         month_number,
@@ -295,8 +333,14 @@ def create_time_interval_report_for_previous_month(month_override):
         block_start_number, 
         block_end_number,
         start_time,
-        end_time
+        end_time,
+        do_only_transaction_analytics,
+        transaction_report
     )
+
+    # don't do the general report if not needed
+    if do_only_transaction_analytics:
+        return
 
     report = create_time_interval_report(
         block_start_number,
@@ -314,7 +358,9 @@ def create_time_interval_report_for_previous_month(month_override):
         block_start_number, 
         block_end_number,
         start_time,
-        end_time
+        end_time,
+        do_only_transaction_analytics,
+        transaction_report
     )
 
     # if it is a cron job report
@@ -359,8 +405,6 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     #     analyze_account_in_parallel(analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
     #     counter += 1
 
-
-    # UNCOMENT THIS
     counter = 0
     for account in all_addresses:
         analyze_account(analysis_list, account, rebase_logs, from_block, to_block, from_block_time, to_block_time)
@@ -392,8 +436,6 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         accounts_with_non_rebase_balance_increase,
         accounts_with_non_rebase_balance_decrease
     )
-
-    #do_transaction_analytics(from_block, to_block)
 
     # set the values back again
     decimal_context.prec = decimal_prec
@@ -439,8 +481,82 @@ def classify_transaction(transaction):
     return "ladida"
 
 def do_transaction_analytics(from_block, to_block):
+    report = {
+        'contracts_swaps': {},
+        'contracts_other': {}
+    }
     transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block)
-    print("DEBUG: ", len(list(transactions)))
+    for transaction in transactions:
+        logs = Log.objects.filter(transaction_hash=transaction.tx_hash)
+        account = transaction.receipt_data["from"]
+        contract_address = transaction.receipt_data["to"]
+        internal_transactions = transaction.internal_transactions
+        received_eth = len(list(filter(lambda tx: tx["to"] == account and float(tx["value"]) > 0, internal_transactions))) > 0
+        sent_eth = transaction.data['value'] != '0x0'
+        transfer_ousd_out = False
+        transfer_ousd_in = False
+        transfer_coin_out = False
+        transfer_coin_in = False
+        ousd_transfer_from = None
+        ousd_transfer_to = None
+        ousd_transfer_amount = None
+        transfer_log_count = 0
+
+        #print(transaction.data)
+        for log in logs:
+            #if len(logs) > 1 and transaction.tx_hash == '0x8fe7683b5e01e2e5d300147f613cd576599e2ccf6d2a065b74b20b8d77bacc71':
+            if log.topic_0 == TRANSFER:
+                transfer_log_count += 1
+                is_ousd_token = log.address == '0x2a8e1e676ec238d8a992307b495b45b3feaa5e86'
+                from_address = "0x" + log.topic_1[-40:]
+                to_address = "0x" + log.topic_2[-40:]
+
+                #print("DEBUG: ", is_ousd_token, from_address, to_address, log.log_index)
+                if is_ousd_token: 
+                    ousd_transfer_from = from_address
+                    ousd_transfer_to = to_address
+                    ousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
+                if from_address == account:
+                    if is_ousd_token:
+                        transfer_ousd_out = True
+                    else:
+                        transfer_coin_out = True
+                if to_address == account:
+                    if is_ousd_token:
+                        transfer_ousd_in = True
+                    else:
+                        transfer_coin_in = True
+
+        swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
+        swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
+
+        if (transfer_log_count > 1 or sent_eth or received_eth) and (not swap_receive_ousd or swap_send_ousd):
+            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} ousd in: {} ousd out: {}".format(transaction.tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_ousd_in, transfer_ousd_out))    
+
+        report_key = "contracts_swaps" if (swap_receive_ousd or swap_send_ousd) else "contracts_other"
+        contract_data = report[report_key][contract_address] if contract_address in report[report_key] else {
+            "address": contract_address,
+            "name": CONTRACT_ADDR_TO_NAME[contract_address] if contract_address in CONTRACT_ADDR_TO_NAME else "N/A",
+            "total_swaps": 0,
+            "total_ousd_swapped": 0,
+            "total_transactions": 0
+        }
+
+        contract_data["total_transactions"] += 1
+        if ousd_transfer_amount is not None:
+            contract_data["total_swaps"] += 1
+            contract_data["total_ousd_swapped"] += ousd_transfer_amount
+
+        report[report_key][contract_address] = contract_data
+
+    for report_key in ["contracts_swaps", "contracts_other"]:
+        report_data = report[report_key]
+        sort_key = "total_ousd_swapped" if report_key == "contracts_swaps" else "total_swaps"
+        report_data = {k: v for k, v in sorted(report_data.items(), key=lambda item: -item[1][sort_key])}
+        report[report_key] = report_data
+
+    return json.dumps(report)
+
 
 def get_rebase_logs(from_block, to_block):
     logs = Log.objects.filter(Q(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1") & Q(block_number__gte=from_block) & Q(block_number__lte=to_block))
@@ -510,6 +626,7 @@ def ensure_ousd_balance(credit_balance, logs):
     return logs
 
 def send_report_email(summary, report, prev_report, report_type):
+    report.transaction_report = json.loads(str(report.transaction_report))
     e = Email(summary, "test", render_to_string('analytics_report_email.html', {
         'type': report_type,
         'report': report,

@@ -270,6 +270,10 @@ class AnalyticsReport(models.Model):
     # report has failed and needs to be re-attempted
     status = models.CharField(max_length=20, default='done')
 
+    # Contains info regarding which contracts have been called that have resulted in 
+    # OUSD Swaps. (Uniswap Router, Metamask router....)
+    transaction_report = models.JSONField(default=list)
+
     # Total number of accounts analyzed - number of accounts that have ever held OUSD
     accounts_analyzed = models.IntegerField()
     # Number of accounts holding OUSD in a given time period
