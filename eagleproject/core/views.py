@@ -48,8 +48,7 @@ from core.blockchain.rpc import (
 from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
-from core.models import Log, SupplySnapshot, OgnStaked, AnalyticsReport, Transaction
-from google.cloud import tasks_v2
+from core.models import Log, SupplySnapshot, OgnStaked, OusdTransfer, AnalyticsReport, Transaction
 from django.conf import settings
 import json
 
@@ -267,6 +266,19 @@ def api_address_yield(request, address):
     })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return response
+
+
+def api_address(request):
+    addresses = (
+        OusdTransfer.objects.values("to_address")
+        .distinct()
+        .values_list("to_address", flat=True)
+    )
+    return JsonResponse(
+        {
+            "addresses": sorted(list(addresses)),
+        }
+    )
 
 
 def active_stake_stats():
