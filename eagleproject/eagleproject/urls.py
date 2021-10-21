@@ -23,6 +23,11 @@ redirect_to_ousd_dapp = RedirectView.as_view(url='https://ousd.com/', permanent=
 urlpatterns = [
     path("", core_views.dashboard),
     path("tx/debug/<slug:tx_hash>", core_views.tx_debug),
+    path("reports", core_views.reports),
+    path("reports/do-monthly", core_views.make_monthly_report),
+    path("reports/do-weekly", core_views.make_weekly_report),
+    path("reports/do-monthly/<int:month>", core_views.make_specific_month_report),
+    path("reports/do-weekly/<int:week>", core_views.make_specific_week_report),
     path("address/<slug:address>", core_views.address, name="address"),
     path("apy", core_views.apr_index, name="apy"),
     path("apr", RedirectView.as_view(pattern_name="apy", permanent=True)),

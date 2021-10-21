@@ -27,6 +27,12 @@ from core.blockchain.harvest.snapshots import (
 from core.blockchain.harvest.transactions import (
     ensure_transaction_and_downstream,
 )
+from core.blockchain.harvest.transaction_history import (
+    create_time_interval_report,
+    create_time_interval_report_for_previous_week,
+    create_time_interval_report_for_previous_month
+)
+
 from core.blockchain.rpc import (
     balanceOf,
     latest_block,
@@ -36,7 +42,7 @@ from core.blockchain.rpc import (
 from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
-from core.models import Log, SupplySnapshot, OgnStaked, OusdTransfer
+from core.models import Log, SupplySnapshot, OgnStaked, OusdTransfer, AnalyticsReport
 
 log = get_logger(__name__)
 
@@ -113,6 +119,22 @@ def dashboard(request):
 def reload(request):
     latest = latest_block()
     reload_all(latest - 2)
+    return HttpResponse("ok")
+
+def make_monthly_report(request):
+    create_time_interval_report_for_previous_month(None)
+    return HttpResponse("ok")
+
+def make_weekly_report(request):
+    create_time_interval_report_for_previous_week(None)
+    return HttpResponse("ok")
+
+def make_specific_month_report(request, month):
+    create_time_interval_report_for_previous_month(month)
+    return HttpResponse("ok")
+
+def make_specific_week_report(request, week):
+    create_time_interval_report_for_previous_week(week)
     return HttpResponse("ok")
 
 
@@ -384,6 +406,10 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
+def reports(request):
+    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    return render(request, "analytics_reports.html", locals())
 
 def tx_debug(request, tx_hash):
     transaction = ensure_transaction_and_downstream(tx_hash)
