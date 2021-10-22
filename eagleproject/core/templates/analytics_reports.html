@@ -48,7 +48,7 @@
                   href="https://www.etherscan.com/address/{{ contract_address }}"
                   target="_blank"
                 >
-                  <b>{{data|dict_value:"name"}}</b>
+                  <b>{{data|cotract_name}}</b>
                 </a>
               </div>
               <div class="col-2 text-s"><b>{{data|dict_value:"total_swaps"|int_no_comma}}</b></div>
@@ -72,7 +72,7 @@
                   href="https://www.etherscan.com/address/{{ contract_address }}"
                   target="_blank"
                 >
-                  <b>{{data|dict_value:"name"}}</b>
+                  <b>{{data|cotract_name}}</b>
                 </a>
               </div>
               <div class="col-2 text-s"><b>{{data|dict_value:"total_transactions"|int_no_comma}}</b></div>
