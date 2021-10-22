@@ -43,7 +43,7 @@
             </div>
             {% for contract_address, data in tuple.0.transaction_report.contracts_swaps.items %}
             <div class="d-flex py-1">
-              <div class="col-4">
+              <div class="col-4 text-s">
                 <a
                   href="https://www.etherscan.com/address/{{ contract_address }}"
                   target="_blank"
@@ -67,7 +67,7 @@
             </div>
             {% for contract_address, data in tuple.0.transaction_report.contracts_other.items %}
             <div class="d-flex py-1">
-              <div class="col-4">
+              <div class="col-4 text-s">
                 <a
                   href="https://www.etherscan.com/address/{{ contract_address }}"
                   target="_blank"
