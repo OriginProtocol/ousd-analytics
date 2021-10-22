@@ -326,6 +326,8 @@ def percentage(value):
 
 @register.filter
 def cotract_name(dictionary):
+    print("DEBUG: ", dictionary["address"])
+    print("DEBUG1: ", dictionary)
     short_address = dictionary["address"][:5] + "..." + dictionary["address"][-5:]
     return dictionary["name"] if dictionary["name"] != "N/A" else short_address
 
