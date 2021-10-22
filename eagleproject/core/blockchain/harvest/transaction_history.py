@@ -552,6 +552,14 @@ def do_transaction_analytics(from_block, to_block):
     for report_key in ["contracts_swaps", "contracts_other"]:
         report_data = report[report_key]
         sort_key = "total_ousd_swapped" if report_key == "contracts_swaps" else "total_swaps"
+
+        sum_total_ousd_swapped = 0
+        for ousd_swapped in map(lambda report_item: report_item[1]["total_ousd_swapped"], report_data.items()):
+            sum_total_ousd_swapped += ousd_swapped
+
+        for contract_address, contract_data in report_data.items():
+            contract_data["total_swapped_ousd_share"] = contract_data["total_ousd_swapped"] / sum_total_ousd_swapped if sum_total_ousd_swapped > 0 else 0
+
         report_data = {k: v for k, v in sorted(report_data.items(), key=lambda item: -item[1][sort_key])}
         report[report_key] = report_data
 

@@ -313,8 +313,21 @@ def class_value(object, key):
     return getattr(object, key)
 
 @register.filter
+# if key contains a comma what comes after the comma is a default value
 def dict_value(dictionary, key):
-    return dictionary[key]
+    default = ""
+    if "," in key:
+        key, default = key.split(",")
+    return dictionary[key] if key in dictionary else default
+
+@register.filter
+def percentage(value):
+    return value * 100
+
+@register.filter
+def cotract_name(dictionary):
+    short_address = dictionary["address"][:5] + "..." + dictionary["address"][-5:]
+    return dictionary["name"] if dictionary["name"] != "N/A" else short_address
 
 @register.filter
 def int_no_comma(value):

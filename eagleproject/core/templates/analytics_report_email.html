@@ -61,7 +61,7 @@
               </a>
             </td>
             <td><b>{{data|dict_value:"total_swaps"|int_no_comma}}</b></td>
-            <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}}</b></td>
+            <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></td>
           </tr>
           {% endfor %}
         </table>
@@ -84,7 +84,7 @@
                 </a>
               </td>
               <td><b>{{data|dict_value:"total_transactions"|int_no_comma}}</b></td>
-              <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}}</b></td>
+              <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></td>
             </tr>
           {% endfor %}
           </table>
