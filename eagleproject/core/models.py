@@ -1,4 +1,7 @@
-from datetime import timedelta
+from datetime import (
+    timedelta,
+    datetime,
+)
 from decimal import Decimal
 from django.db import models
 
@@ -161,6 +164,7 @@ class Transaction(models.Model):
     data = models.JSONField(default=dict)
     receipt_data = models.JSONField(default=dict)
     debug_data = models.JSONField(default=dict)
+    internal_transactions = models.JSONField(default=dict)
 
 
 class OusdTransfer(models.Model):
@@ -257,6 +261,18 @@ class AnalyticsReport(models.Model):
     # starting and ending time of the report
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
+
+    created_at = models.DateTimeField(default=datetime.now())
+    updated_at = models.DateTimeField(default=datetime.now())
+
+    # Status of the report. Valid values: processing, done
+    # this is used in combination with updated_at to figure out if process making a 
+    # report has failed and needs to be re-attempted
+    status = models.CharField(max_length=20, default='done')
+
+    # Contains info regarding which contracts have been called that have resulted in 
+    # OUSD Swaps. (Uniswap Router, Metamask router....)
+    transaction_report = models.JSONField(default=list)
 
     # Total number of accounts analyzed - number of accounts that have ever held OUSD
     accounts_analyzed = models.IntegerField()

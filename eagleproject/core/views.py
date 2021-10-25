@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
+
 from django.db import connection
 from django.db.models import Q
 from core.blockchain.addresses import (
@@ -18,6 +19,7 @@ from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
     OUSD_CONTRACTS,
     START_OF_OUSD_V2,
+    report_stats
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
 from core.blockchain.harvest.snapshots import (
@@ -25,12 +27,15 @@ from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
 )
 from core.blockchain.harvest.transactions import (
+    get_internal_transactions,
     ensure_transaction_and_downstream,
 )
 from core.blockchain.harvest.transaction_history import (
     create_time_interval_report,
     create_time_interval_report_for_previous_week,
-    create_time_interval_report_for_previous_month
+    create_time_interval_report_for_previous_month,
+    calculate_report_change,
+    send_report_email
 )
 
 from core.blockchain.rpc import (
@@ -39,10 +44,13 @@ from core.blockchain.rpc import (
     rebasing_credits_per_token,
     totalSupply,
 )
+
 from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
-from core.models import Log, SupplySnapshot, OgnStaked, OusdTransfer, AnalyticsReport
+from core.models import Log, SupplySnapshot, OgnStaked, OusdTransfer, AnalyticsReport, Transaction
+from django.conf import settings
+import json
 
 log = get_logger(__name__)
 
@@ -122,19 +130,41 @@ def reload(request):
     return HttpResponse("ok")
 
 def make_monthly_report(request):
-    create_time_interval_report_for_previous_month(None)
+    if not settings.ENABLE_REPORTS:
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
+    print("Make monthly report requested")
+    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
+    create_time_interval_report_for_previous_month(None, do_only_transaction_analytics)
     return HttpResponse("ok")
 
 def make_weekly_report(request):
-    create_time_interval_report_for_previous_week(None)
+    if not settings.ENABLE_REPORTS:
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+            
+    print("Make weekly report requested")
+    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
+    create_time_interval_report_for_previous_week(None, do_only_transaction_analytics)
     return HttpResponse("ok")
 
 def make_specific_month_report(request, month):
-    create_time_interval_report_for_previous_month(month)
+    if not settings.ENABLE_REPORTS:
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
+    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
+    create_time_interval_report_for_previous_month(month, do_only_transaction_analytics)
     return HttpResponse("ok")
 
 def make_specific_week_report(request, week):
-    create_time_interval_report_for_previous_week(week)
+    if not settings.ENABLE_REPORTS:
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
+    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
+    create_time_interval_report_for_previous_week(week, do_only_transaction_analytics)
     return HttpResponse("ok")
 
 
@@ -406,10 +436,50 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
+# def test_email(request):
+#     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     return HttpResponse("ok")
+
+
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    stats = report_stats
+    stat_keys = stats.keys()
+
+    enriched_monthly_reports = []
+    for monthly_report in monthly_reports:
+        prev_year = monthly_report.year - 1 if monthly_report.month == 1 else monthly_report.year
+        prev_month = 12 if monthly_report.month == 1 else monthly_report.month - 1
+        prev_report = list(filter(lambda report: report.month == prev_month and report.year == prev_year, monthly_reports))
+        prev_report = prev_report[0] if len(prev_report) > 0 else None
+        monthly_report.transaction_report = json.loads(str(monthly_report.transaction_report))
+        enriched_monthly_reports.append((monthly_report, calculate_report_change(monthly_report, prev_report)))
+
+    enriched_weekly_reports = []
+    for weekly_report in weekly_reports:
+        prev_year = weekly_report.year - 1 if weekly_report.week == 0 else weekly_report.year
+        prev_week = 53 if weekly_report.week == 0 else weekly_report.week - 1
+        prev_report = list(filter(lambda report: report.week == prev_week and report.year == prev_year, weekly_reports))
+        prev_report = prev_report[0] if len(prev_report) > 0 else None
+        weekly_report.transaction_report = json.loads(str(weekly_report.transaction_report))
+        enriched_weekly_reports.append((weekly_report, calculate_report_change(weekly_report, prev_report), ))
+
     return render(request, "analytics_reports.html", locals())
+
+def backfill_internal_transactions(request):
+    transactions = Transaction.objects.filter(internal_transactions={})[:6000]
+    total = len(transactions)
+    print("All transactions:", total)
+    count = 0
+    for transaction in transactions:
+        count += 1
+        print("DOING THIS TRANSACTION {} on {} and {} to go".format(transaction.tx_hash, count, total - count))
+        transaction.internal_transactions = get_internal_transactions(transaction.tx_hash)
+        transaction.save()
+
+    return HttpResponse("ok")
 
 def tx_debug(request, tx_hash):
     transaction = ensure_transaction_and_downstream(tx_hash)

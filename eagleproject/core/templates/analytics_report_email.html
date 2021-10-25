@@ -1,0 +1,95 @@
+{% load blockchain %}
+
+<div>
+    <style>
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        .table-header: {
+            background-color: #e5e5e5;
+            border: 1px solid black;
+        }
+
+        .green {
+            color: green;
+        }
+
+        .red {
+            color: red;
+        }
+    </style>
+
+    <h2>{{type}} Analytics Report</h2>
+    <h4>
+        <a
+          href="https://analytics.ousd.com/reports"
+        >
+            start time: {{report.start_time}} end time: {{report.end_time}}
+        </a>
+    </h4>
+
+    <table>
+        <tr>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Stat</td>
+            <td style="min-width:120px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Value</td>
+        </tr>
+        {% for statistic in stat_keys %}
+        <tr>
+            <td>{{stats|dict_value:statistic}}</td>
+            <td>{{report|class_value:statistic}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat:1}}%)</span></td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% if report.transaction_report %}
+      <div>
+        <h4>Swap transactions </h4>
+        <table>
+          <tr>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Contract</td>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Swaps</td>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Total OUSD</td>
+          </tr>
+          {% for contract_address, data in report.transaction_report.contracts_swaps.items %}
+          <tr class="d-flex py-1">
+            <td>
+              <a
+                href="https://www.etherscan.com/address/{{ contract_address }}"
+                target="_blank"
+              >
+                <b>{{data|dict_value:"name"}}</b>
+              </a>
+            </td>
+            <td><b>{{data|dict_value:"total_swaps"|int_no_comma}}</b></td>
+            <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></td>
+          </tr>
+          {% endfor %}
+        </table>
+        <div>
+          <h4>Unknown transactions </h4>
+          <table>
+            <tr>
+              <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Contract</td>
+              <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Transactions</td>
+              <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Total OUSD</td>
+            </tr>
+            {% for contract_address, data in report.transaction_report.contracts_other.items %}
+            <tr class="d-flex py-1">
+              <td>
+                <a
+                  href="https://www.etherscan.com/address/{{ contract_address }}"
+                  target="_blank"
+                >
+                  <b>{{data|cotract_name}}</b>
+                </a>
+              </td>
+              <td><b>{{data|dict_value:"total_transactions"|int_no_comma}}</b></td>
+              <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></td>
+            </tr>
+          {% endfor %}
+          </table>
+        </div>
+    {% else %}
+      <h3>Contracts report not yet done</h3>
+    {% endif %}
+</div>

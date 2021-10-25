@@ -22,6 +22,7 @@ Vault Eagle
     export PROVIDER_URL="https://CHANGEURLHERE"
     # Below line allows for multithreading from bash on macOS High Sierra
     export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+    export ETHERSCAN_API_KEY="your api key here"
     source ./eagle-python/bin/activate
     python ./manage.py runserver
     # **IMPORTANT**
