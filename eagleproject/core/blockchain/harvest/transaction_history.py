@@ -723,9 +723,7 @@ def get_history_for_address(address):
                 'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown'
             }
 
-    return {
-        "history": list(map(__format_tx_history, tx_history))
-    }
+    return list(map(__format_tx_history, tx_history))
 
 # when rebase logs are available enrich transfer logs with the active credits_per_token values
 def enrich_transfer_logs(logs):
