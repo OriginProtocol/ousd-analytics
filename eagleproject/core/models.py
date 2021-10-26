@@ -165,6 +165,7 @@ class Transaction(models.Model):
     receipt_data = models.JSONField(default=dict)
     debug_data = models.JSONField(default=dict)
     internal_transactions = models.JSONField(default=dict)
+    from_address = models.CharField(max_length=42, db_index=True, default='0xinvalid_address')
 
 
 class OusdTransfer(models.Model):

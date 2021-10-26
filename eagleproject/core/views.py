@@ -35,7 +35,8 @@ from core.blockchain.harvest.transaction_history import (
     create_time_interval_report_for_previous_week,
     create_time_interval_report_for_previous_month,
     calculate_report_change,
-    send_report_email
+    send_report_email,
+    get_history_for_address
 )
 
 from core.blockchain.rpc import (
@@ -440,6 +441,16 @@ def _my_assets(address, block_number):
 #     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
 #     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
 #     return HttpResponse("ok")
+
+def api_address_history(request, address):
+    if address != address.lower():
+        return redirect("api_address_history", address=address.lower())
+    history = get_history_for_address(address)
+    response = JsonResponse({
+        "history": history
+    })
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return response
 
 
 def reports(request):
