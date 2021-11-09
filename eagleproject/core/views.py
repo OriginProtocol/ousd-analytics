@@ -16,8 +16,9 @@ from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
     OUSD_CONTRACTS,
     START_OF_OUSD_V2,
-    report_stats,
-    BLOCKS_PER_DAY
+    BLOCKS_PER_DAY,
+    START_OF_OUSD_V2_TIME,
+    report_stats
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
 from core.blockchain.harvest.snapshots import (
@@ -254,7 +255,9 @@ def api_address_yield(request, address):
 
 def api_address(request):
     addresses = (
-        OusdTransfer.objects.values("to_address")
+        OusdTransfer.objects
+        .filter(block_time__gte=START_OF_OUSD_V2_TIME)
+        .values("to_address")
         .distinct()
         .values_list("to_address", flat=True)
     )

@@ -31,11 +31,12 @@ from core.blockchain.addresses import (
     VAULT,
 )
 
+START_OF_EVERYTHING = 10884500
 START_OF_EVERYTHING_TIME = datetime.strptime("18-9-2020", "%d-%m-%Y")
 # TODO: this might need adjusting
 START_OF_CURVE_CAMPAIGN_TIME = datetime.strptime("11-11-2021", "%d-%m-%Y")
-START_OF_EVERYTHING = 10884500
 START_OF_OUSD_V2 = 11596940
+START_OF_OUSD_V2_TIME = datetime.strptime("29-12-2020", "%d-%m-%Y")
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
