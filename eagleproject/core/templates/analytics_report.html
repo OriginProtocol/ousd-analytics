@@ -35,10 +35,10 @@
           <div class="col-4 black">{{report|class_value:'total_supply'}}<span style="{{change|dict_color_style:'total_supply'}}"> ({{change|dict_value:'total_supply'|floatformat:1}}%)</span></div>
           <div class="col-2 black"></div>
         </div>
-        {% for pool in pools %}
+        {% for pool in report.pools %}
           <div class="d-flex py-2 item">
             <div class="col-6">{{pool|dict_value:'name'}}</div>
-            <div class="col-4 black">{{pool|dict_value:'amount'}}</div>
+            <div class="col-4 black">{{pool|dict_value:'amount'|floatformat_rnd_down:0}}</div>
             {% if pool.is_rebasing %}
               <div class="col-2 black">Rebasing</div>
             {% else %}
@@ -46,25 +46,37 @@
             {% endif %}
           </div>
         {% endfor %}
-        <div class="d-flex py-1 item">
+        <div class="d-flex py-2 item">
           <div class="col-6">Remaining Rebasing</div>
-          <div class="col-4 black">{{json_report|dict_value:'supply_data.other_rebasing'|floatformat:0}}<span style="{{change|dict_color_style:'other_rebasing'}}"> ({{change|dict_value:'other_rebasing'|floatformat:1}}%)</span></div>
+          <div class="col-4 black">{{report|class_value:'other_rebasing'|floatformat_rnd_down:0}}<span style="{{change|dict_color_style:'other_rebasing'}}"> ({{change|dict_value:'other_rebasing'|floatformat_rnd_down:1}}%)</span></div>
           <div class="col-2 black">Rebasing</div>
         </div>
-        <div class="d-flex py-1 item">
+        <div class="d-flex py-2 item">
           <div class="col-6">Remaining Non-rebasing</div>
-          <div class="col-4 black">{{json_report|dict_value:'supply_data.other_non_rebasing'|floatformat:0}}<span style="{{change|dict_color_style:'other_non_rebasing'}}"> ({{change|dict_value:'other_non_rebasing'|floatformat:1}}%)</span></div>
+          <div class="col-4 black">{{report|class_value:'other_non_rebasing'|floatformat_rnd_down:0}}<span style="{{change|dict_color_style:'other_non_rebasing'}}"> ({{change|dict_value:'other_non_rebasing'|floatformat_rnd_down:1}}%)</span></div>
           <div class="col-2 black">Non Rebasing</div>
         </div>
       </div>
 
+      <div class="d-flex flex-column stat-table">
+        <div class="header py-2">General KPIs</div>
+        {% for statistic in stat_keys %}
+          <div class="d-flex py-2 item">
+            <div class="col-6"><b>{{stats|dict_value:statistic}}</b></div>
+            <div class="col-6 black">{{report|class_value:statistic}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat_rnd_down:1}}%)</span></div>
+          </div>
+        {% endfor %}
+      </div>
 
-      {% for statistic in stat_keys %}
-        <div class="d-flex py-1">
-          <div class="col-4"><b>{{stats|dict_value:statistic}}</b></div>
-          <div class="col-6 black">{{report|class_value:statistic}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat:1}}%)</span></div>
-        </div>
-      {% endfor %}
+      <div class="d-flex flex-column stat-table">
+        <div class="header py-2">Curve KPIs</div>
+        {% for statistic in curve_stat_keys %}
+          <div class="d-flex py-2 item">
+            <div class="col-6"><b>{{curve_stats|dict_value:statistic}}</b></div>
+            <div class="col-6 black">{{report|class_value:statistic|floatformat_rnd_down:2}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat_rnd_down:1}}%)</span></div>
+          </div>
+        {% endfor %}
+      </div>
     {% endif %}
     {% if report.transaction_report %}
       <div>
@@ -147,7 +159,7 @@
       color: #183140;
       font-size: 25px;
       font-weight: 800;
-      margin-top: 16px;
+      margin-top: 24px;
     }
 
     .stat-table .item {

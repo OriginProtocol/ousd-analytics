@@ -38,6 +38,7 @@ from datetime import (
 from core.blockchain.const import (
     START_OF_EVERYTHING_TIME,
     report_stats,
+    curve_report_stats,
     E_18,
     START_OF_CURVE_CAMPAIGN_TIME
 )
@@ -165,6 +166,8 @@ def calculate_report_change(current_report, previous_report):
         "accounts_with_non_rebase_balance_decrease": 0,
         "other_rebasing": 0,
         "other_non_rebasing": 0,
+        "curve_metapool_total_supply": 0,
+        "share_earning_curve_ogn": 0,
     }
 
     def calculate_difference(current_stat, previous_stat):
@@ -182,6 +185,9 @@ def calculate_report_change(current_report, previous_report):
     supply_data = json_report["supply_data"] if "supply_data" in json_report else None
     supply_data_previous = json_report_previous["supply_data"] if "supply_data" in json_report_previous else None
 
+    curve_data = json_report["curve_data"] if "curve_data" in json_report else None
+    curve_data_previous = json_report_previous["curve_data"] if "curve_data" in json_report_previous else None
+
     changes['total_supply'] = calculate_difference(current_report.total_supply, previous_report.total_supply)
     changes['apy'] = calculate_difference(current_report.apy, previous_report.apy)
     changes['accounts_analyzed'] = calculate_difference(current_report.accounts_analyzed, previous_report.accounts_analyzed)
@@ -195,6 +201,10 @@ def calculate_report_change(current_report, previous_report):
     if supply_data is not None and supply_data_previous is not None:
         changes['other_rebasing'] = calculate_difference(supply_data['other_rebasing'], supply_data_previous['other_rebasing'])
         changes['other_non_rebasing'] = calculate_difference(supply_data['other_non_rebasing'], supply_data_previous['other_non_rebasing'])
+
+    if curve_data is not None and curve_data_previous is not None:
+        changes['curve_metapool_total_supply'] = calculate_difference(current_report.curve_metapool_total_supply, previous_report.curve_metapool_total_supply)
+        changes['share_earning_curve_ogn'] = calculate_difference(current_report.share_earning_curve_ogn, previous_report.share_earning_curve_ogn)
 
 
     return changes
@@ -735,6 +745,8 @@ def send_report_email(summary, report, prev_report, report_type):
         'change': calculate_report_change(report, prev_report),
         'stats': report_stats,
         'stat_keys': report_stats.keys(),
+        'curve_stats': curve_report_stats,
+        'curve_stat_keys': curve_report_stats.keys(),
     }))
 
     emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")

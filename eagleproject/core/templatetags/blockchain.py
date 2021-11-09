@@ -1,4 +1,5 @@
 import pytz
+import math
 from django import template
 from django.template.defaultfilters import stringfilter
 from django.utils import timezone
@@ -12,6 +13,7 @@ from core.blockchain.harvest.transactions import (
 from core.blockchain.const import E_6, E_8, E_18
 from core.blockchain.decode import slot
 from core.logging import get_logger
+
 
 log = get_logger(__name__)
 
@@ -315,7 +317,26 @@ def dict_color_style(dictionary, stat):
     else:
         value = dictionary[stat]
 
-    if dictionary[stat] > 0:
+    if value > 0:
+         return 'color:green'
+    else:
+        return 'color:red'
+
+@register.filter
+def class_color_style(object, stat):
+    value = 0
+    if "." in stat:
+        keys = stat.split(".")
+        value = object
+        for sub_key in keys:
+            if sub_key in value:
+                value = getattr(value, sub_key)
+            else:
+                return 'color:green'
+    else:
+        value = getattr(object, stat)
+
+    if value > 0:
          return 'color:green'
     else:
         return 'color:red'
@@ -350,6 +371,18 @@ def percentage(value):
 def cotract_name(dictionary):
     short_address = "N/A" if dictionary["address"] == None else dictionary["address"][:5] + "..." + dictionary["address"][-5:]
     return dictionary["name"] if dictionary["name"] != "N/A" else short_address
+
+@register.filter
+def floatformat_rnd_down(value, decimals=2):
+    if not isinstance(decimals, int):
+        raise TypeError("decimal places must be an integer")
+    elif decimals < 0:
+        raise ValueError("decimal places has to be 0 or more")
+    elif decimals == 0:
+        return math.floor(value)
+
+    factor = 10 ** decimals
+    return math.floor(value * factor) / factor
 
 @register.filter
 def int_no_comma(value):

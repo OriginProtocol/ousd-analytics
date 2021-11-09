@@ -18,7 +18,8 @@ from core.blockchain.const import (
     START_OF_OUSD_V2,
     BLOCKS_PER_DAY,
     START_OF_OUSD_V2_TIME,
-    report_stats
+    report_stats,
+    curve_report_stats
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
 from core.blockchain.harvest.snapshots import (
@@ -449,9 +450,9 @@ def report_monthly(request, year, month):
     prev_report = _get_previous_report(report)
     stats = report_stats
     stat_keys = stats.keys()
+    curve_stats = curve_report_stats
+    curve_stat_keys = curve_stats.keys()
     is_monthly = True
-    json_report = json.loads(str(report.report))
-    pools = json_report["supply_data"]["pools"] if "supply_data" in json_report else []
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
 
@@ -462,9 +463,9 @@ def report_weekly(request, year, week):
     prev_report = _get_previous_report(report)
     stats = report_stats
     stat_keys = stats.keys()
+    curve_stats = curve_report_stats
+    curve_stat_keys = curve_stats.keys()
     is_monthly = False
-    json_report = json.loads(str(report.report))
-    pools = json_report["supply_data"]["pools"] if "supply_data" in json_report else []
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
 

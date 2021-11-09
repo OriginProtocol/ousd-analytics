@@ -308,6 +308,13 @@ class AnalyticsReport(models.Model):
             return report_json['curve_data']['earning_ogn'] if 'curve_data' in report_json else None
         elif name == 'apy':
             return report_json['apy']
+        elif name == 'pools':
+            return report_json["supply_data"]["pools"] if "supply_data" in report_json else []
+        elif name == 'other_rebasing':
+            return report_json["supply_data"]["other_rebasing"] if "supply_data" in report_json else []
+        elif name == 'other_non_rebasing':
+            return report_json["supply_data"]["other_non_rebasing"] if "supply_data" in report_json else []
+
 
 class AaveLendingPoolCoreSnapshot(models.Model):
     """ Snapshot of Aave's LendingPoolCore (v1) """

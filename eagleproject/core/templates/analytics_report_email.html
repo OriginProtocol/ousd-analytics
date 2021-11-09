@@ -22,22 +22,77 @@
 
     <h2>{{type}} Analytics Report</h2>
     <h4>
-        <a
-          href="https://analytics.ousd.com/reports"
-        >
-            start time: {{report.start_time}} end time: {{report.end_time}}
-        </a>
+        {% if type == 'Weekly' %}
+          <a
+            href="https://analytics.ousd.com/reports/weekly/{{report.year|int_no_comma}}/{{report.week|int_no_comma}}"
+          >
+              start time: {{report.start_time}} end time: {{report.end_time}}
+          </a>
+        {% else %}
+          <a
+            href="https://analytics.ousd.com/reports/monthly/{{report.year|int_no_comma}}/{{report.month|int_no_comma}}"
+          >
+              start time: {{report.start_time}} end time: {{report.end_time}}
+          </a>
+        {% endif %}
     </h4>
 
     <table>
         <tr>
-            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Stat</td>
-            <td style="min-width:120px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Value</td>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Supply</td>
+            <td style="min-width:120px;background-color:black;color:white;font-weight:bold;padding:2px 8px"></td>
+            <td style="min-width:120px;background-color:black;color:white;font-weight:bold;padding:2px 8px"></td>
+        </tr>
+        <tr>
+            <td>Total Supply</td>
+            <td>{{report|class_value:'total_supply'}}<span style="{{change|dict_color_style:'total_supply'}}"> ({{change|dict_value:'total_supply'|floatformat_rnd_down:1}}%)</span></td>
+            <td></td>
+        </tr>
+        {% for pool in report.pools %}
+        <tr>
+            <td>{{pool|dict_value:'name'}}</td>
+            <td>{{pool|dict_value:'amount'|floatformat_rnd_down:0}}</td>
+            {% if pool.is_rebasing %}
+              <td>Rebasing</td>
+            {% else %}
+              <td>Non Rebasing</td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+        <tr>
+            <td>Remaining Rebasing</td>
+            <td>{{report|class_value:'other_rebasing'|floatformat_rnd_down:0}}<span style="{{change|dict_color_style:'other_rebasing'}}"> ({{change|dict_value:'other_rebasing'|floatformat_rnd_down:1}}%)</span></td>
+            <td>Rebasing</td>
+        </tr>
+        <tr>
+            <td>Remaining Non-rebasing</td>
+            <td>{{report|class_value:'other_non_rebasing'|floatformat_rnd_down:0}}<span style="{{change|dict_color_style:'other_non_rebasing'}}"> ({{change|dict_value:'other_non_rebasing'|floatformat_rnd_down:1}}%)</span></td>
+            <td>Non Rebasing</td>
+        </tr>
+    </table>
+
+    <table>
+        <tr>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">General KPIs</td>
+            <td style="min-width:120px;background-color:black;color:white;font-weight:bold;padding:2px 8px"></td>
         </tr>
         {% for statistic in stat_keys %}
         <tr>
             <td>{{stats|dict_value:statistic}}</td>
-            <td>{{report|class_value:statistic}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat:1}}%)</span></td>
+            <td>{{report|class_value:statistic}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat_rnd_down:1}}%)</span></td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <table>
+        <tr>
+            <td style="min-width:300px;background-color:black;color:white;font-weight:bold;padding:2px 8px">Curve KPIs</td>
+            <td style="min-width:120px;background-color:black;color:white;font-weight:bold;padding:2px 8px"></td>
+        </tr>
+        {% for statistic in curve_stats %}
+        <tr>
+            <td>{{curve_stats|dict_value:statistic}}</td>
+            <td>{{report|class_value:statistic|floatformat_rnd_down:2}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat_rnd_down:1}}%)</span></td>
         </tr>
         {% endfor %}
     </table>
@@ -61,7 +116,7 @@
               </a>
             </td>
             <td><b>{{data|dict_value:"total_swaps"|int_no_comma}}</b></td>
-            <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></td>
+            <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat_rnd_down:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat_rnd_down:1}}%)</b></td>
           </tr>
           {% endfor %}
         </table>
@@ -84,7 +139,7 @@
                 </a>
               </td>
               <td><b>{{data|dict_value:"total_transactions"|int_no_comma}}</b></td>
-              <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></td>
+              <td><b>{{data|dict_value:"total_ousd_swapped"|floatformat_rnd_down:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat_rnd_down:1}}%)</b></td>
             </tr>
           {% endfor %}
           </table>
