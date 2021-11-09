@@ -302,8 +302,20 @@ def color_style(value):
         return 'color:red'
 
 @register.filter
-def dict_color_style(dict, stat):
-    if dict[stat] > 0:
+def dict_color_style(dictionary, stat):
+    value = 0
+    if "." in stat:
+        keys = stat.split(".")
+        value = dictionary
+        for sub_key in keys:
+            if sub_key in value:
+                value = value[sub_key]
+            else:
+                return 'color:green'
+    else:
+        value = dictionary[stat]
+
+    if dictionary[stat] > 0:
          return 'color:green'
     else:
         return 'color:red'
@@ -318,7 +330,17 @@ def dict_value(dictionary, key):
     default = ""
     if "," in key:
         key, default = key.split(",")
-    return dictionary[key] if key in dictionary else default
+    if "." in key:
+        keys = key.split(".")
+        current_value = dictionary
+        for sub_key in keys:
+            if sub_key in current_value:
+                current_value = current_value[sub_key]
+            else:
+                return default
+        return current_value
+    else:
+        return dictionary[key] if key in dictionary else default
 
 @register.filter
 def percentage(value):

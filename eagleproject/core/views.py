@@ -450,6 +450,8 @@ def report_monthly(request, year, month):
     stats = report_stats
     stat_keys = stats.keys()
     is_monthly = True
+    json_report = json.loads(str(report.report))
+    pools = json_report["supply_data"]["pools"] if "supply_data" in json_report else []
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
 
@@ -461,6 +463,8 @@ def report_weekly(request, year, week):
     stats = report_stats
     stat_keys = stats.keys()
     is_monthly = False
+    json_report = json.loads(str(report.report))
+    pools = json_report["supply_data"]["pools"] if "supply_data" in json_report else []
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
 
