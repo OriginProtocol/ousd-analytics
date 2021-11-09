@@ -115,7 +115,6 @@ FALSE_256BIT = "0x00000000000000000000000000000000000000000000000000000000000000
 TRUE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000001"
 
 report_stats = {
-    'total_supply': 'Total supply',
     'apy': 'Apy',
     'accounts_analyzed': 'Accounts processed',
     'accounts_holding_ousd': 'Accounts holding OUSD',
@@ -123,6 +122,11 @@ report_stats = {
     'new_accounts': 'New (first time seen) accounts',
     'accounts_with_non_rebase_balance_increase': 'Accounts with balance increased',
     'accounts_with_non_rebase_balance_decrease': 'Accounts with balance decreased',
-    'accounts_holding_more_than_100_ousd_after_curve_start': 'Accounts holding over 100 OUSD (after Curve campaign)',
-    'new_accounts_after_curve_start': 'New (first time seen, after Curve campaign) accounts',
+}
+
+curve_report_stats = {
+    'accounts_holding_more_than_100_ousd_after_curve_start': 'Accounts holding over 100 OUSD after campaign start',
+    'new_accounts_after_curve_start': 'New accounts after campaign start',
+    'curve_metapool_total_supply': 'Curve pool supply',
+    'share_earning_curve_ogn': 'Share earning OGN',
 }
