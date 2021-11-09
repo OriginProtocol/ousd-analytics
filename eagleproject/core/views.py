@@ -428,6 +428,43 @@ def _my_assets(address, block_number):
 #     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
 #     return HttpResponse("ok")
 
+def _get_previous_report(report, all_reports=None):
+    is_monthly = report.month is not None
+
+    if (is_monthly):
+        all_reports = all_reports if all_reports is not None else AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
+        prev_year = report.year - 1 if report.month == 1 else report.year
+        prev_month = 12 if report.month == 1 else report.month - 1
+        prev_report = list(filter(lambda report: report.month == prev_month and report.year == prev_year, all_reports))
+        return prev_report[0] if len(prev_report) > 0 else None
+    else:
+        all_reports = all_reports if all_reports is not None else AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+        prev_year = report.year - 1 if report.week == 0 else report.year
+        prev_week = 53 if report.week == 0 else report.week - 1
+        prev_report = list(filter(lambda report: report.week == prev_week and report.year == prev_year, all_reports))
+        return prev_report[0] if len(prev_report) > 0 else None
+
+def report_monthly(request, year, month):
+    report = AnalyticsReport.objects.filter(month=month, year=year)[0]
+    prev_report = _get_previous_report(report)
+    stats = report_stats
+    stat_keys = stats.keys()
+    is_monthly = True
+    change = calculate_report_change(report, prev_report)
+    report.transaction_report = json.loads(str(report.transaction_report))
+
+    return render(request, "analytics_report.html", locals())
+
+def report_weekly(request, year, week):
+    report = AnalyticsReport.objects.filter(week=week, year=year)[0]
+    prev_report = _get_previous_report(report)
+    stats = report_stats
+    stat_keys = stats.keys()
+    is_monthly = False
+    change = calculate_report_change(report, prev_report)
+    report.transaction_report = json.loads(str(report.transaction_report))
+
+    return render(request, "analytics_report.html", locals())
 
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
@@ -437,19 +474,13 @@ def reports(request):
 
     enriched_monthly_reports = []
     for monthly_report in monthly_reports:
-        prev_year = monthly_report.year - 1 if monthly_report.month == 1 else monthly_report.year
-        prev_month = 12 if monthly_report.month == 1 else monthly_report.month - 1
-        prev_report = list(filter(lambda report: report.month == prev_month and report.year == prev_year, monthly_reports))
-        prev_report = prev_report[0] if len(prev_report) > 0 else None
+        prev_report = _get_previous_report(monthly_report, monthly_reports)
         monthly_report.transaction_report = json.loads(str(monthly_report.transaction_report))
         enriched_monthly_reports.append((monthly_report, calculate_report_change(monthly_report, prev_report)))
 
     enriched_weekly_reports = []
     for weekly_report in weekly_reports:
-        prev_year = weekly_report.year - 1 if weekly_report.week == 0 else weekly_report.year
-        prev_week = 53 if weekly_report.week == 0 else weekly_report.week - 1
-        prev_report = list(filter(lambda report: report.week == prev_week and report.year == prev_year, weekly_reports))
-        prev_report = prev_report[0] if len(prev_report) > 0 else None
+        prev_report = _get_previous_report(weekly_report, weekly_reports)
         weekly_report.transaction_report = json.loads(str(weekly_report.transaction_report))
         enriched_weekly_reports.append((weekly_report, calculate_report_change(weekly_report, prev_report), ))
 
