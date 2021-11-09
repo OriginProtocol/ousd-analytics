@@ -32,4 +32,3 @@ def ensure_block(block_number):
         print("Warning: caught an error trying to save 2 blocks with the same block_number")
 
     return block
-

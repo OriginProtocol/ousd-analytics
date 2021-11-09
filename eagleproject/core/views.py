@@ -8,9 +8,6 @@ from django.db.models import Q
 from core.blockchain.addresses import (
     OUSD,
     USDT,
-    OUSD_USDT_UNISWAP,
-    OUSD_USDT_SUSHI,
-    COMPENSATION_CLAIMS,
     STRAT3POOL,
     STRATCOMP,
     STRATAAVEDAI,
@@ -19,12 +16,21 @@ from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
     OUSD_CONTRACTS,
     START_OF_OUSD_V2,
-    report_stats
+    report_stats,
+    BLOCKS_PER_DAY
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
 from core.blockchain.harvest.snapshots import (
     ensure_asset,
     ensure_supply_snapshot,
+    latest_snapshot,
+    latest_snapshot_block_number,
+    calculate_snapshot_data
+)
+from core.blockchain.apy import (
+    get_trailing_apr,
+    get_trailing_apy,
+    to_apy
 )
 from core.blockchain.harvest.transactions import (
     get_internal_transactions,
@@ -54,11 +60,9 @@ import json
 
 log = get_logger(__name__)
 
-BLOCKS_PER_DAY = 6500
-
 
 def dashboard(request):
-    block_number = _latest_snapshot_block_number()
+    block_number = latest_snapshot_block_number()
 
     # These probably won't harvest since block_number comes from snapshots
     dai = ensure_asset("DAI", block_number)
@@ -66,7 +70,7 @@ def dashboard(request):
     usdc = ensure_asset("USDC", block_number)
     comp = ensure_asset("COMP", block_number)
 
-    apy = _get_trailing_apy()
+    apy = get_trailing_apy()
 
     assets = [dai, usdt, usdc]
     total_vault = sum(x.vault_holding for x in assets)
@@ -181,44 +185,24 @@ def fetch_transactions(request):
 
 
 def apr_index(request):
-    latest_block_number = _latest_snapshot_block_number()
+    latest_block_number = latest_snapshot_block_number()
     rows = _daily_rows(30, latest_block_number)
-    apy = _get_trailing_apy()
+    apy = get_trailing_apy()
     return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
 
 def supply(request):
-    pools_config = [
-        ("Uniswap OUSD/USDT", OUSD_USDT_UNISWAP, False),
-        ("Sushi OUSD/USDT", OUSD_USDT_SUSHI, False),
-        ("OUSD Compensation", COMPENSATION_CLAIMS, False),
-    ]
-    pools = []
-    totals_by_rebasing = {True: Decimal(0), False: Decimal(0)}
-    for name, address, is_rebasing in pools_config:
-        amount = balanceOf(OUSD, address, 18)
-        pools.append(
-            {
-                "name": name,
-                "amount": amount,
-                "is_rebasing": is_rebasing,
-            }
-        )
-        totals_by_rebasing[is_rebasing] += amount
-    pools = sorted(pools, key=lambda pool: 0-pool["amount"])
+    [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, s] = calculate_snapshot_data()
 
-    s = _latest_snapshot()
-    other_rebasing = s.rebasing_reported_supply() - totals_by_rebasing[True]
-    other_non_rebasing = s.non_rebasing_reported_supply() - totals_by_rebasing[False]
-
-    return _cache(30, render(request, "supply.html", locals()))
+    #return _cache(30, render(request, "supply.html", locals()))
+    return render(request, "supply.html", locals())
 
 
 def api_apr_trailing(request):
-    apr = _get_trailing_apr()
+    apr = get_trailing_apr()
     if apr < 0:
         apr = "0"
-    apy = _get_trailing_apy()
+    apy = get_trailing_apy()
     if apy < 0:
         apy = 0
     response = JsonResponse({"apr": apr, "apy": apy})
@@ -226,13 +210,13 @@ def api_apr_trailing(request):
     return _cache(120, response)
 
 def api_apr_history(request):
-    apr = _get_trailing_apr()
+    apr = get_trailing_apr()
     if apr < 0:
         apr = "0"
-    apy = _get_trailing_apy()
+    apy = get_trailing_apy()
     if apy < 0:
         apy = 0
-    latest_block_number = _latest_snapshot_block_number()
+    latest_block_number = latest_snapshot_block_number()
     days = _daily_rows(8, latest_block_number)
     response = JsonResponse({
         "apr": apr,
@@ -248,7 +232,7 @@ def api_speed_test(request):
 
 
 def api_ratios(request):
-    s = _latest_snapshot()
+    s = latest_snapshot()
     response = JsonResponse({
         "current_credits_per_token": s.rebasing_credits_per_token,
         "next_credits_per_token": Decimal(1.0) / s.rebasing_credits_ratio,
@@ -376,7 +360,7 @@ def address(request, address):
 
 def _address_transfers(address):
     long_address = address.replace("0x", "0x000000000000000000000000")
-    latest_block_number = _latest_snapshot_block_number()
+    latest_block_number = latest_snapshot_block_number()
     # We want to avoid the case where the listener hasn't picked up a
     # transactions yet, but the user's balance has increased or decreased
     # due to a transfer. This would make a hugely wrong lifetime earned amount
@@ -436,10 +420,10 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
-# def test_email(request):
-#     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
-#     return HttpResponse("ok")
+def test_email(request):
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+    return HttpResponse("ok")
 
 
 def reports(request):
@@ -467,7 +451,7 @@ def reports(request):
         enriched_weekly_reports.append((weekly_report, calculate_report_change(weekly_report, prev_report), ))
 
     return render(request, "analytics_reports.html", locals())
-
+    
 def backfill_internal_transactions(request):
     transactions = Transaction.objects.filter(internal_transactions={})[:6000]
     total = len(transactions)
@@ -493,14 +477,6 @@ def _cache(seconds, response):
     return response
 
 
-def _latest_snapshot():
-    return SupplySnapshot.objects.order_by("-block_number")[0]
-
-
-def _latest_snapshot_block_number():
-    return _latest_snapshot().block_number
-
-
 def _daily_rows(steps, latest_block_number):
     STEP = BLOCKS_PER_DAY
     end_block_number = latest_block_number - (latest_block_number % STEP)
@@ -520,8 +496,8 @@ def _daily_rows(steps, latest_block_number):
                 s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio
             ) - Decimal(1)
             s.apr = Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
-            s.apy = _to_apy(s.apr, 1)
-            s.unboosted = _to_apy((s.computed_supply - s.non_rebasing_supply) / s.computed_supply * s.apr, 1)
+            s.apy = to_apy(s.apr, 1)
+            s.unboosted = to_apy((s.computed_supply - s.non_rebasing_supply) / s.computed_supply * s.apr, 1)
             s.gain = change * (s.computed_supply - s.non_rebasing_supply)
         rows.append(s)
         last_snapshot = s
@@ -529,53 +505,6 @@ def _daily_rows(steps, latest_block_number):
     # drop last row with incomplete information
     rows = rows[:-1]
     return rows
-
-PREV_APR = None
-
-
-def _get_trailing_apr():
-    """
-    Calculates the APR by using the OUSD rebase ratio. 
-
-    This has the upside that it's simple to calculate and exactly matches 
-    user's balance changes. 
-
-    It has the downside that the number it pulls from only gets updated
-    on rebases, making this method less acurate. It's bit iffy using it
-    on only one day, but that's the data we have at the moment.
-    """
-    days = 30.00
-
-    # Check cache first
-    global PREV_APR
-    if PREV_APR:
-        good_to, apr = PREV_APR
-        if good_to > datetime.datetime.today():
-            return apr
-
-    # Calculate
-    block = _latest_snapshot_block_number()
-    current = rebasing_credits_per_token(block)
-    past = rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
-    ratio = Decimal(float(past) / float(current))
-    apr = ((ratio - Decimal(1)) * Decimal(100) * Decimal(365.25) / Decimal(days))
-
-    # Save to cache
-    good_to = datetime.datetime.today() + datetime.timedelta(minutes=5)
-    PREV_APR = [good_to, apr]
-    return apr
-
-
-def _get_trailing_apy():
-    apr = Decimal(_get_trailing_apr())
-    apy = _to_apy(apr, 30.0)
-    return round(apy, 2)
-
-def _to_apy(apr, days):
-    periods_per_year = Decimal(365.25 / days)
-    return ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
-
-
 
 def staking_stats(request):
     with connection.cursor() as cursor:
@@ -616,7 +545,7 @@ def staking_stats_by_duration(request):
 def coingecko_pools(request):
     """ API for CoinGecko to consume to get details about OUSD and OGN """
     ousd_liquidity = totalSupply(OUSD, 18)
-    ousd_apy = _get_trailing_apy()
+    ousd_apy = get_trailing_apy()
     ogn_stats = active_stake_stats()
     ogn_30_liquidity = 0
     ogn_90_liquidity = 0
