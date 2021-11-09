@@ -29,7 +29,7 @@ urlpatterns = [
     path("reports/do-weekly", core_views.make_weekly_report),
     path("reports/do-monthly/<int:month>", core_views.make_specific_month_report),
     path("reports/do-weekly/<int:week>", core_views.make_specific_week_report),
-    path("reports/test_email", core_views.test_email),
+    #path("reports/test_email", core_views.test_email),
     path("address/<slug:address>", core_views.address, name="address"),
     path("apy", core_views.apr_index, name="apy"),
     path("apr", RedirectView.as_view(pattern_name="apy", permanent=True)),

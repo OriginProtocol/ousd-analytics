@@ -423,10 +423,10 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
-def test_email(request):
-    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-    send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
-    return HttpResponse("ok")
+# def test_email(request):
+#     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     return HttpResponse("ok")
 
 
 def reports(request):

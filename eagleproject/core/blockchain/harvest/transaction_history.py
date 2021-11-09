@@ -66,9 +66,7 @@ from core.blockchain.addresses import (
 
 import simplejson as json
 
-# TODO CHANGE BACK
-ACCOUNT_ANALYZE_PARALLELISM=70
-#ACCOUNT_ANALYZE_PARALLELISM=30
+ACCOUNT_ANALYZE_PARALLELISM=30
 
 class rebase_log:
     # block_number
@@ -469,20 +467,20 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     curve_data = get_curve_data(to_block)
 
     # Uncomment this to enable parallelism
-    manager = Manager()
-    analysis_list = manager.list()
-    counter = 0
-
-    all_chunks = chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM)
-    for chunk in all_chunks:
-        analyze_account_in_parallel(analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
-        counter += 1
-
+    # manager = Manager()
+    # analysis_list = manager.list()
     # counter = 0
-    # for account in all_addresses:
-    #     analyze_account(analysis_list, account, rebase_logs, from_block, to_block, from_block_time, to_block_time)
-    #     print('Analyzing account {} of {}'.format(counter, len(all_addresses)))
+
+    # all_chunks = chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM)
+    # for chunk in all_chunks:
+    #     analyze_account_in_parallel(analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
     #     counter += 1
+
+    counter = 0
+    for account in all_addresses:
+        analyze_account(analysis_list, account, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+        print('Analyzing account {} of {}'.format(counter, len(all_addresses)))
+        counter += 1
 
 
     accounts_analyzed = len(analysis_list)
@@ -553,9 +551,6 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
     is_new_after_curve_start = len(pre_curve_campaign_transfer_logs) == 0
     new_after_curve_and_hold_more_than_100 = is_holding_more_than_100_ousd and is_new_after_curve_start
     non_rebase_balance_diff = 0
-
-    #TODO: 
-    #‣ Non-campaign adoption - how many unique Ethereum accounts obtained OUSD after the campaign started and are still holding 100+ OUSD outside of Curve
 
     for tansfer_log in filter(lambda log: isinstance(log, transfer_log), transaction_history):
         non_rebase_balance_diff += tansfer_log.amount
