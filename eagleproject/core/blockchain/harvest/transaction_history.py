@@ -26,6 +26,10 @@ from core.blockchain.rpc import (
 )
 from core.blockchain.rpc import (
     balanceOf,
+    totalSupply
+)
+from core.blockchain.apy import (
+    get_trailing_apy,
 )
 from datetime import (
     datetime,
@@ -34,11 +38,16 @@ from datetime import (
 from core.blockchain.const import (
     START_OF_EVERYTHING_TIME,
     report_stats,
-    E_18
+    E_18,
+    START_OF_CURVE_CAMPAIGN_TIME
 )
 
 from core.blockchain.utils import (
     chunks,
+)
+from core.blockchain.harvest.snapshots import (
+    ensure_supply_snapshot,
+    calculate_snapshot_data
 )
 
 import calendar
@@ -49,11 +58,15 @@ from core.channels.email import (
 from django.template.loader import render_to_string
 from django.conf import settings
 from core.blockchain.decode import slot
-from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
+from core.blockchain.addresses import (
+    CONTRACT_ADDR_TO_NAME,
+    CURVE_METAPOOL,
+    CURVE_METAPOOL_GAUGE,
+)
+
 import simplejson as json
 
 ACCOUNT_ANALYZE_PARALLELISM=30
-#ACCOUNT_ANALYZE_PARALLELISM=30
 
 class rebase_log:
     # block_number
@@ -82,27 +95,48 @@ class transfer_log:
 
 class address_analytics:
     # OUSD increasing/decreasing is ignoring rebase events
-    def __init__(self, is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, has_ousd_increased, has_ousd_decreased):
+    def __init__(self, is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, has_ousd_increased, has_ousd_decreased, is_new_after_curve_start, new_after_curve_and_hold_more_than_100):
         self.is_holding_ousd = is_holding_ousd
         self.is_holding_more_than_100_ousd = is_holding_more_than_100_ousd
         self.is_new_account = is_new_account
         self.has_ousd_increased = has_ousd_increased
         self.has_ousd_decreased = has_ousd_decreased
+        self.is_new_after_curve_start = is_new_after_curve_start
+        self.new_after_curve_and_hold_more_than_100 = new_after_curve_and_hold_more_than_100
 
     def __str__(self):
-        return 'address_analytics: is_holding_ousd: {self.is_holding_ousd} is_holding_more_than_100_ousd: {self.is_holding_more_than_100_ousd} is_new_account: {self.is_new_account} has_ousd_increased: {self.has_ousd_increased} has_ousd_decreased: {self.has_ousd_decreased}'.format(self=self)
+        return 'address_analytics: is_holding_ousd: {self.is_holding_ousd} is_holding_more_than_100_ousd: {self.is_holding_more_than_100_ousd} is_new_account: {self.is_new_account} has_ousd_increased: {self.has_ousd_increased} has_ousd_decreased: {self.has_ousd_decreased} is_new_after_curve_start: {self.is_new_after_curve_start} new_after_curve_and_hold_more_than_100: {self.new_after_curve_and_hold_more_than_100}'.format(self=self)
+
 
 class analytics_report:
-    def __init__(self, accounts_analyzed, accounts_holding_ousd, accounts_holding_more_than_100_ousd, new_accounts, accounts_with_non_rebase_balance_increase, accounts_with_non_rebase_balance_decrease):
+    def __init__(
+        self,
+        accounts_analyzed,
+        accounts_holding_ousd,
+        accounts_holding_more_than_100_ousd,
+        accounts_holding_more_than_100_ousd_after_curve_start,
+        new_accounts,
+        new_accounts_after_curve_start,
+        accounts_with_non_rebase_balance_increase,
+        accounts_with_non_rebase_balance_decrease,
+        supply_data,
+        apy,
+        curve_data
+    ):
         self.accounts_analyzed = accounts_analyzed
         self.accounts_holding_ousd = accounts_holding_ousd
         self.accounts_holding_more_than_100_ousd = accounts_holding_more_than_100_ousd
+        self.accounts_holding_more_than_100_ousd_after_curve_start = accounts_holding_more_than_100_ousd_after_curve_start
         self.new_accounts = new_accounts
+        self.new_accounts_after_curve_start = new_accounts_after_curve_start
         self.accounts_with_non_rebase_balance_increase = accounts_with_non_rebase_balance_increase
         self.accounts_with_non_rebase_balance_decrease = accounts_with_non_rebase_balance_decrease
+        self.supply_data = supply_data
+        self.apy = apy
+        self.curve_data = curve_data
 
     def __str__(self):
-        return 'Analytics report: accounts_analyzed: {} accounts_holding_ousd: {} accounts_holding_more_than_100_ousd: {} new_accounts: {} accounts_with_non_rebase_balance_increase: {} accounts_with_non_rebase_balance_decrease: {}'.format(self.accounts_analyzed, self.accounts_holding_ousd, self.accounts_holding_more_than_100_ousd, self.new_accounts, self.accounts_with_non_rebase_balance_increase, self.accounts_with_non_rebase_balance_decrease)
+        return 'Analytics report: accounts_analyzed: {} accounts_holding_ousd: {} accounts_holding_more_than_100_ousd: {} accounts_holding_more_than_100_ousd_after_curve_start: {} new_accounts: {} new_accounts_after_curve_start: {} accounts_with_non_rebase_balance_increase: {} accounts_with_non_rebase_balance_decrease: {} apy: {} supply_data: {} curve_data: {}'.format(self.accounts_analyzed, self.accounts_holding_ousd, self.accounts_holding_more_than_100_ousd, self.accounts_holding_more_than_100_ousd_after_curve_start, self.new_accounts, self.new_accounts_after_curve_start, self.accounts_with_non_rebase_balance_increase, self.accounts_with_non_rebase_balance_decrease, self.apy, self.supply_data, self.curve_data)
 
 # get first available block from the given time.
 # Ascending=True -> closest youngest block
@@ -119,16 +153,20 @@ def get_block_number_from_block_time(time, ascending = False):
 
 def calculate_report_change(current_report, previous_report):
     changes = {
+        "total_supply": 0,
+        "apy": 0,
         "accounts_analyzed": 0,
         "accounts_holding_ousd": 0,
         "accounts_holding_more_than_100_ousd": 0,
+        "accounts_holding_more_than_100_ousd_after_curve_start": 0,
         "new_accounts": 0,
+        "new_accounts_after_curve_start": 0,
         "accounts_with_non_rebase_balance_increase": 0,
         "accounts_with_non_rebase_balance_decrease": 0
     }
 
     def calculate_difference(current_stat, previous_stat):
-        if previous_stat == 0:
+        if previous_stat == 0 or previous_stat is None:
             return 0
 
         return (current_stat - previous_stat) / previous_stat * 100
@@ -136,10 +174,14 @@ def calculate_report_change(current_report, previous_report):
     if previous_report is None:
         return changes
 
+    changes['total_supply'] = calculate_difference(current_report.total_supply, previous_report.total_supply)
+    changes['apy'] = calculate_difference(current_report.apy, previous_report.apy)
     changes['accounts_analyzed'] = calculate_difference(current_report.accounts_analyzed, previous_report.accounts_analyzed)
     changes['accounts_holding_ousd'] = calculate_difference(current_report.accounts_holding_ousd, previous_report.accounts_holding_ousd)
     changes['accounts_holding_more_than_100_ousd'] = calculate_difference(current_report.accounts_holding_more_than_100_ousd, previous_report.accounts_holding_more_than_100_ousd)
+    changes['accounts_holding_more_than_100_ousd_after_curve_start'] = calculate_difference(current_report.accounts_holding_more_than_100_ousd_after_curve_start, previous_report.accounts_holding_more_than_100_ousd_after_curve_start)
     changes['new_accounts'] = calculate_difference(current_report.new_accounts, previous_report.new_accounts)
+    changes['new_accounts_after_curve_start'] = calculate_difference(current_report.new_accounts_after_curve_start, previous_report.new_accounts_after_curve_start)
     changes['accounts_with_non_rebase_balance_increase'] = calculate_difference(current_report.accounts_with_non_rebase_balance_increase, previous_report.accounts_with_non_rebase_balance_increase)
     changes['accounts_with_non_rebase_balance_decrease'] = calculate_difference(current_report.accounts_with_non_rebase_balance_decrease, previous_report.accounts_with_non_rebase_balance_decrease)
 
@@ -147,6 +189,7 @@ def calculate_report_change(current_report, previous_report):
 
 def upsert_report(week_option, month_option, year, status, report, block_start_number, block_end_number, start_time, end_time, do_only_transaction_analytics, transaction_report):
     analyticsReport = None
+
     params = {
         "block_start": block_start_number,
         "block_end": block_end_number,
@@ -158,10 +201,13 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
         "accounts_analyzed": report.accounts_analyzed if report is not None else 0,
         "accounts_holding_ousd": report.accounts_holding_ousd if report is not None else 0,
         "accounts_holding_more_than_100_ousd": report.accounts_holding_more_than_100_ousd if report is not None else 0,
+        "accounts_holding_more_than_100_ousd_after_curve_start": report.accounts_holding_more_than_100_ousd_after_curve_start if report is not None else 0,
         "new_accounts": report.new_accounts if report is not None else 0,
+        "new_accounts_after_curve_start": report.new_accounts_after_curve_start if report is not None else 0,
         "accounts_with_non_rebase_balance_increase": report.accounts_with_non_rebase_balance_increase if report is not None else 0,
         "accounts_with_non_rebase_balance_decrease": report.accounts_with_non_rebase_balance_decrease if report is not None else 0,
-        "transaction_report": transaction_report
+        "transaction_report": transaction_report,
+        "report": json.dumps(report.__dict__) if report is not None else '[]'
     }
 
     if do_only_transaction_analytics:
@@ -382,6 +428,26 @@ def fetch_all_holders():
     from_addresses = list(map(lambda log: log['from_address'], OusdTransfer.objects.values('from_address').distinct()))
     return list(set(filter(lambda address: address not in ['0x0000000000000000000000000000000000000000', '0x000000000000000000000000000000000000dead'], to_addresses + from_addresses)))
 
+def fetch_supply_data(block_number):
+    ensure_supply_snapshot(block_number)
+    [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
+
+    return {
+        'total_supply': snapshot.reported_supply,
+        'pools': pools,
+        'totals_by_rebasing': totals_by_rebasing,
+        'other_rebasing': other_rebasing,
+        'other_non_rebasing': other_non_rebasing,
+    }
+
+def get_curve_data(to_block):
+    balance = balanceOf(CURVE_METAPOOL, CURVE_METAPOOL_GAUGE, 18, to_block)
+    supply = totalSupply(CURVE_METAPOOL, 18, to_block)
+    return {
+        "total_supply": supply,
+        "earning_ogn": balance/supply,
+    }
+
 def create_time_interval_report(from_block, to_block, from_block_time, to_block_time):
     decimal_context = getcontext()
     decimal_prec = decimal_context.prec
@@ -396,12 +462,17 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     rebase_logs = get_rebase_logs(from_block, to_block)
     analysis_list = []
 
+    supply_data = fetch_supply_data(to_block)
+    apy = get_trailing_apy(to_block)
+    curve_data = get_curve_data(to_block)
+
     # Uncomment this to enable parallelism
     # manager = Manager()
     # analysis_list = manager.list()
-
     # counter = 0
-    # for chunk in chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM):
+
+    # all_chunks = chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM)
+    # for chunk in all_chunks:
     #     analyze_account_in_parallel(analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
     #     counter += 1
 
@@ -415,14 +486,18 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     accounts_analyzed = len(analysis_list)
     accounts_holding_ousd = 0
     accounts_holding_more_than_100_ousd = 0
+    accounts_holding_more_than_100_ousd_after_curve_start = 0
     new_accounts = 0
+    new_accounts_after_curve_start = 0
     accounts_with_non_rebase_balance_increase = 0
     accounts_with_non_rebase_balance_decrease = 0
 
     for analysis in analysis_list:
         accounts_holding_ousd += 1 if analysis.is_holding_ousd else 0
         accounts_holding_more_than_100_ousd += 1 if analysis.is_holding_more_than_100_ousd else 0
+        accounts_holding_more_than_100_ousd_after_curve_start += 1 if analysis.new_after_curve_and_hold_more_than_100 else 0
         new_accounts += 1 if analysis.is_new_account else 0
+        new_accounts_after_curve_start += 1 if analysis.is_new_after_curve_start else 0
         accounts_with_non_rebase_balance_increase += 1 if analysis.has_ousd_increased else 0
         accounts_with_non_rebase_balance_decrease += 1 if analysis.has_ousd_decreased else 0
 
@@ -432,9 +507,14 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         accounts_analyzed,
         accounts_holding_ousd,
         accounts_holding_more_than_100_ousd,
+        accounts_holding_more_than_100_ousd_after_curve_start,
         new_accounts,
+        new_accounts_after_curve_start,
         accounts_with_non_rebase_balance_increase,
-        accounts_with_non_rebase_balance_decrease
+        accounts_with_non_rebase_balance_decrease,
+        supply_data,
+        apy,
+        curve_data
     )
 
     # set the values back again
@@ -463,18 +543,20 @@ def analyze_account_in_parallel(analysis_list, accounts_already_analyzed, total_
         p.join()
 
 def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, from_block_time, to_block_time):
-    (transaction_history, previous_transfer_logs, ousd_balance) = ensure_transaction_history(address, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+    (transaction_history, previous_transfer_logs, ousd_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs) = ensure_transaction_history(address, rebase_logs, from_block, to_block, from_block_time, to_block_time)
 
     is_holding_ousd = ousd_balance > 0.1
     is_holding_more_than_100_ousd = ousd_balance > 100
     is_new_account = len(previous_transfer_logs) == 0
+    is_new_after_curve_start = len(pre_curve_campaign_transfer_logs) == 0
+    new_after_curve_and_hold_more_than_100 = is_holding_more_than_100_ousd and is_new_after_curve_start
     non_rebase_balance_diff = 0
 
     for tansfer_log in filter(lambda log: isinstance(log, transfer_log), transaction_history):
         non_rebase_balance_diff += tansfer_log.amount
 
     analysis_list.append(
-        address_analytics(is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, non_rebase_balance_diff > 0, non_rebase_balance_diff < 0)
+        address_analytics(is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, non_rebase_balance_diff > 0, non_rebase_balance_diff < 0, is_new_after_curve_start, new_after_curve_and_hold_more_than_100)
     )
 
 def classify_transaction(transaction):
@@ -652,6 +734,8 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
 
     previous_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, from_block_time)
     transfer_logs = get_transfer_logs(account, from_block_time, to_block_time)
+    pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME)
+    post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time)
     credit_balance, credits_per_token = creditsBalanceOf(account, to_block)
     ousd_balance = calculate_balance(credit_balance, credits_per_token)
 
@@ -659,6 +743,6 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     # sort transfer and rebase logs by block number descending
     balance_logs.sort(key=lambda log: -log.block_number)
     balance_logs = enrich_transfer_logs(balance_logs)
-    return (ensure_ousd_balance(credit_balance, balance_logs), previous_transfer_logs, ousd_balance)
+    return (ensure_ousd_balance(credit_balance, balance_logs), previous_transfer_logs, ousd_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
     
 

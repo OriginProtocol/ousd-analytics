@@ -14,6 +14,9 @@ from core.blockchain.addresses import (
     STRATCOMP2,
     STRAT3POOL,
     VAULT,
+    OUSD_USDT_UNISWAP,
+    OUSD_USDT_SUSHI,
+    COMPENSATION_CLAIMS,
 )
 from core.blockchain.const import (
     BLOCKS_PER_YEAR,
@@ -424,3 +427,39 @@ def ensure_3pool_snapshot(block_number):
         s.save()
 
         return s
+
+def latest_snapshot():
+    return SupplySnapshot.objects.order_by("-block_number")[0]
+
+def snapshot_at_block(block):
+    return SupplySnapshot.objects.filter(block_number__lte=block).order_by("-block_number")[0]
+
+
+def latest_snapshot_block_number():
+    return latest_snapshot().block_number
+
+def calculate_snapshot_data(block=None):
+    pools_config = [
+        ("Uniswap OUSD/USDT", OUSD_USDT_UNISWAP, False),
+        ("Sushi OUSD/USDT", OUSD_USDT_SUSHI, False),
+        ("OUSD Compensation", COMPENSATION_CLAIMS, False),
+    ]
+    pools = []
+    totals_by_rebasing = {True: Decimal(0), False: Decimal(0)}
+    for name, address, is_rebasing in pools_config:
+        amount = balanceOf(OUSD, address, 18, "latest" if block is None else block)
+        pools.append(
+            {
+                "name": name,
+                "amount": amount,
+                "is_rebasing": is_rebasing,
+            }
+        )
+        totals_by_rebasing[is_rebasing] += amount
+    pools = sorted(pools, key=lambda pool: 0-pool["amount"])
+
+    snapshot = latest_snapshot() if block is None else snapshot_at_block(block)
+    other_rebasing = snapshot.rebasing_reported_supply() - totals_by_rebasing[True]
+    other_non_rebasing = snapshot.non_rebasing_reported_supply() - totals_by_rebasing[False]
+
+    return [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot]
