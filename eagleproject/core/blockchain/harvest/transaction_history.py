@@ -1,5 +1,6 @@
 from decimal import *
 from django import db
+from operator import attrgetter
 from multiprocessing import (
     Process,
     Manager,
@@ -74,9 +75,11 @@ class rebase_log:
     # credits_per_token
     # balance
 
-    def __init__(self, block_number, credits_per_token):
+    def __init__(self, block_number, credits_per_token, tx_hash):
         self.block_number = block_number
         self.credits_per_token = credits_per_token
+        self.tx_hash = tx_hash
+
 
     def __str__(self):
         return 'rebase log: block: {} creditsPerToken: {} balance: {}'.format(self.block_number, self.credits_per_token, self.balance if hasattr(self, 'balance') else 0)
@@ -87,12 +90,16 @@ class transfer_log:
     # credits_per_token
     # balance
 
-    def __init__(self, block_number, amount):
+    def __init__(self, block_number, tx_hash, amount, from_address, to_address, block_time):
         self.block_number = block_number
+        self.tx_hash = tx_hash
         self.amount = amount
+        self.from_address = from_address
+        self.to_address = to_address
+        self.block_time = block_time
 
     def __str__(self):
-        return 'transfer log: block: {} amount: {} creditsPerToken: {} balance: {}'.format(self.block_number, self.amount, self.credits_per_token if hasattr(self, 'credits_per_token') else 'N/A', self.balance if hasattr(self, 'balance') else 'N/A')
+        return 'transfer log: block: {} amount: {} tx_hash: {} creditsPerToken: {} balance: {}'.format(self.block_number, self.amount, self.tx_hash, self.credits_per_token if hasattr(self, 'credits_per_token') else 'N/A', self.balance if hasattr(self, 'balance') else 'N/A')
 
 class address_analytics:
     # OUSD increasing/decreasing is ignoring rebase events
@@ -138,6 +145,60 @@ class analytics_report:
 
     def __str__(self):
         return 'Analytics report: accounts_analyzed: {} accounts_holding_ousd: {} accounts_holding_more_than_100_ousd: {} accounts_holding_more_than_100_ousd_after_curve_start: {} new_accounts: {} new_accounts_after_curve_start: {} accounts_with_non_rebase_balance_increase: {} accounts_with_non_rebase_balance_decrease: {} apy: {} supply_data: {} curve_data: {}'.format(self.accounts_analyzed, self.accounts_holding_ousd, self.accounts_holding_more_than_100_ousd, self.accounts_holding_more_than_100_ousd_after_curve_start, self.new_accounts, self.new_accounts_after_curve_start, self.accounts_with_non_rebase_balance_increase, self.accounts_with_non_rebase_balance_decrease, self.apy, self.supply_data, self.curve_data)
+
+class transaction_analysis:
+    def __init__(
+        self,
+        account,
+        tx_hash,
+        contract_address,
+        internal_transactions,
+        received_eth,
+        sent_eth,
+        transfer_ousd_out,
+        transfer_ousd_in,
+        transfer_coin_out,
+        transfer_coin_in,
+        ousd_transfer_from,
+        ousd_transfer_to,
+        ousd_transfer_amount,
+        transfer_log_count,
+        classification
+    ):
+        self.account = account
+        self.tx_hash = tx_hash
+        self.contract_address = contract_address
+        self.internal_transactions = internal_transactions
+        self.received_eth = received_eth
+        self.sent_eth = sent_eth
+        self.transfer_ousd_out = transfer_ousd_out
+        self.transfer_ousd_in = transfer_ousd_in
+        self.transfer_coin_out = transfer_coin_out
+        self.transfer_coin_in = transfer_coin_in
+        self.ousd_transfer_from = ousd_transfer_from
+        self.ousd_transfer_to = ousd_transfer_to
+        self.ousd_transfer_amount = ousd_transfer_amount
+        self.transfer_log_count = transfer_log_count
+        self.classification = classification
+
+    def __str__(self):
+        return 'transaction analysis: account: {} tx_hash: {} classification: {} contract_address: {} received_eth: {} sent_eth: {} transfer_ousd_out: {} transfer_ousd_in: {} transfer_coin_out {} transfer_coin_in {} ousd_transfer_from {} ousd_transfer_to {} ousd_transfer_amount {} transfer_log_count {}'.format(
+            self.account,
+            self.tx_hash,
+            self.classification,
+            self.contract_address,
+            self.received_eth,
+            self.sent_eth,
+            self.transfer_ousd_out,
+            self.transfer_ousd_in,
+            self.transfer_coin_out,
+            self.transfer_coin_in,
+            self.ousd_transfer_from,
+            self.ousd_transfer_to,
+            self.ousd_transfer_amount,
+            self.transfer_log_count
+        )
+
 
 # get first available block from the given time.
 # Ascending=True -> closest youngest block
@@ -581,15 +642,15 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
         address_analytics(is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, non_rebase_balance_diff > 0, non_rebase_balance_diff < 0, is_new_after_curve_start, new_after_curve_and_hold_more_than_100)
     )
 
-def classify_transaction(transaction):
-    return "ladida"
+def ensure_analyzed_transactions(from_block, to_block, account='all'):
+    if from_block is None and to_block is None and account is not 'all':
+        transactions = Transaction.objects.filter(from_address=account)
+    elif account is not 'all':
+        transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block, account=account)
+    else:
+        transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block)
 
-def do_transaction_analytics(from_block, to_block):
-    report = {
-        'contracts_swaps': {},
-        'contracts_other': {}
-    }
-    transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block)
+    analyzed_transactions = []
     for transaction in transactions:
         logs = Log.objects.filter(transaction_hash=transaction.tx_hash)
         account = transaction.receipt_data["from"]
@@ -634,10 +695,58 @@ def do_transaction_analytics(from_block, to_block):
         swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
         swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
 
-        if (transfer_log_count > 1 or sent_eth or received_eth) and (not swap_receive_ousd or swap_send_ousd):
-            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} ousd in: {} ousd out: {}".format(transaction.tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_ousd_in, transfer_ousd_out))    
+        if transaction.tx_hash == '0xaa5649aed6852831ee4af22a00fce471d3d7c42bd6631d68f0d2d2e16fe55a10':
+            print("DEBUG THIS: ", swap_receive_ousd, swap_send_ousd)
 
-        report_key = "contracts_swaps" if (swap_receive_ousd or swap_send_ousd) else "contracts_other"
+        classification = 'unknown'
+        if transfer_log_count > 0:
+            if transfer_ousd_in:
+                classification = 'transfer_in'
+            elif transfer_ousd_out: 
+                classification = 'transfer_out'
+            else:
+                classification = 'unknown_transfer'
+
+        if swap_receive_ousd:
+            classification = 'swap_gain_ousd'
+        elif swap_send_ousd:
+            classification = 'swap_give_ousd'
+
+        analyzed_transactions.append(transaction_analysis(
+            account,
+            transaction.tx_hash,
+            contract_address,
+            internal_transactions,
+            received_eth,
+            sent_eth,
+            transfer_ousd_out,
+            transfer_ousd_in,
+            transfer_coin_out,
+            transfer_coin_in,
+            ousd_transfer_from,
+            ousd_transfer_to,
+            ousd_transfer_amount,
+            transfer_log_count,
+            classification
+        ))
+
+    return analyzed_transactions
+
+def do_transaction_analytics(from_block, to_block, account='all'):
+    report = {
+        'contracts_swaps': {},
+        'contracts_other': {}
+    }
+    analyzed_transactions = ensure_analyzed_transactions(from_block, to_block, account)
+
+    for analyzed_tx in analyzed_transactions:
+
+        tx_hash, contract_address, received_eth, sent_eth, transfer_ousd_out, transfer_ousd_in, transfer_coin_out, transfer_coin_in, ousd_transfer_from, ousd_transfer_amount, transfer_log_count, classification = attrgetter('tx_hash', 'contract_address', 'received_eth', 'sent_eth', 'transfer_ousd_out', 'transfer_ousd_in', 'transfer_coin_out', 'transfer_coin_in', 'ousd_transfer_from', 'ousd_transfer_amount', 'transfer_log_count', 'classification')(analyzed_tx)
+
+        if (transfer_log_count > 1 or sent_eth or received_eth) and (classification != 'swap_gain_ousd' or classification != 'swap_give_ousd'):
+            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} ousd in: {} ousd out: {}".format(tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_ousd_in, transfer_ousd_out))    
+
+        report_key = "contracts_swaps" if (classification == 'swap_gain_ousd' or classification == 'swap_give_ousd') else "contracts_other"
         contract_data = report[report_key][contract_address] if contract_address in report[report_key] else {
             "address": contract_address,
             "name": CONTRACT_ADDR_TO_NAME[contract_address] if contract_address in CONTRACT_ADDR_TO_NAME else "N/A",
@@ -669,10 +778,14 @@ def do_transaction_analytics(from_block, to_block):
 
     return json.dumps(report)
 
-
 def get_rebase_logs(from_block, to_block):
-    logs = Log.objects.filter(Q(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1") & Q(block_number__gte=from_block) & Q(block_number__lte=to_block))
-    rebase_logs = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2]), logs))
+    # we use distinct to mitigate the problem of possibly having double logs in database
+    if from_block is None and to_block is None:
+        logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1").order_by('transaction_hash').distinct('transaction_hash')
+    else:
+        logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
+
+    rebase_logs = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2], log.transaction_hash), logs))
     # rebase logs sorted by block number descending
     rebase_logs.sort(key=lambda rebase_log: -rebase_log.block_number)
     return rebase_logs
@@ -681,8 +794,49 @@ def get_rebase_logs(from_block, to_block):
 # returns a list of transfer_logs where amount is a positive number if account received OUSD
 # and a negative one if OUSD was sent from the account
 def get_transfer_logs(account, from_block_time, to_block_time):
-    transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time))
-    return list(map(lambda log: transfer_log(log.tx_hash.block_number, log.amount if log.to_address.lower() == account.lower() else -log.amount), transfer_logs))
+    if from_block_time is None and to_block_time is None:
+        transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)))
+    else:
+        transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time))    
+
+    return list(map(lambda log: transfer_log(
+        log.tx_hash.block_number,
+        log.tx_hash,
+        log.amount if log.to_address.lower() == account.lower() else -log.amount,
+        log.from_address,
+        log.to_address,
+        log.block_time
+    ), transfer_logs))
+
+def get_history_for_address(address):
+    rebase_logs = get_rebase_logs(None, None)
+    hash_to_classification = dict((ana_tx.tx_hash, ana_tx.classification) for ana_tx in ensure_analyzed_transactions(None, None, address))
+
+    (tx_history, ___, ____, _____, ______) = ensure_transaction_history(address, rebase_logs, None, None, None, None, True)
+
+    def __format_tx_history(tx_history_item):
+        if isinstance(tx_history_item, rebase_log):
+            return {
+                'block_number': tx_history_item.block_number,
+                'balance': tx_history_item.balance,
+                'tx_hash': tx_history_item.tx_hash,
+                'amount': tx_history_item.amount,
+                'type': 'yield'
+            }
+        else:
+            tx_hash = tx_history_item.tx_hash.tx_hash
+            return {
+                'block_number': tx_history_item.block_number,
+                'time': tx_history_item.block_time,
+                'balance': tx_history_item.balance,
+                'tx_hash': tx_hash,
+                'amount': tx_history_item.amount,
+                'from_address': tx_history_item.from_address,
+                'to_address': tx_history_item.to_address,
+                'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown'
+            }
+
+    return list(map(__format_tx_history, tx_history))
 
 # when rebase logs are available enrich transfer logs with the active credits_per_token values
 def enrich_transfer_logs(logs):
@@ -723,10 +877,25 @@ def calculate_balance(credits, credits_per_token):
     return credits / credits_per_token
 
 def ensure_ousd_balance(credit_balance, logs):
+    def find_previous_rebase_log(current_index, logs):
+        current_index += 1
+        while(current_index < len(logs)):
+            log = logs[current_index]
+            if isinstance(log, rebase_log):
+                return log
+            current_index += 1
+        return None
+
     for x in range(0, len(logs)):
         log = logs[x]
         if isinstance(log, rebase_log):
             log.balance = calculate_balance(credit_balance, Decimal(log.credits_per_token))
+            previous_log = find_previous_rebase_log(x, logs)
+            if previous_log is not None:
+                prev_balance = calculate_balance(credit_balance, Decimal(previous_log.credits_per_token))
+                log.amount = log.balance - prev_balance
+            else:
+                log.amount = 0
         elif isinstance(log, transfer_log):
             log.balance = calculate_balance(credit_balance, Decimal(log.credits_per_token))
             # multiply token balance change and credits per token at the time of the event
@@ -752,15 +921,25 @@ def send_report_email(summary, report, prev_report, report_type):
     emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
     result = e.execute(emails)
 
-def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time):
+def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False):
     if rebase_logs is None:
         rebase_logs = get_rebase_logs(from_block, to_block)
 
-    previous_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, from_block_time)
-    transfer_logs = get_transfer_logs(account, from_block_time, to_block_time)
-    pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME)
-    post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time)
-    credit_balance, credits_per_token = creditsBalanceOf(account, to_block)
+    if from_block_time is None and to_block_time is None:
+        transfer_logs = get_transfer_logs(account, None, None)
+        previous_transfer_logs = []
+    else:
+        transfer_logs = get_transfer_logs(account, from_block_time, to_block_time)
+        previous_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, from_block_time)
+
+    credit_balance, credits_per_token = creditsBalanceOf(account, to_block if to_block is not None else 'latest')
+
+    pre_curve_campaign_transfer_logs = []
+    post_curve_campaign_transfer_logs = []
+    if not ignore_curve_data:
+        pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME)
+        post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time)
+
     ousd_balance = calculate_balance(credit_balance, credits_per_token)
 
     balance_logs = list(transfer_logs + rebase_logs)
