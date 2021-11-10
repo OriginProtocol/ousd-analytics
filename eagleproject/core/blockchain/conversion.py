@@ -8,8 +8,13 @@ from core.blockchain.const import (
     COMPOUND_FOR_SYMBOL,
     CTOKEN_DECIMALS,
     DECIMALS_FOR_SYMBOL,
+    BLOCKS_PER_DAY
 )
-from core.blockchain.rpc import exchangeRateStored
+
+from core.blockchain.rpc import (
+    exchangeRateStored,
+    rebasing_credits_per_token,
+)
 
 
 def ctoken_to_underlying(symbol, ctoken_amount, block="latest"):
