@@ -160,7 +160,9 @@ def ensure_transaction_and_downstream(tx_hash):
         "data": raw_transaction,
         "receipt_data": receipt,
         "debug_data": debug,
-        "internal_transactions" : internal_transactions,
+        "internal_transactions": internal_transactions,
+        "from_address": receipt["from"],
+        "to_address": receipt["to"],
     }
 
     db_tx, created = Transaction.objects.get_or_create(

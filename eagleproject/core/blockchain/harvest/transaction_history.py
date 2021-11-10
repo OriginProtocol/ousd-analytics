@@ -695,8 +695,8 @@ def ensure_analyzed_transactions(from_block, to_block, account='all'):
         swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
         swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
 
-        if transaction.tx_hash == '0xaa5649aed6852831ee4af22a00fce471d3d7c42bd6631d68f0d2d2e16fe55a10':
-            print("DEBUG THIS: ", swap_receive_ousd, swap_send_ousd)
+        # if transaction.tx_hash == '0xaa5649aed6852831ee4af22a00fce471d3d7c42bd6631d68f0d2d2e16fe55a10':
+        #     print("DEBUG THIS: ", swap_receive_ousd, swap_send_ousd)
 
         classification = 'unknown'
         if transfer_log_count > 0:

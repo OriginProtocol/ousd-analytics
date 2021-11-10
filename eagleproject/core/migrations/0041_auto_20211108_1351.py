@@ -13,6 +13,17 @@ def populate_(apps, schema_editor):
         # should also provide a sqlLite implementation
         raise Exception('This migration is not implemented in sqlLite. Bug domeng to do it')
 
+
+    if schema_editor.connection.vendor.startswith('postgres'):
+        schema_editor.execute(
+            "UPDATE core_transaction SET from_address=receipt_data->>'from';"
+        )
+    else:
+        # TODO:
+        # should also provide a sqlLite implementation
+        raise Exception('This migration is not implemented in sqlLite. Bug domeng to do it')
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -24,5 +35,11 @@ class Migration(migrations.Migration):
             model_name='analyticsreport',
             name='report',
             field=models.JSONField(default=list),
-        )
+        ),
+        migrations.AddField(
+            model_name='transaction',
+            name='from_address',
+            field=models.CharField(db_index=True, default='0xinvalid_address', max_length=42),
+        ),
+        migrations.RunPython(populate_),
     ]
