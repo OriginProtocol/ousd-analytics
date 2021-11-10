@@ -75,9 +75,11 @@ class rebase_log:
     # credits_per_token
     # balance
 
-    def __init__(self, block_number, credits_per_token):
+    def __init__(self, block_number, credits_per_token, tx_hash):
         self.block_number = block_number
         self.credits_per_token = credits_per_token
+        self.tx_hash = tx_hash
+
 
     def __str__(self):
         return 'rebase log: block: {} creditsPerToken: {} balance: {}'.format(self.block_number, self.credits_per_token, self.balance if hasattr(self, 'balance') else 0)
@@ -646,7 +648,7 @@ def ensure_analyzed_transactions(from_block, to_block, account='all'):
     elif account is not 'all':
         transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block, account=account)
     else:
-        transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block)       
+        transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block)
 
     analyzed_transactions = []
     for transaction in transactions:
@@ -692,6 +694,9 @@ def ensure_analyzed_transactions(from_block, to_block, account='all'):
 
         swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
         swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
+
+        if transaction.tx_hash == '0xaa5649aed6852831ee4af22a00fce471d3d7c42bd6631d68f0d2d2e16fe55a10':
+            print("DEBUG THIS: ", swap_receive_ousd, swap_send_ousd)
 
         classification = 'unknown'
         if transfer_log_count > 0:
@@ -774,12 +779,13 @@ def do_transaction_analytics(from_block, to_block, account='all'):
     return json.dumps(report)
 
 def get_rebase_logs(from_block, to_block):
+    # we use distinct to mitigate the problem of possibly having double logs in database
     if from_block is None and to_block is None:
-        logs = Log.objects.filter(Q(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1"))        
+        logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1").order_by('transaction_hash').distinct('transaction_hash')
     else:
-        logs = Log.objects.filter(Q(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1") & Q(block_number__gte=from_block) & Q(block_number__lte=to_block))
+        logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
 
-    rebase_logs = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2]), logs))
+    rebase_logs = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2], log.transaction_hash), logs))
     # rebase logs sorted by block number descending
     rebase_logs.sort(key=lambda rebase_log: -rebase_log.block_number)
     return rebase_logs
@@ -806,13 +812,15 @@ def get_history_for_address(address):
     rebase_logs = get_rebase_logs(None, None)
     hash_to_classification = dict((ana_tx.tx_hash, ana_tx.classification) for ana_tx in ensure_analyzed_transactions(None, None, address))
 
-    (tx_history, ___, ____) = ensure_transaction_history(address, rebase_logs, None, None, None, None)
+    (tx_history, ___, ____, _____, ______) = ensure_transaction_history(address, rebase_logs, None, None, None, None, True)
 
     def __format_tx_history(tx_history_item):
         if isinstance(tx_history_item, rebase_log):
             return {
                 'block_number': tx_history_item.block_number,
                 'balance': tx_history_item.balance,
+                'tx_hash': tx_history_item.tx_hash,
+                'amount': tx_history_item.amount,
                 'type': 'yield'
             }
         else:
@@ -821,6 +829,7 @@ def get_history_for_address(address):
                 'block_number': tx_history_item.block_number,
                 'time': tx_history_item.block_time,
                 'balance': tx_history_item.balance,
+                'tx_hash': tx_hash,
                 'amount': tx_history_item.amount,
                 'from_address': tx_history_item.from_address,
                 'to_address': tx_history_item.to_address,
@@ -868,10 +877,25 @@ def calculate_balance(credits, credits_per_token):
     return credits / credits_per_token
 
 def ensure_ousd_balance(credit_balance, logs):
+    def find_previous_rebase_log(current_index, logs):
+        current_index += 1
+        while(current_index < len(logs)):
+            log = logs[current_index]
+            if isinstance(log, rebase_log):
+                return log
+            current_index += 1
+        return None
+
     for x in range(0, len(logs)):
         log = logs[x]
         if isinstance(log, rebase_log):
             log.balance = calculate_balance(credit_balance, Decimal(log.credits_per_token))
+            previous_log = find_previous_rebase_log(x, logs)
+            if previous_log is not None:
+                prev_balance = calculate_balance(credit_balance, Decimal(previous_log.credits_per_token))
+                log.amount = log.balance - prev_balance
+            else:
+                log.amount = 0
         elif isinstance(log, transfer_log):
             log.balance = calculate_balance(credit_balance, Decimal(log.credits_per_token))
             # multiply token balance change and credits per token at the time of the event
@@ -897,7 +921,7 @@ def send_report_email(summary, report, prev_report, report_type):
     emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
     result = e.execute(emails)
 
-def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time):
+def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False):
     if rebase_logs is None:
         rebase_logs = get_rebase_logs(from_block, to_block)
 
@@ -910,8 +934,11 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
 
     credit_balance, credits_per_token = creditsBalanceOf(account, to_block if to_block is not None else 'latest')
 
-    pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME)
-    post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time)
+    pre_curve_campaign_transfer_logs = []
+    post_curve_campaign_transfer_logs = []
+    if not ignore_curve_data:
+        pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME)
+        post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time)
 
     ousd_balance = calculate_balance(credit_balance, credits_per_token)
 
