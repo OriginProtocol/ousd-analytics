@@ -6,8 +6,8 @@
 
 
 {% block content %}
-<h1>OUSD Holdings</h1>
-<h2>{{address}}</h2>
+<p style="margin-bottom:1px">OUSD account history:</p>
+<h2 style="margin-top:1px">{{address}}</h2>
 
 <style>
     .card {
@@ -25,12 +25,12 @@
     .label { font-size: 18px; width: 140px; display: block; float: right; padding-top: 20px; font-family: Lato;}
 </style>
 
-<div class="mono" style="width: 700px; font-size: 50px; text-align:right; margin: 2em auto;">
+<div class="mono" style="width: 700px; font-size: 50px; text-align:right; margin: 1em auto;">
+    <div style="clear:both"><strong>{{current_balance|floatformat:4}}</strong> <small  class="label">Current Balance</small></div>
+    <div style="clear:both">=<small  class="label">&nbsp;</small></div>
     <div style="clear:both"> <strong>+ {{yield_balance|floatformat:4}}</strong> <small  class="label">Earned <strong>Yield</strong></small></div>
     <div style="clear:both"> + {{transfers_in|floatformat:4}} <small class="label">Transfers In</small></div>
     <div style="clear:both"> - {{transfers_out|floatformat:4}} <small  class="label">Transfers Out</small></div>
-    <div style="clear:both">=<small  class="label">&nbsp;</small></div>
-    <div style="clear:both"><strong>{{current_balance|floatformat:4}}</strong> <small  class="label">Current Balance</small></div>
 </div>
 
 

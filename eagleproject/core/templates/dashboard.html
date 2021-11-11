@@ -242,7 +242,7 @@
 <div class="top-three columns">
     <div class="module">
         <div class="label">
-            Trailing&nbsp;<a href="/apr">7-Day</a>&nbsp;APY
+            Trailing&nbsp;<a href="/apr">30 Day</a>&nbsp;APY
         </div>
         {{apy|floatformat:2}}%
     </div>
@@ -479,6 +479,14 @@
                         {% elif log.topic_0 == "0x47cee97cb7acd717b3c0aa1435d004cd5b3c8c57d70dbceb4e4458bbd60e39d4" %}
                             🍰 <strong>Claim</strong>
                             {{log.data|slot_0|dec_18|floatformat:2}} <abbr>OUSD</abbr> for <small>{{log.topic_1|long_address_name}}</small>
+                        {% elif log.topic_0 == "0x9b15fe06f6132479e0c4d9dfbbff1de507a47663a459b2cc4ba1aa5a55e52058" %}
+                            🥛 <strong>Reward Token Collected</strong>
+                            {{log.data|slot_1|dec_18|floatformat:2}}
+                            {% if log.address == "0xd5433168ed0b1f7714819646606db509d9d8ec1f" %}
+                                COMP
+                            {% elif log.address == "0x3c5fe0a3922777343cbd67d3732fcdc9f2fa6f2f" %}
+                                CRV
+                            {% endif %}
                         {% else %}
                             <strong>{{log.topic_0|event_name}}</strong>
                             {% if log.topic_1 %}

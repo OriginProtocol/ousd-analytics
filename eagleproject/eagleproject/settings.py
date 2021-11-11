@@ -179,12 +179,14 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
+REPORT_RECEIVER_EMAIL_LIST = os.environ.get("REPORT_RECEIVER_EMAIL_LIST")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 EMAIL_HOST = os.environ.get("EMAIL_HOST")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_PORT = os.environ.get("EMAIL_PORT", 25)
 EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS") == "true"
+ENABLE_REPORTS = os.environ.get("ENABLE_REPORTS") == "true"
 
 ADMINS = [("Engineering", "engineering@originprotocol.com")]
 DISCORD_BOT_NAME = os.environ.get("DISCORD_BOT_NAME", "OUSD Analytics Bot")

@@ -20,6 +20,9 @@ Vault Eagle
 
 ## To run
     export PROVIDER_URL="https://CHANGEURLHERE"
+    # Below line allows for multithreading from bash on macOS High Sierra
+    export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+    export ETHERSCAN_API_KEY="your api key here"
     source ./eagle-python/bin/activate
     python ./manage.py runserver
     # **IMPORTANT**
@@ -28,10 +31,10 @@ Vault Eagle
 
 ## To deploy
 
-    # First make sure you can connect to the DB in question (e.g. cloud_sql_proxy)
-    python manage.py migrate
-    python manage.py collectstatic
-    gcloud app deploy
+    # push to stable branch
+    git checkout stable
+    git merge origin/master
+    git push origin stable
 
 ## Future
 

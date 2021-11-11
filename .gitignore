@@ -2,3 +2,5 @@ eagle-python
 *.pyc
 .vscode
 *.sqlite3
+cloud_sql_proxy
+**/.DS_Store

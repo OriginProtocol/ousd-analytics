@@ -1,5 +1,7 @@
 from decimal import Decimal
-
+from datetime import (
+    datetime,
+)
 from core.blockchain.addresses import (
     AAVE_LENDING_POOL_CORE_V1,
     AAVE_LENDING_POOL_V1,
@@ -30,7 +32,11 @@ from core.blockchain.addresses import (
 )
 
 START_OF_EVERYTHING = 10884500
+START_OF_EVERYTHING_TIME = datetime.strptime("18-9-2020", "%d-%m-%Y")
+# TODO: this might need adjusting
+START_OF_CURVE_CAMPAIGN_TIME = datetime.strptime("11-11-2021", "%d-%m-%Y")
 START_OF_OUSD_V2 = 11596940
+START_OF_OUSD_V2_TIME = datetime.strptime("29-12-2020", "%d-%m-%Y")
 
 CONTRACT_FOR_SYMBOL = {
     "DAI": DAI,
@@ -90,14 +96,14 @@ LOG_CONTRACTS = OUSD_CONTRACTS + [
     CURVE_ARAGON_51,
     CURVE_ARAGON_60,
 ]
-ETHERSCAN_CONTRACTS = [GOVERNOR, GOVERNORV2, OUSD, VAULT, TIMELOCK]
+ETHERSCAN_CONTRACTS = [OUSD, GOVERNOR, GOVERNORV2, VAULT, TIMELOCK]
 
 ASSET_TICKERS = ["DAI", "USDC", "USDT"]
 AAVE_ASSETS = ["DAI"]
 
 BLOCKS_PER_MINUTE = 4
 BLOCKS_PER_HOUR = BLOCKS_PER_MINUTE * 60
-BLOCKS_PER_DAY = BLOCKS_PER_HOUR * 24
+BLOCKS_PER_DAY = 6400
 BLOCKS_PER_YEAR = BLOCKS_PER_DAY * 365
 
 E_6 = Decimal(1e6)
@@ -107,3 +113,20 @@ E_27 = Decimal(1e27)
 
 FALSE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000000"
 TRUE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000001"
+
+report_stats = {
+    'apy': 'Apy',
+    'accounts_analyzed': 'Accounts processed',
+    'accounts_holding_ousd': 'Accounts holding OUSD',
+    'accounts_holding_more_than_100_ousd': 'Accounts holding over 100 OUSD',
+    'new_accounts': 'New (first time seen) accounts',
+    'accounts_with_non_rebase_balance_increase': 'Accounts with balance increased',
+    'accounts_with_non_rebase_balance_decrease': 'Accounts with balance decreased',
+}
+
+curve_report_stats = {
+    'accounts_holding_more_than_100_ousd_after_curve_start': 'Accounts holding over 100 OUSD after campaign start',
+    'new_accounts_after_curve_start': 'New accounts after campaign start',
+    'curve_metapool_total_supply': 'Curve pool supply',
+    'share_earning_curve_ogn': 'Share earning OGN',
+}

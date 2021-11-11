@@ -150,6 +150,18 @@ def get_transaction_receipt(tx_hash):
     return data["result"]
 
 
+def creditsBalanceOf(holder, block="latest"):
+    signature = encode_hex(keccak(b"creditsBalanceOf(address)"))[:10]
+    payload = encode_single("(address)", [holder]).hex()
+    data = call(OUSD, signature, payload, block)
+
+    return (Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+        math.pow(10, 18)
+    ),
+        Decimal(int(data["result"][64 + 2 : 2 * 64 + 2], 16)) / Decimal(
+        math.pow(10, 18)
+    ))
+
 def balanceOf(coin_contract, holder, decimals, block="latest"):
     signature = "0x70a08231"
     payload = encode_single("(address)", [holder]).hex()
@@ -266,11 +278,14 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
     try:
         payload = encode_single("(address)", [coin_contract]).hex()
         data = call(strategy, signature, payload, block)
+        if "error" in data:
+            log.error(data['error']['message'])
         return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
             math.pow(10, decimals)
         )
-    except Exception:
+    except Exception as e:
         log.error("strategyCheckBalance failed")
+        log.error(e)
         return Decimal(0)
 
 

@@ -1,8 +1,12 @@
-from datetime import timedelta
+from datetime import (
+    timedelta,
+    datetime,
+)
 from decimal import Decimal
 from django.db import models
 
 from core.logging import get_logger
+import simplejson as json
 
 log = get_logger(__name__)
 
@@ -161,6 +165,9 @@ class Transaction(models.Model):
     data = models.JSONField(default=dict)
     receipt_data = models.JSONField(default=dict)
     debug_data = models.JSONField(default=dict)
+    internal_transactions = models.JSONField(default=dict)
+    from_address = models.CharField(max_length=42, db_index=True, default='0xinvalid_address')
+    to_address = models.CharField(max_length=42, db_index=True, default='0xinvalid_address')
 
 
 class OusdTransfer(models.Model):
@@ -238,6 +245,77 @@ class CTokenSnapshot(models.Model):
 
     class Meta:
         unique_together = ('block_number', 'address')
+
+
+class AnalyticsReport(models.Model):
+    # A report either represents a time interval of a week or a month. For that
+    # reason year property shall always be populated, with the combination of either
+    # month property or week property. Months go from 1-12 and weeks go from 0-53
+    # or whatever amount of weeks a certain year has
+
+    week = models.IntegerField(null=True)
+    month = models.IntegerField(null=True)
+    year = models.IntegerField(db_index=True)
+
+    # starting and ending block of the report
+    block_start = models.IntegerField()
+    block_end = models.IntegerField()
+
+    # starting and ending time of the report
+    start_time = models.DateTimeField()
+    end_time = models.DateTimeField()
+
+    created_at = models.DateTimeField(default=datetime.now())
+    updated_at = models.DateTimeField(default=datetime.now())
+
+    # Status of the report. Valid values: processing, done
+    # this is used in combination with updated_at to figure out if process making a 
+    # report has failed and needs to be re-attempted
+    status = models.CharField(max_length=20, default='done')
+
+    # Contains info regarding which contracts have been called that have resulted in 
+    # OUSD Swaps. (Uniswap Router, Metamask router....)
+    transaction_report = models.JSONField(default=list)
+
+    # Total number of accounts analyzed - number of accounts that have ever held OUSD
+    accounts_analyzed = models.IntegerField()
+    # Number of accounts holding OUSD in a given time period
+    accounts_holding_ousd = models.IntegerField()
+    # Number of accounts holding more than 100 OUSD in a given time period
+    accounts_holding_more_than_100_ousd = models.IntegerField()
+    # Number of accounts holding more than 100 OUSD after curve campaign start
+    accounts_holding_more_than_100_ousd_after_curve_start = models.IntegerField(default=0)
+    # Number of new accounts holding OUSD in a given time period
+    new_accounts = models.IntegerField()
+    # Number of new accounts after Curve campaign start
+    new_accounts_after_curve_start = models.IntegerField(default=0)
+    # Number of accounts that have increased their OUSD holdings ignoring rebases
+    accounts_with_non_rebase_balance_increase = models.IntegerField()
+    # Number of accounts that have decreased their OUSD holdings ignoring rebases
+    accounts_with_non_rebase_balance_decrease = models.IntegerField()
+
+    # Contains any info that didn't fit into other reporting stats
+    report = models.JSONField(default=list)
+
+    def __getattr__(self, name):
+        if not self.report or self.report == '[]':
+            return None
+
+        report_json = json.loads(str(self.report))
+        if name == 'total_supply':
+            return round(report_json['supply_data']['total_supply'], 2) if 'supply_data' in report_json else None
+        elif name == 'curve_metapool_total_supply':
+            return report_json['curve_data']['total_supply'] if 'curve_data' in report_json else None
+        elif name == 'share_earning_curve_ogn':
+            return report_json['curve_data']['earning_ogn'] if 'curve_data' in report_json else None
+        elif name == 'apy':
+            return report_json['apy']
+        elif name == 'pools':
+            return report_json["supply_data"]["pools"] if "supply_data" in report_json else []
+        elif name == 'other_rebasing':
+            return report_json["supply_data"]["other_rebasing"] if "supply_data" in report_json else []
+        elif name == 'other_non_rebasing':
+            return report_json["supply_data"]["other_non_rebasing"] if "supply_data" in report_json else []
 
 
 class AaveLendingPoolCoreSnapshot(models.Model):

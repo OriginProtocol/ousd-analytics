@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Anaytics Reports{% endblock %}
+
+
+{% block content %}
+<h1>Anaytics Reports</h1>
+
+<h2>Monthly reports</h2>
+<div>
+  {% for tuple in enriched_monthly_reports %}
+    <a
+      class="no-decoration"
+      href="/reports/monthly/{{tuple.0.year|int_no_comma}}/{{tuple.0.month|int_no_comma}}"
+    >
+      <div class="report d-flex flex-column w-100 link-box">
+        <div class="d-flex w-100 py-1">
+          <div class="col-2"><b>Month/Year:</b></div>
+          <div class="col-2 black">{{tuple.0.month}}/{{tuple.0.year|int_no_comma}}</div>
+          <div class="col-8 black">from: {{tuple.0.start_time}} to: {{tuple.0.end_time}}</div>
+        </div>
+        {% if tuple.0.status != 'done' %}
+          <h3 class="mt-3 text-center">Still processing</h3>
+        {% endif %}
+        {% if tuple.0.transaction_report %}
+        {% else %}
+          <h3 class="mt-3 text-center">Contracts report not yet done</h3>
+        {% endif %}
+      </div>
+    </a>
+  {% endfor %}    
+</div>
+
+<h2>Weekly reports</h2>
+<div>
+    {% for tuple in enriched_weekly_reports %}
+    <a
+      class="no-decoration"
+      href="/reports/weekly/{{tuple.0.year|int_no_comma}}/{{tuple.0.week|int_no_comma}}"
+    >
+      <div class="report d-flex flex-column w-100 link-box">
+        <div class="d-flex w-100 py-1">
+          <div class="col-2"><b>Week/Year:</b></div>
+          <div class="col-2 black">{{tuple.0.week}}/{{tuple.0.year|int_no_comma}}</div>
+          <div class="col-8 black">from: {{tuple.0.start_time}} to: {{tuple.0.end_time}}</div>
+        </div>
+        {% if tuple.0.status != 'done' %}
+          <h3 class="mt-3 text-center">Still processing</h3>
+        {% endif %}
+      </div>
+    </a>
+  {% endfor %}       
+</div>
+
+<style>
+    .report {
+        border: 1px solid rgb(130, 147, 164);
+        margin-bottom: 20px;
+        color: rgb(130, 147, 164);
+        border-radius: 10px;
+        box-shadow: rgb(24 49 64 / 10%) 0px 0px 14px 0px;
+        padding: 20px;
+    }
+
+    .no-decoration {
+      text-decoration: none;
+    }
+
+    .link-box:hover {
+      background-color: #eeeeee;
+    }
+
+    .text-s {
+      font-size: 14px;
+    }
+
+    .black {
+      color: black;
+    }
+</style>
+
+
+{% endblock %}

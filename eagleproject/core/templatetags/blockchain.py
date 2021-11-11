@@ -1,4 +1,5 @@
 import pytz
+import math
 from django import template
 from django.template.defaultfilters import stringfilter
 from django.utils import timezone
@@ -6,9 +7,13 @@ from binascii import unhexlify
 from decimal import Decimal
 from eth_abi import decode_single
 from core.blockchain.addresses import DAI, OUSD, USDC, USDT
+from core.blockchain.harvest.transactions import (
+    explode_log_data,
+)
 from core.blockchain.const import E_6, E_8, E_18
 from core.blockchain.decode import slot
 from core.logging import get_logger
+
 
 log = get_logger(__name__)
 
@@ -269,11 +274,7 @@ def slot_3(value):
 
 @register.filter
 def explode_data(value):
-    count = len(value) // 64
-    out = []
-    for i in range(0, count):
-        out.append(dec_18(value[2 + i * 64 : 2 + i * 64 + 64]))
-    return out
+    return explode_log_data(value)
 
 
 def _snarf_input_symbol(trace):
@@ -294,6 +295,98 @@ def local_time(dt):
 @register.filter
 def sub(v, arg):
     return v - arg
+
+@register.filter
+def color_style(value):
+    if value > 0:
+         return 'color:green'
+    else:
+        return 'color:red'
+
+@register.filter
+def dict_color_style(dictionary, stat):
+    value = 0
+    if "." in stat:
+        keys = stat.split(".")
+        value = dictionary
+        for sub_key in keys:
+            if sub_key in value:
+                value = value[sub_key]
+            else:
+                return 'color:green'
+    else:
+        value = dictionary[stat]
+
+    if value > 0:
+         return 'color:green'
+    else:
+        return 'color:red'
+
+@register.filter
+def class_color_style(object, stat):
+    value = 0
+    if "." in stat:
+        keys = stat.split(".")
+        value = object
+        for sub_key in keys:
+            if sub_key in value:
+                value = getattr(value, sub_key)
+            else:
+                return 'color:green'
+    else:
+        value = getattr(object, stat)
+
+    if value > 0:
+         return 'color:green'
+    else:
+        return 'color:red'
+
+@register.filter
+def class_value(object, key):
+    return getattr(object, key)
+
+@register.filter
+# if key contains a comma what comes after the comma is a default value
+def dict_value(dictionary, key):
+    default = ""
+    if "," in key:
+        key, default = key.split(",")
+    if "." in key:
+        keys = key.split(".")
+        current_value = dictionary
+        for sub_key in keys:
+            if sub_key in current_value:
+                current_value = current_value[sub_key]
+            else:
+                return default
+        return current_value
+    else:
+        return dictionary[key] if key in dictionary else default
+
+@register.filter
+def percentage(value):
+    return value * 100
+
+@register.filter
+def cotract_name(dictionary):
+    short_address = "N/A" if dictionary["address"] == None else dictionary["address"][:5] + "..." + dictionary["address"][-5:]
+    return dictionary["name"] if dictionary["name"] != "N/A" else short_address
+
+@register.filter
+def floatformat_rnd_down(value, decimals=2):
+    if not isinstance(decimals, int):
+        raise TypeError("decimal places must be an integer")
+    elif decimals < 0:
+        raise ValueError("decimal places has to be 0 or more")
+    elif decimals == 0:
+        return math.floor(value)
+
+    factor = 10 ** decimals
+    return math.floor(value * factor) / factor
+
+@register.filter
+def int_no_comma(value):
+    return str(value)
 
 
 @register.filter

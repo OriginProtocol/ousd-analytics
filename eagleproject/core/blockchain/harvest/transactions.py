@@ -1,4 +1,6 @@
 from datetime import timedelta
+from django import db
+from multiprocessing import Process
 from django.conf import settings
 from eth_utils import (
     decode_hex,
@@ -7,7 +9,10 @@ from eth_utils import (
     remove_0x_prefix,
 )
 
-from core.etherscan import get_contract_transactions
+from core.etherscan import (
+    get_contract_transactions,
+    get_internal_txs_bt_txhash
+)
 from core.blockchain.addresses import OGN_STAKING
 from core.blockchain.const import (
     E_18,
@@ -25,6 +30,11 @@ from core.blockchain.rpc import (
     request,
     staking_durationRewardRate,
 )
+
+from core.blockchain.utils import (
+    chunks,
+)
+
 from core.blockchain.sigs import (
     DEPRECATED_SIG_EVENT_WITHDRAWN,
     DEPRECATED_SIG_EVENT_STAKED,
@@ -49,6 +59,8 @@ from core.models import (
 
 logger = get_logger(__name__)
 
+# number of transactions downloaded in parallel
+TRANSACTION_PARALLELISM=2
 
 def build_debug_tx(tx_hash):
     data = debug_trace_transaction(tx_hash)
@@ -61,9 +73,7 @@ def ensure_all_transactions(block_number):
     and transactions that do not generate logs.
     """
     pointers = {x.contract: x for x in EtherscanPointer.objects.all()}
-
     if settings.ETHERSCAN_API_KEY:
-
         for address in ETHERSCAN_CONTRACTS:
             if address not in pointers:
                 pointers[address] = EtherscanPointer.objects.create(
@@ -71,6 +81,7 @@ def ensure_all_transactions(block_number):
                     last_block=0,
                 )
 
+            tx_hashes = []
             for tx in get_contract_transactions(
                 address,
                 pointers[address].last_block,
@@ -79,8 +90,9 @@ def ensure_all_transactions(block_number):
                 if tx.get('hash') is None:
                     logger.error('No transaction hash found from Etherscan')
                     continue
+                tx_hashes.append(tx['hash'])
 
-                ensure_transaction_and_downstream(tx['hash'])
+            ensure_transaction_and_downsteam_hashes(tx_hashes)
 
             pointers[address].last_block = block_number
             pointers[address].save()
@@ -116,6 +128,17 @@ def maybe_store_transfer_record(log, block):
 
     return transfer
 
+def explode_log_data(value):
+    count = len(value) // 64
+    out = []
+    for i in range(0, count):
+        out.append(int(value[2 + i * 64 : 2 + i * 64 + 64], 16)/1e18)
+    return out
+
+def get_internal_transactions(tx_hash):
+    data = get_internal_txs_bt_txhash(tx_hash)
+    print("DATA", data)
+    return data
 
 def ensure_transaction_and_downstream(tx_hash):
     """ Ensure that there's a transaction record """
@@ -126,9 +149,9 @@ def ensure_transaction_and_downstream(tx_hash):
     raw_transaction = get_transaction(tx_hash)
     receipt = get_transaction_receipt(tx_hash)
     debug = debug_trace_transaction(tx_hash)
+    internal_transactions = get_internal_transactions(tx_hash)
 
     block_number = int(raw_transaction["blockNumber"], 16)
-
     block = ensure_block(block_number)
 
     params = {
@@ -137,6 +160,9 @@ def ensure_transaction_and_downstream(tx_hash):
         "data": raw_transaction,
         "receipt_data": receipt,
         "debug_data": debug,
+        "internal_transactions": internal_transactions,
+        "from_address": receipt["from"],
+        "to_address": receipt["to"],
     }
 
     db_tx, created = Transaction.objects.get_or_create(
@@ -199,6 +225,31 @@ def ensure_log_record(raw_log):
 
     return log
 
+def ensure_transaction_and_downsteam_hashes(tx_hashes):
+    processed = 0
+    for chunk in chunks(tx_hashes, TRANSACTION_PARALLELISM):
+        ensure_transaction_and_downsteam_in_paralel(chunk, processed)
+        processed += TRANSACTION_PARALLELISM
+
+def ensure_transaction_and_downsteam_in_paralel(tx_hashes, totalProcessed):
+    print("Processing {} transactions of total processed {}".format(len(tx_hashes), totalProcessed))
+    processes = []
+
+    # Multiprocessing copies connection objects between processes because it forks processes
+    # and therefore copies all the file descriptors of the parent process. That being said, 
+    # a connection to the SQL server is just a file, you can see it in linux under /proc//fd/....
+    # any open file will be shared between forked processes.
+    # closing all connections just forces the processes to open new connections within the new 
+    # process.
+    # Not doing this causes PSQL connection errors because multiple processes are using a single connection in 
+    # a non locking manner.
+    db.connections.close_all()
+    for tx_hash in tx_hashes:
+        p = Process(target=ensure_transaction_and_downstream, args=(tx_hash, ))
+        p.start()
+        processes.append(p)
+    for p in processes:
+        p.join()
 
 def download_logs_from_contract(contract, start_block, end_block):
     logger.info("D {} {} {}".format(contract, start_block, end_block))
@@ -212,26 +263,34 @@ def download_logs_from_contract(contract, start_block, end_block):
             }
         ],
     )
-    for tx_hash in set([x["transactionHash"] for x in data["result"]]):
-        ensure_transaction_and_downstream(tx_hash)
+
+    tx_hashes = set([x["transactionHash"] for x in data["result"]])
+
+    ensure_transaction_and_downsteam_hashes(list(tx_hashes))
 
 
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
+    # TODO: perhaps parallelize this as well but needs testing. Since contract tx hashes
+    # are also being fetched in parallel this could cause explosion of threads / processes.
     for contract in LOG_CONTRACTS:
-        pointer = None
-        if contract not in pointers:
-            pointer = LogPointer(contract=contract, last_block=START_OF_EVERYTHING)
-            pointer.save()
-        else:
-            pointer = pointers[contract]
-        start_block = pointer.last_block + 1
-        while start_block <= upto:
-            end_block = min(start_block + 1000, upto)
-            download_logs_from_contract(contract, start_block, end_block)
-            pointer.last_block = end_block
-            pointer.save()
-            start_block = pointer.last_block + 1
+        ensure_latest_logs_for_contract(contract, pointers, upto)
+
+
+def ensure_latest_logs_for_contract(contract, pointers, upto):
+    pointer = None
+    if contract not in pointers:
+        pointer = LogPointer(contract=contract, last_block=START_OF_EVERYTHING)
+        pointer.save()
+    else:
+        pointer = pointers[contract]
+    start_block = pointer.last_block + 1
+    while start_block <= upto:
+        end_block = min(start_block + 1000, upto)
+        download_logs_from_contract(contract, start_block, end_block)
+        pointer.last_block = end_block
+        pointer.save()
+        start_block = pointer.last_block + 1    
 
 
 def maybe_store_stake_withdrawn_record(log, block):
