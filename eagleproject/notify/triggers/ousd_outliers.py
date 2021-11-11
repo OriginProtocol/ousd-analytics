@@ -31,9 +31,9 @@ def get_past_week(transfers):
     CACHE["past_week"] = {
         "expiry": datetime.now() + timedelta(minutes=CACHE_DURATION_MINUTES),
         "result": {
-            "min_value": min(values),
-            "max_value": max(values),
-            "median_value": median(values),
+            "min_value": min(values) if values else 0,
+            "max_value": max(values) if values else 0,
+            "median_value": median(values) if values else 0,
             "values": values,
             "transfers": transfers,
         },
@@ -49,6 +49,9 @@ def get_outlier_transfers(transfers, new_transfers, high_percentile=95,
     """
     outliers = []
     past_week = get_past_week(transfers)
+
+    if not past_week["result"].get("values"):
+        return outliers
 
     # IDK statistics magic
     q1, q3 = percentile(

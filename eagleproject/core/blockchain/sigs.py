@@ -58,6 +58,9 @@ SIG_EVENT_STAKING_PAUSED = encode_hex(keccak(b"Paused(address,bool)"))
 SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
     keccak(b"TotalSupplyUpdated(uint256,uint256,uint256)")
 )
+SIG_EVENT_TOTAL_SUPPLY_UPDATED_HIRES = encode_hex(
+    keccak(b"TotalSupplyUpdatedHighres(uint256,uint256,uint256)")
+)
 
 # Vault
 SIG_FUNC_PRICE_USD_MINT = encode_hex(keccak(b"priceUSDMint(address)"))
