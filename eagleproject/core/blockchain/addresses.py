@@ -18,6 +18,7 @@ THREEPOOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 # OUSD
 GOVERNOR = "0x8e7bdfecd1164c46ad51b58e49a611f954d23377"
 GOVERNORV2 = "0x830622bdd79cc677ee6594e20bbda5b26568b781"
+GOVERNORV3 = "0x72426ba137dec62657306b12b1e869d43fec6ec7"
 OUSD = "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86"
 VAULT = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70"
 TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
@@ -97,31 +98,34 @@ CURVE_ARAGON_60 = "0xbcff8b0b9419b9a88c44546519b1e909cf330399"
 
 # Name resolution
 CONTRACT_ADDR_TO_NAME = {
-    OUSD: 'OUSD Token',
-    COMP: 'COMP Token',
-    VAULT: 'Vault',
-    MIX_ORACLE: 'MixOracle',
-    CHAINLINK_ORACLE: 'ChainlinkOracle',
-    OGN_STAKING: 'OGN Staking',
-    STRATCOMP: 'Compound Strategy',
-    STRATAAVEDAI: 'Aave Strategy',
-    STRAT3POOL: '3Pool Strategy',
-    COMPOUND_TIMELOCK: 'Compound Timelock',
-    COMPOUND_GOVERNOR_ALPHA: 'Compound GovernorAlpha',
-    COMPOUND_GOVERNOR_BRAVO: 'Compound GovernorBravo',
-    COMPOUND_COMPTROLLER: 'Compound Comptroller/Unitroller',
-    COMPOUND_COMPTROLLER_G7: 'StdComptrollerG7',
-    CDAI: 'cDAI',
-    CUSDT: 'cUSDT',
-    CUSDC: 'cUSDC',
-    COMPENSATION_CLAIMS: 'Compensation Claims',
-    CURVE_CRV_TOKEN: 'CRV Token',
-    CURVE_3CRV_TOKEN: '3CRV Token',
-    CURVE_3POOL: '3Pool Swap Contract',
-    CURVE_ARAGON_51: 'Curve Aragon Voting (51%)',
-    CURVE_ARAGON_60: 'Curve Aragon Voting (60%)',
-    GOVERNOR: 'Origin Governor V1',
-    GOVERNORV2: 'Origin Governor V2',
+    OUSD: "OUSD Token",
+    COMP: "COMP Token",
+    VAULT: "Vault",
+    MIX_ORACLE: "MixOracle",
+    CHAINLINK_ORACLE: "ChainlinkOracle",
+    OGN_STAKING: "OGN Staking",
+    STRATCOMP1: "Compound Strategy",
+    STRATCOMP2: "Compound Strategy",
+    STRATAAVEDAI: "Aave Strategy",
+    STRATAAVE2: "Aave Strategy",
+    STRAT3POOL: "3Pool Strategy",
+    COMPOUND_TIMELOCK: "Compound Timelock",
+    COMPOUND_GOVERNOR_ALPHA: "Compound GovernorAlpha",
+    COMPOUND_GOVERNOR_BRAVO: "Compound GovernorBravo",
+    COMPOUND_COMPTROLLER: "Compound Comptroller/Unitroller",
+    COMPOUND_COMPTROLLER_G7: "StdComptrollerG7",
+    CDAI: "cDAI",
+    CUSDT: "cUSDT",
+    CUSDC: "cUSDC",
+    COMPENSATION_CLAIMS: "Compensation Claims",
+    CURVE_CRV_TOKEN: "CRV Token",
+    CURVE_3CRV_TOKEN: "3CRV Token",
+    CURVE_3POOL: "3Pool Swap Contract",
+    CURVE_ARAGON_51: "Curve Aragon Voting (51%)",
+    CURVE_ARAGON_60: "Curve Aragon Voting (60%)",
+    GOVERNOR: "Origin Governor V1",
+    GOVERNORV2: "Origin Governor V2",
+    GOVERNORV3: "Origin Governor V3",
     METAMASK_SWAP_ROUTER: "Metamask Swap Router",
     FLIPPER: "OUSD Swap",
     UNISWAP_V3_ROUTER: "Uniswap V3 Router",
@@ -131,5 +135,5 @@ CONTRACT_ADDR_TO_NAME = {
     UNISWAP_V2: "Uniswap V2 Router",
     MISTX_ROUTER: "MistX Router",
     CURVE_ANOTHER_3POOL: "Curve 3Pool 2",
-    CURVE_METAPOOL: "Curve USDT/OUSD Metapool"
+    CURVE_METAPOOL: "Curve USDT/OUSD Metapool",
 }
