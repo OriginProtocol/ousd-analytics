@@ -783,11 +783,15 @@ def do_transaction_analytics(from_block, to_block, account='all'):
 def get_rebase_logs(from_block, to_block):
     # we use distinct to mitigate the problem of possibly having double logs in database
     if from_block is None and to_block is None:
-        logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1").order_by('transaction_hash').distinct('transaction_hash')
+        old_logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1").order_by('transaction_hash').distinct('transaction_hash')
+        new_logs = Log.objects.filter(topic_0="0x41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e257235").order_by('transaction_hash').distinct('transaction_hash')
     else:
-        logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
+        old_logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
+        new_logs = Log.objects.filter(topic_0="0x41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e257235", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
 
-    rebase_logs = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2], log.transaction_hash), logs))
+    rebase_logs_old = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2], log.transaction_hash), old_logs))
+    rebase_logs_new = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2] / 10 ** 9, log.transaction_hash), new_logs))
+    rebase_logs = rebase_logs_old + rebase_logs_new
 
     block_numbers = list(map(lambda rebase_log: rebase_log.block_number, rebase_logs))
 
