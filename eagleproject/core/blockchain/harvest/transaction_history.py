@@ -80,9 +80,11 @@ class rebase_log:
         self.credits_per_token = credits_per_token
         self.tx_hash = tx_hash
 
+    def set_block_time(self, block_time):
+        self.block_time = block_time
 
     def __str__(self):
-        return 'rebase log: block: {} creditsPerToken: {} balance: {}'.format(self.block_number, self.credits_per_token, self.balance if hasattr(self, 'balance') else 0)
+        return 'rebase log: block: {} creditsPerToken: {} balance: {} block_time:{}'.format(self.block_number, self.credits_per_token, self.balance if hasattr(self, 'balance') else 0, self.block_time if hasattr(self, 'block_time') else False)
 
 class transfer_log:
     # block_number
@@ -781,11 +783,27 @@ def do_transaction_analytics(from_block, to_block, account='all'):
 def get_rebase_logs(from_block, to_block):
     # we use distinct to mitigate the problem of possibly having double logs in database
     if from_block is None and to_block is None:
-        logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1").order_by('transaction_hash').distinct('transaction_hash')
+        old_logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1").order_by('transaction_hash').distinct('transaction_hash')
+        new_logs = Log.objects.filter(topic_0="0x41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e257235").order_by('transaction_hash').distinct('transaction_hash')
     else:
-        logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
+        old_logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
+        new_logs = Log.objects.filter(topic_0="0x41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e257235", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
 
-    rebase_logs = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2], log.transaction_hash), logs))
+    rebase_logs_old = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2], log.transaction_hash), old_logs))
+    rebase_logs_new = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2] / 10 ** 9, log.transaction_hash), new_logs))
+    rebase_logs = rebase_logs_old + rebase_logs_new
+
+    block_numbers = list(map(lambda rebase_log: rebase_log.block_number, rebase_logs))
+
+    blocks = list(map(lambda block: (block.block_time, block.block_number), Block.objects.filter(block_number__in=block_numbers)))
+    block_lookup = dict((y, x) for x, y in blocks)
+
+    def map_logs(log):
+        log.set_block_time(block_lookup[log.block_number])
+        return log
+
+    rebase_logs = list(map(map_logs, rebase_logs))
+
     # rebase logs sorted by block number descending
     rebase_logs.sort(key=lambda rebase_log: -rebase_log.block_number)
     return rebase_logs
@@ -818,6 +836,7 @@ def get_history_for_address(address):
         if isinstance(tx_history_item, rebase_log):
             return {
                 'block_number': tx_history_item.block_number,
+                'time': tx_history_item.block_time,
                 'balance': tx_history_item.balance,
                 'tx_hash': tx_history_item.tx_hash,
                 'amount': tx_history_item.amount,
