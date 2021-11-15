@@ -6,6 +6,7 @@ from core.blockchain.addresses import (
     AAVE_LENDING_POOL_CORE_V1,
     AAVE_LENDING_POOL_V1,
     AAVE_PROTO_GOVERNANCE_V1,
+    CHAINLINK_KEEPER_REGISTRY,
     COMP,
     COMPENSATION_CLAIMS,
     COMPOUND_GOVERNOR_ALPHA,
@@ -52,6 +53,7 @@ DECIMALS_FOR_SYMBOL = {
     "COMP": 18,
     "CRV": 18,
     "DAI": 18,
+    "LINK": 18,
     "OUSD": 18,
     "USDT": 6,
     "USDC": 6,
@@ -97,11 +99,13 @@ LOG_CONTRACTS = OUSD_CONTRACTS + [
     AAVE_PROTO_GOVERNANCE_V1,
     CURVE_ARAGON_51,
     CURVE_ARAGON_60,
+    CHAINLINK_KEEPER_REGISTRY,
 ]
 ETHERSCAN_CONTRACTS = [OUSD, GOVERNOR, GOVERNORV2, GOVERNORV3, VAULT, TIMELOCK]
 
 ASSET_TICKERS = ["DAI", "USDC", "USDT"]
 AAVE_ASSETS = ["DAI"]
+OUSD_KEEPER_UPKEEP_ID = 51
 
 BLOCKS_PER_MINUTE = 4
 BLOCKS_PER_HOUR = BLOCKS_PER_MINUTE * 60
@@ -113,22 +117,26 @@ E_8 = Decimal(1e8)
 E_18 = Decimal(1e18)
 E_27 = Decimal(1e27)
 
-FALSE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000000"
-TRUE_256BIT = "0x0000000000000000000000000000000000000000000000000000000000000001"
+FALSE_256BIT = (
+    "0x0000000000000000000000000000000000000000000000000000000000000000"
+)
+TRUE_256BIT = (
+    "0x0000000000000000000000000000000000000000000000000000000000000001"
+)
 
 report_stats = {
-    'apy': 'Apy',
-    'accounts_analyzed': 'Accounts processed',
-    'accounts_holding_ousd': 'Accounts holding OUSD',
-    'accounts_holding_more_than_100_ousd': 'Accounts holding over 100 OUSD',
-    'new_accounts': 'New (first time seen) accounts',
-    'accounts_with_non_rebase_balance_increase': 'Accounts with balance increased',
-    'accounts_with_non_rebase_balance_decrease': 'Accounts with balance decreased',
+    "apy": "Apy",
+    "accounts_analyzed": "Accounts processed",
+    "accounts_holding_ousd": "Accounts holding OUSD",
+    "accounts_holding_more_than_100_ousd": "Accounts holding over 100 OUSD",
+    "new_accounts": "New (first time seen) accounts",
+    "accounts_with_non_rebase_balance_increase": "Accounts with balance increased",
+    "accounts_with_non_rebase_balance_decrease": "Accounts with balance decreased",
 }
 
 curve_report_stats = {
-    'accounts_holding_more_than_100_ousd_after_curve_start': 'Accounts holding over 100 OUSD after campaign start',
-    'new_accounts_after_curve_start': 'New accounts after campaign start',
-    'curve_metapool_total_supply': 'Curve pool supply',
-    'share_earning_curve_ogn': 'Share earning OGN',
+    "accounts_holding_more_than_100_ousd_after_curve_start": "Accounts holding over 100 OUSD after campaign start",
+    "new_accounts_after_curve_start": "New accounts after campaign start",
+    "curve_metapool_total_supply": "Curve pool supply",
+    "share_earning_curve_ogn": "Share earning OGN",
 }
