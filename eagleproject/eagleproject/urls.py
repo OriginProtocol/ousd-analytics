@@ -38,6 +38,7 @@ urlpatterns = [
     path("supply", core_views.supply),
 
     path("reload", core_views.reload),
+    path("reload2", core_views.reload_delete_me),
     path("snap", core_views.take_snapshot),
     path("fetch", core_views.fetch_transactions),
     path("runtriggers", notify_views.run_triggers),

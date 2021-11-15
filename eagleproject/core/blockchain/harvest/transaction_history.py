@@ -646,13 +646,14 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
 
 def ensure_analyzed_transactions(from_block, to_block, account='all'):
     if from_block is None and to_block is None and account is not 'all':
-        transactions = Transaction.objects.filter(from_address=account)
+        transactions = Transaction.objects.filter((Q(from_address=account) | Q(to_address=account)))
     elif account is not 'all':
-        transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block, account=account)
+        transactions = Transaction.objects.filter(Q(block_number__gte=from_block) | Q(block_number__lt=to_block) | (Q(from_address=account) | Q(to_address=account)))
     else:
         transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block)
 
     analyzed_transactions = []
+    print("TRANSACTIONS: ", len(transactions), account)
     for transaction in transactions:
         logs = Log.objects.filter(transaction_hash=transaction.tx_hash)
         account = transaction.receipt_data["from"]
@@ -697,8 +698,9 @@ def ensure_analyzed_transactions(from_block, to_block, account='all'):
         swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
         swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
 
-        # if transaction.tx_hash == '0xaa5649aed6852831ee4af22a00fce471d3d7c42bd6631d68f0d2d2e16fe55a10':
-        #     print("DEBUG THIS: ", swap_receive_ousd, swap_send_ousd)
+        print("HASH: ", transaction.tx_hash)
+        if transaction.tx_hash == '0xc8319fc47444a5d4a6fd7547d307a09a31e7a8afe6895b734a687a7f75ca4c8c':
+            print("DEBUG THIS: ", swap_receive_ousd, swap_send_ousd, transfer_log_count, transfer_ousd_in, transfer_ousd_out)
 
         classification = 'unknown'
         if transfer_log_count > 0:
@@ -852,7 +854,7 @@ def get_history_for_address(address):
                 'amount': tx_history_item.amount,
                 'from_address': tx_history_item.from_address,
                 'to_address': tx_history_item.to_address,
-                'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown'
+                'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
             }
 
     return list(map(__format_tx_history, tx_history))
