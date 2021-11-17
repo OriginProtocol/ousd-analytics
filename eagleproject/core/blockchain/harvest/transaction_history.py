@@ -868,6 +868,13 @@ def get_history_for_address(address):
 
     (tx_history, ___, ____, _____, ______) = ensure_transaction_history(address, rebase_logs, None, None, None, None, True)
 
+    # find last non rebase transaction, and remove later transactions
+    last_non_yield_tx_idx = -1
+    for i in range(len(tx_history) - 1, -1, -1):
+        if not isinstance(tx_history[i], rebase_log):
+            last_non_yield_tx_idx = i
+            break;
+
     def __format_tx_history(tx_history_item):
         if isinstance(tx_history_item, rebase_log):
             return {
@@ -891,7 +898,7 @@ def get_history_for_address(address):
                 'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
             }
 
-    return list(map(__format_tx_history, tx_history))
+    return list(map(__format_tx_history, tx_history[:last_non_yield_tx_idx + 1 if last_non_yield_tx_idx > 0 else 0]))
 
 # when rebase logs are available enrich transfer logs with the active credits_per_token values
 def enrich_transfer_logs(logs):
