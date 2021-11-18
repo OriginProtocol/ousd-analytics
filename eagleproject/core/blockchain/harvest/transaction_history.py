@@ -92,13 +92,14 @@ class transfer_log:
     # credits_per_token
     # balance
 
-    def __init__(self, block_number, tx_hash, amount, from_address, to_address, block_time):
+    def __init__(self, block_number, tx_hash, amount, from_address, to_address, block_time, log_index):
         self.block_number = block_number
         self.tx_hash = tx_hash
         self.amount = amount
         self.from_address = from_address
         self.to_address = to_address
         self.block_time = block_time
+        self.log_index = log_index
 
     def __str__(self):
         return 'transfer log: block: {} amount: {} tx_hash: {} creditsPerToken: {} balance: {}'.format(self.block_number, self.amount, self.tx_hash, self.credits_per_token if hasattr(self, 'credits_per_token') else 'N/A', self.balance if hasattr(self, 'balance') else 'N/A')
@@ -859,7 +860,8 @@ def get_transfer_logs(account, from_block_time, to_block_time):
         log.amount if log.to_address.lower() == account.lower() else -log.amount,
         log.from_address,
         log.to_address,
-        log.block_time
+        log.block_time,
+        log.log_index
     ), transfer_logs))
 
 def get_history_for_address(address):
@@ -867,6 +869,13 @@ def get_history_for_address(address):
     hash_to_classification = dict((ana_tx.tx_hash, ana_tx.classification) for ana_tx in ensure_analyzed_transactions(None, None, None, None, address))
 
     (tx_history, ___, ____, _____, ______) = ensure_transaction_history(address, rebase_logs, None, None, None, None, True)
+
+    # find last non rebase transaction, and remove later transactions
+    last_non_yield_tx_idx = -1
+    for i in range(len(tx_history) - 1, -1, -1):
+        if not isinstance(tx_history[i], rebase_log):
+            last_non_yield_tx_idx = i
+            break;
 
     def __format_tx_history(tx_history_item):
         if isinstance(tx_history_item, rebase_log):
@@ -888,10 +897,11 @@ def get_history_for_address(address):
                 'amount': tx_history_item.amount,
                 'from_address': tx_history_item.from_address,
                 'to_address': tx_history_item.to_address,
+                'log_index' : tx_history_item.log_index,
                 'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
             }
 
-    return list(map(__format_tx_history, tx_history))
+    return list(map(__format_tx_history, tx_history[:last_non_yield_tx_idx + 1 if last_non_yield_tx_idx > 0 else 0]))
 
 # when rebase logs are available enrich transfer logs with the active credits_per_token values
 def enrich_transfer_logs(logs):
