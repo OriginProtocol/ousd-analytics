@@ -36,7 +36,7 @@ from core.blockchain.apy import (
 )
 from core.blockchain.harvest.transactions import (
     get_internal_transactions,
-    ensure_transaction_and_downstream,
+    ensure_transaction_and_downstream
 )
 from core.blockchain.harvest.transaction_history import (
     create_time_interval_report,
