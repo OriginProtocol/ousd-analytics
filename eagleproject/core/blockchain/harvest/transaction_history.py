@@ -92,13 +92,14 @@ class transfer_log:
     # credits_per_token
     # balance
 
-    def __init__(self, block_number, tx_hash, amount, from_address, to_address, block_time):
+    def __init__(self, block_number, tx_hash, amount, from_address, to_address, block_time, log_index):
         self.block_number = block_number
         self.tx_hash = tx_hash
         self.amount = amount
         self.from_address = from_address
         self.to_address = to_address
         self.block_time = block_time
+        self.log_index = log_index
 
     def __str__(self):
         return 'transfer log: block: {} amount: {} tx_hash: {} creditsPerToken: {} balance: {}'.format(self.block_number, self.amount, self.tx_hash, self.credits_per_token if hasattr(self, 'credits_per_token') else 'N/A', self.balance if hasattr(self, 'balance') else 'N/A')
@@ -859,7 +860,8 @@ def get_transfer_logs(account, from_block_time, to_block_time):
         log.amount if log.to_address.lower() == account.lower() else -log.amount,
         log.from_address,
         log.to_address,
-        log.block_time
+        log.block_time,
+        log.log_index
     ), transfer_logs))
 
 def get_history_for_address(address):
@@ -895,6 +897,7 @@ def get_history_for_address(address):
                 'amount': tx_history_item.amount,
                 'from_address': tx_history_item.from_address,
                 'to_address': tx_history_item.to_address,
+                'log_index' : tx_history_item.log_index,
                 'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
             }
 
