@@ -266,8 +266,8 @@ def download_logs_from_contract(contract, start_block, end_block):
 
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
-    # TODO: perhaps parallelize this as well but needs testing. Since contract tx hashes
-    # are also being fetched in parallel this could cause explosion of threads / processes.
+    # Keep in mind that GAE isn't best suited for parallelism. And if we were to go for it
+    # we need to improve the error handling.
     for contract in LOG_CONTRACTS:
         ensure_latest_logs_for_contract(contract, pointers, upto)
 
