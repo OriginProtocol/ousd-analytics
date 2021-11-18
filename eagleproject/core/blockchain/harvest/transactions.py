@@ -59,9 +59,6 @@ from core.models import (
 
 logger = get_logger(__name__)
 
-# number of transactions downloaded in parallel
-TRANSACTION_PARALLELISM=2
-
 def build_debug_tx(tx_hash):
     data = debug_trace_transaction(tx_hash)
     return DebugTx(tx_hash=tx_hash, block_number=0, data=data["result"])
@@ -226,10 +223,8 @@ def ensure_log_record(raw_log):
     return log
 
 def ensure_transaction_and_downsteam_hashes(tx_hashes):
-    processed = 0
-    for chunk in chunks(tx_hashes, TRANSACTION_PARALLELISM):
-        ensure_transaction_and_downsteam_in_paralel(chunk, processed)
-        processed += TRANSACTION_PARALLELISM
+    for tx_hash in tx_hashes:
+        ensure_transaction_and_downstream(tx_hash)
 
 def ensure_transaction_and_downsteam_in_paralel(tx_hashes, totalProcessed):
     print("Processing {} transactions of total processed {}".format(len(tx_hashes), totalProcessed))

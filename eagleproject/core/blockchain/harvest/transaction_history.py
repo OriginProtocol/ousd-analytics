@@ -647,17 +647,6 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
 
 # start_time and end_time might seem redundant, but are needed so we can query the transfer logs
 def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account='all'):
-    # if from_block is None and to_block is None and account is not 'all':
-    #     transactions = Transaction.objects.filter((Q(from_address=account) | Q(to_address=account)))
-
-    # elif account is not 'all':
-    #     if start_time is None or end_time is None:
-    #         raise Exception('Unsupported ')
-
-    #     transactions = Transaction.objects.filter(Q(block_number__gte=from_block) & Q(block_number__lt=to_block) & (Q(from_address=account) | Q(to_address=account)))
-    # else:
-    #     transactions = Transaction.objects.filter(block_number__gte=from_block, block_number__lt=to_block)
-
     tx_query = Q()
     tran_query = Q()
     if account is not 'all':
@@ -696,17 +685,13 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
         ousd_transfer_amount = None
         transfer_log_count = 0
 
-        #print(transaction.data)
         for log in logs:
-            #if len(logs) > 1 and transaction.tx_hash == '0x8fe7683b5e01e2e5d300147f613cd576599e2ccf6d2a065b74b20b8d77bacc71':
             if log.topic_0 == TRANSFER:
                 transfer_log_count += 1
                 is_ousd_token = log.address == '0x2a8e1e676ec238d8a992307b495b45b3feaa5e86'
                 from_address = "0x" + log.topic_1[-40:]
                 to_address = "0x" + log.topic_2[-40:]
 
-                # if transaction.tx_hash == '0x566624f4af8aa67df39d6b95dd6f4681dd7bac9007d440d68d04228c2a1e8b0a':
-                #     print("DEBUG: ", int(slot(log.data, 0), 16) / E_18, is_ousd_token, from_address, to_address, log.log_index)
 
                 if is_ousd_token: 
                     ousd_transfer_from = from_address
@@ -725,10 +710,6 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
 
         swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
         swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
-
-        # print("HASH: ", transaction.tx_hash)
-        # if transaction.tx_hash == '0xc8319fc47444a5d4a6fd7547d307a09a31e7a8afe6895b734a687a7f75ca4c8c':
-        #     print("DEBUG THIS: ", swap_receive_ousd, swap_send_ousd, transfer_log_count, transfer_ousd_in, transfer_ousd_out)
 
         classification = 'unknown'
         if transfer_log_count > 0:

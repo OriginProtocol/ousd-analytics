@@ -136,16 +136,6 @@ def reload(request):
     reload_all(latest - 2)
     return HttpResponse("ok")
 
-def reload_delete_me(reuqest):
-    ensure_transaction_and_downstream("0xbb8fbed101c3c1d70fcd4a7b19addf9de7b435b39ab257f31088ad73cbeebf31")
-    ensure_transaction_and_downstream("0xc8319fc47444a5d4a6fd7547d307a09a31e7a8afe6895b734a687a7f75ca4c8c")
-    ensure_transaction_and_downstream("0x8fb973d7eaf031f7616acc9ee7beee26a3bac664601f070b8691e10459fe5b06")
-    ensure_transaction_and_downstream("0x8ffacb1c773ab24ce9df61c89a3b26356884cf2ecea97f53b2724b2660ef8b16")
-    ensure_transaction_and_downstream("0xf0c9c6f7f7e68942f37c71370f039c661c2d5959c114a2fbfaa5a2c1d7cd2ce6")
-    ensure_transaction_and_downstream("0x8dd2452a689a3c80e30adc5ecd765ccba268ed0fe10b2067211420b300a4e909")
-    return HttpResponse("ok")
-
-
 def make_monthly_report(request):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
