@@ -41,7 +41,8 @@ from core.blockchain.const import (
     report_stats,
     curve_report_stats,
     E_18,
-    START_OF_CURVE_CAMPAIGN_TIME
+    START_OF_CURVE_CAMPAIGN_TIME,
+    START_OF_OUSD_V2
 )
 
 from core.blockchain.utils import (
@@ -988,7 +989,9 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
 
     ousd_balance = calculate_balance(credit_balance, credits_per_token)
 
-    balance_logs = list(transfer_logs + rebase_logs)
+    # filter out transactions that happened before the OUSD relaunch
+    balance_logs = list(filter(lambda balance_log: balance_log.block_number > START_OF_OUSD_V2, list(transfer_logs + rebase_logs)))
+
     # sort transfer and rebase logs by block number descending
     balance_logs.sort(key=lambda log: -log.block_number)
     balance_logs = enrich_transfer_logs(balance_logs)
