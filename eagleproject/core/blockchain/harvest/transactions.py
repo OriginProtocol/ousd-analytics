@@ -134,7 +134,6 @@ def explode_log_data(value):
 
 def get_internal_transactions(tx_hash):
     data = get_internal_txs_bt_txhash(tx_hash)
-    print("DATA", data)
     return data
 
 def ensure_transaction_and_downstream(tx_hash):
