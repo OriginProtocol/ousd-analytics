@@ -1,3 +1,10 @@
+"""
+Addresses we should know about, including mappings from address to name.
+
+Notes
+-----
+- Addresses in this codebase are all lowercase.
+"""
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 # Assets
@@ -12,12 +19,14 @@ ADAI_V1 = "0xfc1e690f61efd961294b3e1ce3313fbd8aa4f85d"
 ADAI_V2 = "0x028171bca77440897b824ca71d1c56cac55b68a3"
 AUSDC = "0xbcca60bb61934080951369a648fb03df4f96263c"
 AUSDT = "0x3ed3b47dd13ec9a98b44e6204a523e766b225811"
+LINK = "0x514910771af9ca656af840dff83e8264ecf986ca"
 
 THREEPOOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 
 # OUSD
 GOVERNOR = "0x8e7bdfecd1164c46ad51b58e49a611f954d23377"
 GOVERNORV2 = "0x830622bdd79cc677ee6594e20bbda5b26568b781"
+GOVERNORV3 = "0x72426ba137dec62657306b12b1e869d43fec6ec7"
 OUSD = "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86"
 VAULT = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70"
 TIMELOCK = "0x52bebd3d7f37ec4284853fd5861ae71253a7f428"
@@ -29,10 +38,10 @@ OGN_STAKING = "0x501804b374ef06fa9c427476147ac09f1551b9a0"
 
 # Strategies
 STRATCOMP1 = "0xd5433168ed0b1f7714819646606db509d9d8ec1f"
-STRATCOMP2 = "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094"
+STRATCOMP2 = "0x9c459eeb3fa179a40329b81c1635525e9a0ef094"
 STRATCOMP = STRATCOMP2
 STRATAAVEDAI = "0x9f2b18751376cf6a3432eb158ba5f9b1abd2f7ce"
-STRATAAVE2 = "0x5e3646A1Db86993f73E6b74A57D8640B69F7e259"
+STRATAAVE2 = "0x5e3646a1db86993f73e6b74a57d8640b69f7e259"
 STRATAAVE = STRATAAVE2
 STRAT3POOL = "0x3c5fe0a3922777343cbd67d3732fcdc9f2fa6f2f"
 
@@ -49,6 +58,10 @@ CHAINLINK_ETH_USD_FEED = "0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419"  # ETH
 CHAINLINK_DAI_ETH_FEED = "0x773616e4d11a78f511299002da57a0a94577f1f4"
 CHAINLINK_USDC_ETH_FEED = "0x986b5e1e1755e3c2440e960477f25201b0a8bbd4"
 CHAINLINK_USDT_ETH_FEED = "0xee9f2375b4bdf6387aa8265dd4fb8f16512a1d46"
+
+CHAINLINK_KEEPER_REGISTRY = "0x7b3ec232b08bd7b4b3305be0c044d907b2df960b"
+# Related, see OUSD_KEEPER_UPKEEP_ID in blockchain.const
+OUSD_KEEPER = "0xbc72b4617e8fae53fcf0dd428e16ac5f830c1440"
 
 # Compound
 COMPOUND_GOVERNOR_ALPHA = "0xc0da01a04c3f3e0be433606045bb7017a7323e38"
@@ -70,10 +83,11 @@ AAVE_LENDING_POOL_V2 = "0x7d2768de32b0b80b7a3454c06bdac94a69ddc7a9"
 CURVE_CRV_TOKEN = "0xd533a949740bb3306d119cc777fa900ba034cd52"
 CURVE_3CRV_TOKEN = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 CURVE_3POOL = "0xbebc44782c7db0a1a60cb6fe97d0b483032ff1c7"
-CURVE_ANOTHER_3POOL = "0xA79828DF1850E8a3A3064576f380D90aECDD3359"
+CURVE_ANOTHER_3POOL = "0xa79828df1850e8a3a3064576f380d90aecdd3359"
 CURVE_METAPOOL = "0x87650d7bbfc3a9f10587d7778206671719d9910d"
-# Various
+CURVE_METAPOOL_GAUGE = "0x25f0ce4e2f8dba112d9b115710ac297f816087cd"
 
+# Various
 METAMASK_SWAP_ROUTER = "0x881d40237659c251811cec9c364ef91dc08d300c"
 FLIPPER = "0xcecad69d7d4ed6d52efcfa028af8732f27e08f70"
 UNISWAP_V3_ROUTER = "0xe592427a0aece92de3edee1f18e0157c05861564"
@@ -96,31 +110,34 @@ CURVE_ARAGON_60 = "0xbcff8b0b9419b9a88c44546519b1e909cf330399"
 
 # Name resolution
 CONTRACT_ADDR_TO_NAME = {
-    OUSD: 'OUSD Token',
-    COMP: 'COMP Token',
-    VAULT: 'Vault',
-    MIX_ORACLE: 'MixOracle',
-    CHAINLINK_ORACLE: 'ChainlinkOracle',
-    OGN_STAKING: 'OGN Staking',
-    STRATCOMP: 'Compound Strategy',
-    STRATAAVEDAI: 'Aave Strategy',
-    STRAT3POOL: '3Pool Strategy',
-    COMPOUND_TIMELOCK: 'Compound Timelock',
-    COMPOUND_GOVERNOR_ALPHA: 'Compound GovernorAlpha',
-    COMPOUND_GOVERNOR_BRAVO: 'Compound GovernorBravo',
-    COMPOUND_COMPTROLLER: 'Compound Comptroller/Unitroller',
-    COMPOUND_COMPTROLLER_G7: 'StdComptrollerG7',
-    CDAI: 'cDAI',
-    CUSDT: 'cUSDT',
-    CUSDC: 'cUSDC',
-    COMPENSATION_CLAIMS: 'Compensation Claims',
-    CURVE_CRV_TOKEN: 'CRV Token',
-    CURVE_3CRV_TOKEN: '3CRV Token',
-    CURVE_3POOL: '3Pool Swap Contract',
-    CURVE_ARAGON_51: 'Curve Aragon Voting (51%)',
-    CURVE_ARAGON_60: 'Curve Aragon Voting (60%)',
-    GOVERNOR: 'Origin Governor V1',
-    GOVERNORV2: 'Origin Governor V2',
+    OUSD: "OUSD Token",
+    COMP: "COMP Token",
+    VAULT: "Vault",
+    MIX_ORACLE: "MixOracle",
+    CHAINLINK_ORACLE: "ChainlinkOracle",
+    OGN_STAKING: "OGN Staking",
+    STRATCOMP1: "Compound Strategy",
+    STRATCOMP2: "Compound Strategy",
+    STRATAAVEDAI: "Aave Strategy",
+    STRATAAVE2: "Aave Strategy",
+    STRAT3POOL: "3Pool Strategy",
+    COMPOUND_TIMELOCK: "Compound Timelock",
+    COMPOUND_GOVERNOR_ALPHA: "Compound GovernorAlpha",
+    COMPOUND_GOVERNOR_BRAVO: "Compound GovernorBravo",
+    COMPOUND_COMPTROLLER: "Compound Comptroller/Unitroller",
+    COMPOUND_COMPTROLLER_G7: "StdComptrollerG7",
+    CDAI: "cDAI",
+    CUSDT: "cUSDT",
+    CUSDC: "cUSDC",
+    COMPENSATION_CLAIMS: "Compensation Claims",
+    CURVE_CRV_TOKEN: "CRV Token",
+    CURVE_3CRV_TOKEN: "3CRV Token",
+    CURVE_3POOL: "3Pool Swap Contract",
+    CURVE_ARAGON_51: "Curve Aragon Voting (51%)",
+    CURVE_ARAGON_60: "Curve Aragon Voting (60%)",
+    GOVERNOR: "Origin Governor V1",
+    GOVERNORV2: "Origin Governor V2",
+    GOVERNORV3: "Origin Governor V3",
     METAMASK_SWAP_ROUTER: "Metamask Swap Router",
     FLIPPER: "OUSD Swap",
     UNISWAP_V3_ROUTER: "Uniswap V3 Router",
@@ -130,5 +147,8 @@ CONTRACT_ADDR_TO_NAME = {
     UNISWAP_V2: "Uniswap V2 Router",
     MISTX_ROUTER: "MistX Router",
     CURVE_ANOTHER_3POOL: "Curve 3Pool 2",
-    CURVE_METAPOOL: "Curve USDT/OUSD Metapool"
+    CURVE_METAPOOL: "Curve USDT/OUSD Metapool",
+    CHAINLINK_KEEPER_REGISTRY: "Chainlink KeeperRegistry",
+    OUSD_KEEPER: "OUSD Keeper",
+    LINK: "LINK",
 }

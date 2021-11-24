@@ -2,169 +2,55 @@
 {% load blockchain %}
 {% load humanize %}
 
-{% block title %}Anaytics Reports{% endblock %}
+{% block title %}Analytics Reports{% endblock %}
 
 
 {% block content %}
-<h1>Anaytics Reports</h1>
+<h1>Analytics Reports</h1>
 
 <h2>Monthly reports</h2>
 <div>
   {% for tuple in enriched_monthly_reports %}
-    <div class="report d-flex flex-column w-100">
-      <div class="d-flex w-100 py-1">
-        <div class="col-2"><b>Month/Year:</b></div>
-        <div class="col-2 black">{{tuple.0.month}}/{{tuple.0.year|int_no_comma}}</div>
-      </div>
-      <div class="d-flex py-1">
-        <div class="col-2"><b>Block start:</b></div>
-        <div class="col-4 black">{{tuple.0.block_start}}({{tuple.0.start_time}})</div>
-        <div class="col-2"><b>Block end:</b></div>
-        <div class="col-4 black">{{tuple.0.block_end}}({{tuple.0.end_time}})</div>
-      </div>
-      {% if tuple.0.status != 'done' %}
-        <h3 class="mt-3 text-center">Still processing</h3>
-      {% else %}
-        {% for statistic in stat_keys %}
-          <div class="d-flex py-1">
-            <div class="col-4"><b>{{stats|dict_value:statistic}}</b></div>
-            <div class="col-6 black">{{tuple.0|class_value:statistic}}<span style="{{tuple.1|dict_color_style:statistic}}"> ({{tuple.1|dict_value:statistic|floatformat:1}}%)</span></div>
-          </div>
-        {% endfor %}
-      {% endif %}
-      {% if tuple.0.transaction_report %}
-        <div>
-          <div class="mt-3">Swap transactions </div>
-          <div class="d-flex flex-column">
-            <div class="d-flex">
-              <div class="col-4">Contract</div>
-              <div class="col-2">Swaps</div>
-              <div class="col-2">Total OUSD</div>
-            </div>
-            {% for contract_address, data in tuple.0.transaction_report.contracts_swaps.items %}
-            <div class="d-flex py-1">
-              <div class="col-4 text-s">
-                <a
-                  href="https://www.etherscan.com/address/{{ contract_address }}"
-                  target="_blank"
-                >
-                  <b>{{data|cotract_name}}</b>
-                </a>
-              </div>
-              <div class="col-2 text-s"><b>{{data|dict_value:"total_swaps"|int_no_comma}}</b></div>
-              <div class="col-2 text-s"><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></div>
-            </div>
-          {% endfor %}
-          </div>
+    <a
+      class="no-decoration"
+      href="/reports/monthly/{{tuple.0.year|int_no_comma}}/{{tuple.0.month|int_no_comma}}"
+    >
+      <div class="report d-flex flex-column w-100 link-box">
+        <div class="d-flex w-100 py-1">
+          <div class="col-2"><b>Month/Year:</b></div>
+          <div class="col-2 black">{{tuple.0.month}}/{{tuple.0.year|int_no_comma}}</div>
+          <div class="col-8 black">from: {{tuple.0.start_time}} to: {{tuple.0.end_time}}</div>
         </div>
-        <div>
-          <div class="mt-3">Unknown transactions </div>
-          <div class="d-flex flex-column">
-            <div class="d-flex">
-              <div class="col-4">Contract</div>
-              <div class="col-2">Transactions</div>
-              <div class="col-2">Total OUSD</div>
-            </div>
-            {% for contract_address, data in tuple.0.transaction_report.contracts_other.items %}
-            <div class="d-flex py-1">
-              <div class="col-4 text-s">
-                <a
-                  href="https://www.etherscan.com/address/{{ contract_address }}"
-                  target="_blank"
-                >
-                  <b>{{data|cotract_name}}</b>
-                </a>
-              </div>
-              <div class="col-2 text-s"><b>{{data|dict_value:"total_transactions"|int_no_comma}}</b></div>
-              <div class="col-2 text-s"><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></div>
-            </div>
-          {% endfor %}
-          </div>
-        </div>
-      {% else %}
-        <h3 class="mt-3 text-center">Contracts report not yet done</h3>
-      {% endif %}
-    </div>
+        {% if tuple.0.status != 'done' %}
+          <h3 class="mt-3 text-center">Still processing</h3>
+        {% endif %}
+        {% if tuple.0.transaction_report %}
+        {% else %}
+          <h3 class="mt-3 text-center">Contracts report not yet done</h3>
+        {% endif %}
+      </div>
+    </a>
   {% endfor %}    
 </div>
 
 <h2>Weekly reports</h2>
 <div>
     {% for tuple in enriched_weekly_reports %}
-    <div class="report d-flex flex-column w-100">
-      <div class="d-flex w-100 py-1">
-        <div class="col-2"><b>Week/Year:</b></div>
-        <div class="col-2 black">{{tuple.0.week}}/{{tuple.0.year|int_no_comma}}</div>
-      </div>
-      <div class="d-flex py-1">
-        <div class="col-2"><b>Block start:</b></div>
-        <div class="col-4 black">{{tuple.0.block_start}}({{tuple.0.start_time}})</div>
-        <div class="col-2"><b>Block end:</b></div>
-        <div class="col-4 black">{{tuple.0.block_end}}({{tuple.0.end_time}})</div>
-      </div>
-      {% if tuple.0.status != 'done' %}
-        <h3 class="mt-3 text-center">Still processing</h3>
-      {% else %}
-        {% for statistic in stat_keys %}
-          <div class="d-flex py-1">
-            <div class="col-4"><b>{{stats|dict_value:statistic}}</b></div>
-            <div class="col-6 black">{{tuple.0|class_value:statistic}}<span style="{{tuple.1|dict_color_style:statistic}}"> ({{tuple.1|dict_value:statistic|floatformat:1}}%)</span></div>
-          </div>
-        {% endfor %}
-        {% if tuple.0.transaction_report %}
-          <div>
-            <h4 class="mt-3">Swap transactions </h4>
-            <div class="d-flex flex-column">
-              <div class="d-flex">
-                <div class="col-4">Contract</div>
-                <div class="col-2">Swaps</div>
-                <div class="col-2">Total OUSD</div>
-              </div>
-              {% for contract_address, data in tuple.0.transaction_report.contracts_swaps.items %}
-              <div class="d-flex mb-1">
-                <div class="col-4 text-s">
-                  <a
-                    href="https://www.etherscan.com/address/{{ contract_address }}"
-                    target="_blank"
-                  >
-                    <b>{{data|cotract_name}}</b>
-                  </a>
-                </div>
-                <div class="col-2 text-s"><b>{{data|dict_value:"total_swaps"|int_no_comma}}</b></div>
-                <div class="col-2 text-s"><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></div>
-              </div>
-            {% endfor %}
-            </div>
-          </div>
-          <div>
-            <h4 class="mt-3">Unknown transactions </h4>
-            <div class="d-flex flex-column">
-              <div class="d-flex">
-                <div class="col-4">Contract</div>
-                <div class="col-2">Transactions</div>
-                <div class="col-2">Total OUSD</div>
-              </div>
-              {% for contract_address, data in tuple.0.transaction_report.contracts_other.items %}
-              <div class="d-flex mb-1">
-                <div class="col-4 text-s">
-                  <a
-                    href="https://www.etherscan.com/address/{{ contract_address }}"
-                    target="_blank"
-                  >
-                    <b>{{data|cotract_name}}</b>
-                  </a>
-                </div>
-                <div class="col-2 text-s"><b>{{data|dict_value:"total_transactions"|int_no_comma}}</b></div>
-                <div class="col-2 text-s"><b>{{data|dict_value:"total_ousd_swapped"|floatformat:1}} ({{data|dict_value:"total_swapped_ousd_share,0"|percentage|floatformat:1}}%)</b></div>
-              </div>
-            {% endfor %}
-            </div>
-          </div>
-        {% else %}
-          <h3 class="mt-3 text-center">Contracts report not yet done</h3>
+    <a
+      class="no-decoration"
+      href="/reports/weekly/{{tuple.0.year|int_no_comma}}/{{tuple.0.week|int_no_comma}}"
+    >
+      <div class="report d-flex flex-column w-100 link-box">
+        <div class="d-flex w-100 py-1">
+          <div class="col-2"><b>Week/Year:</b></div>
+          <div class="col-2 black">{{tuple.0.week}}/{{tuple.0.year|int_no_comma}}</div>
+          <div class="col-8 black">from: {{tuple.0.start_time}} to: {{tuple.0.end_time}}</div>
+        </div>
+        {% if tuple.0.status != 'done' %}
+          <h3 class="mt-3 text-center">Still processing</h3>
         {% endif %}
-      {% endif %}
-    </div>
+      </div>
+    </a>
   {% endfor %}       
 </div>
 
@@ -176,6 +62,14 @@
         border-radius: 10px;
         box-shadow: rgb(24 49 64 / 10%) 0px 0px 14px 0px;
         padding: 20px;
+    }
+
+    .no-decoration {
+      text-decoration: none;
+    }
+
+    .link-box:hover {
+      background-color: #eeeeee;
     }
 
     .text-s {

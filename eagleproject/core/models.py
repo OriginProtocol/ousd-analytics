@@ -6,6 +6,7 @@ from decimal import Decimal
 from django.db import models
 
 from core.logging import get_logger
+import simplejson as json
 
 log = get_logger(__name__)
 
@@ -166,6 +167,7 @@ class Transaction(models.Model):
     debug_data = models.JSONField(default=dict)
     internal_transactions = models.JSONField(default=dict)
     from_address = models.CharField(max_length=42, db_index=True, default='0xinvalid_address')
+    to_address = models.CharField(max_length=42, db_index=True, null=True)
 
 
 class OusdTransfer(models.Model):
@@ -281,12 +283,40 @@ class AnalyticsReport(models.Model):
     accounts_holding_ousd = models.IntegerField()
     # Number of accounts holding more than 100 OUSD in a given time period
     accounts_holding_more_than_100_ousd = models.IntegerField()
+    # Number of accounts holding more than 100 OUSD after curve campaign start
+    accounts_holding_more_than_100_ousd_after_curve_start = models.IntegerField(default=0)
     # Number of new accounts holding OUSD in a given time period
     new_accounts = models.IntegerField()
+    # Number of new accounts after Curve campaign start
+    new_accounts_after_curve_start = models.IntegerField(default=0)
     # Number of accounts that have increased their OUSD holdings ignoring rebases
     accounts_with_non_rebase_balance_increase = models.IntegerField()
     # Number of accounts that have decreased their OUSD holdings ignoring rebases
     accounts_with_non_rebase_balance_decrease = models.IntegerField()
+
+    # Contains any info that didn't fit into other reporting stats
+    report = models.JSONField(default=list)
+
+    def __getattr__(self, name):
+        if not self.report or self.report == '[]':
+            return None
+
+        report_json = json.loads(str(self.report))
+        if name == 'total_supply':
+            return round(report_json['supply_data']['total_supply'], 2) if 'supply_data' in report_json else None
+        elif name == 'curve_metapool_total_supply':
+            return report_json['curve_data']['total_supply'] if 'curve_data' in report_json else None
+        elif name == 'share_earning_curve_ogn':
+            return report_json['curve_data']['earning_ogn'] if 'curve_data' in report_json else None
+        elif name == 'apy':
+            return report_json['apy']
+        elif name == 'pools':
+            return report_json["supply_data"]["pools"] if "supply_data" in report_json else []
+        elif name == 'other_rebasing':
+            return report_json["supply_data"]["other_rebasing"] if "supply_data" in report_json else []
+        elif name == 'other_non_rebasing':
+            return report_json["supply_data"]["other_non_rebasing"] if "supply_data" in report_json else []
+
 
 class AaveLendingPoolCoreSnapshot(models.Model):
     """ Snapshot of Aave's LendingPoolCore (v1) """

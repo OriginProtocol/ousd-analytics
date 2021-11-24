@@ -31,10 +31,10 @@ Vault Eagle
 
 ## To deploy
 
-    # First make sure you can connect to the DB in question (e.g. cloud_sql_proxy)
-    python manage.py migrate
-    python manage.py collectstatic
-    gcloud app deploy
+    # push to stable branch
+    git checkout stable
+    git merge origin/master
+    git push origin stable
 
 ## Future
 

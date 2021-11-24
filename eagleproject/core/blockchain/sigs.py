@@ -12,6 +12,20 @@ CHAINLINK_TOK_ETH_PRICE = encode_hex(keccak(b"tokEthPrice(string)"))
 # tokUsdPrice(string calldata symbol)
 CHAINLINK_TOK_USD_PRICE = encode_hex(keccak(b"tokUsdPrice(string)"))
 
+# Chainlink KeeperRegistry
+EVENT_KEEPER_UPKEEP_PERFORMED = encode_hex(
+    keccak(b"UpkeepPerformed(uint256,bool,address,uint96,bytes)")
+)
+EVENT_KEEPER_UPKEEP_CANCELLED = encode_hex(
+    keccak(b"UpkeepCanceled(uint256,uint64)")
+)
+EVENT_KEEPER_FUNDS_ADDED = encode_hex(
+    keccak(b"FundsAdded(uint256,address,uint96)")
+)
+EVENT_KEEPER_FUNDS_WITHDRAWN = encode_hex(
+    keccak(b"FundsWithdrawn(uint256,uint256,address)")
+)
+
 # ERC20
 SIG_FUNC_TOTAL_SUPPLY = encode_hex(keccak(b"totalSupply()"))
 SIG_FUNC_APPROVE_AND_CALL_SENDER = encode_hex(
@@ -58,6 +72,9 @@ SIG_EVENT_STAKING_PAUSED = encode_hex(keccak(b"Paused(address,bool)"))
 SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
     keccak(b"TotalSupplyUpdated(uint256,uint256,uint256)")
 )
+SIG_EVENT_TOTAL_SUPPLY_UPDATED_HIRES = encode_hex(
+    keccak(b"TotalSupplyUpdatedHighres(uint256,uint256,uint256)")
+)
 
 # Vault
 SIG_FUNC_PRICE_USD_MINT = encode_hex(keccak(b"priceUSDMint(address)"))
@@ -77,12 +94,18 @@ SIG_EVENT_ASSET_SUPPORTED = encode_hex(keccak(b"AssetSupported(address)"))
 SIG_EVENT_BUFFER_UPDATE = encode_hex(keccak(b"VaultBufferUpdated(uint256)"))
 SIG_EVENT_REDEEM_FEE = encode_hex(keccak(b"RedeemFeeUpdated(uint256)"))
 SIG_EVENT_PRICE_PROVIDER = encode_hex(keccak(b"PriceProviderUpdated(address)"))
-SIG_EVENT_ALLOCATE_THRESHOLD = encode_hex(keccak(b"AllocateThresholdUpdated(uint256)"))
-SIG_EVENT_REBASE_THRESHOLD = encode_hex(keccak(b"RebaseThresholdUpdated(uint256)"))
+SIG_EVENT_ALLOCATE_THRESHOLD = encode_hex(
+    keccak(b"AllocateThresholdUpdated(uint256)")
+)
+SIG_EVENT_REBASE_THRESHOLD = encode_hex(
+    keccak(b"RebaseThresholdUpdated(uint256)")
+)
 SIG_EVENT_UNISWAP = encode_hex(keccak(b"UniswapUpdated(address)"))
 SIG_EVENT_STRATEGIST = encode_hex(keccak(b"StrategistUpdated(address)"))
 SIG_EVENT_MAX_SUPPLY_DIFF = encode_hex(keccak(b"MaxSupplyDiffChanged(uint256)"))
-SIG_EVENT_DEFAULT_STRATEGY = encode_hex(keccak(b"AssetDefaultStrategyUpdated(address,address)"))
+SIG_EVENT_DEFAULT_STRATEGY = encode_hex(
+    keccak(b"AssetDefaultStrategyUpdated(address,address)")
+)
 SIG_EVENT_STRATEGY_APPROVED = encode_hex(keccak(b"StrategyApproved(address)"))
 SIG_EVENT_YIELD_DISTRIBUTION = encode_hex(
     keccak(b"YieldDistribution(address,uint256,uint256)")
@@ -95,8 +118,12 @@ SIG_EVENT_TRUSTEE_ADDRESS_CHANGED = encode_hex(
 )
 
 # Governable
-SIG_EVENT_PENDING_TRANSFER = encode_hex(keccak(b"PendingGovernorshipTransfer(address,address)"))
-SIG_EVENT_TRANSFER = encode_hex(keccak(b"GovernorshipTransferred(address,address)"))
+SIG_EVENT_PENDING_TRANSFER = encode_hex(
+    keccak(b"PendingGovernorshipTransfer(address,address)")
+)
+SIG_EVENT_TRANSFER = encode_hex(
+    keccak(b"GovernorshipTransferred(address,address)")
+)
 
 # Proxy
 SIG_EVENT_UPGRADED = encode_hex(keccak(b"Upgraded(address)"))
@@ -112,9 +139,7 @@ SIG_EVENT_WITHDRAWAL = encode_hex(
     keccak(b"Withdrawal(address,address,uint256)")
 )
 SIG_EVENT_PTOKEN_ADDED = encode_hex(keccak(b"PTokenAdded(address,address)"))
-SIG_EVENT_PTOKEN_REMOVED = encode_hex(
-    keccak(b"PTokenRemoved(address,address)")
-)
+SIG_EVENT_PTOKEN_REMOVED = encode_hex(keccak(b"PTokenRemoved(address,address)"))
 SIG_EVENT_REWARDS_COLLECTED = encode_hex(
     keccak(b"RewardTokenCollected(address,uint256)")
 )
@@ -136,27 +161,41 @@ SIG_EVENT_QUEUE_TRANSACTION = encode_hex(
 
 # Compound GovernorAlpha, GovernorBravo
 SIG_EVENT_PROPOSAL_CREATED = encode_hex(
-    keccak(b"ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)")
+    keccak(
+        b"ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)"
+    )
 )
 # VoteCast(address voter, uint proposalId, bool support, uint votes);
-SIG_EVENT_VOTE_CAST = encode_hex(keccak(b"VoteCast(address,uint256,bool,uint256)"))
+SIG_EVENT_VOTE_CAST = encode_hex(
+    keccak(b"VoteCast(address,uint256,bool,uint256)")
+)
 SIG_EVENT_PROPOSAL_CANCELED = encode_hex(keccak(b"ProposalCanceled(uint256)"))
-SIG_EVENT_PROPOSAL_QUEUED = encode_hex(keccak(b"ProposalQueued(uint256,uint256)"))
+SIG_EVENT_PROPOSAL_QUEUED = encode_hex(
+    keccak(b"ProposalQueued(uint256,uint256)")
+)
 SIG_EVENT_PROPOSAL_EXECUTED = encode_hex(keccak(b"ProposalExecuted(uint256)"))
 
 # Compound GovernorBravo specific
 # VoteCast(address indexed voter, uint proposalId, uint8 support, uint votes, string reason);
-SIG_EVENT_VOTE_CAST_BRAVO = encode_hex(keccak(b"VoteCast(address,uint,uint8,uint256,string)"))
+SIG_EVENT_VOTE_CAST_BRAVO = encode_hex(
+    keccak(b"VoteCast(address,uint,uint8,uint256,string)")
+)
 # NewImplementation(address oldImplementation, address newImplementation);
-SIG_EVENT_NEW_IMPLEMENTATION_BRAVO = encode_hex(keccak(b"NewImplementation(address,address)"))
+SIG_EVENT_NEW_IMPLEMENTATION_BRAVO = encode_hex(
+    keccak(b"NewImplementation(address,address)")
+)
 # VotingDelaySet(uint oldVotingDelay, uint newVotingDelay)
 SIG_EVENT_VOTING_DELAY_SET = encode_hex(keccak(b"VotingDelaySet(uint,uint)"))
 # VotingPeriodSet(uint oldVotingPeriod, uint newVotingPeriod)
 SIG_EVENT_VOTING_PERIOD_SET = encode_hex(keccak(b"VotingPeriodSet(uint,uint)"))
 # ProposalThresholdSet(uint oldProposalThreshold, uint newProposalThreshold)
-SIG_EVENT_PROPOSAL_THRESHOLD_SET = encode_hex(keccak(b"ProposalThresholdSet(uint,uint)"))
+SIG_EVENT_PROPOSAL_THRESHOLD_SET = encode_hex(
+    keccak(b"ProposalThresholdSet(uint,uint)")
+)
 # NewPendingAdmin(address oldPendingAdmin, address newPendingAdmin)
-SIG_EVENT_NEW_PENDING_ADMIN_BRAVO = encode_hex(keccak(b"NewPendingAdmin(address,address)"))
+SIG_EVENT_NEW_PENDING_ADMIN_BRAVO = encode_hex(
+    keccak(b"NewPendingAdmin(address,address)")
+)
 # NewAdmin(address oldAdmin, address newAdmin)
 SIG_EVENT_NEW_ADMIN_BRAVO = encode_hex(keccak(b"NewAdmin(address,address)"))
 
@@ -165,9 +204,11 @@ SIG_EVENT_PAUSED = encode_hex(keccak(b"Paused()"))
 SIG_EVENT_UNPAUSED = encode_hex(keccak(b"Unpaused()"))
 
 # Aave AaveProtoGovernance
-SIG_EVENT_AAVE_PROPOSAL_CREATED = encode_hex(keccak(
-    b"ProposalCreated(uint256,bytes32,bytes32,uint256,uint256,uint256,uint256,uint256,address)"
-))
+SIG_EVENT_AAVE_PROPOSAL_CREATED = encode_hex(
+    keccak(
+        b"ProposalCreated(uint256,bytes32,bytes32,uint256,uint256,uint256,uint256,uint256,address)"
+    )
+)
 SIG_EVENT_STATUS_CHANGE_TO_VOTING = encode_hex(
     keccak(b"StatusChangeToVoting(uint256,uint256)")
 )
@@ -188,9 +229,9 @@ SIG_EVENT_WINS_ABSTAIN = encode_hex(
 )
 
 # Curve Aragon Voting fork (governance)
-SIG_EVENT_START_VOTE = encode_hex(keccak(
-    b"StartVote(uint256,address,string,uint256,uint256,uint256,uint256)"
-))
+SIG_EVENT_START_VOTE = encode_hex(
+    keccak(b"StartVote(uint256,address,string,uint256,uint256,uint256,uint256)")
+)
 SIG_EVENT_EXECUTE_VOTE = encode_hex(keccak(b"ExecuteVote(uint256)"))
 SIG_EVENT_CHANGE_SUPPORT_REQUIRED = encode_hex(
     keccak(b"ChangeSupportRequired(uint64)")

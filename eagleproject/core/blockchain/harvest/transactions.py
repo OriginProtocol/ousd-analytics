@@ -59,9 +59,6 @@ from core.models import (
 
 logger = get_logger(__name__)
 
-# number of transactions downloaded in parallel
-TRANSACTION_PARALLELISM=2
-
 def build_debug_tx(tx_hash):
     data = debug_trace_transaction(tx_hash)
     return DebugTx(tx_hash=tx_hash, block_number=0, data=data["result"])
@@ -137,7 +134,6 @@ def explode_log_data(value):
 
 def get_internal_transactions(tx_hash):
     data = get_internal_txs_bt_txhash(tx_hash)
-    print("DATA", data)
     return data
 
 def ensure_transaction_and_downstream(tx_hash):
@@ -160,7 +156,9 @@ def ensure_transaction_and_downstream(tx_hash):
         "data": raw_transaction,
         "receipt_data": receipt,
         "debug_data": debug,
-        "internal_transactions" : internal_transactions,
+        "internal_transactions": internal_transactions,
+        "from_address": receipt["from"],
+        "to_address": receipt["to"],
     }
 
     db_tx, created = Transaction.objects.get_or_create(
@@ -224,10 +222,8 @@ def ensure_log_record(raw_log):
     return log
 
 def ensure_transaction_and_downsteam_hashes(tx_hashes):
-    processed = 0
-    for chunk in chunks(tx_hashes, TRANSACTION_PARALLELISM):
-        ensure_transaction_and_downsteam_in_paralel(chunk, processed)
-        processed += TRANSACTION_PARALLELISM
+    for tx_hash in tx_hashes:
+        ensure_transaction_and_downstream(tx_hash)
 
 def ensure_transaction_and_downsteam_in_paralel(tx_hashes, totalProcessed):
     print("Processing {} transactions of total processed {}".format(len(tx_hashes), totalProcessed))
@@ -269,8 +265,8 @@ def download_logs_from_contract(contract, start_block, end_block):
 
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
-    # TODO: perhaps parallelize this as well but needs testing. Since contract tx hashes
-    # are also being fetched in parallel this could cause explosion of threads / processes.
+    # Keep in mind that GAE isn't best suited for parallelism. And if we were to go for it
+    # we need to improve the error handling.
     for contract in LOG_CONTRACTS:
         ensure_latest_logs_for_contract(contract, pointers, upto)
 
