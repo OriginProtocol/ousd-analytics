@@ -130,11 +130,20 @@ def build_asset_block(symbol, block_number):
             )
 
     # 3pool
-    if (
-        block_number == "latest"
-        or block_number > 11831747
+    if(block_number == "latest"
+        or block_number > 13677000
         and symbol in ("USDC", "USDT", "DAI")
-    ):
+        ):
+        threepoolstrat_holding += strategyCheckBalance(
+            STRATCONVEX1,
+            CONTRACT_FOR_SYMBOL[symbol],
+            DECIMALS_FOR_SYMBOL[symbol],
+            block_number,
+        )
+    elif (
+        block_number > 11831747
+        and symbol in ("USDC", "USDT", "DAI")
+        ):
         threepoolstrat_holding += strategyCheckBalance(
             STRAT3POOL,
             CONTRACT_FOR_SYMBOL[symbol],
