@@ -13,6 +13,7 @@ from core.blockchain.addresses import (
     STRATCOMP1,
     STRATCOMP2,
     STRAT3POOL,
+    STRATCONVEX1,
     VAULT,
     OUSD_USDT_UNISWAP,
     OUSD_USDT_SUSHI,
