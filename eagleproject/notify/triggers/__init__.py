@@ -49,15 +49,21 @@ log = get_logger(__name__)
 
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
-SKIP_TRIGGERS = ['noop', 'assetblock_holdings']
-log = logging.getLogger('notify.triggers')
+SKIP_TRIGGERS = [
+    "noop",
+    "assetblock_holdings",
+    # TODO: Maybe add these back when Aave v2 snapshots added
+    "aave_lpc_supply_rates",
+    "aave_lpc_total_liquidity",
+]
+log = logging.getLogger("notify.triggers")
 
 
 def strip_ext(fname):
     """ Strip an extension from a filename """
-    if '.' not in fname:
+    if "." not in fname:
         return fname
-    return '.'.join(fname.split('.')[:-1])
+    return ".".join(fname.split(".")[:-1])
 
 
 def load_triggers():
@@ -67,13 +73,13 @@ def load_triggers():
         for x in THIS_DIR.iterdir()
         if (
             x.is_file()
-            and x.name.endswith('.py')
-            and not x.name.startswith('__')
+            and x.name.endswith(".py")
+            and not x.name.startswith("__")
         )
     ]
 
     return [
-        import_module('notify.triggers.{}'.format(strip_ext(mod.name)))
+        import_module("notify.triggers.{}".format(strip_ext(mod.name)))
         for mod in files
         if strip_ext(mod.name) not in SKIP_TRIGGERS
     ]
@@ -91,14 +97,14 @@ def transactions(block_number):
 
 def logs(block_number):
     """ Get all event logs since given block """
-    return Log.objects.filter(
-        block_number__gt=block_number
-    ).order_by('block_number', 'transaction_index', 'log_index')
+    return Log.objects.filter(block_number__gt=block_number).order_by(
+        "block_number", "transaction_index", "log_index"
+    )
 
 
 def latest_ogn_staking_snap():
     try:
-        return OgnStakingSnapshot.objects.all().order_by('-block_number')[0]
+        return OgnStakingSnapshot.objects.all().order_by("-block_number")[0]
     except Exception as e:
         log.error(str(e))
         return None
@@ -115,33 +121,34 @@ def ctoken_snapshots(block_number):
 def recent_ctoken_snapshots(snap_count=5):
     """ Get the latest N snapshots for all cTokens """
     return CTokenSnapshot.objects.filter(
-        block_number__in=CTokenSnapshot.objects.order_by(
-            '-block_number'
-        ).values('block_number').distinct()[:snap_count]
-    ).order_by('-block_number', 'address')
+        block_number__in=CTokenSnapshot.objects.order_by("-block_number")
+        .values("block_number")
+        .distinct()[:snap_count]
+    ).order_by("-block_number", "address")
 
 
 def recent_aave_reserve_snapshots(snap_count=5):
     return AaveLendingPoolCoreSnapshot.objects.filter(
         block_number__in=AaveLendingPoolCoreSnapshot.objects.order_by(
-            '-block_number'
-        ).values('block_number').distinct()[:snap_count]
-    ).order_by('-block_number', 'asset')
+            "-block_number"
+        )
+        .values("block_number")
+        .distinct()[:snap_count]
+    ).order_by("-block_number", "asset")
 
 
 def aave_reserve_snapshots(block_number):
-    return AaveLendingPoolCoreSnapshot.objects.filter(
-        block_number=block_number
-    )
+    return AaveLendingPoolCoreSnapshot.objects.filter(block_number=block_number)
 
 
-def past_asset_blocks(after=datetime.now() - timedelta(days=7),
-                      until_block=None):
+def past_asset_blocks(
+    after=datetime.now() - timedelta(days=7), until_block=None
+):
     """ Get previous asset blocks after `after` """
     try:
         first_block_after = Block.objects.filter(
             block_time__gte=after
-        ).order_by('block_number')[0]
+        ).order_by("block_number")[0]
     except IndexError:
         return []
 
@@ -152,14 +159,14 @@ def past_asset_blocks(after=datetime.now() - timedelta(days=7),
     if until_block:
         ablocks = ablocks.filter(block_number__lt=until_block)
 
-    return ablocks.order_by('block_number')
+    return ablocks.order_by("block_number")
 
 
 def latest_asset_blocks(after_block_number):
     """ Get previous asset blocks after `after_block_number` """
     return AssetBlock.objects.filter(
         block_number__gt=after_block_number
-    ).order_by('block_number')
+    ).order_by("block_number")
 
 
 def run_all_triggers():
@@ -185,7 +192,7 @@ def run_all_triggers():
         defaults={
             "block_number": block_number,
             "last_update": datetime.now(tz=timezone.utc),
-        }
+        },
     )
 
     transaction_cursor, _ = NotifyCursor.objects.get_or_create(
@@ -193,7 +200,7 @@ def run_all_triggers():
         defaults={
             "block_number": block_number,
             "last_update": datetime.now(tz=timezone.utc),
-        }
+        },
     )
 
     snapshot_cursor, _ = NotifyCursor.objects.get_or_create(
@@ -201,7 +208,7 @@ def run_all_triggers():
         defaults={
             "block_number": snapshot_block_number,
             "last_update": datetime.now(tz=timezone.utc),
-        }
+        },
     )
 
     availible_kwargs_valgen = {
@@ -220,9 +227,7 @@ def run_all_triggers():
         "new_logs": lambda: logs(transaction_cursor.block_number),
         "ogn_staking_snapshot": latest_ogn_staking_snap,
         "oracle_snapshots": lambda: oracles_snaps(snapshot_block_number),
-        "ctoken_snapshots": lambda: ctoken_snapshots(
-            snapshot_block_number
-        ),
+        "ctoken_snapshots": lambda: ctoken_snapshots(snapshot_block_number),
         "recent_ctoken_snapshots": lambda: recent_ctoken_snapshots(),
         "aave_reserve_snapshots": lambda: aave_reserve_snapshots(
             snapshot_block_number
