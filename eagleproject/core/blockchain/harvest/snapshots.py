@@ -15,9 +15,9 @@ from core.blockchain.addresses import (
     STRAT3POOL,
     STRATCONVEX1,
     VAULT,
-    OUSD_USDT_UNISWAP,
-    OUSD_USDT_SUSHI,
-    COMPENSATION_CLAIMS,
+    OUSD_USDT_UNISWAP_V3,
+    FLIPPER,
+    CURVE_METAPOOL,
 )
 from core.blockchain.const import (
     BLOCKS_PER_YEAR,
@@ -450,9 +450,9 @@ def latest_snapshot_block_number():
 
 def calculate_snapshot_data(block=None):
     pools_config = [
-        ("Uniswap OUSD/USDT", OUSD_USDT_UNISWAP, False),
-        ("Sushi OUSD/USDT", OUSD_USDT_SUSHI, False),
-        ("OUSD Compensation", COMPENSATION_CLAIMS, False),
+        ("Curve", CURVE_METAPOOL, False),
+        ("Uniswap v3 OUSD/USDT", OUSD_USDT_UNISWAP_V3, False),
+        ("OUSD Swap", FLIPPER, True),
     ]
     pools = []
     totals_by_rebasing = {True: Decimal(0), False: Decimal(0)}

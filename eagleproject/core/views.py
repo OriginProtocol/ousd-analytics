@@ -196,7 +196,8 @@ def apr_index(request):
 
 def supply(request):
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, s] = calculate_snapshot_data()
-
+    rebasing_pools = [x for x in pools if x['is_rebasing']]
+    non_rebasing_pools = [x for x in pools if x['is_rebasing'] == False]
     #return _cache(30, render(request, "supply.html", locals()))
     return render(request, "supply.html", locals())
 
