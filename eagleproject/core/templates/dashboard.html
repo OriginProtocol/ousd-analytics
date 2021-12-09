@@ -31,6 +31,35 @@
         opacity: 0.1;
     }
 
+    .top-three {
+        position: relative;
+    }
+
+    .dune-holder {
+        position: absolute;
+        right: -220px;
+        top: -30px;
+        width: 200px;
+        height: 50px;
+    }
+
+    .dune-link:hover {
+        opacity: 1;
+        color: white;
+        text-decoration: underline;
+    }
+
+    .dune-link {
+        font-size: 18px;
+        font-weight: 600;
+        background-color: #f2603e;
+        color: white;
+        border-radius: 10px;
+        width: 100%;
+        height: 100%;
+        text-decoration: none;
+    }
+
     .top-three .module {
         background-color: var(--dark-blue-grey);
         color: white;
@@ -270,6 +299,11 @@
             <small>OUSD</small>
             {% endif %}
         </div>
+    </div>
+    <div class="dune-holder">
+        <a class="dune-link d-flex align-items-center justify-content-center" href="/dune-analytics">
+            Dune Analytics
+        </a>
     </div>
 </div>
 

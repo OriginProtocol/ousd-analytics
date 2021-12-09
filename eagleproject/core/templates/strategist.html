@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Strategist Validatooooor{% endblock %}
+
+{% block content %}
+
+<h1>Strategist Validatooooor</h1>
+
+<textarea id="textarea" style="width: 100%; height:150px;" placeholder="Paste data here.."></textarea>
+
+<div id="output"></div>
+
+<script src="/static/vendor/ethers-5.5.umd.min.js"></script>
+<script src="/static/core/strategist/abi_vault.js"></script>
+<script src="/static/core/strategist/strategist_validator.js"></script>
+<style>
+.pill { padding: 4px 16px 4px 12px; border: solid 1px #ddd;
+	border-radius: 24px; display: inline-block; margin-right: 8px; }
+.neutral { padding-right: 12px;  }
+.bad { color: #ff2e2e; background: #7a0000; border-color: #6a0000; }
+.good { color: #00485e; background: #dff6ff; border-color: #0793a4; }
+.decimals { color: #999; }
+.number { font-weight: 1000; }
+th { padding-right: 12px }
+td { padding: 4px; }
+#output{
+	margin-top: 10px;
+	border-left: rgb(69, 220, 251) 4px solid;
+	padding-left: 17px;
+}
+</style>
+
+<script>
+	strategistValidator.app({
+		'masterEl': document.getElementById('output'),
+		'textareaEl': document.getElementById('textarea'),
+
+	})
+</script>
+
+{% endblock %}

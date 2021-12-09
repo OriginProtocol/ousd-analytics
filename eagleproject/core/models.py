@@ -123,6 +123,9 @@ class SupplySnapshot(models.Model):
     def rebasing_reported_supply(self):
         return self.reported_supply - self.non_rebasing_supply
 
+    def rebasing_computed_supply(self):
+        return self.computed_supply - self.non_rebasing_supply
+
     def non_rebasing_reported_supply(self):
         return self.non_rebasing_supply
 
@@ -137,6 +140,11 @@ class SupplySnapshot(models.Model):
             (self.computed_supply / (self.computed_supply - self.non_rebasing_supply))
             - 1
         ) * 100
+
+    def non_rebasing_boost_multiplier(self):
+        return (
+            (self.computed_supply / (self.computed_supply - self.non_rebasing_supply))
+        )
 
     class Meta:
         ordering = ["-block_number"]

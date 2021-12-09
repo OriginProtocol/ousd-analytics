@@ -196,9 +196,16 @@ def apr_index(request):
 
 def supply(request):
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, s] = calculate_snapshot_data()
-
+    rebasing_pools = [x for x in pools if x['is_rebasing']]
+    non_rebasing_pools = [x for x in pools if x['is_rebasing'] == False]
     #return _cache(30, render(request, "supply.html", locals()))
     return render(request, "supply.html", locals())
+
+def dune_analytics(request):
+    return render(request, "dune_analytics.html", locals())
+
+def strategist(request):
+    return render(request, "strategist.html", locals())
 
 
 def api_apr_trailing(request):
