@@ -201,6 +201,9 @@ def supply(request):
     #return _cache(30, render(request, "supply.html", locals()))
     return render(request, "supply.html", locals())
 
+def dune_analytics(request):
+    return render(request, "dune_analytics.html", locals())
+
 def strategist(request):
     return render(request, "strategist.html", locals())
 
