@@ -32,6 +32,9 @@ const strategistValidator = (function () {
     textareaEl.onpaste = () => {
       setTimeout(refresh, 5)
     }
+    textareaEl.onkeyup = () => {
+      setTimeout(refresh, 5)
+    }
     refresh()
   }
 
@@ -52,7 +55,7 @@ const strategistValidator = (function () {
     masterEl.innerHTML = "" // Clear
 
     if (!successParse && data == "") {
-      masterEl.appendChild(element("h2", "Paste data to validate"))
+      masterEl.appendChild(element("p", "Awaiting..."))
       return
     }
 
