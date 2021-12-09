@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Dune Analytics{% endblock %}
+
+{% block content %}
+
+<style>
+    footer {
+        box-shadow: 0 -1px 0 0 var(--powder-blue);
+        background-color: var(--pale-grey);
+        color: var(--blue-grey);
+        font-size: 0.875rem;
+        padding: 22px;
+        text-align: center;
+    }
+
+    @media (min-width: 768px) {
+
+    }
+</style>
+<h2>General Stats</h2>
+<iframe src="https://dune.xyz/embeds/271634/519050/34dc346b-e90f-4c4b-86ab-1107fe8d6a4b" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/284182/536054/8efedf92-132d-43f9-974c-d6aaa2ad53b6" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/284111/536003/6b5abcab-4856-4590-b03f-47da6959202e" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/278146/524806/476159a6-b7bb-4cf7-96e2-e74f99170b4a" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+
+<h2>OUSD Holders</h2>
+<iframe src="https://dune.xyz/embeds/280055/532120/dac10a6c-e731-44bf-a394-cbfe4c2903ae" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/284273/536199/c65ae6a8-90cf-4d06-8d86-84d0080aa39d" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/282332/532634/55ca01e1-77f3-4394-86f3-139765492a27" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/284704/537456/a450c5db-957f-4832-8e5b-b91dd8c5db55" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/282755/533459/735067b4-9f41-4f4b-9ef1-6b80a1fd9f12" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/283166/534275/1d88ccea-eec7-4e8f-9a86-3bc47b605053" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+<iframe src="https://dune.xyz/embeds/278734/528075/c2b8b10f-9a32-495b-a5e1-bccbae2a860a" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+
+<h2>Other</h2>
+<iframe src="https://dune.xyz/embeds/285485/539422/ea76c2ad-232d-4001-9c78-ecf5231b9700" width="100%" height="380" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+</iframe>
+
+<footer>
+    Latest Block: {{block_number}}
+</footer>
+
+{% endblock %}
