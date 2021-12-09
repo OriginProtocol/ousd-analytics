@@ -200,6 +200,9 @@ def supply(request):
     #return _cache(30, render(request, "supply.html", locals()))
     return render(request, "supply.html", locals())
 
+def strategist(request):
+    return render(request, "strategist.html", locals())
+
 
 def api_apr_trailing(request):
     apr = get_trailing_apr()
