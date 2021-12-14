@@ -236,6 +236,36 @@
         margin-top: 1rem;
     }
 
+    .iframe-holder {
+        position: relative;
+        width: 100%;
+    }
+
+    .floating-stat {
+        position: absolute;
+        border:1px solid #999999;
+        border-radius: 10px;
+        background-color: white;
+        top: 8px;
+        left: 8px;
+        padding: 10px 20px;
+        font-size: 2.25rem;
+        font-weight: bold;
+    }
+
+    .floating-stat.smaller {
+        font-size: 1.8rem;
+    }
+
+    .floating-stat .label {
+        color: var(--dark-blue-grey);
+        font-size: 0.875rem;
+    }
+
+    .floating-stat .label a {
+        color: var(--dark-blue-grey);
+    }
+
     footer {
         box-shadow: 0 -1px 0 0 var(--powder-blue);
         background-color: var(--pale-grey);
@@ -268,13 +298,7 @@
     }
 </style>
 
-<div class="top-three columns">
-    <div class="module">
-        <div class="label">
-            Trailing&nbsp;<a href="/apr">30 Day</a>&nbsp;APY
-        </div>
-        {{apy|floatformat:2}}%
-    </div>
+<!-- <div class="top-three columns">
     <div class="module">
         <div class="label">
             Total&nbsp;<a href="/supply">Supply</a>
@@ -304,6 +328,37 @@
         <a class="dune-link d-flex align-items-center justify-content-center" href="/dune-analytics">
             Dune Analytics
         </a>
+    </div>
+</div> -->
+
+<div class="columns d-flex flex-column">
+    {# Total Supply #}
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/278146/524806/476159a6-b7bb-4cf7-96e2-e74f99170b4a" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;"></iframe>
+        <div class="floating-stat smaller d-flex flex-column align-items-center">
+            <div class="label">
+                Total&nbsp;<a href="/supply">Supply</a>
+            </div>
+            <div class="no-wrap">
+                {% if total_supply >= 1000000 %}
+                    {{total_supply|floatformat:0}}
+                {% else %}
+                    {{total_supply|floatformat:2}}
+                {% endif %}
+                <small>OUSD</small>
+            </div>
+        </div>
+    </div>
+
+    {# APY #}
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/271634/519050/34dc346b-e90f-4c4b-86ab-1107fe8d6a4b" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;"></iframe>
+        <div class="floating-stat d-flex flex-column align-items-center">
+            <div class="label">
+                Trailing&nbsp;<a href="/apr">30 Day</a>&nbsp;APY
+            </div>
+            {{apy|floatformat:2}}%
+        </div>
     </div>
 </div>
 
@@ -397,6 +452,47 @@
         <div class="strategy-links">
             <a href="https://etherscan.io/address/{{ strataavedai_address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Aave Strategy</a>
         </div>
+    </div>
+</div>
+
+<div class="columns d-flex flex-column">
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/284182/536054/8efedf92-132d-43f9-974c-d6aaa2ad53b6" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+        </iframe>
+    </div>
+
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/284273/536199/c65ae6a8-90cf-4d06-8d86-84d0080aa39d" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+        </iframe>
+    </div>
+
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/284704/537456/a450c5db-957f-4832-8e5b-b91dd8c5db55" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+        </iframe>
+    </div>
+
+
+
+
+
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/285485/539422/ea76c2ad-232d-4001-9c78-ecf5231b9700" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+        </iframe>
+    </div>
+
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/283166/534275/1d88ccea-eec7-4e8f-9a86-3bc47b605053" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+        </iframe>
+    </div>
+
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/284111/536003/6b5abcab-4856-4590-b03f-47da6959202e" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+        </iframe>
+    </div>
+
+    <div class="iframe-holder">
+        <iframe src="https://dune.xyz/embeds/278734/528075/c2b8b10f-9a32-495b-a5e1-bccbae2a860a" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
+        </iframe>
     </div>
 </div>
 
