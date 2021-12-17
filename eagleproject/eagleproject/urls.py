@@ -39,6 +39,7 @@ urlpatterns = [
     path("dune-analytics", core_views.dune_analytics),
 
     path("strategist", core_views.strategist),
+    path("strategist/creator", core_views.strategist_creator),
 
     path("reload", core_views.reload),
     path("snap", core_views.take_snapshot),
