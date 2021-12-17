@@ -207,6 +207,9 @@ def dune_analytics(request):
 def strategist(request):
     return render(request, "strategist.html", locals())
 
+def strategist_creator(request):
+    return render(request, "strategist_creator.html", locals())
+
 
 def api_apr_trailing(request):
     apr = get_trailing_apr()
