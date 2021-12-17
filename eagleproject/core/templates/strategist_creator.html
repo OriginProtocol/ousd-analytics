@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Strategist Creatoooooor{% endblock %}
+
+{% block content %}
+
+<h1>Strategist Creatoooooor</h1>
+
+
+<div id="input">
+	
+	<p>Transaction builder</p>
+
+	<h2>Reallocate Funds (...)</h2>
+
+	<table>
+		<tr>
+			<th>From:</th>
+			<td>
+				<select id="from">
+					<option>AAVE Strat</option>
+					<option>Compound Strat</option>
+					<option>Convex Strat</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th>To:</th>
+			<td>
+				<select id="to">
+					<option>AAVE Strat</option>
+					<option>Compound Strat</option>
+					<option>Convex Strat</option>
+				</select>
+			</td>
+		</tr>
+		<tr>
+			<th colspan="2">DAI</th>
+			<th>USDC</th>
+			<th>USDT</th>
+		</tr>
+		<tr>
+			<td colspan="2"><input type="text" id="dai" value="78"></td>
+			<td><input type="text" id="usdc" value="123"></td>
+			<td><input type="text" id="usdt" value="1,233,333,337"></td>
+		</tr>
+		<tr>
+			<td colspan="2"></td>
+			<th style="padding-top: 20px;">Maximum Loss</th>
+		</tr>
+		<tr>
+			<td colspan="2"></td>
+			<td><input type="text" id="maxLoss"></td>
+			<td><!-- <p style="padding:13px 0px 0px 8px;">0.010% of total</p> --></td>
+		</tr>
+	</table>
+
+	<hr>
+	<div id="output">
+
+	</div>
+
+
+</div>
+<div id="output"></div>
+
+<script src="/static/vendor/ethers-5.5.umd.min.js"></script>
+<script src="/static/core/strategist/abi_vault.js"></script>
+<script src="/static/core/strategist/abi_vault_value_checker.js"></script>
+<script src="/static/core/strategist/strategist_creator.js"></script>
+
+<style>
+input[type=text] { font-size: 1.4em; width: 180px;}
+#output textarea { width: 574px; height: 400px; font-family: monospace;}
+
+.pill { padding: 4px 16px 4px 12px; border: solid 1px #ddd;
+	border-radius: 24px; display: inline-block; margin-right: 8px; }
+.neutral { padding-right: 12px;  }
+.bad { color: #ff2e2e; background: #7a0000; border-color: #6a0000; }
+.good { color: #00485e; background: #dff6ff; border-color: #0793a4; }
+.decimals { color: #999; }
+.number { font-weight: 1000; }
+th { padding-right: 12px }
+td { padding: 4px; }
+#output{
+	margin-top: 10px;
+	border-left: rgb(69, 220, 251) 4px solid;
+	padding-left: 17px;
+}
+</style>
+
+<script>
+	strategistCreator.app({
+		'fromEl': document.getElementById('from'),
+		'toEl': document.getElementById('to'),
+		'daiEl': document.getElementById('dai'),
+		'usdcEl': document.getElementById('usdc'),
+		'usdtEl': document.getElementById('usdt'),
+		'maxLossEl': document.getElementById('maxLoss'),
+		'outputEl': document.getElementById('output'),
+	})
+</script>
+
+{% endblock %}

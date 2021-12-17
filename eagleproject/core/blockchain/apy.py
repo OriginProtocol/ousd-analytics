@@ -24,7 +24,7 @@ def get_trailing_apr(block=None):
     on rebases, making this method less accurate. It's bit iffy using it
     on only one day, but that's the data we have at the moment.
     """
-    days = 29.00
+    days = 30.00
 
     # Check cache first
     global PREV_APR
