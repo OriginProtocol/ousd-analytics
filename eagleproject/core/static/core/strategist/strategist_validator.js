@@ -64,7 +64,12 @@ const strategistValidator = (function () {
         masterEl.appendChild(innerEl);
       }
     } else {
-      masterEl.appendChild(parseAndDisplayTx(VAULT, data));
+      try {
+        iVault.parseTransaction({ data: data });
+        masterEl.appendChild(parseAndDisplayTx(VAULT, data));
+      } catch {
+        masterEl.appendChild(parseAndDisplayTx(CHECKER, data));
+      }
     }
   }
 
@@ -234,3 +239,4 @@ const strategistValidator = (function () {
 
   return { app };
 })();
+

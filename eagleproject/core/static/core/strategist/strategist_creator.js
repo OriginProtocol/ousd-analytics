@@ -113,7 +113,9 @@ const strategistCreator = (function () {
           ]
             .join("")
             .replace(/0x/g, "");
+        console.log("========");
         console.log(takeSnapshotData);
+        console.log("🚌", reallocateData)
         console.log(checkLossData);
       } catch (e) {
         console.error(e);
