@@ -123,6 +123,7 @@ CONTRACT_ADDR_TO_NAME = {
     STRATAAVEDAI: "Aave Strategy",
     STRATAAVE2: "Aave Strategy",
     STRAT3POOL: "3Pool Strategy",
+    STRATCONVEX1: "Convex Strategy",
     COMPOUND_TIMELOCK: "Compound Timelock",
     COMPOUND_GOVERNOR_ALPHA: "Compound GovernorAlpha",
     COMPOUND_GOVERNOR_BRAVO: "Compound GovernorBravo",
