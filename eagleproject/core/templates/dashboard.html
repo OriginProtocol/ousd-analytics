@@ -232,6 +232,11 @@
         display: block;
     }
 
+    .coin-icon {
+        width: 30px;
+        height: 30px;
+    }
+
     .strategy-links {
         margin-top: 1rem;
     }
@@ -390,8 +395,8 @@
             <span class="value">{{total_compstrat|floatformat:2}}</span>
         </div>
         <div class="line-item">
-            <img src="/static/core/img/curve-icon.svg" alt="CRV icon" />
-            Curve
+            <img class="coin-icon" src="/static/core/img/convex.png" alt="CRX icon" />
+            Convex
             <span class="value">{{total_threepool|floatformat:2}}</span>
         </div>
         <div class="line-item">
@@ -425,8 +430,8 @@
     </div>
     <div class="module">
         <div class="label">
-            <img src="/static/core/img/curve-icon.svg" alt="CRV icon" />
-            Curve Strategy Allocation
+            <img class="coin-icon" src="/static/core/img/convex.png" alt="CRX icon" />
+            Convex Strategy Allocation
         </div>
         {% for asset in assets %}
         <div class="line-item">
