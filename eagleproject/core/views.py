@@ -107,7 +107,7 @@ def dashboard(request):
             "label": "redeems",
         },
         {
-            "topic": "0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1",
+            "topic": "0x09516ecf4a8a86e59780a9befc6dee948bc9e60a36e3be68d31ea817ee8d2c80",
             "label": "rebases",
         },
         {
