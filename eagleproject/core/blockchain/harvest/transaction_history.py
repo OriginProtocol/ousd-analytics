@@ -672,7 +672,7 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
             return
 
         logs = Log.objects.filter(transaction_hash=transaction.tx_hash)
-        account = transaction.receipt_data["from"]
+        account_starting_tx = transaction.receipt_data["from"]
         contract_address = transaction.receipt_data["to"]
         internal_transactions = transaction.internal_transactions
         received_eth = len(list(filter(lambda tx: tx["to"] == account and float(tx["value"]) > 0, internal_transactions))) > 0
@@ -693,42 +693,44 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
                 from_address = "0x" + log.topic_1[-40:]
                 to_address = "0x" + log.topic_2[-40:]
 
-
                 if is_ousd_token: 
                     ousd_transfer_from = from_address
                     ousd_transfer_to = to_address
                     ousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
-                if from_address == account:
-                    if is_ousd_token:
-                        transfer_ousd_out = True
-                    else:
-                        transfer_coin_out = True
-                if to_address == account:
-                    if is_ousd_token:
-                        transfer_ousd_in = True
-                    else:
-                        transfer_coin_in = True
 
-        swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
-        swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
+                if account is not 'all':
+                    if from_address == account:
+                        if is_ousd_token:
+                            transfer_ousd_out = True
+                        else:
+                            transfer_coin_out = True
+                    if to_address == account:
+                        if is_ousd_token:
+                            transfer_ousd_in = True
+                        else:
+                            transfer_coin_in = True
 
         classification = 'unknown'
-        if transfer_log_count > 0:
-            if transfer_ousd_in:
-                classification = 'transfer_in'
-            elif transfer_ousd_out: 
-                classification = 'transfer_out'
-            else:
-                classification = 'unknown_transfer'
+        if account is not 'all':
+            swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
+            swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
 
-        if swap_receive_ousd:
-            classification = 'swap_gain_ousd'
-        elif swap_send_ousd:
-            classification = 'swap_give_ousd'
+            if transfer_log_count > 0:
+                if transfer_ousd_in:
+                    classification = 'transfer_in'
+                elif transfer_ousd_out: 
+                    classification = 'transfer_out'
+                else:
+                    classification = 'unknown_transfer'
+
+            if swap_receive_ousd:
+                classification = 'swap_gain_ousd'
+            elif swap_send_ousd:
+                classification = 'swap_give_ousd'
 
         analyzed_transaction_hashes.append(transaction.tx_hash)
         analyzed_transactions.append(transaction_analysis(
-            account,
+            account_starting_tx,
             transaction.tx_hash,
             contract_address,
             internal_transactions,
@@ -883,7 +885,7 @@ def get_history_for_address(address):
                 'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
             }
 
-    return list(map(__format_tx_history, tx_history[:last_non_yield_tx_idx + 1 if last_non_yield_tx_idx > 0 else 0]))
+    return list(map(__format_tx_history, tx_history[:last_non_yield_tx_idx + 1 if last_non_yield_tx_idx != -1 else 0]))
 
 # when rebase logs are available enrich transfer logs with the active credits_per_token values
 def enrich_transfer_logs(logs):
