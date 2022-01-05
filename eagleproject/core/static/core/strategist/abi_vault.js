@@ -2,6 +2,32 @@ const abiVault = {
   "address": "0x6bd6CC9605Ae43B424cB06363255b061A84DfFD3",
   "abi": [
     {
+      "inputs": [],
+      "name": "harvestAndSwap",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_strategyAddr",
+          "type": "address"
+        }
+      ],
+      "name": "harvestAndSwap",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "constant": false,
       "inputs": [],
       "name": "unpauseRebase",
