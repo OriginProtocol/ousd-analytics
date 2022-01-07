@@ -65,14 +65,15 @@ log = get_logger(__name__)
 
 def fetch_assets(block_number):
     # These probably won't harvest since block_number comes from snapshots
-    dai = ensure_asset("DAI", latest_block_number)
-    usdt = ensure_asset("USDT", latest_block_number)
-    usdc = ensure_asset("USDC", latest_block_number)
-    comp = ensure_asset("COMP", latest_block_number)
+    dai = ensure_asset("DAI", block_number)
+    usdt = ensure_asset("USDT", block_number)
+    usdc = ensure_asset("USDC", block_number)
     return [dai, usdt, usdc]
 
 def dashboard(request):
     block_number = latest_snapshot_block_number()
+
+    comp = ensure_asset("COMP", latest_block_number)
 
     apy = get_trailing_apy()
 
