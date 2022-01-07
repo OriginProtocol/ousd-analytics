@@ -11,6 +11,7 @@ from core.blockchain.addresses import (
     STRAT3POOL,
     STRATCOMP,
     STRATAAVEDAI,
+    STRATCONVEX1
 )
 from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
