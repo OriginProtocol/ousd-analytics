@@ -303,39 +303,6 @@
     }
 </style>
 
-<!-- <div class="top-three columns">
-    <div class="module">
-        <div class="label">
-            Total&nbsp;<a href="/supply">Supply</a>
-        </div>
-        {% if total_supply >= 1000000 %}
-            {{total_supply|floatformat:0}}
-        {% else %}
-            {{total_supply|floatformat:2}}
-        {% endif %}
-        <small>OUSD</small>
-    </div>
-    <div class="module">
-        <div class="label">
-            Next Rebase
-        {% if extra_assets < 0 %}
-            &nbsp;(on hold)
-        {% endif %}
-        </div>
-        <div class="{% if extra_assets < 0 %}negative{% endif %}">
-            {% if extra_assets > 0 %}
-            {{extra_assets|floatformat:2}}
-            <small>OUSD</small>
-            {% endif %}
-        </div>
-    </div>
-    <div class="dune-holder">
-        <a class="dune-link d-flex align-items-center justify-content-center" href="/dune-analytics">
-            Dune Analytics
-        </a>
-    </div>
-</div> -->
-
 {% if not topic %}
 
 <div class="columns d-flex flex-column">

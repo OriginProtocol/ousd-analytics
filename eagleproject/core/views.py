@@ -63,19 +63,21 @@ import json
 
 log = get_logger(__name__)
 
-
-def dashboard(request):
-    block_number = latest_snapshot_block_number()
-
+def fetch_assets(block_number):
     # These probably won't harvest since block_number comes from snapshots
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
+    return [dai, usdt, usdc]
+
+def dashboard(request):
+    block_number = latest_snapshot_block_number()
+
     comp = ensure_asset("COMP", block_number)
 
     apy = get_trailing_apy()
 
-    assets = [dai, usdt, usdc]
+    assets = fetch_assets(block_number)
     total_vault = sum(x.vault_holding for x in assets)
     total_aave = sum(x.aavestrat_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
@@ -186,11 +188,15 @@ def fetch_transactions(request):
     refresh_transactions(latest - 2)
     return HttpResponse("ok")
 
-
 def apr_index(request):
     latest_block_number = latest_snapshot_block_number()
     rows = _daily_rows(30, latest_block_number)
     apy = get_trailing_apy()
+
+    assets = fetch_assets(latest_block_number)
+    total_assets = sum(x.total() for x in assets)
+    total_supply = totalSupply(OUSD, 18, latest_block_number)
+    extra_assets = (total_assets - total_supply) * Decimal(0.9)
     return _cache(5 * 60, render(request, "apr_index.html", locals()))
 
 

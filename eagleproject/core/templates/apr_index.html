@@ -7,9 +7,38 @@
 
 {% block content %}
 
-<h1>APY {{apy|floatformat:2}}% <small>30 day trailing average</small></h1>
+<style>
+    .negative {
+        opacity: 0.1;
+    }
+</style>
 
-<p>Daily APY for the last thirty days:</p>
+<div class="row">
+    <div class="col-12 col-md-6">
+        <h1>
+            APY {{apy|floatformat:2}}%<br />
+            <small>30 day trailing average</small>
+        </h1>
+    </div>
+    <div class="col-12 col-md-6">
+        <h1>
+            <span class="{% if extra_assets < 0 %}negative{% endif %}">
+                {{extra_assets|floatformat:2}}
+            {% if extra_assets > 0 %}
+                &nbsp;OUSD
+            {% endif %}
+            </span><br />
+            <small>
+                Next rebase
+            {% if extra_assets < 0 %}
+                &nbsp;(on hold)
+            {% endif %}
+            </small>
+        </h1>
+    </div>
+</div>
+
+<p class="mt-4 mb-0">Daily APY for the last thirty days:</p>
 
 <table class="table table-right">
     <thead>
