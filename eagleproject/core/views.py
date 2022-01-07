@@ -73,7 +73,7 @@ def fetch_assets(block_number):
 def dashboard(request):
     block_number = latest_snapshot_block_number()
 
-    comp = ensure_asset("COMP", latest_block_number)
+    comp = ensure_asset("COMP", block_number)
 
     apy = get_trailing_apy()
 
