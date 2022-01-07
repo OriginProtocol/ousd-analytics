@@ -126,7 +126,7 @@ def dashboard(request):
         },
     ]
 
-    strat3pool_address = STRAT3POOL
+    stratconvex_address = STRATCONVEX1
     stratcomp_address = STRATCOMP
     strataavedai_address = STRATAAVEDAI
 
