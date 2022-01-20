@@ -115,7 +115,7 @@ def build_asset_block(symbol, block_number):
     # AAVE Strats
     if block_number < 11096410:
        pass 
-    if block_number < 13399969:
+    elif block_number < 13399969:
         if symbol == "DAI":
             aavestrat_holding += strategyCheckBalance(
                 STRATAAVEDAI,
