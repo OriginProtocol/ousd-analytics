@@ -122,7 +122,7 @@ def build_asset_block(symbol, block_number):
                 block_number,
             )
     if block_number == "latest" or block_number >= 13399969:
-        if symbol in ["DAI"]:
+        if symbol in ["DAI", "USDT"]:
             aavestrat_holding += strategyCheckBalance(
                 STRATAAVE2,
                 CONTRACT_FOR_SYMBOL[symbol],
