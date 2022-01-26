@@ -191,7 +191,12 @@ def fetch_transactions(request):
 
 def apr_index(request):
     latest_block_number = latest_snapshot_block_number()
-    rows = _daily_rows(30, latest_block_number)
+    try:
+        num_rows = int(request.GET.get('rows', 30))
+    except ValueError:
+        num_rows = 30
+    rows = _daily_rows(num_rows, latest_block_number)
+    del num_rows
     apy = get_trailing_apy()
 
     assets = fetch_assets(latest_block_number)
