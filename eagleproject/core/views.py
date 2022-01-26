@@ -195,7 +195,7 @@ def apr_index(request):
         num_rows = int(request.GET.get('rows', 30))
     except ValueError:
         num_rows = 30
-    rows = _daily_rows(num_rows, latest_block_number)
+    rows = _daily_rows(min(120, num_rows), latest_block_number)
     del num_rows
     apy = get_trailing_apy()
 
