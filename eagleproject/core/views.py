@@ -6,12 +6,13 @@ from django.http import HttpResponse, JsonResponse
 from django.db import connection
 from django.db.models import Q
 from core.blockchain.addresses import (
+    DRIPPER,
     OUSD,
     USDT,
     STRAT3POOL,
     STRATCOMP,
     STRATAAVEDAI,
-    STRATCONVEX1
+    STRATCONVEX1,
 )
 from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
@@ -50,6 +51,8 @@ from core.blockchain.harvest.transaction_history import (
 
 from core.blockchain.rpc import (
     balanceOf,
+    dripper_available,
+    dripper_drip_rate,
     latest_block,
     rebasing_credits_per_token,
     totalSupply,
@@ -212,6 +215,15 @@ def supply(request):
     non_rebasing_pools = [x for x in pools if x['is_rebasing'] == False]
     #return _cache(30, render(request, "supply.html", locals()))
     return render(request, "supply.html", locals())
+
+def dripper(request):
+    dripper_usdt = balanceOf(USDT, DRIPPER, 6)
+    dripper_available_usdt = dripper_available()
+    rate = dripper_drip_rate()
+    dripper_drip_rate_per_minute = dripper_drip_rate() * 60
+    dripper_drip_rate_per_hour = dripper_drip_rate() * 60 * 60
+    dripper_drip_rate_per_day = dripper_drip_rate() * 24 * 60 * 60
+    return _cache(10, render(request, "dripper.html", locals()))
 
 def dune_analytics(request):
     return render(request, "dune_analytics.html", locals())

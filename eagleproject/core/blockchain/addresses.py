@@ -92,6 +92,7 @@ CURVE_METAPOOL_GAUGE = "0x25f0ce4e2f8dba112d9b115710ac297f816087cd"
 # Various
 METAMASK_SWAP_ROUTER = "0x881d40237659c251811cec9c364ef91dc08d300c"
 FLIPPER = "0xcecad69d7d4ed6d52efcfa028af8732f27e08f70"
+DRIPPER = "0x80c898ae5e56f888365e235ceb8cea3eb726cb58"
 UNISWAP_V3_ROUTER = "0xe592427a0aece92de3edee1f18e0157c05861564"
 OX_EXCHANGE = "0xdef1c0ded9bec7f1a1670819833240f027b25eff"
 ONE_INCH_V3 = "0x11111112542d85b3ef69ae05771c2dccff4faa26"
@@ -138,6 +139,7 @@ CONTRACT_ADDR_TO_NAME = {
     CURVE_3POOL: "3Pool Swap Contract",
     CURVE_ARAGON_51: "Curve Aragon Voting (51%)",
     CURVE_ARAGON_60: "Curve Aragon Voting (60%)",
+    DRIPPER: "Dripper",
     GOVERNOR: "Origin Governor V1",
     GOVERNORV2: "Origin Governor V2",
     GOVERNORV3: "Origin Governor V3",
