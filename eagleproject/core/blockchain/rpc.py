@@ -15,6 +15,7 @@ from core.blockchain.addresses import (
     OGN_STAKING,
     OPEN_ORACLE,
     OUSD,
+    DRIPPER,
 )
 from core.blockchain.const import (
     DECIMALS_FOR_SYMBOL,
@@ -31,6 +32,8 @@ from core.blockchain.sigs import (
     CHAINLINK_ETH_USD_PRICE,
     CHAINLINK_TOK_ETH_PRICE,
     CHAINLINK_TOK_USD_PRICE,
+    SIG_DRIPPER_AVAILABLE_FUNDS,
+    SIG_DRIPPER_CONFIG,
     SIG_FUNC_BORROW_RATE,
     SIG_FUNC_DURATION_REWARD_RATE,
     SIG_FUNC_EXCHANGE_RATE_STORED,
@@ -332,6 +335,18 @@ def staking_durationRewardRate(address, duration, block="latest"):
     payload = encode_single("(uint256)", [duration]).hex()
     data = call(address, signature, payload, block)
     return Decimal(int(data["result"], 16))
+
+
+def dripper_available(block="latest"):
+    signature = SIG_DRIPPER_AVAILABLE_FUNDS[:10]
+    data = call(DRIPPER, signature, "", block)
+    return Decimal(int(data["result"], 16)) / E_6
+
+
+def dripper_drip_rate(block="latest"):
+    signature = SIG_DRIPPER_CONFIG[:10]
+    data = call(DRIPPER, signature, "", block)
+    return Decimal(int(data["result"][64 + 2 :], 16)) / E_6
 
 
 class AaveLendingPoolCore:
