@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}OUSD Dripper{% endblock %}
+
+
+{% block content %}
+
+<style>
+    tr.grey td { background: #eee;}
+</style>
+
+<h1>OUSD Rewards Token Dripper</h1>
+
+<p>Only income from sales from DeFi reward tokens. This does not include base APY income.</p>
+
+<table class="table" style="width:auto">
+    <tr>
+        <td>Funds held by dripper</td>
+        <td class="text-right big"><strong>{{dripper_usdt|floatformat:0}}</strong></td>
+    </tr>
+    <tr>
+        <td>Available for collection</td>
+        <td class="text-right big"><strong>{{dripper_available_usdt|floatformat:0}}</strong></td>
+    </tr>
+    <tr>
+        <td>Drip Rate</td>
+        <td class="text-right big"><strong>{{dripper_drip_rate_per_day|floatformat:0}}</strong><br><small><small>per day</small></small></td>
+        <td class="text-right big"><strong>{{dripper_drip_rate_per_hour|floatformat:2}}</strong><br><small><small>per hour</small></small></td>
+        <td class="text-right big"><strong>{{dripper_drip_rate_per_minute|floatformat:4}}</strong><br><small><small>per minute</small></small></td>
+    </tr>
+</table>
+    
+
+
+{% endblock %}

@@ -36,6 +36,7 @@ urlpatterns = [
     path("apy", core_views.apr_index, name="apy"),
     path("apr", RedirectView.as_view(pattern_name="apy", permanent=True)),
     path("supply", core_views.supply),
+    path("dripper", core_views.dripper),
     path("dune-analytics", core_views.dune_analytics),
 
     path("strategist", core_views.strategist),

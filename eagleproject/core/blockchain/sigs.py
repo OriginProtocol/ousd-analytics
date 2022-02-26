@@ -52,6 +52,10 @@ SIG_FUNC_AIR_DROPPED_STAKE = encode_hex(
     keccak(b"airDroppedStake(uint256,uint8,uint256,uint256,uint256,bytes32[])")
 )
 
+# DRIPPER
+SIG_DRIPPER_AVAILABLE_FUNDS = encode_hex(keccak(b'availableFunds()'))
+SIG_DRIPPER_CONFIG = encode_hex(keccak(b'drip()'))
+
 ########
 # Events
 ########
