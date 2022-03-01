@@ -14,13 +14,13 @@
 </style>
 
 <div class="row">
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-4">
         <h1>
             APY {{apy|floatformat:2}}%<br />
             <small>30 day trailing average</small>
         </h1>
     </div>
-    <div class="col-12 col-md-6">
+    <div class="col-12 col-md-4"  style="text-align:center;">
         <h1>
             <span class="{% if extra_assets < 0 %}negative{% endif %}">
                 {{extra_assets|floatformat:2}}
@@ -36,6 +36,12 @@
             </small>
         </h1>
     </div>
+    <div class="col-12 col-md-4" style="text-align:right">
+        <h1>
+            APY {{apy_365|floatformat:2}}%<br />
+            <small>365 day trailing average</small>
+        </h1>
+    </div>
 </div>
 
 <p class="mt-4 mb-0">Daily APY for the last thirty days:</p>
@@ -43,32 +49,30 @@
 <table class="table table-right">
     <thead>
         <tr>
-            <th>Block</th>
+            <th>Day</th>
             <th>APY</th>
-            <th>Multiplier</th>
-            <th>Unboosted</th>
+            <th>Mul</th>
+            <th>Raw</th>
             <th>Aprx. Yield</th>
             <th>OUSD Supply</th>
             <th>Backing Supply</th>
             <th>Rebasing Supply</th>
             <th>Non-Rebasing Supply</th>
-            <th>%</th>
-            <th>Ratio</th>
+            <th>Virtual Price</th>
         </tr>
     </thead>
     {% for row in rows %}    
         <tr>
-            <td>{% if row.block_number == latest_block_number %}<small>Today So Far</small>{% else %}{{row.block_number}}{% endif %}</td>
-            <td><strong>{{row.apy|floatformat:2}}%</strong></td>
-            <td>{{row.non_rebasing_boost_multiplier|floatformat:2}}x</td>
-            <td>{{row.unboosted|floatformat:2}}%</td>
-            <td><strong>{{row.gain|floatformat:2}}</strong></td>
+            <td style="white-space: nowrap;">{% if row.block_number == latest_block_number %}<small>Today So Far</small>{% else %}{{row.effective_day|date:'M d'}}{% endif %}<!-- {{row.block_number}} --></td>
+            <td>{% if row.block_number != latest_block_number %}<strong>{{row.apy|floatformat:2}}%{% endif %}</strong></td>
+            <td>{% if row.block_number != latest_block_number %}{{row.non_rebasing_boost_multiplier|floatformat:2}}x{% endif %}</td>
+            <td>{% if row.block_number != latest_block_number %}{{row.unboosted|floatformat:2}}%{% endif %}</td>
+            <td><strong>{{row.gain|floatformat:0}}</strong></td>
             <td>{{row.reported_supply|floatformat:0}}</td>
             <td>{{row.computed_supply|floatformat:0}}</td>
             <td>{{row.rebasing_computed_supply|floatformat:0}}</td>
             <td>{{row.non_rebasing_supply|floatformat:0}}</td>
-            <td>{{row.non_rebasing_percentage|floatformat:1}}%</td>
-            <td>{{row.rebasing_credits_ratio|floatformat:8}}</td>
+            <td>{{row.rebasing_credits_ratio|floatformat:5}}</td>
         </tr>
     {% endfor %}
 </table>

@@ -49,6 +49,10 @@ class AssetBlock(models.Model):
         ]
 
 
+class Day(models.Model):
+    date = models.DateField(db_index=True, primary_key=True)
+    block_number = models.IntegerField(db_index=True)
+
 class DebugTx(models.Model):
     tx_hash = models.CharField(max_length=66, db_index=True)
     block_number = models.IntegerField(db_index=True)
