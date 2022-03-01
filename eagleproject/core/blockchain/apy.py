@@ -13,7 +13,7 @@ from core.blockchain.const import (
 PREV_APR = None
 
 # if block is None, the latest block shall be considered
-def get_trailing_apr(block=None):
+def get_trailing_apr(block=None, days=30.00):
     """
     Calculates the APR by using the OUSD rebase ratio. 
 
@@ -24,7 +24,6 @@ def get_trailing_apr(block=None):
     on rebases, making this method less accurate. It's bit iffy using it
     on only one day, but that's the data we have at the moment.
     """
-    days = 30.00
 
     # Check cache first
     global PREV_APR
@@ -47,9 +46,9 @@ def get_trailing_apr(block=None):
     return apr
 
 # if block is None, the latest block shall be considered
-def get_trailing_apy(block=None):
-    apr = Decimal(get_trailing_apr(block))
-    apy = to_apy(apr, 30.0)
+def get_trailing_apy(block=None, days=30.00):
+    apr = Decimal(get_trailing_apr(block, days))
+    apy = to_apy(apr, days)
     return round(apy, 2)
 
 def to_apy(apr, days):
