@@ -24,6 +24,10 @@ from core.blockchain.const import (
     curve_report_stats
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
+from core.blockchain.harvest.blocks import (
+    ensure_block,
+    ensure_day
+)
 from core.blockchain.harvest.snapshots import (
     ensure_asset,
     ensure_supply_snapshot,
@@ -201,12 +205,13 @@ def apr_index(request):
     rows = _daily_rows(min(120, num_rows), latest_block_number)
     del num_rows
     apy = get_trailing_apy()
+    apy_365 = get_trailing_apy(days=365)
 
     assets = fetch_assets(latest_block_number)
     total_assets = sum(x.total() for x in assets)
     total_supply = totalSupply(OUSD, 18, latest_block_number)
-    extra_assets = (total_assets - total_supply) * Decimal(0.9)
-    return _cache(5 * 60, render(request, "apr_index.html", locals()))
+    extra_assets = (total_assets - total_supply) + dripper_available()
+    return _cache(1 * 60, render(request, "apr_index.html", locals()))
 
 
 def supply(request):
@@ -562,23 +567,36 @@ def _cache(seconds, response):
 
 
 def _daily_rows(steps, latest_block_number):
-    STEP = BLOCKS_PER_DAY
-    end_block_number = latest_block_number - (latest_block_number % STEP)
-    block_numbers = list(
-        range(end_block_number - (steps) * STEP, end_block_number + 1, STEP)
-    ) + [latest_block_number]
+    # Blocks to display
+    # ...this could be a bit more efficient if we pre-loaded the days and blocks in
+    # on transaction, then only ensured the missing ones.
+    block_numbers = [latest_block_number]  # Start with today so far
+    today = datetime.datetime.utcnow()
+    if today.hour < 8:
+        # No rebase guaranteed yet on this UTC day
+        today = (today - datetime.timedelta(seconds=24*60*60)).replace(tzinfo=datetime.timezone.utc)
+    selected = datetime.datetime(today.year, today.month, today.day).replace(tzinfo=datetime.timezone.utc)
+    for i in range(0,steps+1):
+        day = ensure_day(selected)
+        block_numbers.append(day.block_number)
+        selected = (selected - datetime.timedelta(seconds=24*60*60)).replace(tzinfo=datetime.timezone.utc)
+    block_numbers.reverse()
+
+    # Snapshots for each block
     rows = []
     last_snapshot = None
-
     for block_number in block_numbers:
         if block_number < START_OF_OUSD_V2:
             continue
+        block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number)
+        s.block_time = block.block_time
+        s.effective_day = (block.block_time - datetime.timedelta(seconds=24*60*60)).replace(tzinfo=datetime.timezone.utc)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
-            change = (
-                s.rebasing_credits_ratio / last_snapshot.rebasing_credits_ratio
-            ) - Decimal(1)
+            change = ((
+                s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token
+            ) - Decimal(1)) * -1
             s.apr = Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
             s.apy = to_apy(s.apr, 1)
             s.unboosted = to_apy((s.computed_supply - s.non_rebasing_supply) / s.computed_supply * s.apr, 1)
@@ -588,6 +606,8 @@ def _daily_rows(steps, latest_block_number):
     rows.reverse()
     # drop last row with incomplete information
     rows = rows[:-1]
+    # Add dripper funds to today so far
+    rows[0].gain += dripper_available()
     return rows
 
 def staking_stats(request):
