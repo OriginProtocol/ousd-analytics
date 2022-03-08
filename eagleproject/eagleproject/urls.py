@@ -13,7 +13,7 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.urls import path
+from django.urls import path, re_path
 from django.views.generic import RedirectView
 from core import views as core_views
 from notify import views as notify_views
@@ -49,6 +49,7 @@ urlpatterns = [
     path("notifygc", notify_views.gc),
 
     path("api/v1/apr/trailing", core_views.api_apr_trailing),
+    re_path(r'^api/v1/apr/trailing/(?P<days>[0-9]{2,3})', core_views.api_apr_trailing_days),
     path("api/v1/apr/history", core_views.api_apr_history),
     path("api/v1/ratios", core_views.api_ratios),
     path("api/v1/speed_test", core_views.api_speed_test),
