@@ -131,8 +131,16 @@ def build_asset_block(symbol, block_number):
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
-    else:
+    elif block_number < 14398806:
         if symbol in ["DAI", "USDT"]:
+            aavestrat_holding += strategyCheckBalance(
+                STRATAAVE2,
+                CONTRACT_FOR_SYMBOL[symbol],
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+    else:
+        if symbol in ["DAI", "USDT", "USDC"]:
             aavestrat_holding += strategyCheckBalance(
                 STRATAAVE2,
                 CONTRACT_FOR_SYMBOL[symbol],
