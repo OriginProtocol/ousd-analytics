@@ -83,7 +83,9 @@ def dashboard(request):
 
     comp = ensure_asset("COMP", block_number)
 
-    apy = get_trailing_apy()
+    apy = get_trailing_apy(days=365)
+    if apy < 0:
+        apy = 0
 
     assets = fetch_assets(block_number)
     total_vault = sum(x.vault_holding for x in assets)
