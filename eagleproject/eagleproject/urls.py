@@ -49,7 +49,7 @@ urlpatterns = [
     path("notifygc", notify_views.gc),
 
     path("api/v1/apr/trailing", core_views.api_apr_trailing),
-    re_path(r'^api/v1/apr/trailing/(?P<days>[0-9]{2,3})', core_views.api_apr_trailing_days),
+    re_path(r'^api/v1/apr/trailing/(?P<days>[0-9]{1,3})', core_views.api_apr_trailing_days),
     path("api/v1/apr/history", core_views.api_apr_history),
     path("api/v1/ratios", core_views.api_ratios),
     path("api/v1/speed_test", core_views.api_speed_test),
