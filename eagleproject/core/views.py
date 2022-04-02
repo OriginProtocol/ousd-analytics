@@ -385,8 +385,10 @@ def active_stake_stats():
     for address in nonsense_users:
         del user_aggreate[address]
 
+    unique_addresses = user_aggreate.keys()
+
     # Now we need to bucket all active stakes
-    for user_address in user_aggreate.keys():
+    for user_address in unique_addresses:
         for stake in user_aggreate[user_address]:
             if stake.staked_duration == datetime.timedelta(days=30):
                 total_30 += stake.amount
@@ -402,11 +404,14 @@ def active_stake_stats():
                     )
                 )
 
-    return [
-        {'duration': 30, 'total_staked': total_30},
-        {'duration': 90, 'total_staked': total_90},
-        {'duration': 365, 'total_staked': total_365},
-    ]
+    return {
+        "userCount": len(unique_addresses),
+        "stats": [
+            {'duration': 30, 'total_staked': total_30},
+            {'duration': 90, 'total_staked': total_90},
+            {'duration': 365, 'total_staked': total_365},
+        ]
+    }
 
 
 def address(request, address):
@@ -624,31 +629,17 @@ def _daily_rows(steps, latest_block_number):
     return rows
 
 def staking_stats(request):
-    with connection.cursor() as cursor:
-        query = """
-        select count(*) as count, sum(staked_amount) as total_staked from (
-            select user_address, sum(
-                case
-                when is_staked then amount
-                else staked_amount * -1
-                end
-            ) as staked_amount from core_ognstaked group by user_address
-        ) as t where staked_amount > 0;
-        """
-        cursor.execute(query)
-        row = cursor.fetchone()
-        count, total_staked = row
+    data = active_stake_stats()
 
-        data = {
-            "success": True,
-            "userCount": count,
-            "lockupSum": float(total_staked) if total_staked else 0,
-        }
-        return JsonResponse(data)
-
+    return JsonResponse({
+        "success": True,
+        "userCount": data["userCount"],
+        "lockupSum": sum(row['total_staked'] for row in data["stats"])
+    })
 
 def staking_stats_by_duration(request):
-    stats = active_stake_stats()
+    data = active_stake_stats()
+    stats = data["stats"]
 
     return JsonResponse({
         "success": True,
@@ -663,7 +654,8 @@ def coingecko_pools(request):
     """ API for CoinGecko to consume to get details about OUSD and OGN """
     ousd_liquidity = totalSupply(OUSD, 18)
     ousd_apy = get_trailing_apy()
-    ogn_stats = active_stake_stats()
+    ogn_stats_data = active_stake_stats()
+    ogn_stats = ogn_stats_data["stats"]
     ogn_30_liquidity = 0
     ogn_90_liquidity = 0
     ogn_365_liquidity = 0
