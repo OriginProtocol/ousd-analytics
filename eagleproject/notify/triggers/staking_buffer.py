@@ -2,9 +2,9 @@ from django.conf import settings
 from core.common import format_ogn_human
 from notify.events import event_critical, event_high, event_normal, event_low
 
-LOW_YELLOW = 250000
-LOW_ORANGE = 100000
-LOW_RED = 50000
+LOW_YELLOW = 25000
+LOW_ORANGE = 10000
+LOW_RED = 500
 EVENT_TAGS = ['ogn']
 
 
