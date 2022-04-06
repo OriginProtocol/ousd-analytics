@@ -19,7 +19,7 @@ __pycache__/
 /setup.cfg
 
 
-db.sqlite3
+db.sqlite3*
 cloud_sql_proxy
 eagleproject/.env
 eagleproject/.env*
