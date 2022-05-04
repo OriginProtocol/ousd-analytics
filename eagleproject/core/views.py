@@ -598,6 +598,10 @@ def _daily_rows(steps, latest_block_number):
         day = ensure_day(selected)
         block_numbers.append(day.block_number)
         selected = (selected - datetime.timedelta(seconds=24*60*60)).replace(tzinfo=datetime.timezone.utc)
+    # Deduplicate list and preserving order.
+    # Sometimes latest_block_number supplied to the function and latest day block_number are the same block
+    # Triggering division by 0 in the code below
+    block_numbers = list(dict.fromkeys(block_numbers))
     block_numbers.reverse()
 
     # Snapshots for each block
