@@ -1188,8 +1188,8 @@ def ensure_transaction_wrap_history(account, from_block, to_block, from_block_ti
 
     wousd_balance = balanceOf(WOUSD, account, 18, to_block if to_block is not None else 'latest')
 
+    # sort transfer logs by block number descending
     balance_logs = list(transfer_logs)
-    # sort transfer and rebase logs by block number descending
     balance_logs.sort(key=lambda log: -log.block_number)
     balance_logs = enrich_transfer_logs(balance_logs)
     return (ensure_wousd_balance(wousd_balance, balance_logs), previous_transfer_logs, wousd_balance)
