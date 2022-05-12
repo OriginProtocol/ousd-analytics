@@ -843,7 +843,8 @@ def get_transfer_logs(account, from_block_time, to_block_time):
     return list(map(lambda log: transfer_log(
         log.tx_hash.block_number,
         # for now the transaction_index (index of tx execution within a block) is not
-        # available / important for transfer logs
+        # available in the db yet. Will need to add a new `transaction_index` field to ousd_transfers
+        # and recalculate historical data.
         0,
         log.tx_hash,
         log.amount if log.to_address.lower() == account.lower() else -log.amount,
