@@ -196,6 +196,20 @@ class OusdTransfer(models.Model):
     amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
 
 
+class WousdTransfer(models.Model):
+    tx_hash = models.ForeignKey(
+        "Transaction",
+        to_field="tx_hash",
+        on_delete=models.DO_NOTHING,
+        db_index=True,
+    )
+    log_index = models.CharField(max_length=66, db_index=True)
+    block_time = models.DateTimeField(db_index=True)
+    from_address = models.CharField(max_length=42, db_index=True)
+    to_address = models.CharField(max_length=42, db_index=True)
+    amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+
+
 class OgnStaked(models.Model):
     tx_hash = models.CharField(max_length=66, db_index=True)
     log_index = models.CharField(max_length=66, db_index=True)
@@ -433,4 +447,5 @@ def conditional_update(self, **kwargs):
 Log.add_to_class("conditional_update", conditional_update)
 Transaction.add_to_class("conditional_update", conditional_update)
 OusdTransfer.add_to_class("conditional_update", conditional_update)
+WousdTransfer.add_to_class("conditional_update", conditional_update)
 OgnStaked.add_to_class("conditional_update", conditional_update)

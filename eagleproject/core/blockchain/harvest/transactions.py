@@ -54,6 +54,7 @@ from core.models import (
     LogPointer,
     OgnStaked,
     OusdTransfer,
+    WousdTransfer,
     Transaction,
 )
 
@@ -125,6 +126,36 @@ def maybe_store_transfer_record(log, block):
 
     return transfer
 
+def maybe_store_wrap_transfer_record(log, block):
+    # Must be a transfer event
+    if log["topics"][0] != TRANSFER:
+        return None
+
+    # Must be on wOUSD
+    if log["address"] != "0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62":
+        return None
+
+    tx_hash = log["transactionHash"]
+    log_index = int(log["logIndex"], 16)
+
+    params = {
+        "block_time": block.block_time,
+        "from_address": "0x" + log["topics"][1][-40:],
+        "to_address": "0x" + log["topics"][2][-40:],
+        "amount": int(slot(log["data"], 0), 16) / E_18,
+    }
+
+    transfer, created = WousdTransfer.objects.get_or_create(
+        tx_hash_id=tx_hash,
+        log_index=log_index,
+        defaults=params
+    )
+
+    if not created:
+        transfer.conditional_update(**params)
+
+    return transfer
+
 def explode_log_data(value):
     count = len(value) // 64
     out = []
@@ -172,6 +203,7 @@ def ensure_transaction_and_downstream(tx_hash):
     for log in receipt["logs"]:
         ensure_log_record(log)
         maybe_store_transfer_record(log, block)
+        maybe_store_wrap_transfer_record(log, block)
         maybe_store_stake_withdrawn_record(log, block)
 
     return db_tx

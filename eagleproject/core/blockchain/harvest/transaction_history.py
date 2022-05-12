@@ -9,6 +9,7 @@ from multiprocessing import (
 from core.models import (
     Log,
     OusdTransfer,
+    WousdTransfer,
     Block,
     Transaction,
     AnalyticsReport
@@ -24,6 +25,7 @@ from core.blockchain.harvest.transactions import (
 )
 from core.blockchain.rpc import (
     creditsBalanceOf,
+    balanceOf
 )
 from core.blockchain.rpc import (
     balanceOf,
@@ -65,6 +67,7 @@ from core.blockchain.addresses import (
     CONTRACT_ADDR_TO_NAME,
     CURVE_METAPOOL,
     CURVE_METAPOOL_GAUGE,
+    WOUSD,
 )
 
 import simplejson as json
@@ -755,6 +758,114 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
 
     return analyzed_transactions
 
+def ensure_analyzed_wrap_transactions(from_block, to_block, start_time, end_time, account='all'):
+    tx_query = Q()
+    tran_query = Q()
+    if account is not 'all':
+        tx_query &= Q(from_address=account) | Q(to_address=account)
+        tran_query &= Q(from_address=account) | Q(to_address=account)
+    # info regarding all blocks should be present
+    if from_block is not None:
+        tx_query &= Q(block_number__gte=from_block)
+        tx_query &= Q(block_number__lt=to_block)
+        tran_query &= Q(block_time__gte=start_time)
+        tran_query &= Q(block_time__lt=end_time)
+    
+    transactions = Transaction.objects.filter(tx_query)
+    transfer_transactions = map(lambda transfer: transfer.tx_hash, WousdTransfer.objects.filter(tran_query))
+
+    analyzed_transactions = []
+    analyzed_transaction_hashes = []
+    
+    def process_transaction(transaction):
+        if transaction.tx_hash in analyzed_transaction_hashes:
+            # transaction already analyzed skipping
+            return
+
+        logs = Log.objects.filter(transaction_hash=transaction.tx_hash)
+        account_starting_tx = transaction.receipt_data["from"]
+        contract_address = transaction.receipt_data["to"]
+        internal_transactions = transaction.internal_transactions
+        received_eth = len(list(filter(lambda tx: tx["to"] == account and float(tx["value"]) > 0, internal_transactions))) > 0
+        sent_eth = transaction.data['value'] != '0x0'
+        transfer_wousd_out = False
+        transfer_wousd_in = False
+        transfer_coin_out = False
+        transfer_coin_in = False
+        wousd_transfer_from = None
+        wousd_transfer_to = None
+        wousd_transfer_amount = None
+        transfer_log_count = 0
+
+        for log in logs:
+            if log.topic_0 == TRANSFER:
+                transfer_log_count += 1
+                is_wousd_token = log.address == '0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62'
+                from_address = "0x" + log.topic_1[-40:]
+                to_address = "0x" + log.topic_2[-40:]
+
+                if is_wousd_token: 
+                    wousd_transfer_from = from_address
+                    wousd_transfer_to = to_address
+                    wousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
+
+                if account is not 'all':
+                    if from_address == account:
+                        if is_wousd_token:
+                            transfer_wousd_out = True
+                        else:
+                            transfer_coin_out = True
+                    if to_address == account:
+                        if is_wousd_token:
+                            transfer_wousd_in = True
+                        else:
+                            transfer_coin_in = True
+
+        classification = 'unknown'
+        if account is not 'all':
+            wrap_receive_wousd = transfer_wousd_in and (transfer_coin_out or sent_eth)
+            wrap_send_wousd = transfer_wousd_out and (transfer_coin_in or received_eth)
+
+            if transfer_log_count > 0:
+                if transfer_wousd_in:
+                    classification = 'transfer_in_wousd'
+                elif transfer_wousd_out: 
+                    classification = 'transfer_out_wousd'
+                else:
+                    classification = 'unknown_transfer'
+
+            if wrap_receive_wousd:
+                classification = 'wrap_gain_wousd'
+            elif wrap_send_wousd:
+                classification = 'wrap_give_wousd'
+
+        analyzed_transaction_hashes.append(transaction.tx_hash)
+        analyzed_transactions.append(transaction_analysis(
+            account_starting_tx,
+            transaction.tx_hash,
+            contract_address,
+            internal_transactions,
+            received_eth,
+            sent_eth,
+            transfer_wousd_out,
+            transfer_wousd_in,
+            transfer_coin_out,
+            transfer_coin_in,
+            wousd_transfer_from,
+            wousd_transfer_to,
+            wousd_transfer_amount,
+            transfer_log_count,
+            classification
+        ))
+
+    for transaction in transactions:
+        process_transaction(transaction)
+
+    for transaction in transfer_transactions:
+        process_transaction(transaction)
+
+    return analyzed_transactions
+
 def do_transaction_analytics(from_block, to_block, start_time, end_time, account='all'):
     report = {
         'contracts_swaps': {},
@@ -848,6 +959,22 @@ def get_transfer_logs(account, from_block_time, to_block_time):
         log.log_index
     ), transfer_logs))
 
+def get_wrap_transfer_logs(account, from_block_time, to_block_time):
+    if from_block_time is None and to_block_time is None:
+        transfer_logs = WousdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)))
+    else:
+        transfer_logs = WousdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time))    
+
+    return list(map(lambda log: transfer_log(
+        log.tx_hash.block_number,
+        log.tx_hash,
+        log.amount if log.to_address.lower() == account.lower() else -log.amount,
+        log.from_address,
+        log.to_address,
+        log.block_time,
+        log.log_index
+    ), transfer_logs))
+
 def get_history_for_address(address):
     rebase_logs = get_rebase_logs(None, None)
     hash_to_classification = dict((ana_tx.tx_hash, ana_tx.classification) for ana_tx in ensure_analyzed_transactions(None, None, None, None, address))
@@ -886,6 +1013,37 @@ def get_history_for_address(address):
             }
 
     return list(map(__format_tx_history, tx_history[:last_non_yield_tx_idx + 1 if last_non_yield_tx_idx != -1 else 0]))
+
+def get_wrap_history_for_address(address):
+    hash_to_classification = dict((ana_tx.tx_hash, ana_tx.classification) for ana_tx in ensure_analyzed_wrap_transactions(None, None, None, None, address))
+
+    (tx_history, ___, ____) = ensure_transaction_wrap_history(address, None, None, None, None)
+
+    def __format_tx_history(tx_history_item):
+        if isinstance(tx_history_item, rebase_log):
+            return {
+                'block_number': tx_history_item.block_number,
+                'time': tx_history_item.block_time,
+                'balance': tx_history_item.balance,
+                'tx_hash': tx_history_item.tx_hash,
+                'amount': tx_history_item.amount,
+                'type': 'yield'
+            }
+        else:
+            tx_hash = tx_history_item.tx_hash.tx_hash
+            return {
+                'block_number': tx_history_item.block_number,
+                'time': tx_history_item.block_time,
+                'balance': tx_history_item.balance,
+                'tx_hash': tx_hash,
+                'amount': tx_history_item.amount,
+                'from_address': tx_history_item.from_address,
+                'to_address': tx_history_item.to_address,
+                'log_index' : tx_history_item.log_index,
+                'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
+            }
+
+    return list(map(__format_tx_history, tx_history[:0]))
 
 # when rebase logs are available enrich transfer logs with the active credits_per_token values
 def enrich_transfer_logs(logs):
@@ -955,6 +1113,27 @@ def ensure_ousd_balance(credit_balance, logs):
         logs[x] = log
     return logs
 
+def ensure_wousd_balance(balance, logs):
+    def find_previous_rebase_log(current_index, logs):
+        current_index += 1
+        while(current_index < len(logs)):
+            log = logs[current_index]
+            if isinstance(log, rebase_log):
+                return log
+            current_index += 1
+        return None
+
+    for x in range(0, len(logs)):
+        log = logs[x]
+        if isinstance(log, transfer_log):
+            log.balance = balance
+            change = - log.amount
+            balance += change
+        else:
+            raise Exception('Unexpected object instance', log)
+        logs[x] = log
+    return logs
+
 def send_report_email(summary, report, prev_report, report_type):
     report.transaction_report = json.loads(str(report.transaction_report))
     e = Email(summary, "test", render_to_string('analytics_report_email.html', {
@@ -998,5 +1177,21 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     balance_logs.sort(key=lambda log: -log.block_number)
     balance_logs = enrich_transfer_logs(balance_logs)
     return (ensure_ousd_balance(credit_balance, balance_logs), previous_transfer_logs, ousd_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
+    
+def ensure_transaction_wrap_history(account, from_block, to_block, from_block_time, to_block_time):
+    if from_block_time is None and to_block_time is None:
+        transfer_logs = get_wrap_transfer_logs(account, None, None)
+        previous_transfer_logs = []
+    else:
+        transfer_logs = get_wrap_transfer_logs(account, from_block_time, to_block_time)
+        previous_transfer_logs = get_wrap_transfer_logs(account, START_OF_EVERYTHING_TIME, from_block_time)
+
+    wousd_balance = balanceOf(WOUSD, account, 18, to_block if to_block is not None else 'latest')
+
+    balance_logs = list(transfer_logs)
+    # sort transfer and rebase logs by block number descending
+    balance_logs.sort(key=lambda log: -log.block_number)
+    balance_logs = enrich_transfer_logs(balance_logs)
+    return (ensure_wousd_balance(wousd_balance, balance_logs), previous_transfer_logs, wousd_balance)
     
 
