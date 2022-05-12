@@ -76,8 +76,9 @@ class rebase_log:
     # credits_per_token
     # balance
 
-    def __init__(self, block_number, credits_per_token, tx_hash):
+    def __init__(self, block_number, position, credits_per_token, tx_hash):
         self.block_number = block_number
+        self.position = position
         self.credits_per_token = credits_per_token
         self.tx_hash = tx_hash
 
@@ -93,8 +94,9 @@ class transfer_log:
     # credits_per_token
     # balance
 
-    def __init__(self, block_number, tx_hash, amount, from_address, to_address, block_time, log_index):
+    def __init__(self, block_number, position, tx_hash, amount, from_address, to_address, block_time, log_index):
         self.block_number = block_number
+        self.position = position
         self.tx_hash = tx_hash
         self.amount = amount
         self.from_address = from_address
@@ -810,8 +812,8 @@ def get_rebase_logs(from_block, to_block):
         old_logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
         new_logs = Log.objects.filter(topic_0="0x41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e257235", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
 
-    rebase_logs_old = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2], log.transaction_hash), old_logs))
-    rebase_logs_new = list(map(lambda log: rebase_log(log.block_number, explode_log_data(log.data)[2] / 10 ** 9, log.transaction_hash), new_logs))
+    rebase_logs_old = list(map(lambda log: rebase_log(log.block_number, log.transaction_index, explode_log_data(log.data)[2], log.transaction_hash), old_logs))
+    rebase_logs_new = list(map(lambda log: rebase_log(log.block_number, log.transaction_index, explode_log_data(log.data)[2] / 10 ** 9, log.transaction_hash), new_logs))
     rebase_logs = rebase_logs_old + rebase_logs_new
 
     block_numbers = list(map(lambda rebase_log: rebase_log.block_number, rebase_logs))
@@ -840,6 +842,10 @@ def get_transfer_logs(account, from_block_time, to_block_time):
 
     return list(map(lambda log: transfer_log(
         log.tx_hash.block_number,
+        # for now the transaction_index (index of tx execution within a block) is not
+        # available in the db yet. Will need to add a new `transaction_index` field to ousd_transfers
+        # and recalculate historical data.
+        0,
         log.tx_hash,
         log.amount if log.to_address.lower() == account.lower() else -log.amount,
         log.from_address,
@@ -995,7 +1001,7 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     balance_logs = list(filter(lambda balance_log: balance_log.block_number > START_OF_OUSD_V2, list(transfer_logs + rebase_logs)))
 
     # sort transfer and rebase logs by block number descending
-    balance_logs.sort(key=lambda log: -log.block_number)
+    balance_logs.sort(key=lambda log: (-log.block_number, -log.position))
     balance_logs = enrich_transfer_logs(balance_logs)
     return (ensure_ousd_balance(credit_balance, balance_logs), previous_transfer_logs, ousd_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
     
