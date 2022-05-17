@@ -2,6 +2,7 @@ import datetime
 from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
+from django.core.paginator import Paginator
 
 from django.db import connection
 from django.db.models import Q
@@ -490,9 +491,20 @@ def _my_assets(address, block_number):
 def api_address_history(request, address):
     if address != address.lower():
         return redirect("api_address_history", address=address.lower())
+    page_number = request.GET.get('page', 1)
+    per_page = request.GET.get('per_page', 50)
     history = get_history_for_address(address)
+    paginator = Paginator(history, per_page)
+    page = paginator.get_page(page_number)
+    pages = paginator.num_pages
     response = JsonResponse({
-        "history": history
+        'page': {
+            'current': page.number,
+            'has_next': page.has_next(),
+            'has_previous': page.has_previous(),
+            'pages': pages
+        },
+        'history': page.object_list
     })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return response
