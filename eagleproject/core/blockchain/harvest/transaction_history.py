@@ -649,8 +649,8 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
         address_analytics(is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, non_rebase_balance_diff > 0, non_rebase_balance_diff < 0, is_new_after_curve_start, new_after_curve_and_hold_more_than_100)
     )
 
-# start_time and end_time might seem redundant, but are needed so we can query the transfer logs
-def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account='all'):
+def ensure_transaction_analysis(from_block, to_block, start_time, end_time, account='all', mode='ousd'):
+    is_ousd = mode == 'ousd'
     tx_query = Q()
     tran_query = Q()
     if account is not 'all':
@@ -664,7 +664,10 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
         tran_query &= Q(block_time__lt=end_time)
     
     transactions = Transaction.objects.filter(tx_query)
-    transfer_transactions = map(lambda transfer: transfer.tx_hash, OusdTransfer.objects.filter(tran_query))
+    if is_ousd:
+        transfer_transactions = map(lambda transfer: transfer.tx_hash, OusdTransfer.objects.filter(tran_query))
+    else:
+        transfer_transactions = map(lambda transfer: transfer.tx_hash, WousdTransfer.objects.filter(tran_query))
 
     analyzed_transactions = []
     analyzed_transaction_hashes = []
@@ -682,116 +685,13 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
         sent_eth = transaction.data['value'] != '0x0'
         transfer_ousd_out = False
         transfer_ousd_in = False
+        transfer_wousd_out = False
+        transfer_wousd_in = False
         transfer_coin_out = False
         transfer_coin_in = False
         ousd_transfer_from = None
         ousd_transfer_to = None
         ousd_transfer_amount = None
-        transfer_log_count = 0
-
-        for log in logs:
-            if log.topic_0 == TRANSFER:
-                transfer_log_count += 1
-                is_ousd_token = log.address == '0x2a8e1e676ec238d8a992307b495b45b3feaa5e86'
-                from_address = "0x" + log.topic_1[-40:]
-                to_address = "0x" + log.topic_2[-40:]
-
-                if is_ousd_token: 
-                    ousd_transfer_from = from_address
-                    ousd_transfer_to = to_address
-                    ousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
-
-                if account is not 'all':
-                    if from_address == account:
-                        if is_ousd_token:
-                            transfer_ousd_out = True
-                        else:
-                            transfer_coin_out = True
-                    if to_address == account:
-                        if is_ousd_token:
-                            transfer_ousd_in = True
-                        else:
-                            transfer_coin_in = True
-
-        classification = 'unknown'
-        if account is not 'all':
-            swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
-            swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
-
-            if transfer_log_count > 0:
-                if transfer_ousd_in:
-                    classification = 'transfer_in'
-                elif transfer_ousd_out: 
-                    classification = 'transfer_out'
-                else:
-                    classification = 'unknown_transfer'
-
-            if swap_receive_ousd:
-                classification = 'swap_gain_ousd'
-            elif swap_send_ousd:
-                classification = 'swap_give_ousd'
-
-        analyzed_transaction_hashes.append(transaction.tx_hash)
-        analyzed_transactions.append(transaction_analysis(
-            account_starting_tx,
-            transaction.tx_hash,
-            contract_address,
-            internal_transactions,
-            received_eth,
-            sent_eth,
-            transfer_ousd_out,
-            transfer_ousd_in,
-            transfer_coin_out,
-            transfer_coin_in,
-            ousd_transfer_from,
-            ousd_transfer_to,
-            ousd_transfer_amount,
-            transfer_log_count,
-            classification
-        ))
-
-    for transaction in transactions:
-        process_transaction(transaction)
-
-    for transaction in transfer_transactions:
-        process_transaction(transaction)
-
-    return analyzed_transactions
-
-def ensure_analyzed_wrap_transactions(from_block, to_block, start_time, end_time, account='all'):
-    tx_query = Q()
-    tran_query = Q()
-    if account is not 'all':
-        tx_query &= Q(from_address=account) | Q(to_address=account)
-        tran_query &= Q(from_address=account) | Q(to_address=account)
-    # info regarding all blocks should be present
-    if from_block is not None:
-        tx_query &= Q(block_number__gte=from_block)
-        tx_query &= Q(block_number__lt=to_block)
-        tran_query &= Q(block_time__gte=start_time)
-        tran_query &= Q(block_time__lt=end_time)
-    
-    transactions = Transaction.objects.filter(tx_query)
-    transfer_transactions = map(lambda transfer: transfer.tx_hash, WousdTransfer.objects.filter(tran_query))
-
-    analyzed_transactions = []
-    analyzed_transaction_hashes = []
-    
-    def process_transaction(transaction):
-        if transaction.tx_hash in analyzed_transaction_hashes:
-            # transaction already analyzed skipping
-            return
-
-        logs = Log.objects.filter(transaction_hash=transaction.tx_hash)
-        account_starting_tx = transaction.receipt_data["from"]
-        contract_address = transaction.receipt_data["to"]
-        internal_transactions = transaction.internal_transactions
-        received_eth = len(list(filter(lambda tx: tx["to"] == account and float(tx["value"]) > 0, internal_transactions))) > 0
-        sent_eth = transaction.data['value'] != '0x0'
-        transfer_wousd_out = False
-        transfer_wousd_in = False
-        transfer_coin_out = False
-        transfer_coin_in = False
         wousd_transfer_from = None
         wousd_transfer_to = None
         wousd_transfer_amount = None
@@ -800,44 +700,93 @@ def ensure_analyzed_wrap_transactions(from_block, to_block, start_time, end_time
         for log in logs:
             if log.topic_0 == TRANSFER:
                 transfer_log_count += 1
+                is_ousd_token = log.address == '0x2a8e1e676ec238d8a992307b495b45b3feaa5e86'
                 is_wousd_token = log.address == '0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62'
                 from_address = "0x" + log.topic_1[-40:]
                 to_address = "0x" + log.topic_2[-40:]
 
-                if is_wousd_token: 
-                    wousd_transfer_from = from_address
-                    wousd_transfer_to = to_address
-                    wousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
+                if is_ousd:
+                    if is_ousd_token: 
+                        ousd_transfer_from = from_address
+                        ousd_transfer_to = to_address
+                        ousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
 
-                if account is not 'all':
-                    if from_address == account:
-                        if is_wousd_token:
-                            transfer_wousd_out = True
-                        else:
-                            transfer_coin_out = True
-                    if to_address == account:
-                        if is_wousd_token:
-                            transfer_wousd_in = True
-                        else:
-                            transfer_coin_in = True
+                    if account is not 'all':
+                        if from_address == account:
+                            if is_ousd_token:
+                                transfer_ousd_out = True
+                            else:
+                                transfer_coin_out = True
+                        if to_address == account:
+                            if is_ousd_token:
+                                transfer_ousd_in = True
+                            else:
+                                transfer_coin_in = True
+                
+                else:
+                    if is_wousd_token: 
+                        wousd_transfer_from = from_address
+                        wousd_transfer_to = to_address
+                        wousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
+
+                    if account is not 'all':
+                        if from_address == account:
+                            if is_wousd_token:
+                                transfer_wousd_out = True
+                            else:
+                                transfer_coin_out = True
+                        if to_address == account:
+                            if is_wousd_token:
+                                transfer_wousd_in = True
+                            else:
+                                transfer_coin_in = True
 
         classification = 'unknown'
         if account is not 'all':
-            wrap_receive_wousd = transfer_wousd_in and (transfer_coin_out or sent_eth)
-            wrap_send_wousd = transfer_wousd_out and (transfer_coin_in or received_eth)
+            swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
+            swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
+            wrap_receive_wousd = transfer_wousd_in and transfer_coin_out
+            wrap_send_wousd = transfer_wousd_out and transfer_coin_in
 
-            if transfer_log_count > 0:
-                if transfer_wousd_in:
-                    classification = 'transfer_in_wousd'
-                elif transfer_wousd_out: 
-                    classification = 'transfer_out_wousd'
-                else:
-                    classification = 'unknown_transfer'
+            if is_ousd:
+                if transfer_log_count > 0:
+                    if transfer_ousd_in:
+                        classification = 'transfer_in'
+                    elif transfer_ousd_out: 
+                        classification = 'transfer_out'
+                    else:
+                        classification = 'unknown_transfer'
 
-            if wrap_receive_wousd:
-                classification = 'wrap_gain_wousd'
-            elif wrap_send_wousd:
-                classification = 'wrap_give_wousd'
+                if swap_receive_ousd:
+                    classification = 'swap_gain_ousd'
+                elif swap_send_ousd:
+                    classification = 'swap_give_ousd'
+
+                transfer_out = transfer_ousd_out
+                transfer_in = transfer_ousd_in
+                transfer_from = ousd_transfer_from
+                transfer_to = ousd_transfer_to
+                transfer_amount = ousd_transfer_amount
+            
+            else:
+                if transfer_log_count > 0:
+                    if transfer_wousd_in:
+                        classification = 'transfer_in_wousd'
+                    elif transfer_wousd_out: 
+                        classification = 'transfer_out_wousd'
+                    else:
+                        classification = 'unknown_transfer'
+
+                if wrap_receive_wousd:
+                    classification = 'wrap_gain_wousd'
+                elif wrap_send_wousd:
+                    classification = 'wrap_give_wousd'
+
+                transfer_out = transfer_wousd_out
+                transfer_in = transfer_wousd_in
+                transfer_from = wousd_transfer_from
+                transfer_to = wousd_transfer_to
+                transfer_amount = wousd_transfer_amount
 
         analyzed_transaction_hashes.append(transaction.tx_hash)
         analyzed_transactions.append(transaction_analysis(
@@ -847,13 +796,13 @@ def ensure_analyzed_wrap_transactions(from_block, to_block, start_time, end_time
             internal_transactions,
             received_eth,
             sent_eth,
-            transfer_wousd_out,
-            transfer_wousd_in,
+            transfer_out,
+            transfer_in,
             transfer_coin_out,
             transfer_coin_in,
-            wousd_transfer_from,
-            wousd_transfer_to,
-            wousd_transfer_amount,
+            transfer_from,
+            transfer_to,
+            transfer_amount,
             transfer_log_count,
             classification
         ))
@@ -865,6 +814,13 @@ def ensure_analyzed_wrap_transactions(from_block, to_block, start_time, end_time
         process_transaction(transaction)
 
     return analyzed_transactions
+
+# start_time and end_time might seem redundant, but are needed so we can query the transfer logs
+def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account='all'):
+    return ensure_transaction_analysis(from_block, to_block, start_time, end_time, account, 'ousd')
+
+def ensure_analyzed_wrap_transactions(from_block, to_block, start_time, end_time, account='all'):
+    return ensure_transaction_analysis(from_block, to_block, start_time, end_time, account, 'wousd')
 
 def do_transaction_analytics(from_block, to_block, start_time, end_time, account='all'):
     report = {
