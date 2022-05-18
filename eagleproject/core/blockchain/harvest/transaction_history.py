@@ -162,13 +162,13 @@ class transaction_analysis:
         internal_transactions,
         received_eth,
         sent_eth,
-        transfer_ousd_out,
-        transfer_ousd_in,
-        transfer_coin_out,
-        transfer_coin_in,
-        ousd_transfer_from,
-        ousd_transfer_to,
-        ousd_transfer_amount,
+        transfer_token_out,
+        transfer_token_in,
+        transfer_backing_coin_out,
+        transfer_backing_coin_in,
+        token_transfer_from,
+        token_transfer_to,
+        token_transfer_amount,
         transfer_log_count,
         classification
     ):
@@ -178,31 +178,31 @@ class transaction_analysis:
         self.internal_transactions = internal_transactions
         self.received_eth = received_eth
         self.sent_eth = sent_eth
-        self.transfer_ousd_out = transfer_ousd_out
-        self.transfer_ousd_in = transfer_ousd_in
-        self.transfer_coin_out = transfer_coin_out
-        self.transfer_coin_in = transfer_coin_in
-        self.ousd_transfer_from = ousd_transfer_from
-        self.ousd_transfer_to = ousd_transfer_to
-        self.ousd_transfer_amount = ousd_transfer_amount
+        self.transfer_token_out = transfer_token_out
+        self.transfer_token_in = transfer_token_in
+        self.transfer_backing_coin_out = transfer_backing_coin_out
+        self.transfer_backing_coin_in = transfer_backing_coin_in
+        self.token_transfer_from = token_transfer_from
+        self.token_transfer_to = token_transfer_to
+        self.token_transfer_amount = token_transfer_amount
         self.transfer_log_count = transfer_log_count
         self.classification = classification
 
     def __str__(self):
-        return 'transaction analysis: account: {} tx_hash: {} classification: {} contract_address: {} received_eth: {} sent_eth: {} transfer_ousd_out: {} transfer_ousd_in: {} transfer_coin_out {} transfer_coin_in {} ousd_transfer_from {} ousd_transfer_to {} ousd_transfer_amount {} transfer_log_count {}'.format(
+        return 'transaction analysis: account: {} tx_hash: {} classification: {} contract_address: {} received_eth: {} sent_eth: {} transfer_token_out: {} transfer_token_in: {} transfer_backing_coin_out {} transfer_backing_coin_in {} token_transfer_from {} token_transfer_to {} token_transfer_amount {} transfer_log_count {}'.format(
             self.account,
             self.tx_hash,
             self.classification,
             self.contract_address,
             self.received_eth,
             self.sent_eth,
-            self.transfer_ousd_out,
-            self.transfer_ousd_in,
-            self.transfer_coin_out,
-            self.transfer_coin_in,
-            self.ousd_transfer_from,
-            self.ousd_transfer_to,
-            self.ousd_transfer_amount,
+            self.transfer_token_out,
+            self.transfer_token_in,
+            self.transfer_backing_coin_out,
+            self.transfer_backing_coin_in,
+            self.token_transfer_from,
+            self.token_transfer_to,
+            self.token_transfer_amount,
             self.transfer_log_count
         )
 
@@ -683,110 +683,56 @@ def ensure_transaction_analysis(from_block, to_block, start_time, end_time, acco
         internal_transactions = transaction.internal_transactions
         received_eth = len(list(filter(lambda tx: tx["to"] == account and float(tx["value"]) > 0, internal_transactions))) > 0
         sent_eth = transaction.data['value'] != '0x0'
-        transfer_ousd_out = False
-        transfer_ousd_in = False
-        transfer_wousd_out = False
-        transfer_wousd_in = False
-        transfer_coin_out = False
-        transfer_coin_in = False
-        ousd_transfer_from = None
-        ousd_transfer_to = None
-        ousd_transfer_amount = None
-        wousd_transfer_from = None
-        wousd_transfer_to = None
-        wousd_transfer_amount = None
+        transfer_token_out = False
+        transfer_token_in = False
+        transfer_backing_coin_out = False
+        transfer_backing_coin_in = False
+        token_transfer_from = None
+        token_transfer_to = None
+        token_transfer_amount = None
         transfer_log_count = 0
 
         for log in logs:
             if log.topic_0 == TRANSFER:
                 transfer_log_count += 1
-                is_ousd_token = log.address == '0x2a8e1e676ec238d8a992307b495b45b3feaa5e86'
-                is_wousd_token = log.address == '0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62'
+                is_token = log.address == '0x2a8e1e676ec238d8a992307b495b45b3feaa5e86' if is_ousd else log.address == '0xd2af830e8cbdfed6cc11bab697bb25496ed6fa62'
                 from_address = "0x" + log.topic_1[-40:]
                 to_address = "0x" + log.topic_2[-40:]
 
-                if is_ousd:
-                    if is_ousd_token: 
-                        ousd_transfer_from = from_address
-                        ousd_transfer_to = to_address
-                        ousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
+                if is_token: 
+                    token_transfer_from = from_address
+                    token_transfer_to = to_address
+                    token_transfer_amount = int(slot(log.data, 0), 16) / E_18
 
-                    if account is not 'all':
-                        if from_address == account:
-                            if is_ousd_token:
-                                transfer_ousd_out = True
-                            else:
-                                transfer_coin_out = True
-                        if to_address == account:
-                            if is_ousd_token:
-                                transfer_ousd_in = True
-                            else:
-                                transfer_coin_in = True
-                
-                else:
-                    if is_wousd_token: 
-                        wousd_transfer_from = from_address
-                        wousd_transfer_to = to_address
-                        wousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
-
-                    if account is not 'all':
-                        if from_address == account:
-                            if is_wousd_token:
-                                transfer_wousd_out = True
-                            else:
-                                transfer_coin_out = True
-                        if to_address == account:
-                            if is_wousd_token:
-                                transfer_wousd_in = True
-                            else:
-                                transfer_coin_in = True
+                if account is not 'all':
+                    if from_address == account:
+                        if is_token:
+                            transfer_token_out = True
+                        else:
+                            transfer_backing_coin_out = True
+                    if to_address == account:
+                        if is_token:
+                            transfer_token_in = True
+                        else:
+                            transfer_backing_coin_in = True
 
         classification = 'unknown'
         if account is not 'all':
-            swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
-            swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
-            wrap_receive_wousd = transfer_wousd_in and transfer_coin_out
-            wrap_send_wousd = transfer_wousd_out and transfer_coin_in
+            swap_receive_token = transfer_token_in and (transfer_backing_coin_out or sent_eth)
+            swap_send_token = transfer_token_out and (transfer_backing_coin_in or received_eth)
 
-            if is_ousd:
-                if transfer_log_count > 0:
-                    if transfer_ousd_in:
-                        classification = 'transfer_in'
-                    elif transfer_ousd_out: 
-                        classification = 'transfer_out'
-                    else:
-                        classification = 'unknown_transfer'
+            if transfer_log_count > 0:
+                if transfer_token_in:
+                    classification = 'transfer_in' if is_ousd else 'transfer_in_wousd'
+                elif transfer_token_out: 
+                    classification = 'transfer_out' if is_ousd else 'transfer_out_wousd'
+                else:
+                    classification = 'unknown_transfer'
 
-                if swap_receive_ousd:
-                    classification = 'swap_gain_ousd'
-                elif swap_send_ousd:
-                    classification = 'swap_give_ousd'
-
-                transfer_out = transfer_ousd_out
-                transfer_in = transfer_ousd_in
-                transfer_from = ousd_transfer_from
-                transfer_to = ousd_transfer_to
-                transfer_amount = ousd_transfer_amount
-            
-            else:
-                if transfer_log_count > 0:
-                    if transfer_wousd_in:
-                        classification = 'transfer_in_wousd'
-                    elif transfer_wousd_out: 
-                        classification = 'transfer_out_wousd'
-                    else:
-                        classification = 'unknown_transfer'
-
-                if wrap_receive_wousd:
-                    classification = 'wrap_gain_wousd'
-                elif wrap_send_wousd:
-                    classification = 'wrap_give_wousd'
-
-                transfer_out = transfer_wousd_out
-                transfer_in = transfer_wousd_in
-                transfer_from = wousd_transfer_from
-                transfer_to = wousd_transfer_to
-                transfer_amount = wousd_transfer_amount
+            if swap_receive_token:
+                classification = 'swap_gain_ousd' if is_ousd else 'wrap_gain_wousd'
+            elif swap_send_token:
+                classification = 'swap_give_ousd' if is_ousd else 'wrap_give_wousd'
 
         analyzed_transaction_hashes.append(transaction.tx_hash)
         analyzed_transactions.append(transaction_analysis(
@@ -796,13 +742,13 @@ def ensure_transaction_analysis(from_block, to_block, start_time, end_time, acco
             internal_transactions,
             received_eth,
             sent_eth,
-            transfer_out,
-            transfer_in,
-            transfer_coin_out,
-            transfer_coin_in,
-            transfer_from,
-            transfer_to,
-            transfer_amount,
+            transfer_token_out,
+            transfer_token_in,
+            transfer_backing_coin_out,
+            transfer_backing_coin_in,
+            token_transfer_from,
+            token_transfer_to,
+            token_transfer_amount,
             transfer_log_count,
             classification
         ))
