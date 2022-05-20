@@ -331,7 +331,6 @@ def active_stake_stats():
     a dict of OgnStaked with user_address as key.  We should be able to filter
     out matured and withdrawn OgnStaked instances after collection using their
     maturity dates/blocks.
-
     Afterwards, we can put them all into buckets of 30, 90, 365 day running
     totals of active stakes.
     """
@@ -489,22 +488,20 @@ def _my_assets(address, block_number):
 #     return HttpResponse("ok")
 
 def api_address_history(request, address):
-    if address != address.lower():
-        return redirect("api_address_history", address=address.lower())
     page_number = request.GET.get('page', 1)
     per_page = request.GET.get('per_page', 50)
-    history = get_history_for_address(address)
+    transaction_filter = request.GET.get('filter')
+    history = get_history_for_address(address, transaction_filter)
     paginator = Paginator(history, per_page)
-    page = paginator.get_page(page_number)
+    page_obj = paginator.get_page(page_number)
     pages = paginator.num_pages
     response = JsonResponse({
         'page': {
-            'current': page.number,
-            'has_next': page.has_next(),
-            'has_previous': page.has_previous(),
-            'pages': pages
+            'current': page_obj.number,
+            'pages': pages,
+            'filters': [] if transaction_filter == None else transaction_filter.split()
         },
-        'history': page.object_list
+        'history': page_obj.object_list
     })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return response

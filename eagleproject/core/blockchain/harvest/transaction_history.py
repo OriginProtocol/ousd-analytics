@@ -854,11 +854,15 @@ def get_transfer_logs(account, from_block_time, to_block_time):
         log.log_index
     ), transfer_logs))
 
-def get_history_for_address(address):
+def get_history_for_address(address, transaction_filter):
     rebase_logs = get_rebase_logs(None, None)
     hash_to_classification = dict((ana_tx.tx_hash, ana_tx.classification) for ana_tx in ensure_analyzed_transactions(None, None, None, None, address))
 
     (tx_history, ___, ____, _____, ______) = ensure_transaction_history(address, rebase_logs, None, None, None, None, True)
+
+    if transaction_filter != None:
+        transaction_filter = transaction_filter.replace('swap_ousd', 'swap_gain_ousd swap_give_ousd')
+    tx_history_filtered = []
 
     # find last non rebase transaction, and remove later transactions
     last_non_yield_tx_idx = -1
@@ -867,31 +871,34 @@ def get_history_for_address(address):
             last_non_yield_tx_idx = i
             break;
 
-    def __format_tx_history(tx_history_item):
-        if isinstance(tx_history_item, rebase_log):
-            return {
-                'block_number': tx_history_item.block_number,
-                'time': tx_history_item.block_time,
-                'balance': tx_history_item.balance,
-                'tx_hash': tx_history_item.tx_hash,
-                'amount': tx_history_item.amount,
-                'type': 'yield'
-            }
+    for i in range(0, last_non_yield_tx_idx + 1 if last_non_yield_tx_idx != -1 else 0, 1):
+        if isinstance(tx_history[i], rebase_log):
+            if transaction_filter == None or 'yield' in transaction_filter:
+                tx_history_filtered.append({
+                    'block_number': tx_history[i].block_number,
+                    'time': tx_history[i].block_time,
+                    'balance': tx_history[i].balance,
+                    'tx_hash': tx_history[i].tx_hash,
+                    'amount': tx_history[i].amount,
+                    'type': 'yield'
+                })
         else:
-            tx_hash = tx_history_item.tx_hash.tx_hash
-            return {
-                'block_number': tx_history_item.block_number,
-                'time': tx_history_item.block_time,
-                'balance': tx_history_item.balance,
-                'tx_hash': tx_hash,
-                'amount': tx_history_item.amount,
-                'from_address': tx_history_item.from_address,
-                'to_address': tx_history_item.to_address,
-                'log_index' : tx_history_item.log_index,
-                'type': hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
-            }
+            tx_hash = tx_history[i].tx_hash.tx_hash
+            tx_classification = hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
+            if transaction_filter == None or tx_classification in transaction_filter:
+                tx_history_filtered.append({
+                    'block_number': tx_history[i].block_number,
+                    'time': tx_history[i].block_time,
+                    'balance': tx_history[i].balance,
+                    'tx_hash': tx_hash,
+                    'amount': tx_history[i].amount,
+                    'from_address': tx_history[i].from_address,
+                    'to_address': tx_history[i].to_address,
+                    'log_index' : tx_history[i].log_index,
+                    'type': tx_classification
+                })
 
-    return list(map(__format_tx_history, tx_history[:last_non_yield_tx_idx + 1 if last_non_yield_tx_idx != -1 else 0]))
+    return list(tx_history_filtered)
 
 # when rebase logs are available enrich transfer logs with the active credits_per_token values
 def enrich_transfer_logs(logs):
@@ -1005,4 +1012,3 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     balance_logs = enrich_transfer_logs(balance_logs)
     return (ensure_ousd_balance(credit_balance, balance_logs), previous_transfer_logs, ousd_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
     
-
