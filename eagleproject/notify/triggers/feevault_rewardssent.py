@@ -9,6 +9,8 @@ from core.common import format_ousd_human
 
 from notify.events import event_high
 
+EVENT_TAGS = ["ogn"]
+
 
 def get_rewards_events(logs):
     """ Get RewardsSent events """
@@ -34,6 +36,7 @@ def run_trigger(new_logs):
             event_high(
                 "Rewards Sent   💸",
                 f"{amount} {symbol} paid to {to_address}",
+                tags=EVENT_TAGS,
                 log_model=ev,
             )
         )

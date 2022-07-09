@@ -4,6 +4,8 @@ from notify.events import event_high
 from core.blockchain.addresses import STORY_STAKING_VAULT
 from core.blockchain.sigs import SIG_EVENT_OZ_PAUSED, SIG_EVENT_OZ_UNPAUSED
 
+EVENT_TAGS = ["ogn"]
+
 
 def get_pause_events(logs):
     """ Get Paused/Unpaused events """
@@ -26,6 +28,7 @@ def run_trigger(new_logs):
                 "FeeVault was {}".format(
                     "paused" if is_pause else "unpaused",
                 ),
+                tags=EVENT_TAGS,
                 log_model=ev,
             )
         )

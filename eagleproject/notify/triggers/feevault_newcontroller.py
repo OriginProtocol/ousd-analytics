@@ -7,6 +7,8 @@ from core.blockchain.sigs import SIG_EVENT_NEW_CONTROLLER
 
 from notify.events import event_high
 
+EVENT_TAGS = ["ogn"]
+
 
 def get_pause_events(logs):
     """ Get Paused/Unpaused events """
@@ -26,6 +28,7 @@ def run_trigger(new_logs):
             event_high(
                 "New Controller   🛂",
                 "FeeVault has a new controller: {}".format(controller),
+                tags=EVENT_TAGS,
                 log_model=ev,
             )
         )

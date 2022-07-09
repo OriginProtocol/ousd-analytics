@@ -9,6 +9,8 @@ from core.common import format_ousd_human
 
 from notify.events import event_high, event_low
 
+EVENT_TAGS = ["ogn"]
+
 
 def get_rewards_events(logs):
     """ Get RewardsSent events """
@@ -55,6 +57,7 @@ def run_trigger(new_logs, latest_story_snapshots):
                 "Unexpected Vault Balance Change   🥷",
                 f"Vault balance changed by {format_ousd_human(diff_eth)} ETH "
                 f"but {format_ousd_human(paid_eth)} ETH was paid out.",
+                tags=EVENT_TAGS,
             )
         )
     elif diff_eth > 0:
@@ -62,6 +65,7 @@ def run_trigger(new_logs, latest_story_snapshots):
             event_low(
                 "Vault Received Funds   🏦",
                 f"FeeVault received {format_ousd_human(diff_eth)} ETH.",
+                tags=EVENT_TAGS,
             )
         )
 
@@ -71,6 +75,7 @@ def run_trigger(new_logs, latest_story_snapshots):
                 "Unexpected Vault Balance Change   🥷",
                 f"Vault balance changed by {format_ousd_human(diff_ogn)} OGN "
                 f"but {format_ousd_human(paid_ogn)} OGN was paid out.",
+                tags=EVENT_TAGS,
             )
         )
     elif diff_ogn > 0:
@@ -78,6 +83,7 @@ def run_trigger(new_logs, latest_story_snapshots):
             event_low(
                 "Vault Received Funds   🏦",
                 f"FeeVault received {format_ousd_human(diff_ogn)} OGN.",
+                tags=EVENT_TAGS,
             )
         )
 

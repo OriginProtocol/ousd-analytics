@@ -3,7 +3,6 @@ from eth_utils import decode_hex
 from django.db.models import Q
 
 from core.blockchain.addresses import STORY_STAKING_SERIES
-from core.blockchain.const import SYMBOL_FOR_CONTRACT
 from core.blockchain.sigs import (
     SIG_EVENT_FINALE,
     SIG_EVENT_NEW_SEASON,
@@ -13,6 +12,8 @@ from core.blockchain.sigs import (
 from core.common import format_ousd_human
 
 from notify.events import event_high, event_normal
+
+EVENT_TAGS = ["ogn"]
 
 
 def get_rewards_events(logs):
@@ -43,6 +44,7 @@ def run_trigger(new_logs):
                     "New Season   📅",
                     f"Season {index + 1} has been added to the series\n\n"
                     f"Address: {season_address}",
+                    tags=EVENT_TAGS,
                     log_model=ev,
                 )
             )
@@ -57,6 +59,7 @@ def run_trigger(new_logs):
                 event_normal(
                     "Season Started   🎬",
                     f"Season {index + 1} has begun!\n\nAddress: {season_address}",
+                    tags=EVENT_TAGS,
                     log_model=ev,
                 )
             )
@@ -72,6 +75,7 @@ def run_trigger(new_logs):
                     "Season Cancelled   🪓",
                     f"Season {index + 1} ({season_address}) has been "
                     "cancelled!  It will likely be replaced, stay tuned.",
+                    tags=EVENT_TAGS,
                     log_model=ev,
                 )
             )
@@ -89,6 +93,7 @@ def run_trigger(new_logs):
                     "-------\n"
                     f"- {format_ousd_human(rewards_eth)} ETH\n"
                     f"- {format_ousd_human(rewards_ogn)} OGN\n",
+                    tags=EVENT_TAGS,
                     log_model=ev,
                 )
             )
