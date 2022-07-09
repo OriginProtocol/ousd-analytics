@@ -3,11 +3,15 @@ from datetime import datetime, timezone
 
 from core.blockchain.addresses import (
     CHAINLINK_ORACLE,
+    CURVE_METAPOOL,
     DAI,
+    FLIPPER,
     OGN,
     OGN_STAKING,
     OPEN_ORACLE,
     OUSD,
+    OUSD_USDT_UNISWAP_V3,
+    STORY_STAKING_VAULT,
     STRATAAVEDAI,
     STRATAAVE2,
     STRATCOMP1,
@@ -15,9 +19,6 @@ from core.blockchain.addresses import (
     STRAT3POOL,
     STRATCONVEX1,
     VAULT,
-    OUSD_USDT_UNISWAP_V3,
-    FLIPPER,
-    CURVE_METAPOOL,
 )
 from core.blockchain.const import (
     BLOCKS_PER_YEAR,
@@ -35,6 +36,7 @@ from core.blockchain.rpc import (
     chainlink_ethUsdPrice,
     chainlink_tokEthPrice,
     exchangeRateStored,
+    get_balance,
     getCash,
     ogn_staking_total_outstanding,
     open_oracle_price,
@@ -44,6 +46,9 @@ from core.blockchain.rpc import (
     priceUSDRedeem,
     rebasing_credits_per_token,
     strategyCheckBalance,
+    story_staking_total_supply,
+    story_staking_claiming_index,
+    story_staking_staking_index,
     supplyRatePerBlock,
     totalSupply,
     totalBorrows,
@@ -57,6 +62,7 @@ from core.models import (
     OgnStaked,
     OgnStakingSnapshot,
     OracleSnapshot,
+    StoryStakingSnapshot,
     SupplySnapshot,
     ThreePoolSnapshot,
 )
@@ -72,7 +78,7 @@ def isbetween(start, end, v):
     if v > end:
         return False
     return True
-    
+
 
 def build_asset_block(symbol, block_number):
     symbol = symbol.upper()
@@ -114,7 +120,7 @@ def build_asset_block(symbol, block_number):
 
     # AAVE Strats
     if block_number < 11096410:
-       pass 
+        pass
     elif block_number < 13399969:
         if symbol == "DAI":
             aavestrat_holding += strategyCheckBalance(
@@ -149,20 +155,18 @@ def build_asset_block(symbol, block_number):
             )
 
     # 3pool
-    if(block_number == "latest"
+    if (
+        block_number == "latest"
         or block_number > 13677000
         and symbol in ("USDC", "USDT", "DAI")
-        ):
+    ):
         threepoolstrat_holding += strategyCheckBalance(
             STRATCONVEX1,
             CONTRACT_FOR_SYMBOL[symbol],
             DECIMALS_FOR_SYMBOL[symbol],
             block_number,
         )
-    elif (
-        block_number > 11831747
-        and symbol in ("USDC", "USDT", "DAI")
-        ):
+    elif block_number > 11831747 and symbol in ("USDC", "USDT", "DAI"):
         threepoolstrat_holding += strategyCheckBalance(
             STRAT3POOL,
             CONTRACT_FOR_SYMBOL[symbol],
@@ -171,18 +175,14 @@ def build_asset_block(symbol, block_number):
         )
 
     ora_tok_usd_min = (
-        0 if symbol == "COMP" else priceUSDMint(
-            VAULT,
-            CONTRACT_FOR_SYMBOL[symbol],
-            block_number
-        )
+        0
+        if symbol == "COMP"
+        else priceUSDMint(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
     )
     ora_tok_usd_max = (
-        0 if symbol == "COMP" else priceUSDRedeem(
-            VAULT,
-            CONTRACT_FOR_SYMBOL[symbol],
-            block_number
-        )
+        0
+        if symbol == "COMP"
+        else priceUSDRedeem(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
     )
 
     return AssetBlock(
@@ -230,7 +230,9 @@ def ensure_supply_snapshot(block_number):
         s.non_rebasing_supply = ousd_non_rebasing_supply(block_number)
         s.credits_ratio = s.computed_supply / s.credits
         future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.1)
-        next_rebase_supply = s.computed_supply - s.non_rebasing_supply - future_fee
+        next_rebase_supply = (
+            s.computed_supply - s.non_rebasing_supply - future_fee
+        )
         s.rebasing_credits_ratio = next_rebase_supply / s.credits
         s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
         s.save()
@@ -245,12 +247,41 @@ def ensure_staking_snapshot(block_number):
 
     ogn_balance = balanceOf(OGN, OGN_STAKING, 18, block=block_number)
     total_outstanding = ogn_staking_total_outstanding(block_number)
-    user_count = OgnStaked.objects.values('user_address').distinct().count()
+    user_count = OgnStaked.objects.values("user_address").distinct().count()
 
     return OgnStakingSnapshot.objects.create(
         block_number=block_number,
         ogn_balance=ogn_balance,
         total_outstanding=total_outstanding,
+        user_count=user_count,
+    )
+
+
+def ensure_story_staking_snapshot(block_number):
+    try:
+        return StoryStakingSnapshot.objects.get(block_number=block_number)
+    except StoryStakingSnapshot.DoesNotExist:
+        pass
+
+    total_supply = story_staking_total_supply(block_number)
+    claiming_index = story_staking_claiming_index(block_number)
+    staking_index = story_staking_staking_index(block_number)
+    vault_eth = get_balance(STORY_STAKING_VAULT)
+    vault_ogn = balanceOf(
+        OGN,
+        STORY_STAKING_VAULT,
+        18,
+        block_number,
+    )
+    user_count = StoryStake.objects.values("user_address").distinct().count()
+
+    return StoryStakingSnapshot.objects.create(
+        block_number=block_number,
+        total_supply=total_supply,
+        claiming_index=claiming_index,
+        staking_index=staking_index,
+        vault_eth=vault_eth,
+        vault_ogn=vault_ogn,
         user_count=user_count,
     )
 
@@ -272,7 +303,7 @@ def ensure_oracle_snapshot(block_number):
                 oracle=CHAINLINK_ORACLE,
                 ticker_left="ETH",
                 ticker_right="USD",
-                price=usd_eth_price
+                price=usd_eth_price,
             )
         )
 
@@ -287,7 +318,7 @@ def ensure_oracle_snapshot(block_number):
                     oracle=CHAINLINK_ORACLE,
                     ticker_left=ticker,
                     ticker_right="ETH",
-                    price=eth_price
+                    price=eth_price,
                 )
             )
 
@@ -314,7 +345,7 @@ def ensure_oracle_snapshot(block_number):
                     oracle=OPEN_ORACLE,
                     ticker_left=ticker,
                     ticker_right="USD",
-                    price=usd_price
+                    price=usd_price,
                 )
             )
 
@@ -323,14 +354,13 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
     ctoken_address = COMPOUND_FOR_SYMBOL.get(underlying_symbol)
 
     if not ctoken_address:
-        logger.error('Unknown underlying asset for cToken')
+        logger.error("Unknown underlying asset for cToken")
         return None
 
     underlying_decimals = DECIMALS_FOR_SYMBOL[underlying_symbol]
 
     q = CTokenSnapshot.objects.filter(
-        address=ctoken_address,
-        block_number=block_number
+        address=ctoken_address, block_number=block_number
     )
 
     if q.count():
@@ -344,10 +374,7 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
         supply_apy = supply_rate * Decimal(BLOCKS_PER_YEAR)
 
         total_supply = totalSupply(ctoken_address, 8, block_number)
-        exchange_rate_stored = exchangeRateStored(
-            ctoken_address,
-            block_number
-        )
+        exchange_rate_stored = exchangeRateStored(ctoken_address, block_number)
 
         s = CTokenSnapshot()
         s.block_number = block_number
@@ -358,19 +385,13 @@ def ensure_ctoken_snapshot(underlying_symbol, block_number):
         s.supply_apy = supply_apy
         s.total_supply = total_supply
         s.total_borrows = totalBorrows(
-            ctoken_address,
-            underlying_decimals,
-            block_number
+            ctoken_address, underlying_decimals, block_number
         )
         s.total_cash = getCash(
-            ctoken_address,
-            underlying_decimals,
-            block_number
+            ctoken_address, underlying_decimals, block_number
         )
         s.total_reserves = totalReserves(
-            ctoken_address,
-            underlying_decimals,
-            block_number
+            ctoken_address, underlying_decimals, block_number
         )
         s.exchange_rate_stored = exchange_rate_stored
         s.save()
@@ -383,12 +404,11 @@ def ensure_aave_snapshot(underlying_symbol, block_number):
     asset_address = CONTRACT_FOR_SYMBOL.get(underlying_symbol)
 
     if not asset_address:
-        logger.error('Unknown underlying asset for Aave snapshot')
+        logger.error("Unknown underlying asset for Aave snapshot")
         return None
 
     q = AaveLendingPoolCoreSnapshot.objects.filter(
-        asset=asset_address,
-        block_number=block_number
+        asset=asset_address, block_number=block_number
     )
 
     if q.count():
@@ -402,26 +422,28 @@ def ensure_aave_snapshot(underlying_symbol, block_number):
         s.borrowing_enabled = AaveLendingPoolCore.isReserveBorrowingEnabled(
             asset_address
         )
-        s.available_liquidity = AaveLendingPoolCore.getReserveAvailableLiquidity(
-            asset_address
+        s.available_liquidity = (
+            AaveLendingPoolCore.getReserveAvailableLiquidity(asset_address)
         )
-        s.total_borrows_stable = AaveLendingPoolCore.getReserveTotalBorrowsStable(
-            asset_address
+        s.total_borrows_stable = (
+            AaveLendingPoolCore.getReserveTotalBorrowsStable(asset_address)
         )
-        s.total_borrows_variable = AaveLendingPoolCore.getReserveTotalBorrowsVariable(
-            asset_address
+        s.total_borrows_variable = (
+            AaveLendingPoolCore.getReserveTotalBorrowsVariable(asset_address)
         )
         s.total_liquidity = AaveLendingPoolCore.getReserveTotalLiquidity(
             asset_address
         )
-        s.current_liquidity_rate = AaveLendingPoolCore.getReserveCurrentLiquidityRate(
-            asset_address
+        s.current_liquidity_rate = (
+            AaveLendingPoolCore.getReserveCurrentLiquidityRate(asset_address)
         )
-        s.variable_borrow_rate = AaveLendingPoolCore.getReserveCurrentVariableBorrowRate(
-            asset_address
+        s.variable_borrow_rate = (
+            AaveLendingPoolCore.getReserveCurrentVariableBorrowRate(
+                asset_address
+            )
         )
-        s.stable_borrow_rate = AaveLendingPoolCore.getReserveCurrentStableBorrowRate(
-            asset_address
+        s.stable_borrow_rate = (
+            AaveLendingPoolCore.getReserveCurrentStableBorrowRate(asset_address)
         )
         s.save()
 
@@ -445,26 +467,29 @@ def ensure_3pool_snapshot(block_number):
         s.initial_a = ThreePool.initial_A(block_number)
         s.future_a = ThreePool.future_A(block_number)
         s.initial_a_time = datetime.fromtimestamp(
-            ThreePool.initial_A_time(block_number),
-            tz=timezone.utc
+            ThreePool.initial_A_time(block_number), tz=timezone.utc
         )
         s.future_a_time = datetime.fromtimestamp(
-            ThreePool.future_A_time(block_number),
-            tz=timezone.utc
+            ThreePool.future_A_time(block_number), tz=timezone.utc
         )
         s.save()
 
         return s
 
+
 def latest_snapshot():
     return SupplySnapshot.objects.order_by("-block_number")[0]
 
+
 def snapshot_at_block(block):
-    return SupplySnapshot.objects.filter(block_number__lte=block).order_by("-block_number")[0]
+    return SupplySnapshot.objects.filter(block_number__lte=block).order_by(
+        "-block_number"
+    )[0]
 
 
 def latest_snapshot_block_number():
     return latest_snapshot().block_number
+
 
 def calculate_snapshot_data(block=None):
     pools_config = [
@@ -475,7 +500,9 @@ def calculate_snapshot_data(block=None):
     pools = []
     totals_by_rebasing = {True: Decimal(0), False: Decimal(0)}
     for name, address, is_rebasing in pools_config:
-        amount = balanceOf(OUSD, address, 18, "latest" if block is None else block)
+        amount = balanceOf(
+            OUSD, address, 18, "latest" if block is None else block
+        )
         pools.append(
             {
                 "name": name,
@@ -484,10 +511,20 @@ def calculate_snapshot_data(block=None):
             }
         )
         totals_by_rebasing[is_rebasing] += amount
-    pools = sorted(pools, key=lambda pool: 0-pool["amount"])
+    pools = sorted(pools, key=lambda pool: 0 - pool["amount"])
 
     snapshot = latest_snapshot() if block is None else snapshot_at_block(block)
-    other_rebasing = snapshot.rebasing_reported_supply() - totals_by_rebasing[True]
-    other_non_rebasing = snapshot.non_rebasing_reported_supply() - totals_by_rebasing[False]
+    other_rebasing = (
+        snapshot.rebasing_reported_supply() - totals_by_rebasing[True]
+    )
+    other_non_rebasing = (
+        snapshot.non_rebasing_reported_supply() - totals_by_rebasing[False]
+    )
 
-    return [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot]
+    return [
+        pools,
+        totals_by_rebasing,
+        other_rebasing,
+        other_non_rebasing,
+        snapshot,
+    ]
