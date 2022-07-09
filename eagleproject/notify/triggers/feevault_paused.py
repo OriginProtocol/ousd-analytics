@@ -1,4 +1,3 @@
-from django.db.models import Q
 from notify.events import event_high
 
 from core.blockchain.addresses import STORY_STAKING_VAULT
@@ -10,8 +9,8 @@ EVENT_TAGS = ["ogn"]
 def get_pause_events(logs):
     """ Get Paused/Unpaused events """
     return logs.filter(
-        Q(address=STORY_STAKING_VAULT)
-        & Q(Q(topic_0=SIG_EVENT_OZ_PAUSED) | Q(topic_0=SIG_EVENT_OZ_UNPAUSED))
+        address=STORY_STAKING_VAULT,
+        topic_0__in=[SIG_EVENT_OZ_PAUSED, SIG_EVENT_OZ_UNPAUSED],
     ).order_by("block_number")
 
 

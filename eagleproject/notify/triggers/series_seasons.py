@@ -1,6 +1,5 @@
 from eth_abi import decode_single
 from eth_utils import decode_hex
-from django.db.models import Q
 
 from core.blockchain.addresses import STORY_STAKING_SERIES
 from core.blockchain.sigs import (
@@ -19,12 +18,12 @@ EVENT_TAGS = ["ogn"]
 def get_rewards_events(logs):
     """ Get Series' Season events """
     return logs.filter(
-        Q(address=STORY_STAKING_SERIES)
-        & Q(
-            Q(topic_0=SIG_EVENT_NEW_SEASON)
-            | Q(topic_0=SIG_EVENT_SEASON_START)
-            | Q(topic_0=SIG_EVENT_SEASON_CANCELLED)
-        )
+        address=STORY_STAKING_SERIES,
+        topic_0__in=[
+            SIG_EVENT_NEW_SEASON,
+            SIG_EVENT_SEASON_START,
+            SIG_EVENT_SEASON_CANCELLED,
+        ],
     ).order_by("block_number")
 
 

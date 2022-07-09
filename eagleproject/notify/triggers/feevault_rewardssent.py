@@ -1,6 +1,5 @@
 from eth_abi import decode_single
 from eth_utils import decode_hex
-from django.db.models import Q
 
 from core.blockchain.addresses import STORY_STAKING_VAULT
 from core.blockchain.const import SYMBOL_FOR_CONTRACT
@@ -15,7 +14,7 @@ EVENT_TAGS = ["ogn"]
 def get_rewards_events(logs):
     """ Get RewardsSent events """
     return logs.filter(
-        Q(address=STORY_STAKING_VAULT) & Q(topic_0=SIG_EVENT_REWARDS_SENT)
+        address=STORY_STAKING_VAULT, topic_0=SIG_EVENT_REWARDS_SENT
     ).order_by("block_number")
 
 
