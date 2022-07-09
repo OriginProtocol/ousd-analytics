@@ -6,7 +6,7 @@ from core.blockchain.const import SYMBOL_FOR_CONTRACT
 from core.blockchain.sigs import SIG_EVENT_REWARDS_SENT
 from core.common import format_ousd_human
 
-from notify.events import event_high, event_low
+from notify.events import event_critical, event_low
 
 EVENT_TAGS = ["ogn"]
 
@@ -52,7 +52,7 @@ def run_trigger(new_logs, latest_story_snapshots):
 
     if diff_eth < 0 and abs(diff_eth) != paid_eth:
         events.append(
-            event_high(
+            event_critical(
                 "Unexpected FeeVault Balance Change   🥷",
                 f"Vault balance changed by {format_ousd_human(diff_eth)} ETH "
                 f"but {format_ousd_human(paid_eth)} ETH was paid out.",
@@ -70,7 +70,7 @@ def run_trigger(new_logs, latest_story_snapshots):
 
     if diff_ogn < 0 and abs(diff_ogn) != paid_ogn:
         events.append(
-            event_high(
+            event_critical(
                 "Unexpected FeeVault Balance Change   🥷",
                 f"Vault balance changed by {format_ousd_human(diff_ogn)} OGN "
                 f"but {format_ousd_human(paid_ogn)} OGN was paid out.",

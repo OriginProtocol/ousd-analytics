@@ -86,7 +86,7 @@ def run_trigger(new_logs):
 
             events.append(
                 event_normal(
-                    "Season Ended   🛑",
+                    "Season Ended   🏁",
                     f"Season {index + 1} ({season_address}) has ended!\n\n"
                     "Rewards\n"
                     "-------\n"

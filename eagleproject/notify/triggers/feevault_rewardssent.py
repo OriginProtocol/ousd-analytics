@@ -6,7 +6,7 @@ from core.blockchain.const import SYMBOL_FOR_CONTRACT
 from core.blockchain.sigs import SIG_EVENT_REWARDS_SENT
 from core.common import format_ousd_human
 
-from notify.events import event_high
+from notify.events import event_low
 
 EVENT_TAGS = ["ogn"]
 
@@ -32,7 +32,7 @@ def run_trigger(new_logs):
         symbol = SYMBOL_FOR_CONTRACT[asset]
 
         events.append(
-            event_high(
+            event_low(
                 "Rewards Sent   💸",
                 f"{amount} {symbol} paid to {to_address}",
                 tags=EVENT_TAGS,
