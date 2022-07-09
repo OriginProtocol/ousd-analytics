@@ -84,7 +84,7 @@ def request(method, params):
 
 
 def get_balance(address, block="latest") -> Decimal:
-    data = request("eth_getBalance", [address, block])
+    data = request("eth_getBalance", [address, hex(block)])
     return Decimal(int(data["result"], 16)) / E_18
 
 

@@ -267,7 +267,7 @@ def ensure_story_staking_snapshot(block_number):
     total_supply = story_staking_total_supply(block_number)
     claiming_index = story_staking_claiming_index(block_number)
     staking_index = story_staking_staking_index(block_number)
-    vault_eth = get_balance(STORY_STAKING_VAULT)
+    vault_eth = get_balance(STORY_STAKING_VAULT, block_number)
     vault_ogn = balanceOf(
         OGN,
         STORY_STAKING_VAULT,
