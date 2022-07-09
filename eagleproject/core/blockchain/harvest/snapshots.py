@@ -62,6 +62,7 @@ from core.models import (
     OgnStaked,
     OgnStakingSnapshot,
     OracleSnapshot,
+    StoryStake,
     StoryStakingSnapshot,
     SupplySnapshot,
     ThreePoolSnapshot,
