@@ -40,6 +40,7 @@ from core.models import (
     OgnStakingSnapshot,
     OracleSnapshot,
     OusdTransfer,
+    StoryStakingSnapshot,
     SupplySnapshot,
     Transaction,
 )
@@ -169,6 +170,11 @@ def latest_asset_blocks(after_block_number):
     ).order_by("block_number")
 
 
+def latest_story_snapshots(limit=2):
+    """ Get the last N amount of story snapshots """
+    return StoryStakingSnapshot.objects.order_by("-block_number")[:limit]
+
+
 def run_all_triggers():
     """ Run all triggers """
     events = []
@@ -239,6 +245,7 @@ def run_all_triggers():
         "last_week_asset_blocks": lambda: past_asset_blocks(
             until_block=snapshot_cursor.block_number
         ),
+        "latest_story_snapshots": lambda: latest_story_snapshots,
     }
 
     for mod in mods:

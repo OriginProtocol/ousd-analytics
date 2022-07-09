@@ -6,6 +6,7 @@ from core.blockchain.harvest.snapshots import (
     ensure_ctoken_snapshot,
     ensure_supply_snapshot,
     ensure_staking_snapshot,
+    ensure_story_staking_snapshot,
     ensure_oracle_snapshot,
 )
 from core.blockchain.harvest.transactions import (
@@ -27,6 +28,7 @@ def snap(block_number):
     ensure_asset("COMP", block_number)
     ensure_supply_snapshot(block_number)
     ensure_staking_snapshot(block_number)
+    ensure_story_staking_snapshot(block_number)
     ensure_oracle_snapshot(block_number)
 
     for symbol in COMPOUND_FOR_SYMBOL:
