@@ -39,8 +39,6 @@ def run_trigger(new_logs):
     for ev in get_stake_unstake_events(new_logs):
 
         if ev.topic_0 == SIG_EVENT_STAKE:
-            verb = "staked"
-
             user_address = decode_single("(address)", decode_hex(ev.topic_1))[0]
             amount = decode_single("(uint256)", decode_hex(ev.topic_2))[0]
             points = decode_single("(uint256)", decode_hex(ev.data))[0]
@@ -48,9 +46,9 @@ def run_trigger(new_logs):
             events.append(
                 event_normal(
                     "Staked    🥩",
-                    "{} OGN was {} for {} points".format(
+                    "{} staked {} OGN for {} points".format(
+                        user_address[:6],
                         format_ousd_human(Decimal(amount) / Decimal(1e18)),
-                        verb,
                         format_ousd_human(points / E_18),
                     ),
                     tags=EVENT_TAGS,
@@ -67,7 +65,7 @@ def run_trigger(new_logs):
             events.append(
                 event_normal(
                     "Unstaked   💔",
-                    f"{unstake_amount} OGN was unstaked",
+                    f"{user_address[:6]} unstaked {unstake_amount} OGN",
                     tags=EVENT_TAGS,
                     log_model=ev,
                 )
