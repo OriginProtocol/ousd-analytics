@@ -53,8 +53,8 @@ SIG_FUNC_AIR_DROPPED_STAKE = encode_hex(
 )
 
 # DRIPPER
-SIG_DRIPPER_AVAILABLE_FUNDS = encode_hex(keccak(b'availableFunds()'))
-SIG_DRIPPER_CONFIG = encode_hex(keccak(b'drip()'))
+SIG_DRIPPER_AVAILABLE_FUNDS = encode_hex(keccak(b"availableFunds()"))
+SIG_DRIPPER_CONFIG = encode_hex(keccak(b"drip()"))
 
 ########
 # Events
@@ -71,6 +71,34 @@ DEPRECATED_SIG_EVENT_WITHDRAWN = encode_hex(
     keccak(b"Withdrawn(address,uint256)")
 )
 SIG_EVENT_STAKING_PAUSED = encode_hex(keccak(b"Paused(address,bool)"))
+
+# Story Staking
+SIG_FUNC_CURRENT_CLAIMING_INDEX = encode_hex(keccak(b"currentClaimingIndex()"))
+SIG_FUNC_CURRENT_STAKING_INDEX = encode_hex(keccak(b"currentStakingIndex()"))
+# NewSeason(uint256 indexed number, address indexed season)
+SIG_EVENT_NEW_SEASON = encode_hex(keccak(b"NewSeason(uint256,address)"))
+# SeasonStart(uint256 indexed number, address indexed season)
+SIG_EVENT_SEASON_START = encode_hex(keccak(b"SeasonStart(uint256,address)"))
+# SeasonCancelled(address indexed season)
+SIG_EVENT_SEASON_CANCELLED = encode_hex(keccak(b"SeasonCancelled(address)"))
+# Stake(address indexed userAddress, uint256 indexed amount, uint256 points)
+SIG_EVENT_STAKE = encode_hex(keccak(b"Stake(address,uint256,uint256)"))
+# Unstake(address indexed userAddress)
+SIG_EVENT_UNSTAKE = encode_hex(keccak(b"Unstake(address)"))
+# Finale(uint256 totalRewardETH, uint256 totalRewardOGN)
+SIG_EVENT_FINALE = encode_hex(keccak(b"Finale(uint256,uint256)"))
+# RewardsSent(address indexed asset, address indexed toAddress, uint256 amount)
+SIG_EVENT_REWARDS_SENT = encode_hex(
+    keccak(b"RewardsSent(address,address,uint256)")
+)
+# NewController(address controllerAddress)
+SIG_EVENT_NEW_CONTROLLER = encode_hex(keccak(b"NewController(address)"))
+
+# OpenZeppelin Pausable
+# Paused(address account)
+SIG_EVENT_OZ_PAUSED = encode_hex(keccak(b"Paused(address)"))
+# Unpaused(address account)
+SIG_EVENT_OZ_UNPAUSED = encode_hex(keccak(b"Unpaused(address)"))
 
 # OUSD
 SIG_EVENT_TOTAL_SUPPLY_UPDATED = encode_hex(
