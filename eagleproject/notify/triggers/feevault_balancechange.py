@@ -54,7 +54,7 @@ def run_trigger(new_logs, latest_story_snapshots):
     if diff_eth < 0 and abs(diff_eth) != paid_eth:
         events.append(
             event_high(
-                "Unexpected Vault Balance Change   🥷",
+                "Unexpected FeeVault Balance Change   🥷",
                 f"Vault balance changed by {format_ousd_human(diff_eth)} ETH "
                 f"but {format_ousd_human(paid_eth)} ETH was paid out.",
                 tags=EVENT_TAGS,
@@ -63,7 +63,7 @@ def run_trigger(new_logs, latest_story_snapshots):
     elif diff_eth > 0:
         events.append(
             event_low(
-                "Vault Received Funds   🏦",
+                "FeeVault Received Funds   🏦",
                 f"FeeVault received {format_ousd_human(diff_eth)} ETH.",
                 tags=EVENT_TAGS,
             )
@@ -72,7 +72,7 @@ def run_trigger(new_logs, latest_story_snapshots):
     if diff_ogn < 0 and abs(diff_ogn) != paid_ogn:
         events.append(
             event_high(
-                "Unexpected Vault Balance Change   🥷",
+                "Unexpected FeeVault Balance Change   🥷",
                 f"Vault balance changed by {format_ousd_human(diff_ogn)} OGN "
                 f"but {format_ousd_human(paid_ogn)} OGN was paid out.",
                 tags=EVENT_TAGS,
@@ -81,7 +81,7 @@ def run_trigger(new_logs, latest_story_snapshots):
     elif diff_ogn > 0:
         events.append(
             event_low(
-                "Vault Received Funds   🏦",
+                "FeeVault Received Funds   🏦",
                 f"FeeVault received {format_ousd_human(diff_ogn)} OGN.",
                 tags=EVENT_TAGS,
             )
