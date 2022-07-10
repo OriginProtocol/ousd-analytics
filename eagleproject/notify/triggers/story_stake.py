@@ -46,7 +46,7 @@ def run_trigger(new_logs):
             events.append(
                 event_normal(
                     "Staked    🥩",
-                    "{} staked {} OGN for {} points".format(
+                    "{} staked {} OGN for a total of {} points".format(
                         user_address[:6],
                         format_ousd_human(Decimal(amount) / Decimal(1e18)),
                         format_ousd_human(points / E_18),
