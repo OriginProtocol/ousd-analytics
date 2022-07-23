@@ -347,7 +347,7 @@ def create_time_interval_report_for_previous_week(week_override, do_only_transac
 
     if week_override is None and not should_create_new_report(year_number, None, week_number):
         print("Report for year: {} and week: {} does not need creation".format(year_number, week_number))
-        return 
+        return
 
     # TODO: this will work incorrectly when the week falls on new year
     week_interval = "{year}-W{week}".format(year = year_number, week=week_number)
@@ -368,7 +368,7 @@ def create_time_interval_report_for_previous_week(week_override, do_only_transac
         year_number,
         "processing",
         None,
-        block_start_number, 
+        block_start_number,
         block_end_number,
         start_time,
         end_time,
@@ -393,7 +393,7 @@ def create_time_interval_report_for_previous_week(week_override, do_only_transac
         year_number,
         "done",
         report,
-        block_start_number, 
+        block_start_number,
         block_end_number,
         start_time,
         end_time,
@@ -415,9 +415,9 @@ def create_time_interval_report_for_previous_week(week_override, do_only_transac
         send_report_email('Weekly report', db_report, preb_db_report, "Weekly")
 
 def should_create_new_report(year, month_option, week_option):
-    if month_option is not None: 
+    if month_option is not None:
         existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option))
-    elif week_option is not None: 
+    elif week_option is not None:
         existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option))
 
     if len(existing_report) == 1:
@@ -443,7 +443,7 @@ def create_time_interval_report_for_previous_month(month_override, do_only_trans
 
     if month_override is None and not should_create_new_report(year_number, month_number, None):
         print("Report for year: {} and month: {} does not need creation".format(year_number, month_number))
-        return 
+        return
 
     month_interval = "{year}-m{month}".format(year=year_number, month=month_number)
 
@@ -465,7 +465,7 @@ def create_time_interval_report_for_previous_month(month_override, do_only_trans
         year_number,
         "processing",
         None,
-        block_start_number, 
+        block_start_number,
         block_end_number,
         start_time,
         end_time,
@@ -490,7 +490,7 @@ def create_time_interval_report_for_previous_month(month_override, do_only_trans
         year_number,
         "done",
         report,
-        block_start_number, 
+        block_start_number,
         block_end_number,
         start_time,
         end_time,
@@ -541,8 +541,8 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     decimal_context = getcontext()
     decimal_prec = decimal_context.prec
     decimal_rounding = decimal_context.rounding
-    
-    # to simulate uint256 in solidity when using decimals 
+
+    # to simulate uint256 in solidity when using decimals
     decimal_context.prec = 18
     decimal_context.rounding = 'ROUND_DOWN'
 
@@ -615,12 +615,12 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
 def analyze_account_in_parallel(analysis_list, accounts_already_analyzed, total_accounts, accounts, rebase_logs, from_block, to_block, from_block_time, to_block_time):
     print("Analyzing {} accounts... progress {}/{}".format(len(accounts), accounts_already_analyzed + len(accounts), total_accounts))
     # Multiprocessing copies connection objects between processes because it forks processes
-    # and therefore copies all the file descriptors of the parent process. That being said, 
+    # and therefore copies all the file descriptors of the parent process. That being said,
     # a connection to the SQL server is just a file, you can see it in linux under /proc//fd/....
     # any open file will be shared between forked processes.
-    # closing all connections just forces the processes to open new connections within the new 
+    # closing all connections just forces the processes to open new connections within the new
     # process.
-    # Not doing this causes PSQL connection errors because multiple processes are using a single connection in 
+    # Not doing this causes PSQL connection errors because multiple processes are using a single connection in
     # a non locking manner.
     db.connections.close_all()
     processes = []
@@ -652,7 +652,7 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
 def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account='all'):
     tx_query = Q()
     tran_query = Q()
-    if account is not 'all':
+    if account != 'all':
         tx_query &= Q(from_address=account) | Q(to_address=account)
         tran_query &= Q(from_address=account) | Q(to_address=account)
     # info regarding all blocks should be present
@@ -661,13 +661,13 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
         tx_query &= Q(block_number__lt=to_block)
         tran_query &= Q(block_time__gte=start_time)
         tran_query &= Q(block_time__lt=end_time)
-    
+
     transactions = Transaction.objects.filter(tx_query)
     transfer_transactions = map(lambda transfer: transfer.tx_hash, OusdTransfer.objects.filter(tran_query))
 
     analyzed_transactions = []
     analyzed_transaction_hashes = []
-    
+
     def process_transaction(transaction):
         if transaction.tx_hash in analyzed_transaction_hashes:
             # transaction already analyzed skipping
@@ -695,12 +695,12 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
                 from_address = "0x" + log.topic_1[-40:]
                 to_address = "0x" + log.topic_2[-40:]
 
-                if is_ousd_token: 
+                if is_ousd_token:
                     ousd_transfer_from = from_address
                     ousd_transfer_to = to_address
                     ousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
 
-                if account is not 'all':
+                if account != 'all':
                     if from_address == account:
                         if is_ousd_token:
                             transfer_ousd_out = True
@@ -713,14 +713,14 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
                             transfer_coin_in = True
 
         classification = 'unknown'
-        if account is not 'all':
+        if account != 'all':
             swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
             swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
 
             if transfer_log_count > 0:
                 if transfer_ousd_in:
                     classification = 'transfer_in'
-                elif transfer_ousd_out: 
+                elif transfer_ousd_out:
                     classification = 'transfer_out'
                 else:
                     classification = 'unknown_transfer'
@@ -769,7 +769,7 @@ def do_transaction_analytics(from_block, to_block, start_time, end_time, account
         tx_hash, contract_address, received_eth, sent_eth, transfer_ousd_out, transfer_ousd_in, transfer_coin_out, transfer_coin_in, ousd_transfer_from, ousd_transfer_amount, transfer_log_count, classification = attrgetter('tx_hash', 'contract_address', 'received_eth', 'sent_eth', 'transfer_ousd_out', 'transfer_ousd_in', 'transfer_coin_out', 'transfer_coin_in', 'ousd_transfer_from', 'ousd_transfer_amount', 'transfer_log_count', 'classification')(analyzed_tx)
 
         if (transfer_log_count > 1 or sent_eth or received_eth) and (classification != 'swap_gain_ousd' or classification != 'swap_give_ousd'):
-            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} ousd in: {} ousd out: {}".format(tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_ousd_in, transfer_ousd_out))    
+            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} ousd in: {} ousd out: {}".format(tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_ousd_in, transfer_ousd_out))
 
         report_key = "contracts_swaps" if (classification == 'swap_gain_ousd' or classification == 'swap_give_ousd') else "contracts_other"
         contract_data = report[report_key][contract_address] if contract_address in report[report_key] else {
@@ -838,7 +838,7 @@ def get_transfer_logs(account, from_block_time, to_block_time):
     if from_block_time is None and to_block_time is None:
         transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)))
     else:
-        transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time))    
+        transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time))
 
     return list(map(lambda log: transfer_log(
         log.tx_hash.block_number,
@@ -907,7 +907,7 @@ def enrich_transfer_logs(logs):
     logs_length = len(logs)
     current_credits_per_token = 0
 
-    # TODO: ideally there would always be one rebase transaction before transfer once since the rebase 
+    # TODO: ideally there would always be one rebase transaction before transfer once since the rebase
     # tells us the correct value of credits_per_token at the time of the transfer transaction.
     # So when transfer is the first transaction we find the closest rebase transaction and use those
     # credits per token. Which is not correct...

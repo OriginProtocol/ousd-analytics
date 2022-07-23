@@ -23,9 +23,9 @@ def get_past_week(transfers):
         return CACHE["past_week"]
 
     one_week_ago = datetime.now() - timedelta(days=7)
-    transfers = transfers.filter(
-        block_time__gt=one_week_ago
-    ).filter(~Q(from_address=ZERO_ADDRESS))
+    transfers = transfers.filter(block_time__gt=one_week_ago).filter(
+        ~Q(from_address=ZERO_ADDRESS)
+    )
     values = [t.amount for t in transfers]
 
     CACHE["past_week"] = {
@@ -42,9 +42,10 @@ def get_past_week(transfers):
     return CACHE["past_week"]
 
 
-def get_outlier_transfers(transfers, new_transfers, high_percentile=95,
-                          low_percentile=5):
-    """ Find the outlier transfers with values outside of the expected from the
+def get_outlier_transfers(
+    transfers, new_transfers, high_percentile=95, low_percentile=5
+):
+    """Find the outlier transfers with values outside of the expected from the
     new set of transfers compared to all from the last week
     """
     outliers = []
@@ -56,7 +57,7 @@ def get_outlier_transfers(transfers, new_transfers, high_percentile=95,
     # IDK statistics magic
     q1, q3 = percentile(
         sorted(map(float, past_week["result"]["values"])),
-        (low_percentile, high_percentile)
+        (low_percentile, high_percentile),
     )
 
     # Interquartile range
@@ -95,7 +96,6 @@ def run_trigger(transfers, new_transfers):
                         transfer.tx_hash_id,
                     ),
                     block_number=transfer.tx_hash.block_number,
-                    transaction_index=transfer.tx_hash.transaction_index,
                     log_index=transfer.log_index,
                 )
             )

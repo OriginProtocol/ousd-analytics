@@ -12,10 +12,11 @@ from core.blockchain.addresses import (
     AAVE_LENDING_POOL_CORE_V1,
     CHAINLINK_ORACLE,
     CURVE_3POOL,
+    DRIPPER,
     OGN_STAKING,
     OPEN_ORACLE,
     OUSD,
-    DRIPPER,
+    STORY_STAKING_SERIES,
 )
 from core.blockchain.const import (
     DECIMALS_FOR_SYMBOL,
@@ -35,6 +36,8 @@ from core.blockchain.sigs import (
     SIG_DRIPPER_AVAILABLE_FUNDS,
     SIG_DRIPPER_CONFIG,
     SIG_FUNC_BORROW_RATE,
+    SIG_FUNC_CURRENT_CLAIMING_INDEX,
+    SIG_FUNC_CURRENT_STAKING_INDEX,
     SIG_FUNC_DURATION_REWARD_RATE,
     SIG_FUNC_EXCHANGE_RATE_STORED,
     SIG_FUNC_GET_CASH,
@@ -80,6 +83,11 @@ def request(method, params):
         raise err
 
 
+def get_balance(address, block="latest") -> Decimal:
+    data = request("eth_getBalance", [address, hex(block)])
+    return Decimal(int(data["result"], 16)) / E_18
+
+
 def call(to, signature, payload, block="latest"):
     params = [
         {"to": to, "data": signature + payload},
@@ -89,32 +97,20 @@ def call(to, signature, payload, block="latest"):
     return request("eth_call", params)
 
 
-def call_by_sig(
-        address,
-        signature,
-        args,
-        block="latest") -> dict:
+def call_by_sig(address, signature, args, block="latest") -> dict:
     """ Do an eth_call given a string function signature and an arg array """
     payload = encode_args(signature, args)
-    sig_hash = encode_hex(keccak(signature.encode('utf-8')))[:10]
+    sig_hash = encode_hex(keccak(signature.encode("utf-8")))[:10]
     return call(address, sig_hash, payload, block)
 
 
-def call_and_return_wad(
-        address,
-        signature,
-        args,
-        block="latest") -> Decimal:
+def call_and_return_wad(address, signature, args, block="latest") -> Decimal:
     """ Make an RPC call and return a "wad" value (18 decimals) """
     data = call_by_sig(address, signature, args, block)
     return Decimal(int(data["result"], 16)) / E_18
 
 
-def call_and_return_ray(
-        address,
-        signature,
-        args,
-        block="latest") -> Decimal:
+def call_and_return_ray(address, signature, args, block="latest") -> Decimal:
     """ Make an RPC call and return a "ray" value (27 decimals) """
     data = call_by_sig(address, signature, args, block)
     return Decimal(int(data["result"], 16)) / E_27
@@ -158,12 +154,13 @@ def creditsBalanceOf(holder, block="latest"):
     payload = encode_single("(address)", [holder]).hex()
     data = call(OUSD, signature, payload, block)
 
-    return (Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
-        math.pow(10, 18)
-    ),
-        Decimal(int(data["result"][64 + 2 : 2 * 64 + 2], 16)) / Decimal(
-        math.pow(10, 18)
-    ))
+    return (
+        Decimal(int(data["result"][0 : 64 + 2], 16))
+        / Decimal(math.pow(10, 18)),
+        Decimal(int(data["result"][64 + 2 : 2 * 64 + 2], 16))
+        / Decimal(math.pow(10, 18)),
+    )
+
 
 def balanceOf(coin_contract, holder, decimals, block="latest"):
     signature = "0x70a08231"
@@ -214,21 +211,21 @@ def exchangeRateStored(coin_contract, block="latest"):
     signature = SIG_FUNC_EXCHANGE_RATE_STORED[:10]
     payload = ""
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
 def borrowRatePerBlock(coin_contract, block="latest"):
     signature = SIG_FUNC_BORROW_RATE[:10]
     payload = ""
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
 def supplyRatePerBlock(coin_contract, block="latest"):
     signature = SIG_FUNC_SUPPLY_RATE[:10]
     payload = ""
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0:64+2], 16)) / E_18
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
 
 
 def open_oracle_price(ticker, block="latest"):
@@ -236,7 +233,7 @@ def open_oracle_price(ticker, block="latest"):
     payload = encode_single("(string)", [ticker]).hex()
     data = call(OPEN_ORACLE, signature, payload, block)
     # price() returns 6 decimals
-    return Decimal(int(data["result"][0:64 + 2], 16)) / E_6
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_6
 
 
 def chainlink_ethUsdPrice(block="latest"):
@@ -244,7 +241,7 @@ def chainlink_ethUsdPrice(block="latest"):
     payload = ""
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH-USD price with 6 decimals
-    return Decimal(int(data["result"][0:64 + 2], 16)) / E_6
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_6
 
 
 def chainlink_tokEthPrice(ticker, block="latest"):
@@ -252,7 +249,7 @@ def chainlink_tokEthPrice(ticker, block="latest"):
     payload = encode_single("(string)", [ticker]).hex()
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH price with 8 decimals for some reason...
-    return Decimal(int(data["result"][0:64 + 2], 16)) / E_8
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_8
 
 
 def chainlink_tokUsdPrice(ticker, block="latest"):
@@ -260,7 +257,7 @@ def chainlink_tokUsdPrice(ticker, block="latest"):
     payload = encode_single("(string)", [ticker]).hex()
     data = call(CHAINLINK_ORACLE, signature, payload, block)
     # tokEthPrice() returns an ETH price with 8 decimals for some reason...
-    return Decimal(int(data["result"][0:64 + 2], 16)) / E_8
+    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_8
 
 
 def balanceOfUnderlying(coin_contract, holder, decimals, block="latest"):
@@ -282,7 +279,7 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
         payload = encode_single("(address)", [coin_contract]).hex()
         data = call(strategy, signature, payload, block)
         if "error" in data:
-            log.error(data['error']['message'])
+            log.error(data["error"]["message"])
         return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
             math.pow(10, decimals)
         )
@@ -313,6 +310,24 @@ def ousd_non_rebasing_supply(block="latest"):
 def ogn_staking_total_outstanding(block):
     data = storage_at(OGN_STAKING, 54, block)
     return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
+
+
+def story_staking_total_supply(block):
+    signature = SIG_FUNC_TOTAL_SUPPLY[:10]
+    data = call(STORY_STAKING_SERIES, signature, "", block)
+    return Decimal(int(data["result"], 16)) / E_18
+
+
+def story_staking_claiming_index(block):
+    signature = SIG_FUNC_CURRENT_CLAIMING_INDEX[:10]
+    data = call(STORY_STAKING_SERIES, signature, "", block)
+    return int(data["result"], 16)
+
+
+def story_staking_staking_index(block):
+    signature = SIG_FUNC_CURRENT_STAKING_INDEX[:10]
+    data = call(STORY_STAKING_SERIES, signature, "", block)
+    return int(data["result"], 16)
 
 
 def priceUSDMint(coin_contract, assetAddress, block="latest"):
@@ -358,26 +373,30 @@ class AaveLendingPoolCore:
             AAVE_LENDING_POOL_CORE_V1,
             "isReserveBorrowingEnabled(address)",
             [address],
-            block
+            block,
         )
         return data["result"] == TRUE_256BIT
 
     @staticmethod
-    def getReserveAvailableLiquidity(address, decimals=18, block="latest") -> Decimal:
+    def getReserveAvailableLiquidity(
+        address, decimals=18, block="latest"
+    ) -> Decimal:
         return call_and_return_wad(
             AAVE_LENDING_POOL_CORE_V1,
             "getReserveAvailableLiquidity(address)",
             [address],
-            block=block
+            block=block,
         )
 
     @staticmethod
-    def getReserveTotalBorrowsStable(address, decimals=18, block="latest") -> Decimal:
+    def getReserveTotalBorrowsStable(
+        address, decimals=18, block="latest"
+    ) -> Decimal:
         return call_and_return_wad(
             AAVE_LENDING_POOL_CORE_V1,
             "getReserveTotalBorrowsStable(address)",
             [address],
-            block=block
+            block=block,
         )
 
     @staticmethod
@@ -386,7 +405,7 @@ class AaveLendingPoolCore:
             AAVE_LENDING_POOL_CORE_V1,
             "getReserveTotalBorrowsVariable(address)",
             [address],
-            block=block
+            block=block,
         )
 
     @staticmethod
@@ -395,7 +414,7 @@ class AaveLendingPoolCore:
             AAVE_LENDING_POOL_CORE_V1,
             "getReserveTotalLiquidity(address)",
             [address],
-            block=block
+            block=block,
         )
 
     @staticmethod
@@ -405,7 +424,7 @@ class AaveLendingPoolCore:
             AAVE_LENDING_POOL_CORE_V1,
             "getReserveCurrentLiquidityRate(address)",
             [address],
-            block=block
+            block=block,
         )
 
     @staticmethod
@@ -415,7 +434,7 @@ class AaveLendingPoolCore:
             AAVE_LENDING_POOL_CORE_V1,
             "getReserveCurrentVariableBorrowRate(address)",
             [address],
-            block=block
+            block=block,
         )
 
     @staticmethod
@@ -425,7 +444,7 @@ class AaveLendingPoolCore:
             AAVE_LENDING_POOL_CORE_V1,
             "getReserveCurrentStableBorrowRate(address)",
             [address],
-            block=block
+            block=block,
         )
 
 
@@ -461,9 +480,7 @@ class ThreePool:
         for i, coin in enumerate(coins):
             symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
             decimals = DECIMALS_FOR_SYMBOL[symbol]
-            retval[symbol] = Decimal(
-                ThreePool.balances(i)
-            ) / Decimal(
+            retval[symbol] = Decimal(ThreePool.balances(i)) / Decimal(
                 math.pow(10, decimals)
             )
 
