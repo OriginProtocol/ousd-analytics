@@ -14,14 +14,24 @@ log = get_logger(__name__)
 class AssetBlock(models.Model):
     symbol = models.CharField(max_length=8, db_index=True)
     block_number = models.IntegerField(db_index=True)
-    ora_tok_usd_min = models.DecimalField(max_digits=64, decimal_places=18, default=0)
-    ora_tok_usd_max = models.DecimalField(max_digits=64, decimal_places=18, default=0)
-    vault_holding = models.DecimalField(max_digits=64, decimal_places=18, default=0)
-    compstrat_holding = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    ora_tok_usd_min = models.DecimalField(
+        max_digits=64, decimal_places=18, default=0
+    )
+    ora_tok_usd_max = models.DecimalField(
+        max_digits=64, decimal_places=18, default=0
+    )
+    vault_holding = models.DecimalField(
+        max_digits=64, decimal_places=18, default=0
+    )
+    compstrat_holding = models.DecimalField(
+        max_digits=64, decimal_places=18, default=0
+    )
     threepoolstrat_holding = models.DecimalField(
         max_digits=64, decimal_places=18, default=0
     )
-    aavestrat_holding = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    aavestrat_holding = models.DecimalField(
+        max_digits=64, decimal_places=18, default=0
+    )
 
     def ora_diff_basis(self):
         return (self.ora_tok_usd_max - self.ora_tok_usd_min) * Decimal(10000)
@@ -52,6 +62,7 @@ class AssetBlock(models.Model):
 class Day(models.Model):
     date = models.DateField(db_index=True, primary_key=True)
     block_number = models.IntegerField(db_index=True)
+
 
 class DebugTx(models.Model):
     tx_hash = models.CharField(max_length=66, db_index=True)
@@ -99,7 +110,7 @@ class Log(models.Model):
         indexes = [
             models.Index(fields=["block_number"]),
         ]
-        unique_together = ('block_number', 'transaction_index', 'log_index')
+        unique_together = ("block_number", "transaction_index", "log_index")
 
 
 class SupplySnapshot(models.Model):
@@ -141,13 +152,16 @@ class SupplySnapshot(models.Model):
 
     def non_rebasing_boost_percentage(self):
         return (
-            (self.computed_supply / (self.computed_supply - self.non_rebasing_supply))
+            (
+                self.computed_supply
+                / (self.computed_supply - self.non_rebasing_supply)
+            )
             - 1
         ) * 100
 
     def non_rebasing_boost_multiplier(self):
-        return (
-            (self.computed_supply / (self.computed_supply - self.non_rebasing_supply))
+        return self.computed_supply / (
+            self.computed_supply - self.non_rebasing_supply
         )
 
     class Meta:
@@ -164,6 +178,16 @@ class OgnStakingSnapshot(models.Model):
     user_count = models.IntegerField()
 
 
+class StoryStakingSnapshot(models.Model):
+    block_number = models.IntegerField(db_index=True, unique=True)
+    claiming_index = models.IntegerField()
+    staking_index = models.IntegerField()
+    user_count = models.IntegerField(default=0)
+    total_supply = models.DecimalField(max_digits=64, decimal_places=18)
+    vault_eth = models.DecimalField(max_digits=64, decimal_places=18)
+    vault_ogn = models.DecimalField(max_digits=64, decimal_places=18)
+
+
 class Block(models.Model):
     block_number = models.IntegerField(primary_key=True)
     block_time = models.DateTimeField(db_index=True)
@@ -178,7 +202,9 @@ class Transaction(models.Model):
     receipt_data = models.JSONField(default=dict)
     debug_data = models.JSONField(default=dict)
     internal_transactions = models.JSONField(default=dict)
-    from_address = models.CharField(max_length=42, db_index=True, default='0xinvalid_address')
+    from_address = models.CharField(
+        max_length=42, db_index=True, default="0xinvalid_address"
+    )
     to_address = models.CharField(max_length=42, db_index=True, null=True)
 
 
@@ -203,18 +229,47 @@ class OgnStaked(models.Model):
     user_address = models.CharField(max_length=42, db_index=True)
     is_staked = models.BooleanField()
     amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
-    staked_amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    staked_amount = models.DecimalField(
+        max_digits=64, decimal_places=18, default=0
+    )
     duration = models.IntegerField(default=0)
     staked_duration = models.DurationField(default=timedelta(days=0))
     rate = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     stake_type = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ('tx_hash', 'log_index')
+        unique_together = ("tx_hash", "log_index")
+
+
+class StoryStake(models.Model):
+    tx_hash = models.CharField(max_length=66, db_index=True)
+    log_index = models.CharField(max_length=66, db_index=True)
+    block = models.ForeignKey(
+        "Block",
+        to_field="block_number",
+        on_delete=models.DO_NOTHING,
+        db_index=True,
+    )
+    unstake_block = models.ForeignKey(
+        "Block",
+        to_field="block_number",
+        on_delete=models.DO_NOTHING,
+        db_index=True,
+        related_name="story_unstake",
+        null=True,
+        default=None,
+    )
+    user_address = models.CharField(max_length=42, db_index=True)
+    amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
+    points = models.DecimalField(max_digits=64, decimal_places=0, default=0)
+
+    class Meta:
+        unique_together = ("block", "log_index")
 
 
 class OracleSnapshot(models.Model):
     """ Snapshot of prices from dependency oracles """
+
     block_number = models.IntegerField(db_index=True)
     oracle = models.CharField(max_length=42, db_index=True)
     ticker_left = models.CharField(max_length=6, db_index=True)
@@ -224,6 +279,7 @@ class OracleSnapshot(models.Model):
 
 class CTokenSnapshot(models.Model):
     """ Snapshot of useful compound state for a given block """
+
     block_number = models.IntegerField(db_index=True)
 
     # Address of the cToken
@@ -250,13 +306,10 @@ class CTokenSnapshot(models.Model):
     total_cash = models.DecimalField(max_digits=64, decimal_places=18)
 
     # The exchange rate from the underlying to the CToken
-    exchange_rate_stored = models.DecimalField(
-        max_digits=64,
-        decimal_places=18
-    )
+    exchange_rate_stored = models.DecimalField(max_digits=64, decimal_places=18)
 
     class Meta:
-        unique_together = ('block_number', 'address')
+        unique_together = ("block_number", "address")
 
 
 class AnalyticsReport(models.Model):
@@ -281,11 +334,11 @@ class AnalyticsReport(models.Model):
     updated_at = models.DateTimeField(default=datetime.now())
 
     # Status of the report. Valid values: processing, done
-    # this is used in combination with updated_at to figure out if process making a 
+    # this is used in combination with updated_at to figure out if process making a
     # report has failed and needs to be re-attempted
-    status = models.CharField(max_length=20, default='done')
+    status = models.CharField(max_length=20, default="done")
 
-    # Contains info regarding which contracts have been called that have resulted in 
+    # Contains info regarding which contracts have been called that have resulted in
     # OUSD Swaps. (Uniswap Router, Metamask router....)
     transaction_report = models.JSONField(default=list)
 
@@ -296,7 +349,9 @@ class AnalyticsReport(models.Model):
     # Number of accounts holding more than 100 OUSD in a given time period
     accounts_holding_more_than_100_ousd = models.IntegerField()
     # Number of accounts holding more than 100 OUSD after curve campaign start
-    accounts_holding_more_than_100_ousd_after_curve_start = models.IntegerField(default=0)
+    accounts_holding_more_than_100_ousd_after_curve_start = models.IntegerField(
+        default=0
+    )
     # Number of new accounts holding OUSD in a given time period
     new_accounts = models.IntegerField()
     # Number of new accounts after Curve campaign start
@@ -310,24 +365,48 @@ class AnalyticsReport(models.Model):
     report = models.JSONField(default=list)
 
     def __getattr__(self, name):
-        if not self.report or self.report == '[]':
+        if not self.report or self.report == "[]":
             return None
 
         report_json = json.loads(str(self.report))
-        if name == 'total_supply':
-            return round(report_json['supply_data']['total_supply'], 2) if 'supply_data' in report_json else None
-        elif name == 'curve_metapool_total_supply':
-            return report_json['curve_data']['total_supply'] if 'curve_data' in report_json else None
-        elif name == 'share_earning_curve_ogn':
-            return report_json['curve_data']['earning_ogn'] if 'curve_data' in report_json else None
-        elif name == 'apy':
-            return report_json['apy']
-        elif name == 'pools':
-            return report_json["supply_data"]["pools"] if "supply_data" in report_json else []
-        elif name == 'other_rebasing':
-            return report_json["supply_data"]["other_rebasing"] if "supply_data" in report_json else []
-        elif name == 'other_non_rebasing':
-            return report_json["supply_data"]["other_non_rebasing"] if "supply_data" in report_json else []
+        if name == "total_supply":
+            return (
+                round(report_json["supply_data"]["total_supply"], 2)
+                if "supply_data" in report_json
+                else None
+            )
+        elif name == "curve_metapool_total_supply":
+            return (
+                report_json["curve_data"]["total_supply"]
+                if "curve_data" in report_json
+                else None
+            )
+        elif name == "share_earning_curve_ogn":
+            return (
+                report_json["curve_data"]["earning_ogn"]
+                if "curve_data" in report_json
+                else None
+            )
+        elif name == "apy":
+            return report_json["apy"]
+        elif name == "pools":
+            return (
+                report_json["supply_data"]["pools"]
+                if "supply_data" in report_json
+                else []
+            )
+        elif name == "other_rebasing":
+            return (
+                report_json["supply_data"]["other_rebasing"]
+                if "supply_data" in report_json
+                else []
+            )
+        elif name == "other_non_rebasing":
+            return (
+                report_json["supply_data"]["other_non_rebasing"]
+                if "supply_data" in report_json
+                else []
+            )
 
 
 class AaveLendingPoolCoreSnapshot(models.Model):
@@ -380,7 +459,7 @@ class AaveLendingPoolCoreSnapshot(models.Model):
     )
 
     class Meta:
-        unique_together = ('block_number', 'asset')
+        unique_together = ("block_number", "asset")
 
 
 class ThreePoolSnapshot(models.Model):
@@ -405,7 +484,7 @@ class ThreePoolSnapshot(models.Model):
 
 
 def conditional_update(self, **kwargs):
-    """ Update if the given kwargs do not match this model's prop values
+    """Update if the given kwargs do not match this model's prop values
 
     Note: This function is used as a monkeypatch method for the Django Model
     class
@@ -414,7 +493,7 @@ def conditional_update(self, **kwargs):
 
     for k, v in kwargs.items():
         if not hasattr(self, k):
-            raise KeyError('Model does not have prop {}'.format(k))
+            raise KeyError("Model does not have prop {}".format(k))
 
         if getattr(self, k) != v:
             setattr(self, k, v)
@@ -423,7 +502,7 @@ def conditional_update(self, **kwargs):
                 save = True
 
     if save:
-        log.debug('Updating {} model data...'.format(self.__class__.__name__))
+        log.debug("Updating {} model data...".format(self.__class__.__name__))
         self.save()
         return 1
 
@@ -434,3 +513,4 @@ Log.add_to_class("conditional_update", conditional_update)
 Transaction.add_to_class("conditional_update", conditional_update)
 OusdTransfer.add_to_class("conditional_update", conditional_update)
 OgnStaked.add_to_class("conditional_update", conditional_update)
+StoryStake.add_to_class("conditional_update", conditional_update)
