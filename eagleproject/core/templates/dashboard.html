@@ -605,6 +605,16 @@
                             {% elif log.address == "0x3c5fe0a3922777343cbd67d3732fcdc9f2fa6f2f" %}
                                 CRV
                             {% endif %}
+                        {% elif log.topic_0 == "0x7d84a6263ae0d98d3329bd7b46bb4e8d6f98cd35a7adb45c274c8b7fd5ebd5e0" and log.address == "0x3cdd07c16614059e66344a7b579dab4f9516c0b6" %}
+                            <strong>Proposal Created</strong><br>
+                            <strong>Proposer: {{log.data|slot_1|long_address_name}}</strong><br>
+                            <small>{{log.data}}</small><br>
+                        {% elif log.topic_0 == "0xb8e138887d0aa13bab447e82de9d5c1777041ecd21ca36ba824ff1e6c07ddda4" and log.address == "0x3cdd07c16614059e66344a7b579dab4f9516c0b6" %}
+                            <strong>Vote Cast</strong><br>
+                            {% if log.topic_1 %}
+                                <strong>Voter: {{log.topic_1|long_address_name}}</strong><br>
+                            {% endif %}
+                            <small>{{log.data}}</small>
                         {% else %}
                             <strong>{{log.topic_0|event_name}}</strong>
                             {% if log.topic_1 %}

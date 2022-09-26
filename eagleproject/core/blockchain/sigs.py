@@ -176,6 +176,20 @@ SIG_EVENT_REWARDS_COLLECTED = encode_hex(
     keccak(b"RewardTokenCollected(address,uint256)")
 )
 
+# OUSD Timelock
+SIG_EVENT_CALL_SCHEDULED = encode_hex(
+    keccak(b"CallScheduled(bytes32,uint256,address,uint256,bytes,bytes32,uint256)")
+)
+SIG_EVENT_CALL_EXECUTED = encode_hex(
+    keccak(b"CallExecuted(bytes32,uint256,address,uint256,bytes)")
+)
+SIG_EVENT_CALL_CANCELLED = encode_hex(
+    keccak(b"Cancelled(bytes32)")
+)
+SIG_EVENT_MIN_DELAY_CHANGED = encode_hex(
+    keccak(b"MinDelayChange(uint256,uint256)")
+)
+
 # Compound Timelock
 # The following are already defined in our Timelock
 # SIG_EVENT_NEW_ADMIN = encode_hex(keccak(b"NewAdmin(address)"))
@@ -191,7 +205,18 @@ SIG_EVENT_QUEUE_TRANSACTION = encode_hex(
     keccak(b"QueueTransaction(bytes32,address,uint256,string,bytes,uint256)")
 )
 
+SIG_EVENT_ROLE_ADMIN_CHANGED = encode_hex(
+    keccak(b"RoleAdminChanged(bytes32,bytes32,bytes32")
+)
+SIG_EVENT_ROLE_GRANTED = encode_hex(
+    keccak(b"RoleGranted(bytes32,address,address")
+)
+SIG_EVENT_ROLE_REVOKED = encode_hex(
+    keccak(b"RoleRevoked(bytes32,address,address")
+)
+
 # Compound GovernorAlpha, GovernorBravo
+# OUSD Governance
 SIG_EVENT_PROPOSAL_CREATED = encode_hex(
     keccak(
         b"ProposalCreated(uint256,address,address[],uint256[],string[],bytes[],uint256,uint256,string)"
@@ -200,6 +225,9 @@ SIG_EVENT_PROPOSAL_CREATED = encode_hex(
 # VoteCast(address voter, uint proposalId, bool support, uint votes);
 SIG_EVENT_VOTE_CAST = encode_hex(
     keccak(b"VoteCast(address,uint256,bool,uint256)")
+)
+SIG_EVENT_VOTE_CAST_OUSD = encode_hex(
+    keccak(b"VoteCast(address,uint256,uint8,uint256,string)")
 )
 SIG_EVENT_PROPOSAL_CANCELED = encode_hex(keccak(b"ProposalCanceled(uint256)"))
 SIG_EVENT_PROPOSAL_QUEUED = encode_hex(
@@ -230,6 +258,12 @@ SIG_EVENT_NEW_PENDING_ADMIN_BRAVO = encode_hex(
 )
 # NewAdmin(address oldAdmin, address newAdmin)
 SIG_EVENT_NEW_ADMIN_BRAVO = encode_hex(keccak(b"NewAdmin(address,address)"))
+
+# OUSD Governance
+SIG_EVENT_QUORUM_NUMERATOR_UPDATED = encode_hex(keccak(b"QuorumNumeratorUpdated(uint256,uint256"))
+SIG_EVENT_TIMELOCK_CHANGE = encode_hex(keccak(b"TimelockChange(address,address"))
+SIG_EVENT_LATE_QUORUM_VOTE_EXTENSION_SET = encode_hex(keccak(b"LateQuorumVoteExtensionSet(uint64,uint64"))
+SIG_EVENT_PROPOSAL_EXTENDED = encode_hex(keccak(b"ProposalExtended(uint256,uint64"))
 
 # Aave LendingPool
 SIG_EVENT_PAUSED = encode_hex(keccak(b"Paused()"))
