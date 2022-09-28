@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 try:
     import envkey  # noqa: F401
@@ -24,9 +26,21 @@ env = environ.Env(
     # set casting, default value
     DEBUG=(bool, False),
     DATABASE_HOST_OVERRIDE=(str, None),
+    SENTRY_DSN=(str,None)
 )
 env_file = Path(__file__).resolve().parent.joinpath('.env')
 environ.Env.read_env(env.str('ENV_PATH', str(env_file)))
+
+SENTRY_DSN=env("SENTRY_DSN")
+
+sentry_sdk.init(
+    dsn=SENTRY_DSN,
+    integrations=[DjangoIntegration()],
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
