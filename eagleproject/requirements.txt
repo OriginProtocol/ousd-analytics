@@ -25,12 +25,12 @@ pycryptodome==3.9.8
 python-dotenv==0.15.0
 pytz==2020.1
 regex==2020.7.14
-requests==2.24.0
+requests==2.28.1
 six==1.15.0
 sqlparse==0.4.2
 toml==0.10.1
 toolz==0.10.0
 typing-extensions==3.7.4.3
-urllib3==1.25.10
+urllib3==1.26.11
 simplejson==3.17.5
 sentry-sdk==1.9.9
