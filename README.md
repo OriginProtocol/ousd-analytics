@@ -15,7 +15,8 @@ Vault Eagle
     pip install -r eagleproject/requirements.txt
     cd eagleproject
     cp eagleproject/.env.dev eagleproject/.env
-    # edit eagleproject/.env and add in your provider URL
+    # edit eagleproject/.env and add in your provider URL (alchemy, for example)
+    # run a postgresql db locally and setup DATABASE_URL in .env
     python manage.py migrate
 
 ## To run
@@ -26,8 +27,10 @@ Vault Eagle
     source ./eagle-python/bin/activate
     python ./manage.py runserver
     # **IMPORTANT**
-    # Start by visiting http://localhost:8000/reload to download blockchain data
-    # Otherwise, the root dashboard view will crash if there is no data
+    # Start by visiting http://localhost:8000/snap to download blockchain snapshot (will take a few mins)
+    # Otherwise, the root dashboard view will crash (with an IndexError)
+    # Visit http://localhost:8000/reload to download blockchain data (data download starts from block 10884500)  
+    # Otherwise, there will be no events shown for the contracts
 
 ## To deploy
 
@@ -35,6 +38,12 @@ Vault Eagle
     git checkout stable
     git merge origin/master
     git push origin stable
+
+## Additional Information
+
+The app is based on Django and presents two main views - snapshot data and contract event data.  
+Snapshot data view consists of total supply of OUSD, OUSD APY, Vault Holdings and allocations among other things  
+Contract event data view consists of the latest events for OUSD, Vault, Governance, and other contracts   
 
 ## Future
 

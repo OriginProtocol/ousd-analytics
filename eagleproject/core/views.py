@@ -124,7 +124,7 @@ def dashboard(request):
             "label": "rebases",
         },
         {
-            "topic": "0xa560e3198060a2f10670c1ec5b403077ea6ae93ca8de1c32b451dc1a943cd6e7",
+            "topic": "0x712ae1383f79ac853f8d882153778e0260ef8f03b504e2866e0593e04d2b291f",
             "label": "governance",
         },
         {
