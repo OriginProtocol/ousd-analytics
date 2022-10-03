@@ -3,6 +3,7 @@ from eth_utils import decode_hex
 from eth_abi import decode_single
 
 from core.blockchain.sigs import SIG_EVENT_UNISWAP
+from core.blockchain.addresses import OGV_BUYBACK, CONTRACT_ADDR_TO_NAME
 from notify.events import event_normal
 
 
@@ -16,11 +17,12 @@ def run_trigger(new_logs):
     events = []
 
     for ev in get_events(new_logs):
-        address = decode_single('(address)', decode_hex(ev.data))[0]
-
+        uniswap_address = decode_single('(address)', decode_hex(ev.data))[0]
+        uniswap_version = "V3" if ev.address == OGV_BUYBACK else "V2"
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
         events.append(event_normal(
-            "Vault Uniswap V2 Router Address Changed   🦄",
-            "Uniswap V2 Router was changed to {} ".format(address),
+            "{} Uniswap {} Router Address Changed   🦄".format(contract_name, uniswap_version),
+            "Uniswap {} Router was changed to {} ".format(uniswap_version, uniswap_address),
             log_model=ev
         ))
 

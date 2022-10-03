@@ -4,7 +4,7 @@ from eth_abi import decode_single
 
 from django.db.models import Q
 
-from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME, VAULT, OGV_BUYBACK
 from core.blockchain.sigs import SIG_EVENT_STRATEGIST
 from notify.events import event_normal
 
