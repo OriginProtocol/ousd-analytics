@@ -101,6 +101,7 @@ CONTRACT_NAMES = {
     "0x20d01749ccf2b689b758e07c597d9bb35370c378": "Mooniswap V1 (OUSD-USDT)",
     "0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f": "Sushiswap Router",
     "0xe4455fdec181561e9ffe909dde46aaeaedc55283": "Sushiswap OUSD-USDT",
+    "0x6c5cdfb47150efc52072cb93eea1e0f123529748": "OGV BuyBack"
 }
 
 SIGNATURES = {
