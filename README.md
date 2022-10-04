@@ -32,6 +32,16 @@ Vault Eagle
     # Visit http://localhost:8000/reload to download blockchain data (data download starts from block 10884500)  
     # Otherwise, there will be no events shown for the contracts
 
+## Local setup using Docker
+1. Copy and update env file
+```
+$ cp eagleproject/eagleproject/docker.env.dev eagleproject/eagleproject/docker.env
+```
+2. Start containers
+```
+$ docker-compose up
+```
+
 ## To deploy
 
     # push to stable branch

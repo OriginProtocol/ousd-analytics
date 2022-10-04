@@ -3,8 +3,6 @@ from datetime import (
     datetime,
 )
 from core.blockchain.addresses import (
-    AAVE_LENDING_POOL_CORE_V1,
-    AAVE_LENDING_POOL_V1,
     AAVE_PROTO_GOVERNANCE_V1,
     CHAINLINK_KEEPER_REGISTRY,
     COMP,
@@ -35,7 +33,8 @@ from core.blockchain.addresses import (
     USDC,
     VAULT,
     GOVERNANCE,
-    GOVERNANCE_TIMELOCK
+    GOVERNANCE_TIMELOCK,
+    OGV_BUYBACK
 )
 
 START_OF_EVERYTHING = 10884500
@@ -64,6 +63,8 @@ DECIMALS_FOR_SYMBOL = {
     "USDT": 6,
     "USDC": 6,
     "veCRV": 18,
+    "OUSD": 18,
+    "OGV": 18,
 }
 
 THREEPOOLINDEX_FOR_ASSET = {
@@ -114,6 +115,7 @@ LOG_CONTRACTS = (
         CURVE_ARAGON_51,
         CURVE_ARAGON_60,
         CHAINLINK_KEEPER_REGISTRY,
+        OGV_BUYBACK,
     ]
 )
 ETHERSCAN_CONTRACTS = [
@@ -127,6 +129,7 @@ ETHERSCAN_CONTRACTS = [
     GOVERNANCE_TIMELOCK,
     STORY_STAKING_VAULT,
     STORY_STAKING_SERIES,
+    OGV_BUYBACK,
 ]
 
 ASSET_TICKERS = ["DAI", "USDC", "USDT"]
