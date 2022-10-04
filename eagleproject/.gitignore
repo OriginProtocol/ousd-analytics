@@ -5,3 +5,4 @@ app.yaml
 reports_worker.yaml
 .envkey
 *.DS_Store 
+.env.docker

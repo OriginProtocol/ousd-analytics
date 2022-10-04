@@ -1,0 +1,29 @@
+version: "3.9"
+services:
+  ousda:
+    build: .
+    container_name: ousda-server
+    depends_on:
+      - ousda-db
+    ports:
+      - 8000:8000
+    volumes:
+      - ./eagleproject:/app
+      - ./eagleproject/eagleproject/docker.env:/app/eagleproject/.env
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      - DATABASE_URL=postgres://origin:origin@ousda-db:5432/ousda
+
+  ousda-db:
+    image: postgres:14.0
+    container_name: ousda-db
+    restart: always
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=origin
+      - POSTGRES_PASSWORD=origin
+      - POSTGRES_DB=ousda
+      - POSTGRES_HOST_AUTH_METHOD=trust
+volumes:
+  pg_data:
