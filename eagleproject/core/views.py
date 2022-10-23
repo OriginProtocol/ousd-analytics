@@ -506,6 +506,45 @@ def api_address_history(request, address):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return response
 
+def strategies(request):
+    block_number = latest_snapshot_block_number()
+    assets = fetch_assets(block_number)
+    total_vault = sum(x.vault_holding for x in assets)
+    total_aave = sum(x.aavestrat_holding for x in assets)
+    total_compstrat = sum(x.compstrat_holding for x in assets)
+    total_threepool = sum(x.threepoolstrat_holding for x in assets)
+
+    comp_tokens = []
+    aave_tokens = []
+    convex_tokens = []
+    vault_tokens = []
+
+    for asset in assets:
+        comp_tokens.append(asset.compstrat_holding)
+        aave_tokens.append(asset.aavestrat_holding)
+        convex_tokens.append(asset.threepoolstrat_holding)
+        vault_tokens.append(asset.vault_holding)
+
+    response = JsonResponse({
+        "compound": {"total": total_compstrat, "dai": comp_tokens[0], "usdt": comp_tokens[1], "usdc": comp_tokens[2]},
+        "aave": {"total": total_aave, "dai": aave_tokens[0], "usdt": aave_tokens[1], "usdc": aave_tokens[2]},
+        "convex": {"total": total_threepool, "dai": convex_tokens[0], "usdt": convex_tokens[1], "usdc": convex_tokens[2]},
+        "vault": {"total": total_vault, "dai": vault_tokens[0], "usdt": vault_tokens[1], "usdc": vault_tokens[2]},
+        })
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return _cache(120, response)
+
+def collateral(request):
+    block_number = latest_snapshot_block_number()
+    assets = fetch_assets(block_number)
+    response = JsonResponse({
+        "dai": assets[0].total(),
+        "usdt": assets[1].total(),
+        "usdc": assets[2].total(),
+    })
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return _cache(120, response)
+
 def _get_previous_report(report, all_reports=None):
     is_monthly = report.month is not None
 
