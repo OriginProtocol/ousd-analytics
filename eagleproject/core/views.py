@@ -525,23 +525,23 @@ def strategies(request):
         convex_tokens.append(asset.threepoolstrat_holding)
         vault_tokens.append(asset.vault_holding)
 
-    response = JsonResponse({
-        "compound": {"total": total_compstrat, "dai": comp_tokens[0], "usdt": comp_tokens[1], "usdc": comp_tokens[2]},
-        "aave": {"total": total_aave, "dai": aave_tokens[0], "usdt": aave_tokens[1], "usdc": aave_tokens[2]},
-        "convex": {"total": total_threepool, "dai": convex_tokens[0], "usdt": convex_tokens[1], "usdc": convex_tokens[2]},
-        "vault": {"total": total_vault, "dai": vault_tokens[0], "usdt": vault_tokens[1], "usdc": vault_tokens[2]},
-        })
+    response = JsonResponse({"strategies": [
+        {"name": "compound", "total": total_compstrat, "dai": comp_tokens[0], "usdt": comp_tokens[1], "usdc": comp_tokens[2]},
+        {"name": "aave", "total": total_aave, "dai": aave_tokens[0], "usdt": aave_tokens[1], "usdc": aave_tokens[2]},
+        {"name": "convex", "total": total_threepool, "dai": convex_tokens[0], "usdt": convex_tokens[1], "usdc": convex_tokens[2]},
+        {"name": "vault", "total": total_vault, "dai": vault_tokens[0], "usdt": vault_tokens[1], "usdc": vault_tokens[2]},
+    ]})
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
 def collateral(request):
     block_number = latest_snapshot_block_number()
     assets = fetch_assets(block_number)
-    response = JsonResponse({
-        "dai": assets[0].total(),
-        "usdt": assets[1].total(),
-        "usdc": assets[2].total(),
-    })
+    response = JsonResponse({"collateral": [
+        {"name": "dai", "total": assets[0].total()},
+        {"name": "usdt", "total": assets[1].total()},
+        {"name": "usdc", "total": assets[2].total()},
+    ]})
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
