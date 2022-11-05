@@ -19,27 +19,26 @@ from sentry_sdk.integrations.django import DjangoIntegration
 try:
     import envkey  # noqa: F401
 except ValueError as err:
-    if 'ENVKEY missing' not in str(err):
+    if "ENVKEY missing" not in str(err):
         raise err
 
 env = environ.Env(
     # set casting, default value
     DEBUG=(bool, False),
     DATABASE_HOST_OVERRIDE=(str, None),
-    SENTRY_DSN=(str,None)
+    SENTRY_DSN=(str, None),
 )
-env_file = Path(__file__).resolve().parent.joinpath('.env')
-environ.Env.read_env(env.str('ENV_PATH', str(env_file)))
+env_file = Path(__file__).resolve().parent.joinpath(".env")
+environ.Env.read_env(env.str("ENV_PATH", str(env_file)))
 
-SENTRY_DSN=env("SENTRY_DSN")
+SENTRY_DSN = env("SENTRY_DSN")
 
 sentry_sdk.init(
     dsn=SENTRY_DSN,
     integrations=[DjangoIntegration()],
-
     # Set traces_sample_rate to 1.0 to capture 100%
     # of transactions for performance monitoring.
-    traces_sample_rate=1.0
+    traces_sample_rate=1.0,
 )
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -69,6 +68,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.humanize",
+    "abi",
     "core",
     "notify",
 ]
@@ -102,43 +102,43 @@ TEMPLATES = [
 ]
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {name} {message}',
-            'style': '{',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
         },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
         },
     },
-    'root': {
-        'handlers': ['console'],
-        'level': os.getenv('LOG_LEVEL', 'INFO'),
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
     },
-    'loggers': {
-        'django': {
-            'handlers': ['console'],
-            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
-            'propagate': False,
+    "root": {
+        "handlers": ["console"],
+        "level": os.getenv("LOG_LEVEL", "INFO"),
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
+            "propagate": False,
         },
-        'requests': {
-            'handlers': ['console'],
-            'level': os.environ.get('REQUESTS_LOG_LEVEL', 'WARNING'),
-            'propagate': True,
+        "requests": {
+            "handlers": ["console"],
+            "level": os.environ.get("REQUESTS_LOG_LEVEL", "WARNING"),
+            "propagate": True,
         },
-        'urllib3': {
-            'handlers': ['console'],
-            'level': os.environ.get('REQUESTS_LOG_LEVEL', 'WARNING'),
-            'propagate': True,
+        "urllib3": {
+            "handlers": ["console"],
+            "level": os.environ.get("REQUESTS_LOG_LEVEL", "WARNING"),
+            "propagate": True,
         },
     },
 }
@@ -206,8 +206,7 @@ ADMINS = [("Engineering", "engineering@originprotocol.com")]
 DISCORD_BOT_NAME = os.environ.get("DISCORD_BOT_NAME", "OUSD Analytics Bot")
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
 OGN_DISCORD_WEBHOOK_URL = os.environ.get(
-    "OGN_DISCORD_WEBHOOK_URL",
-    DISCORD_WEBHOOK_URL
+    "OGN_DISCORD_WEBHOOK_URL", DISCORD_WEBHOOK_URL
 )
 # Comma delimited User IDs (e.g. 'Mike Shultz#5937' is '386238710255058954')
 # You can get this by Right clicking the name and "Copy ID" with developer mode
