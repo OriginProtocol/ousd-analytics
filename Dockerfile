@@ -13,12 +13,16 @@ COPY ./eagleproject/requirements.txt ./requirements.txt
 # Install requirements
 RUN pip install -r requirements.txt
 
+# Install psql
+RUN set -ex; \
+    curl https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - ; \
+    echo "deb http://apt.postgresql.org/pub/repos/apt/ bullseye-pgdg main 14" > /etc/apt/sources.list.d/pgdg.list; \
+    mkdir -p /etc/postgresql-common/createcluster.d/; \
+    echo "create_main_cluster = false" > /etc/postgresql-common/createcluster.d/no-main-cluster.conf; \
+    apt-get update -y; \
+    apt-get install -y --no-install-recommends postgresql-client-14; \
+    apt-get clean;
+
 EXPOSE 8000
 
-# # Copy start script
-# COPY ./entrypoint.sh /app/run.sh
-# RUN ["chmod", "+x", "/app/run.sh"]
-
-# Run Migrations and then start server
-# ENTRYPOINT ["/bin/sh", "-c" , "ls"]
-ENTRYPOINT ["/bin/sh", "-c" , "python manage.py migrate && python manage.py runserver"]
+# ENTRYPOINT ["/bin/sh", "-c" , "./entrypoint.sh && python manage.py runserver 8000"]

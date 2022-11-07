@@ -5,6 +5,9 @@ Notes
 -----
 - Addresses in this codebase are all lowercase.
 """
+
+from core.blockchain.metastrategies import METASTRATEGIES
+
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
 # Assets
@@ -175,3 +178,7 @@ CONTRACT_ADDR_TO_NAME = {
     OGV_BUYBACK: "OGV BuyBack",
     REWARDS_SOURCE: "RewardsSource",
 }
+
+# Also include metastrategies
+for strat in METASTRATEGIES:
+    CONTRACT_ADDR_TO_NAME[strat["ADDRESS"]] = strat["NAME"]

@@ -7,12 +7,14 @@ services:
       - ousda-db
     ports:
       - 8000:8000
+    command: ["./entrypoint.sh", "python", "manage.py", "runserver", "8000"]
     volumes:
       - ./eagleproject:/app
       - ./eagleproject/eagleproject/docker.env:/app/eagleproject/.env
+      - ./entrypoint.sh:/app/entrypoint.sh
       - pg_data:/var/lib/postgresql/data
     environment:
-      - DATABASE_URL=postgres://origin:origin@ousda-db:5432/ousda
+      - DATABASE_URL=postgres://ousda:origin@ousda-db:5432/ousda
 
   ousda-db:
     image: postgres:14.0
@@ -21,7 +23,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=origin
+      - POSTGRES_USER=ousda
       - POSTGRES_PASSWORD=origin
       - POSTGRES_DB=ousda
       - POSTGRES_HOST_AUTH_METHOD=trust

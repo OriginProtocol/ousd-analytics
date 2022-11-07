@@ -93,6 +93,7 @@ def dashboard(request):
     total_aave = sum(x.aavestrat_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
     total_threepool = sum(x.threepoolstrat_holding for x in assets)
+    total_metastrat = sum(x.total_metastrat_holdings() for x in assets)
     total_assets = sum(x.total() for x in assets)
     total_comp = comp.total()
     total_supply = totalSupply(OUSD, 18, block_number)
