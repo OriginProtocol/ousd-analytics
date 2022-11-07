@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal
 from datetime import (
     datetime,
@@ -34,7 +35,7 @@ from core.blockchain.addresses import (
     VAULT,
     GOVERNANCE,
     GOVERNANCE_TIMELOCK,
-    OGV_BUYBACK
+    OGV_BUYBACK,
 )
 
 START_OF_EVERYTHING = 10884500
@@ -104,6 +105,13 @@ LOG_CONTRACTS = (
         OGN_STAKING,
         STORY_STAKING_VAULT,
         STORY_STAKING_SERIES,
+        OGV_BUYBACK,
+    ]
+)
+
+# Skip log fetching for these contracts if SKIP_THIRD_PARTY is set to "true"
+if os.environ.get("SKIP_THIRD_PARTY") != "true":
+    LOG_CONTRACTS += [
         COMPOUND_GOVERNOR_ALPHA,
         COMPOUND_GOVERNOR_BRAVO,
         COMPOUND_TIMELOCK,
@@ -115,9 +123,8 @@ LOG_CONTRACTS = (
         CURVE_ARAGON_51,
         CURVE_ARAGON_60,
         CHAINLINK_KEEPER_REGISTRY,
-        OGV_BUYBACK,
     ]
-)
+
 ETHERSCAN_CONTRACTS = [
     OUSD,
     GOVERNOR,
