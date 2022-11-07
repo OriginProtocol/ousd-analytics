@@ -5,6 +5,7 @@ from django.db.models import Q, Sum
 from core.common import format_ousd_human
 from core.models import StoryStake
 from core.blockchain.addresses import (
+    CONTRACT_ADDR_TO_NAME,
     STORY_STAKING_SEASONS,
 )
 from core.blockchain.const import E_18
@@ -37,7 +38,6 @@ def run_trigger(new_logs):
     events = []
 
     for ev in get_stake_unstake_events(new_logs):
-
         if ev.topic_0 == SIG_EVENT_STAKE:
             user_address = decode_single("(address)", decode_hex(ev.topic_1))[0]
             amount = decode_single("(uint256)", decode_hex(ev.topic_2))[0]
@@ -45,7 +45,9 @@ def run_trigger(new_logs):
 
             events.append(
                 event_normal(
-                    "Staked    🥩",
+                    "{} Stake    🥩".format(
+                        CONTRACT_ADDR_TO_NAME.get(ev.address, "")
+                    ),
                     "{} staked {} OGN for a total of {} points".format(
                         user_address[:6],
                         format_ousd_human(Decimal(amount) / Decimal(1e18)),
@@ -64,7 +66,9 @@ def run_trigger(new_logs):
 
             events.append(
                 event_normal(
-                    "Unstaked   💔",
+                    "{} Unstake   💔".format(
+                        CONTRACT_ADDR_TO_NAME.get(ev.address, "")
+                    ),
                     f"{user_address[:6]} unstaked {unstake_amount} OGN",
                     tags=EVENT_TAGS,
                     log_model=ev,
