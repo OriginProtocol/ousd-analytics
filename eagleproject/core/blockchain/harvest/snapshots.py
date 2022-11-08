@@ -189,15 +189,16 @@ def build_asset_block(symbol, block_number):
         else priceUSDRedeem(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
     )
 
-    for strat in METASTRATEGIES:
-        if block_number > strat["FROM_BLOCK"]:
-            holding = strategyCheckBalance(
-                strat["ADDRESS"],
-                CONTRACT_FOR_SYMBOL[symbol],
-                DECIMALS_FOR_SYMBOL[symbol],
-                block_number,
-            )
-            metastrat_holdings[strat["KEY"]] = str(holding)
+    if symbol in ("USDC", "USDT", "DAI"):
+        for strat in METASTRATEGIES:
+            if block_number > strat["FROM_BLOCK"]:
+                holding = strategyCheckBalance(
+                    strat["ADDRESS"],
+                    CONTRACT_FOR_SYMBOL[symbol],
+                    DECIMALS_FOR_SYMBOL[symbol],
+                    block_number,
+                )
+                metastrat_holdings[strat["KEY"]] = str(holding)
 
     return AssetBlock(
         symbol=symbol,

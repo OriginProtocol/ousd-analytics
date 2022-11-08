@@ -1,9 +1,5 @@
 # Params: Address, name, LP token 
-# Events: 
-# - MaxWithdrawalSlippageUpdated
-# - PTokenAdded, PTokenRemoved
-# - Deposit, Withdrawal
-# - RewardTokenCollected, RewardTokenAddressesUpdated, HarvesterAddressesUpdated
+# Events:
 # - Pool Balance Change %: 1d, 7d, 30d??
 # - % of pool held??
 

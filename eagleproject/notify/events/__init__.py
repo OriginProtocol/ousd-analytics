@@ -20,10 +20,10 @@ def event_order_comp(a, b) -> int:
     if a._transaction_index > b._transaction_index:
         return 1
 
-    if a._log_index < b._log_index:
+    if int(a._log_index) < int(b._log_index):
         return -1
 
-    if a._log_index > b._log_index:
+    if int(a._log_index) > int(b._log_index):
         return 1
 
     return 0
