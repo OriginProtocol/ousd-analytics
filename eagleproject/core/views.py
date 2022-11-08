@@ -70,6 +70,8 @@ from core.models import Log, SupplySnapshot, OgnStaked, OusdTransfer, AnalyticsR
 from django.conf import settings
 import json
 
+from core.blockchain.metastrategies import METASTRATEGIES
+
 log = get_logger(__name__)
 
 def fetch_assets(block_number):
@@ -140,6 +142,24 @@ def dashboard(request):
     stratconvex_address = STRATCONVEX1
     stratcomp_address = STRATCOMP
     strataavedai_address = STRATAAVEDAI
+
+    metastrats = []
+
+    for strat in METASTRATEGIES:
+        total = 0
+        holdings = []
+
+        for asset in assets:
+            balance = asset.get_metastrat_holdings(strat)
+            holdings.append((asset.symbol, balance))
+            total += balance
+
+        metastrats.append({
+            "name": strat["NAME"],
+            "address": strat["ADDRESS"],
+            "total": total,
+            "holdings": holdings
+        })
 
     return _cache(20, render(request, "dashboard.html", locals()))
 

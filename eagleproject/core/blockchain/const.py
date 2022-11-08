@@ -38,6 +38,8 @@ from core.blockchain.addresses import (
     OGV_BUYBACK,
 )
 
+from core.blockchain.metastrategies import METASTRATEGIES
+
 START_OF_EVERYTHING = 10884500
 START_OF_EVERYTHING_TIME = datetime.strptime("18-9-2020", "%d-%m-%Y")
 # TODO: this might need adjusting
@@ -50,6 +52,7 @@ CONTRACT_FOR_SYMBOL = {
     "USDT": USDT,
     "USDC": USDC,
     "COMP": COMP,
+    "OUSD": OUSD,
     "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
 }
 SYMBOL_FOR_CONTRACT = {v: k for (k, v) in CONTRACT_FOR_SYMBOL.items()}
@@ -97,6 +100,8 @@ OUSD_CONTRACTS = [
     TIMELOCK,
 ]
 
+METASTRAT_CONTRACTS = [strat["ADDRESS"] for strat in METASTRATEGIES]
+
 LOG_CONTRACTS = (
     OUSD_CONTRACTS
     + STORY_STAKING_SEASONS
@@ -107,6 +112,7 @@ LOG_CONTRACTS = (
         STORY_STAKING_SERIES,
         OGV_BUYBACK,
     ]
+    + METASTRAT_CONTRACTS
 )
 
 # Skip log fetching for these contracts if SKIP_THIRD_PARTY is set to "true"

@@ -175,6 +175,15 @@ SIG_EVENT_PTOKEN_REMOVED = encode_hex(keccak(b"PTokenRemoved(address,address)"))
 SIG_EVENT_REWARDS_COLLECTED = encode_hex(
     keccak(b"RewardTokenCollected(address,uint256)")
 )
+SIG_EVENT_MAX_SLIPPAGE_UPDATED = encode_hex(
+    keccak(b"MaxWithdrawalSlippageUpdated(uint256,uint256)")
+)
+SIG_EVENT_REWARD_TOKENS_UPDATED = encode_hex(
+    keccak(b"RewardTokenAddressesUpdated(address[],address[])")
+)
+SIG_EVENT_HARVESTER_UPDATED = encode_hex(
+    keccak(b"HarvesterAddressesUpdated(address,address)")
+)
 
 # OUSD Timelock
 SIG_EVENT_CALL_SCHEDULED = encode_hex(
