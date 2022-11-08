@@ -47,10 +47,18 @@ class AssetBlock(models.Model):
         )
 
     def total_metastrat_holdings(self):
-        holdings = 0
+        holdings = Decimal(0)
         
         for key, total in self.metastrat_holdings.items():
-            holdings += total
+            holdings += Decimal(total)
+
+        return holdings
+
+    def get_metastrat_holdings(self, strat):
+        holdings = Decimal(0)
+
+        if strat["KEY"] in self.metastrat_holdings:
+            holdings = Decimal(self.metastrat_holdings[strat["KEY"]])
 
         return holdings
 

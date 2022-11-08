@@ -61,8 +61,8 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
         previous_meta_holdings = getattr(previous, 'metastrat_holdings')
 
         for prop, name in known_strategies:
-            current_holding = getattr(current, prop) if prop in known_strategies_keys else current_meta_holdings.get(prop, 0)
-            previous_holding = getattr(previous, prop) if prop in known_strategies_keys else previous_meta_holdings.get(prop, 0)
+            current_holding = getattr(current, prop) if prop in known_strategies_keys else Decimal(current_meta_holdings.get(prop, 0))
+            previous_holding = getattr(previous, prop) if prop in known_strategies_keys else Decimal(previous_meta_holdings.get(prop, 0))
 
             diff = current_holding - previous_holding
             absdiff = abs(diff)

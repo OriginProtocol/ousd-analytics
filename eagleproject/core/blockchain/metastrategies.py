@@ -11,7 +11,7 @@ METASTRATEGIES = [
   {
     "KEY": "ousd_metastrat",
     "NAME": "OUSD MetaStrategy",
-    "ADDRESS": "0x9c459eeb3fa179a40329b81c1635525e9a0ef094",
-    "FROM_BLOCK": 15918470
+    "ADDRESS": "0x89eb88fedc50fc77ae8a18aad1ca0ac27f777a90",
+    "FROM_BLOCK": 15896478
   },
 ]

@@ -197,7 +197,7 @@ def build_asset_block(symbol, block_number):
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
-            metastrat_holdings[strat["KEY"]] = holding
+            metastrat_holdings[strat["KEY"]] = str(holding)
 
     return AssetBlock(
         symbol=symbol,
