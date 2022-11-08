@@ -375,7 +375,7 @@
         </div>
         {% for strat in metastrats %}
         <div class="line-item">
-            <img src="/static/core/img/buffer-icon.svg" alt="Unallocated icon" />
+            <img src="/static/core/img/buffer-icon.svg" alt="MetaStrategy icon" />
             {{strat.name}}
             <span class="value">{{strat.total|floatformat:2}}</span>
         </div>
@@ -441,7 +441,7 @@
     {% for strat in metastrats %}
     <div class="module">
         <div class="label">
-            <img src="/static/core/img/aave-icon.svg" alt="AAVE icon" />
+            <img src="/static/core/img/buffer-icon.svg" alt="{{strat.name}} icon" />
             {{strat.name}}
         </div>
         {% for symbol, holding in strat.holdings %}
