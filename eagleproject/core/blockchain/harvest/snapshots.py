@@ -68,6 +68,8 @@ from core.models import (
     ThreePoolSnapshot,
 )
 
+from core.blockchain.metastrategies import METASTRATEGIES
+
 logger = get_logger(__name__)
 
 
@@ -86,6 +88,7 @@ def build_asset_block(symbol, block_number):
     compstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
     threepoolstrat_holding = Decimal(0)
+    metastrat_holdings = {}
 
     # Compound Strats
     if isbetween(11060000, 13399969, block_number):
@@ -186,6 +189,17 @@ def build_asset_block(symbol, block_number):
         else priceUSDRedeem(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
     )
 
+    if symbol in ("USDC", "USDT", "DAI"):
+        for strat in METASTRATEGIES:
+            if block_number > strat["FROM_BLOCK"]:
+                holding = strategyCheckBalance(
+                    strat["ADDRESS"],
+                    CONTRACT_FOR_SYMBOL[symbol],
+                    DECIMALS_FOR_SYMBOL[symbol],
+                    block_number,
+                )
+                metastrat_holdings[strat["KEY"]] = str(holding)
+
     return AssetBlock(
         symbol=symbol,
         block_number=block_number,
@@ -200,6 +214,7 @@ def build_asset_block(symbol, block_number):
         compstrat_holding=compstrat_holding,
         threepoolstrat_holding=threepoolstrat_holding,
         aavestrat_holding=aavestrat_holding,
+        metastrat_holdings=metastrat_holdings,
     )
 
 

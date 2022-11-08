@@ -373,6 +373,13 @@
             Aave
             <span class="value">{{total_aave|floatformat:2}}</span>
         </div>
+        {% for strat in metastrats %}
+        <div class="line-item">
+            <img src="/static/core/img/buffer-icon.svg" alt="MetaStrategy icon" />
+            {{strat.name}}
+            <span class="value">{{strat.total|floatformat:2}}</span>
+        </div>
+        {% endfor %}
         <div class="line-item">
             <img src="/static/core/img/buffer-icon.svg" alt="Unallocated icon" />
             Unallocated
@@ -428,6 +435,28 @@
         </div>
     </div>
 </div>
+
+{% if metastrats %}
+<div class="strategy-allocations columns">
+    {% for strat in metastrats %}
+    <div class="module">
+        <div class="label">
+            <img src="/static/core/img/buffer-icon.svg" alt="{{strat.name}} icon" />
+            {{strat.name}}
+        </div>
+        {% for symbol, holding in strat.holdings %}
+        <div class="line-item">
+            {{symbol}}
+            <span class="value">{{holding|floatformat:2}}</span>
+        </div>
+        {% endfor %}
+        <div class="strategy-links">
+            <a href="https://etherscan.io/address/{{ strat.address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - {{strat.name}} Strategy</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
 <div class="columns d-flex flex-column">
     <div class="iframe-holder">

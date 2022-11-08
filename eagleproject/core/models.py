@@ -32,6 +32,7 @@ class AssetBlock(models.Model):
     aavestrat_holding = models.DecimalField(
         max_digits=64, decimal_places=18, default=0
     )
+    metastrat_holdings = models.JSONField(default=dict)
 
     def ora_diff_basis(self):
         return (self.ora_tok_usd_max - self.ora_tok_usd_min) * Decimal(10000)
@@ -42,7 +43,24 @@ class AssetBlock(models.Model):
             + self.compstrat_holding
             + self.threepoolstrat_holding
             + self.aavestrat_holding
+            + self.total_metastrat_holdings()
         )
+
+    def total_metastrat_holdings(self):
+        holdings = Decimal(0)
+        
+        for key, total in self.metastrat_holdings.items():
+            holdings += Decimal(total)
+
+        return holdings
+
+    def get_metastrat_holdings(self, strat):
+        holdings = Decimal(0)
+
+        if strat["KEY"] in self.metastrat_holdings:
+            holdings = Decimal(self.metastrat_holdings[strat["KEY"]])
+
+        return holdings
 
     def redeem_value(self):
         return self.total() * self.redeem_price()

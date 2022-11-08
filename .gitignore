@@ -4,3 +4,4 @@ eagle-python
 *.sqlite3
 cloud_sql_proxy
 **/.DS_Store
+eagleproject/entrypoint.sh
