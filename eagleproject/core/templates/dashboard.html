@@ -532,8 +532,16 @@
                 {% for asset in assets %}
                     <tr>
                         <td>{{asset.symbol}}</td>
+                        {% if asset.ora_tok_usd_min < 0 %}
+                        <td class="no-mobile">Error</td>
+                        {% else %}
                         <td class="no-mobile">${{asset.ora_tok_usd_min|floatformat:4}}</td>
+                        {% endif %}
+                        {% if asset.ora_tok_usd_max < 0 %}
+                        <td class="no-mobile">Error</td>
+                        {% else %}
                         <td class="no-mobile">${{asset.ora_tok_usd_max|floatformat:4}}</td>
+                        {% endif %}
                         <td class="no-mobile">{{asset.ora_diff_basis|floatformat:1}}</td>
                         <td>${{asset.redeem_value|floatformat:2}}</td>
                     </tr>
