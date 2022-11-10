@@ -178,16 +178,28 @@ def build_asset_block(symbol, block_number):
             block_number,
         )
 
-    ora_tok_usd_min = (
-        0
-        if symbol == "COMP"
-        else priceUSDMint(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
-    )
-    ora_tok_usd_max = (
-        0
-        if symbol == "COMP"
-        else priceUSDRedeem(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
-    )
+    ora_tok_usd_min = 0 if symbol == "COMP" else -1
+    ora_tok_usd_max = 0 if symbol == "COMP" else -1
+
+    if ora_tok_usd_min < 0:
+        try:
+            ora_tok_usd_min = (
+                0
+                if symbol == "COMP"
+                else priceUSDMint(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+            )
+        except:
+            print("Failed to fetch price from oracle for {}".format(symbol))
+ 
+    if ora_tok_usd_max < 0:
+        try:
+            ora_tok_usd_max = (
+                0
+                if symbol == "COMP"
+                else priceUSDRedeem(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+            )
+        except:
+            print("Failed to fetch price from oracle for {}".format(symbol))
 
     if symbol in ("USDC", "USDT", "DAI"):
         for strat in METASTRATEGIES:
