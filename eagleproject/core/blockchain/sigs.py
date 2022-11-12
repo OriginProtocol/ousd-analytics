@@ -59,7 +59,10 @@ SIG_DRIPPER_CONFIG = encode_hex(keccak(b"drip()"))
 ########
 # Events
 ########
-TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+SIG_EVENT_ERC20_TRANSFER = encode_hex(
+    keccak(b"Transfer(address,address,uint256)")
+)
+TRANSFER = SIG_EVENT_ERC20_TRANSFER
 
 # OGN Staking
 SIG_EVENT_STAKED = encode_hex(
@@ -187,14 +190,14 @@ SIG_EVENT_HARVESTER_UPDATED = encode_hex(
 
 # OUSD Timelock
 SIG_EVENT_CALL_SCHEDULED = encode_hex(
-    keccak(b"CallScheduled(bytes32,uint256,address,uint256,bytes,bytes32,uint256)")
+    keccak(
+        b"CallScheduled(bytes32,uint256,address,uint256,bytes,bytes32,uint256)"
+    )
 )
 SIG_EVENT_CALL_EXECUTED = encode_hex(
     keccak(b"CallExecuted(bytes32,uint256,address,uint256,bytes)")
 )
-SIG_EVENT_CALL_CANCELLED = encode_hex(
-    keccak(b"Cancelled(bytes32)")
-)
+SIG_EVENT_CALL_CANCELLED = encode_hex(keccak(b"Cancelled(bytes32)"))
 SIG_EVENT_MIN_DELAY_CHANGED = encode_hex(
     keccak(b"MinDelayChange(uint256,uint256)")
 )
@@ -247,19 +250,23 @@ SIG_EVENT_PROPOSAL_EXECUTED = encode_hex(keccak(b"ProposalExecuted(uint256)"))
 # Compound GovernorBravo specific
 # VoteCast(address indexed voter, uint proposalId, uint8 support, uint votes, string reason);
 SIG_EVENT_VOTE_CAST_BRAVO = encode_hex(
-    keccak(b"VoteCast(address,uint,uint8,uint256,string)")
+    keccak(b"VoteCast(address,uint256,uint8,uint256,string)")
 )
 # NewImplementation(address oldImplementation, address newImplementation);
 SIG_EVENT_NEW_IMPLEMENTATION_BRAVO = encode_hex(
     keccak(b"NewImplementation(address,address)")
 )
 # VotingDelaySet(uint oldVotingDelay, uint newVotingDelay)
-SIG_EVENT_VOTING_DELAY_SET = encode_hex(keccak(b"VotingDelaySet(uint,uint)"))
+SIG_EVENT_VOTING_DELAY_SET = encode_hex(
+    keccak(b"VotingDelaySet(uint256,uint256)")
+)
 # VotingPeriodSet(uint oldVotingPeriod, uint newVotingPeriod)
-SIG_EVENT_VOTING_PERIOD_SET = encode_hex(keccak(b"VotingPeriodSet(uint,uint)"))
+SIG_EVENT_VOTING_PERIOD_SET = encode_hex(
+    keccak(b"VotingPeriodSet(uint256,uint256)")
+)
 # ProposalThresholdSet(uint oldProposalThreshold, uint newProposalThreshold)
 SIG_EVENT_PROPOSAL_THRESHOLD_SET = encode_hex(
-    keccak(b"ProposalThresholdSet(uint,uint)")
+    keccak(b"ProposalThresholdSet(uint256,uint256)")
 )
 # NewPendingAdmin(address oldPendingAdmin, address newPendingAdmin)
 SIG_EVENT_NEW_PENDING_ADMIN_BRAVO = encode_hex(
@@ -269,10 +276,18 @@ SIG_EVENT_NEW_PENDING_ADMIN_BRAVO = encode_hex(
 SIG_EVENT_NEW_ADMIN_BRAVO = encode_hex(keccak(b"NewAdmin(address,address)"))
 
 # OUSD Governance
-SIG_EVENT_QUORUM_NUMERATOR_UPDATED = encode_hex(keccak(b"QuorumNumeratorUpdated(uint256,uint256"))
-SIG_EVENT_TIMELOCK_CHANGE = encode_hex(keccak(b"TimelockChange(address,address"))
-SIG_EVENT_LATE_QUORUM_VOTE_EXTENSION_SET = encode_hex(keccak(b"LateQuorumVoteExtensionSet(uint64,uint64"))
-SIG_EVENT_PROPOSAL_EXTENDED = encode_hex(keccak(b"ProposalExtended(uint256,uint64"))
+SIG_EVENT_QUORUM_NUMERATOR_UPDATED = encode_hex(
+    keccak(b"QuorumNumeratorUpdated(uint256,uint256")
+)
+SIG_EVENT_TIMELOCK_CHANGE = encode_hex(
+    keccak(b"TimelockChange(address,address")
+)
+SIG_EVENT_LATE_QUORUM_VOTE_EXTENSION_SET = encode_hex(
+    keccak(b"LateQuorumVoteExtensionSet(uint64,uint64")
+)
+SIG_EVENT_PROPOSAL_EXTENDED = encode_hex(
+    keccak(b"ProposalExtended(uint256,uint64")
+)
 
 # Aave LendingPool
 SIG_EVENT_PAUSED = encode_hex(keccak(b"Paused()"))
@@ -322,6 +337,8 @@ SIG_EVENT_RECOVER_TO_VAULT = encode_hex(
 )
 SIG_EVENT_SET_APP = encode_hex(keccak(b"SetApp(bytes32,bytes32,address)"))
 SIG_EVENT_CLAIMED_TOKENS = encode_hex(
-    keccak(b"ClaimedTokens(address,address,uint)")
+    keccak(b"ClaimedTokens(address,address,uint256)")
 )
-SIG_EVENT_NEW_CLONE_TOKEN = encode_hex(keccak(b"NewCloneToken(address,uint)"))
+SIG_EVENT_NEW_CLONE_TOKEN = encode_hex(
+    keccak(b"NewCloneToken(address,uint256)")
+)
