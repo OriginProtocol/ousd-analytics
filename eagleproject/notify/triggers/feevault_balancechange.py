@@ -6,7 +6,7 @@ from core.blockchain.const import SYMBOL_FOR_CONTRACT
 from core.blockchain.sigs import SIG_EVENT_REWARDS_SENT
 from core.common import format_ousd_human
 
-from notify.events import event_critical, event_low
+from notify.events import event_low
 
 EVENT_TAGS = ["ogn"]
 
@@ -44,22 +44,25 @@ def run_trigger(new_logs, latest_story_snapshots):
     if len(snapshots) < 2:
         return
 
-    paid = calculate_paid(get_rewards_events(new_logs))
-    paid_eth = paid.get("ETH", 0)
-    paid_ogn = paid.get("OGN", 0)
+    # paid = calculate_paid(get_rewards_events(new_logs))
+    # paid_eth = paid.get("ETH", 0)
+    # paid_ogn = paid.get("OGN", 0)
     diff_eth = snapshots[0].vault_eth - snapshots[1].vault_eth
     diff_ogn = snapshots[0].vault_ogn - snapshots[1].vault_ogn
 
-    if diff_eth < 0 and abs(diff_eth) != paid_eth:
-        events.append(
-            event_critical(
-                "Unexpected FeeVault Balance Change   🥷",
-                f"Vault balance changed by {format_ousd_human(diff_eth)} ETH "
-                f"but {format_ousd_human(paid_eth)} ETH was paid out.",
-                tags=EVENT_TAGS,
-            )
-        )
-    elif diff_eth > 0:
+    # Commented out evnets are because of false positives due to data races
+    # where snapshots will be ahead of event logs.  Disabling until a solution
+    # is found.
+    # if diff_eth < 0 and abs(diff_eth) != paid_eth:
+    #     events.append(
+    #         event_critical(
+    #             "Unexpected FeeVault Balance Change   🥷",
+    #             f"Vault balance changed by {format_ousd_human(diff_eth)} ETH "
+    #             f"but {format_ousd_human(paid_eth)} ETH was paid out.",
+    #             tags=EVENT_TAGS,
+    #         )
+    #     )
+    if diff_eth > 0:
         events.append(
             event_low(
                 "FeeVault Received Funds   🏦",
@@ -68,16 +71,16 @@ def run_trigger(new_logs, latest_story_snapshots):
             )
         )
 
-    if diff_ogn < 0 and abs(diff_ogn) != paid_ogn:
-        events.append(
-            event_critical(
-                "Unexpected FeeVault Balance Change   🥷",
-                f"Vault balance changed by {format_ousd_human(diff_ogn)} OGN "
-                f"but {format_ousd_human(paid_ogn)} OGN was paid out.",
-                tags=EVENT_TAGS,
-            )
-        )
-    elif diff_ogn > 0:
+    # if diff_ogn < 0 and abs(diff_ogn) != paid_ogn:
+    #     events.append(
+    #         event_critical(
+    #             "Unexpected FeeVault Balance Change   🥷",
+    #             f"Vault balance changed by {format_ousd_human(diff_ogn)} OGN "
+    #             f"but {format_ousd_human(paid_ogn)} OGN was paid out.",
+    #             tags=EVENT_TAGS,
+    #         )
+    #     )
+    if diff_ogn > 0:
         events.append(
             event_low(
                 "FeeVault Received Funds   🏦",
