@@ -25,6 +25,7 @@ Every trigger should implement:
 """
 import inspect
 import logging
+import os
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from importlib import import_module
@@ -50,6 +51,7 @@ log = get_logger(__name__)
 
 ME = Path(__file__).resolve()
 THIS_DIR = ME.parent
+ONLY_RUN_TRIGGER = os.environ.get("ONLY_RUN_TRIGGER")
 SKIP_TRIGGERS = [
     "noop",
     "assetblock_holdings",
@@ -69,6 +71,14 @@ def strip_ext(fname):
 
 def load_triggers():
     """ Loads all trigger modules in this dir """
+
+    if ONLY_RUN_TRIGGER is not None:
+        triggers = ONLY_RUN_TRIGGER.split(",")
+        return [
+            import_module("notify.triggers.{}".format(trigger))
+            for trigger in triggers
+        ]
+
     files = [
         x
         for x in THIS_DIR.iterdir()
@@ -258,6 +268,7 @@ def run_all_triggers():
         }
 
         try:
+            log.debug(f"Executing trigger: {mod.__name__}")
             # Execute and save actions for return
             events.extend(mod.run_trigger(**script_kwargs))
         except Exception:

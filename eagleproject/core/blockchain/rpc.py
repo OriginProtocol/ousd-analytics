@@ -53,6 +53,18 @@ from core.logging import get_logger
 log = get_logger(__name__)
 
 
+class RPCError(Exception):
+    def __init__(self, code, message):
+        self.code = code
+        self.message = message
+
+    def __str__(self):
+        return self.message
+
+    def __repr__(self):
+        return self.message
+
+
 def request(method, params):
     url = os.environ.get("PROVIDER_URL")
 
@@ -334,6 +346,10 @@ def priceUSDMint(coin_contract, assetAddress, block="latest"):
     signature = SIG_FUNC_PRICE_USD_MINT[:10]  # priceUSDMint(address)
     payload = encode_single("(address)", [assetAddress]).hex()
     data = call(coin_contract, signature, payload, block)
+
+    if data.get("error") is not None:
+        raise RPCError(data["error"]["code"], data["error"]["message"])
+
     return Decimal(int(data["result"], 16)) / E_18
 
 
@@ -341,6 +357,10 @@ def priceUSDRedeem(coin_contract, assetAddress, block="latest"):
     signature = SIG_FUNC_PRICE_USD_REDEEM[:10]  # priceUSDRedeem(address)
     payload = encode_single("(address)", [assetAddress]).hex()
     data = call(coin_contract, signature, payload, block)
+
+    if data.get("error") is not None:
+        raise RPCError(data["error"]["code"], data["error"]["message"])
+
     return Decimal(int(data["result"], 16)) / E_18
 
 
