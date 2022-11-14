@@ -2,14 +2,18 @@ from decimal import Decimal
 from eth_abi import decode_single
 from eth_utils import decode_hex
 from django.db.models import Q, Sum
-from core.common import format_ousd_human
+from core.common import format_ousd_human, format_token_human
 from core.models import StoryStake
 from core.blockchain.addresses import (
     CONTRACT_ADDR_TO_NAME,
+    OGN,
     STORY_STAKING_SEASONS,
+    STORY_STAKING_SERIES,
+    STORY_STAKING_VAULT,
 )
 from core.blockchain.const import E_18
 from core.blockchain.sigs import (
+    SIG_EVENT_ERC20_TRANSFER,
     SIG_EVENT_STAKE,
     SIG_EVENT_UNSTAKE,
 )
@@ -27,6 +31,25 @@ def get_stake_unstake_events(logs):
         Q(address__in=STORY_STAKING_SEASONS)
         & Q(Q(topic_0=SIG_EVENT_STAKE) | Q(topic_0=SIG_EVENT_UNSTAKE))
     ).order_by("block_number")
+
+
+def get_ogn_unstake_transfer_event(logs, tx_hash):
+    """ Get OGN transfer indicating an unstake """
+    evs = logs.filter(
+        address=OGN,
+        transaction_hash=tx_hash,
+        topic_0=SIG_EVENT_ERC20_TRANSFER,
+    ).order_by("log_index")
+
+    ogn_unstake_ev = None
+
+    for ev in evs:
+        from_address = decode_single("(address)", decode_hex(ev.topic_1))[0]
+
+        if from_address == STORY_STAKING_SERIES:
+            ogn_unstake_ev = ev
+
+    return ogn_unstake_ev
 
 
 def run_trigger(new_logs):
@@ -58,21 +81,35 @@ def run_trigger(new_logs):
                 )
             )
         elif ev.topic_0 == SIG_EVENT_UNSTAKE:
-            user_address = decode_single("(address)", decode_hex(ev.topic_1))[0]
-            res = StoryStake.objects.filter(
-                user_address=user_address, unstake_block=ev.block_number
-            ).aggregate(stake_total=Sum("amount"))
-            unstake_amount = format_ousd_human(res["stake_total"])
-
-            events.append(
-                event_normal(
-                    "{} Unstake   💔".format(
-                        CONTRACT_ADDR_TO_NAME.get(ev.address, "")
-                    ),
-                    f"{user_address[:6]} unstaked {unstake_amount} OGN",
-                    tags=EVENT_TAGS,
-                    log_model=ev,
-                )
+            ogn_unstake_ev = get_ogn_unstake_transfer_event(
+                new_logs, ev.transaction_hash
             )
+            user_address = decode_single("(address)", decode_hex(ev.topic_1))[0]
+
+            # If there's no transfer of OGN from series to user, it's not an
+            # unstake from the Series, just a claim
+            if ogn_unstake_ev:
+                res = StoryStake.objects.filter(
+                    user_address=user_address, unstake_block=ev.block_number
+                ).aggregate(stake_total=Sum("amount"))
+
+                if res["stake_total"] is None:
+                    log.error(
+                        f"Unstake was not recorded for transaction {ev.transaction_hash}"
+                    )
+                    continue
+
+                unstake_amount = format_token_human("OGN", res["stake_total"])
+
+                events.append(
+                    event_normal(
+                        "{} Unstake   💔".format(
+                            CONTRACT_ADDR_TO_NAME.get(ev.address, "")
+                        ),
+                        f"{user_address[:6]} unstaked {unstake_amount} OGN",
+                        tags=EVENT_TAGS,
+                        log_model=ev,
+                    )
+                )
 
     return events

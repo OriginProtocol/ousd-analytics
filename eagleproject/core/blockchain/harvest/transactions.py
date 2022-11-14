@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from django import db
 from multiprocessing import Process
 from django.conf import settings
+from eth_abi import decode_single
 from eth_utils import (
     decode_hex,
     encode_hex,
@@ -11,6 +12,7 @@ from eth_utils import (
 
 from core.etherscan import get_contract_transactions, get_internal_txs_bt_txhash
 from core.blockchain.addresses import (
+    OGN,
     OGN_STAKING,
     STORY_STAKING_SERIES,
     STORY_STAKING_SEASONS,
@@ -39,6 +41,7 @@ from core.blockchain.utils import (
 from core.blockchain.sigs import (
     DEPRECATED_SIG_EVENT_WITHDRAWN,
     DEPRECATED_SIG_EVENT_STAKED,
+    SIG_EVENT_ERC20_TRANSFER,
     SIG_EVENT_STAKE,
     SIG_EVENT_STAKED,
     SIG_EVENT_UNSTAKE,
@@ -176,7 +179,7 @@ def ensure_transaction_and_downstream(tx_hash):
         ensure_log_record(log)
         maybe_store_transfer_record(log, block)
         maybe_store_stake_withdrawn_record(log, block)
-        maybe_store_stake(log, block)
+        maybe_store_stake(log, block, receipt)
 
     print(f"Transaction {tx_hash} ensured.")
     print(f"Block {block_number} ensured.")
@@ -453,7 +456,18 @@ def maybe_store_stake_withdrawn_record(log, block):
     return staked
 
 
-def maybe_store_stake(log, block):
+def receipt_has_unstake_transfer(receipt):
+    """ Check if the receipt has an OGN transfer from the Series contract """
+    return any(
+        log["address"] == OGN
+        and log["topics"][0] == SIG_EVENT_ERC20_TRANSFER
+        and decode_single("(address)", decode_hex(log["topics"][1]))[0]
+        == STORY_STAKING_SERIES
+        for log in receipt["logs"]
+    )
+
+
+def maybe_store_stake(log, block, receipt):
     """ Store a story stake record """
 
     if log["address"] not in STORY_STAKING_SEASONS:
@@ -465,7 +479,7 @@ def maybe_store_stake(log, block):
         params = {
             "tx_hash": log["transactionHash"],
             "user_address": add_0x_prefix(log["topics"][1][-40:]),
-            "amount": int(log["topics"][2], 16) / E_18,
+            "amount": int(log["topics"][2], 16),
             "points": int(slot(log["data"], 0), 16),
         }
 
@@ -484,9 +498,14 @@ def maybe_store_stake(log, block):
     elif log["topics"][0] == SIG_EVENT_UNSTAKE:
         user_address = add_0x_prefix(log["topics"][1][-40:])
 
-        # Unstakes are for the full stake amount
-        StoryStake.objects.filter(
-            user_address=user_address, unstake_block__isnull=True
-        ).update(unstake_block=block)
+        # Many Unstake events from Season contracts are claims (because it's the
+        # same thing to the Season), but do not actually unstake from the
+        # Series.  Check for a transfer of OGN from Series to the user to
+        # detect an actual unstake.
+        if receipt_has_unstake_transfer(receipt):
+            # Unstakes are for the full stake amount
+            StoryStake.objects.filter(
+                user_address=user_address, unstake_block__isnull=True
+            ).update(unstake_block=block)
 
     return None

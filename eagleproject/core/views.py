@@ -22,28 +22,21 @@ from core.blockchain.const import (
     BLOCKS_PER_DAY,
     START_OF_OUSD_V2_TIME,
     report_stats,
-    curve_report_stats
+    curve_report_stats,
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
-from core.blockchain.harvest.blocks import (
-    ensure_block,
-    ensure_day
-)
+from core.blockchain.harvest.blocks import ensure_block, ensure_day
 from core.blockchain.harvest.snapshots import (
     ensure_asset,
     ensure_supply_snapshot,
     latest_snapshot,
     latest_snapshot_block_number,
-    calculate_snapshot_data
+    calculate_snapshot_data,
 )
-from core.blockchain.apy import (
-    get_trailing_apr,
-    get_trailing_apy,
-    to_apy
-)
+from core.blockchain.apy import get_trailing_apr, get_trailing_apy, to_apy
 from core.blockchain.harvest.transactions import (
     get_internal_transactions,
-    ensure_transaction_and_downstream
+    ensure_transaction_and_downstream,
 )
 from core.blockchain.harvest.transaction_history import (
     create_time_interval_report,
@@ -51,7 +44,7 @@ from core.blockchain.harvest.transaction_history import (
     create_time_interval_report_for_previous_month,
     calculate_report_change,
     send_report_email,
-    get_history_for_address
+    get_history_for_address,
 )
 
 from core.blockchain.rpc import (
@@ -66,7 +59,14 @@ from core.blockchain.rpc import (
 from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
-from core.models import Log, SupplySnapshot, OgnStaked, OusdTransfer, AnalyticsReport, Transaction
+from core.models import (
+    Log,
+    SupplySnapshot,
+    OgnStaked,
+    OusdTransfer,
+    AnalyticsReport,
+    Transaction,
+)
 from django.conf import settings
 import json
 
@@ -74,12 +74,14 @@ from core.blockchain.metastrategies import METASTRATEGIES
 
 log = get_logger(__name__)
 
+
 def fetch_assets(block_number):
     # These probably won't harvest since block_number comes from snapshots
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
     return [dai, usdt, usdc]
+
 
 def dashboard(request):
     block_number = latest_snapshot_block_number()
@@ -154,12 +156,14 @@ def dashboard(request):
             holdings.append((asset.symbol, balance))
             total += balance
 
-        metastrats.append({
-            "name": strat["NAME"],
-            "address": strat["ADDRESS"],
-            "total": total,
-            "holdings": holdings
-        })
+        metastrats.append(
+            {
+                "name": strat["NAME"],
+                "address": strat["ADDRESS"],
+                "total": total,
+                "holdings": holdings,
+            }
+        )
 
     return _cache(20, render(request, "dashboard.html", locals()))
 
@@ -169,42 +173,62 @@ def reload(request):
     reload_all(latest - 2)
     return HttpResponse("ok")
 
+
 def make_monthly_report(request):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
     print("Make monthly report requested")
-    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
-    create_time_interval_report_for_previous_month(None, do_only_transaction_analytics)
+    do_only_transaction_analytics = (
+        request.GET.get("only_tx_report", "false") == "true"
+    )
+    create_time_interval_report_for_previous_month(
+        None, do_only_transaction_analytics
+    )
     return HttpResponse("ok")
+
 
 def make_weekly_report(request):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
-            
+
     print("Make weekly report requested")
-    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
-    create_time_interval_report_for_previous_week(None, do_only_transaction_analytics)
+    do_only_transaction_analytics = (
+        request.GET.get("only_tx_report", "false") == "true"
+    )
+    create_time_interval_report_for_previous_week(
+        None, do_only_transaction_analytics
+    )
     return HttpResponse("ok")
+
 
 def make_specific_month_report(request, month):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
-    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
-    create_time_interval_report_for_previous_month(month, do_only_transaction_analytics)
+    do_only_transaction_analytics = (
+        request.GET.get("only_tx_report", "false") == "true"
+    )
+    create_time_interval_report_for_previous_month(
+        month, do_only_transaction_analytics
+    )
     return HttpResponse("ok")
+
 
 def make_specific_week_report(request, week):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
-    do_only_transaction_analytics = request.GET.get('only_tx_report', 'false') == 'true'
-    create_time_interval_report_for_previous_week(week, do_only_transaction_analytics)
+    do_only_transaction_analytics = (
+        request.GET.get("only_tx_report", "false") == "true"
+    )
+    create_time_interval_report_for_previous_week(
+        week, do_only_transaction_analytics
+    )
     return HttpResponse("ok")
 
 
@@ -219,10 +243,11 @@ def fetch_transactions(request):
     refresh_transactions(latest - 2)
     return HttpResponse("ok")
 
+
 def apr_index(request):
     latest_block_number = latest_snapshot_block_number()
     try:
-        num_rows = int(request.GET.get('rows', 30))
+        num_rows = int(request.GET.get("rows", 30))
     except ValueError:
         num_rows = 30
     rows = _daily_rows(min(120, num_rows), latest_block_number)
@@ -238,11 +263,18 @@ def apr_index(request):
 
 
 def supply(request):
-    [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, s] = calculate_snapshot_data()
-    rebasing_pools = [x for x in pools if x['is_rebasing']]
-    non_rebasing_pools = [x for x in pools if x['is_rebasing'] == False]
-    #return _cache(30, render(request, "supply.html", locals()))
+    [
+        pools,
+        totals_by_rebasing,
+        other_rebasing,
+        other_non_rebasing,
+        s,
+    ] = calculate_snapshot_data()
+    rebasing_pools = [x for x in pools if x["is_rebasing"]]
+    non_rebasing_pools = [x for x in pools if x["is_rebasing"] == False]
+    # return _cache(30, render(request, "supply.html", locals()))
     return render(request, "supply.html", locals())
+
 
 def dripper(request):
     dripper_usdt = balanceOf(USDT, DRIPPER, 6)
@@ -253,11 +285,14 @@ def dripper(request):
     dripper_drip_rate_per_day = dripper_drip_rate() * 24 * 60 * 60
     return _cache(10, render(request, "dripper.html", locals()))
 
+
 def dune_analytics(request):
     return render(request, "dune_analytics.html", locals())
 
+
 def strategist(request):
     return render(request, "strategist.html", locals())
+
 
 def strategist_creator(request):
     return render(request, "strategist_creator.html", locals())
@@ -274,6 +309,7 @@ def api_apr_trailing(request):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
+
 def api_apr_trailing_days(request, days):
     apr = get_trailing_apr(days=int(days))
     if apr < 0:
@@ -285,6 +321,7 @@ def api_apr_trailing_days(request, days):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
+
 def api_apr_history(request):
     apr = get_trailing_apr()
     if apr < 0:
@@ -294,11 +331,13 @@ def api_apr_history(request):
         apy = 0
     latest_block_number = latest_snapshot_block_number()
     days = _daily_rows(8, latest_block_number)
-    response = JsonResponse({
-        "apr": apr,
-        "apy": apy,
-        "daily": [{'apy':x.apy} for x in days],
-        })
+    response = JsonResponse(
+        {
+            "apr": apr,
+            "apy": apy,
+            "daily": [{"apy": x.apy} for x in days],
+        }
+    )
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
@@ -309,29 +348,33 @@ def api_speed_test(request):
 
 def api_ratios(request):
     s = latest_snapshot()
-    response = JsonResponse({
-        "current_credits_per_token": s.rebasing_credits_per_token,
-        "next_credits_per_token": Decimal(1.0) / s.rebasing_credits_ratio,
-    })
+    response = JsonResponse(
+        {
+            "current_credits_per_token": s.rebasing_credits_per_token,
+            "next_credits_per_token": Decimal(1.0) / s.rebasing_credits_ratio,
+        }
+    )
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(30, response)
+
 
 def api_address_yield(request, address):
     if address != address.lower():
         return redirect("api_address_yield", address=address.lower())
     data = _address_transfers(address)
-    response = JsonResponse({
-        "address": data['address'],
-        "lifetime_yield": "{:.2f}".format(data['yield_balance']),
-    })
+    response = JsonResponse(
+        {
+            "address": data["address"],
+            "lifetime_yield": "{:.2f}".format(data["yield_balance"]),
+        }
+    )
     response.setdefault("Access-Control-Allow-Origin", "*")
     return response
 
 
 def api_address(request):
     addresses = (
-        OusdTransfer.objects
-        .filter(block_time__gte=START_OF_OUSD_V2_TIME)
+        OusdTransfer.objects.filter(block_time__gte=START_OF_OUSD_V2_TIME)
         .values("to_address")
         .distinct()
         .values_list("to_address", flat=True)
@@ -360,7 +403,7 @@ def active_stake_stats():
     total_90 = 0
     total_365 = 0
 
-    all_stakes = OgnStaked.objects.order_by('block_time').all()
+    all_stakes = OgnStaked.objects.order_by("block_time").all()
 
     for stake in all_stakes:
         dict_append(user_aggreate, stake.user_address, stake)
@@ -383,22 +426,23 @@ def active_stake_stats():
                 ]
                 mature_so_far = sum([x.amount for x in matured_stakes])
 
-                if mature_so_far != stake.staked_amount:
-                    log.error(
-                        'Stakes make no sense!  Withdraw {} does not match '
-                        'previous stakes of {}. User: {}'.format(
-                            stake.staked_amount,
-                            mature_so_far,
-                            user_address,
-                        )
-                    )
-                    # If this happens, something is fucked
-                    nonsense_users.append(user_address)
-                    break
+                # Silencing this because it's a bad calc and annoying log message
+                # if mature_so_far != stake.staked_amount:
+                #     log.error(
+                #         'Stakes make no sense!  Withdraw {} does not match '
+                #         'previous stakes of {}. User: {}'.format(
+                #             stake.staked_amount,
+                #             mature_so_far,
+                #             user_address,
+                #         )
+                #     )
+                #     # If this happens, something is fucked
+                #     nonsense_users.append(user_address)
+                #     break
 
-                else:
-                    active_stakes = list(set(active_stakes) - set(matured_stakes))
-                    running_total -= mature_so_far
+                # else:
+                active_stakes = list(set(active_stakes) - set(matured_stakes))
+                running_total -= mature_so_far
 
         user_aggreate[user_address] = active_stakes
 
@@ -418,19 +462,17 @@ def active_stake_stats():
                 total_365 += stake.amount
             else:
                 log.error(
-                    'Unknown stake duration of {}. Excluding from '
-                    'totals.'.format(
-                        stake.staked_duration
-                    )
+                    "Unknown stake duration of {}. Excluding from "
+                    "totals.".format(stake.staked_duration)
                 )
 
     return {
         "userCount": len(unique_addresses),
         "stats": [
-            {'duration': 30, 'total_staked': total_30},
-            {'duration': 90, 'total_staked': total_90},
-            {'duration': 365, 'total_staked': total_365},
-        ]
+            {"duration": 30, "total_staked": total_30},
+            {"duration": 90, "total_staked": total_90},
+            {"duration": 365, "total_staked": total_365},
+        ],
     }
 
 
@@ -440,27 +482,26 @@ def address(request, address):
     data = _address_transfers(address)
     return render(request, "address.html", data)
 
+
 def _address_transfers(address):
     long_address = address.replace("0x", "0x000000000000000000000000")
     latest_block_number = latest_snapshot_block_number()
     # We want to avoid the case where the listener hasn't picked up a
     # transactions yet, but the user's balance has increased or decreased
     # due to a transfer. This would make a hugely wrong lifetime earned amount
-    # 
+    #
     # We refresh the DB every minute, so we will do two minutes worth of
     # blocks - conservatively 120 / 10 = 12 blocks.
     block_number = latest_block_number - 12
-    transfers = (Log.objects
-        .filter(address=OUSD, topic_0=TRANSFER)
+    transfers = (
+        Log.objects.filter(address=OUSD, topic_0=TRANSFER)
         .filter(Q(topic_1=long_address) | Q(topic_2=long_address))
         .filter(block_number__gte=START_OF_OUSD_V2)
         .filter(block_number__lte=block_number)
     )
-    transfers_in = sum([
-        x.ousd_value()
-        for x in transfers
-        if x.topic_2 == long_address
-    ])
+    transfers_in = sum(
+        [x.ousd_value() for x in transfers if x.topic_2 == long_address]
+    )
     transfers_out = sum(
         [x.ousd_value() for x in transfers if x.topic_1 == long_address]
     )
@@ -468,14 +509,15 @@ def _address_transfers(address):
     non_yield_balance = transfers_in - transfers_out
     yield_balance = current_balance - non_yield_balance
     return {
-        'address': address,
-        'transfers': transfers,
-        'transfers_in': transfers_in,
-        'transfers_out': transfers_out,
-        'current_balance': current_balance,
-        'non_yield_balance': non_yield_balance,
-        'yield_balance': yield_balance,
+        "address": address,
+        "transfers": transfers,
+        "transfers_in": transfers_in,
+        "transfers_out": transfers_out,
+        "current_balance": current_balance,
+        "non_yield_balance": non_yield_balance,
+        "yield_balance": yield_balance,
     }
+
 
 def _my_assets(address, block_number):
     dai = ensure_asset("DAI", block_number)
@@ -502,29 +544,36 @@ def _my_assets(address, block_number):
         "total_supply": total_supply,
     }
 
+
 # def test_email(request):
 #     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
 #     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
 #     return HttpResponse("ok")
 
+
 def api_address_history(request, address):
-    page_number = request.GET.get('page', 1)
-    per_page = request.GET.get('per_page', 50)
-    transaction_filter = request.GET.get('filter')
+    page_number = request.GET.get("page", 1)
+    per_page = request.GET.get("per_page", 50)
+    transaction_filter = request.GET.get("filter")
     history = get_history_for_address(address, transaction_filter)
     paginator = Paginator(history, per_page)
     page_obj = paginator.get_page(page_number)
     pages = paginator.num_pages
-    response = JsonResponse({
-        'page': {
-            'current': page_obj.number,
-            'pages': pages,
-            'filters': [] if transaction_filter == None else transaction_filter.split()
-        },
-        'history': page_obj.object_list
-    })
+    response = JsonResponse(
+        {
+            "page": {
+                "current": page_obj.number,
+                "pages": pages,
+                "filters": []
+                if transaction_filter == None
+                else transaction_filter.split(),
+            },
+            "history": page_obj.object_list,
+        }
+    )
     response.setdefault("Access-Control-Allow-Origin", "*")
     return response
+
 
 def strategies(request):
     block_number = latest_snapshot_block_number()
@@ -545,41 +594,100 @@ def strategies(request):
         convex_tokens.append(asset.threepoolstrat_holding)
         vault_tokens.append(asset.vault_holding)
 
-    response = JsonResponse({"strategies": [
-        {"name": "compound", "total": total_compstrat, "dai": comp_tokens[0], "usdt": comp_tokens[1], "usdc": comp_tokens[2]},
-        {"name": "aave", "total": total_aave, "dai": aave_tokens[0], "usdt": aave_tokens[1], "usdc": aave_tokens[2]},
-        {"name": "convex", "total": total_threepool, "dai": convex_tokens[0], "usdt": convex_tokens[1], "usdc": convex_tokens[2]},
-        {"name": "vault", "total": total_vault, "dai": vault_tokens[0], "usdt": vault_tokens[1], "usdc": vault_tokens[2]},
-    ]})
+    response = JsonResponse(
+        {
+            "strategies": [
+                {
+                    "name": "compound",
+                    "total": total_compstrat,
+                    "dai": comp_tokens[0],
+                    "usdt": comp_tokens[1],
+                    "usdc": comp_tokens[2],
+                },
+                {
+                    "name": "aave",
+                    "total": total_aave,
+                    "dai": aave_tokens[0],
+                    "usdt": aave_tokens[1],
+                    "usdc": aave_tokens[2],
+                },
+                {
+                    "name": "convex",
+                    "total": total_threepool,
+                    "dai": convex_tokens[0],
+                    "usdt": convex_tokens[1],
+                    "usdc": convex_tokens[2],
+                },
+                {
+                    "name": "vault",
+                    "total": total_vault,
+                    "dai": vault_tokens[0],
+                    "usdt": vault_tokens[1],
+                    "usdc": vault_tokens[2],
+                },
+            ]
+        }
+    )
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
+
 
 def collateral(request):
     block_number = latest_snapshot_block_number()
     assets = fetch_assets(block_number)
-    response = JsonResponse({"collateral": [
-        {"name": "dai", "total": assets[0].total()},
-        {"name": "usdt", "total": assets[1].total()},
-        {"name": "usdc", "total": assets[2].total()},
-    ]})
+    response = JsonResponse(
+        {
+            "collateral": [
+                {"name": "dai", "total": assets[0].total()},
+                {"name": "usdt", "total": assets[1].total()},
+                {"name": "usdc", "total": assets[2].total()},
+            ]
+        }
+    )
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
+
 
 def _get_previous_report(report, all_reports=None):
     is_monthly = report.month is not None
 
-    if (is_monthly):
-        all_reports = all_reports if all_reports is not None else AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
+    if is_monthly:
+        all_reports = (
+            all_reports
+            if all_reports is not None
+            else AnalyticsReport.objects.filter(month__isnull=False).order_by(
+                "-year", "-month"
+            )
+        )
         prev_year = report.year - 1 if report.month == 1 else report.year
         prev_month = 12 if report.month == 1 else report.month - 1
-        prev_report = list(filter(lambda report: report.month == prev_month and report.year == prev_year, all_reports))
+        prev_report = list(
+            filter(
+                lambda report: report.month == prev_month
+                and report.year == prev_year,
+                all_reports,
+            )
+        )
         return prev_report[0] if len(prev_report) > 0 else None
     else:
-        all_reports = all_reports if all_reports is not None else AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+        all_reports = (
+            all_reports
+            if all_reports is not None
+            else AnalyticsReport.objects.filter(week__isnull=False).order_by(
+                "-year", "-week"
+            )
+        )
         prev_year = report.year - 1 if report.week == 0 else report.year
         prev_week = 53 if report.week == 0 else report.week - 1
-        prev_report = list(filter(lambda report: report.week == prev_week and report.year == prev_year, all_reports))
+        prev_report = list(
+            filter(
+                lambda report: report.week == prev_week
+                and report.year == prev_year,
+                all_reports,
+            )
+        )
         return prev_report[0] if len(prev_report) > 0 else None
+
 
 def report_monthly(request, year, month):
     report = AnalyticsReport.objects.filter(month=month, year=year)[0]
@@ -594,6 +702,7 @@ def report_monthly(request, year, month):
 
     return render(request, "analytics_report.html", locals())
 
+
 def report_weekly(request, year, week):
     report = AnalyticsReport.objects.filter(week=week, year=year)[0]
     prev_report = _get_previous_report(report)
@@ -607,26 +716,46 @@ def report_weekly(request, year, week):
 
     return render(request, "analytics_report.html", locals())
 
+
 def reports(request):
-    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
-    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    monthly_reports = AnalyticsReport.objects.filter(
+        month__isnull=False
+    ).order_by("-year", "-month")
+    weekly_reports = AnalyticsReport.objects.filter(
+        week__isnull=False
+    ).order_by("-year", "-week")
     stats = report_stats
     stat_keys = stats.keys()
 
     enriched_monthly_reports = []
     for monthly_report in monthly_reports:
         prev_report = _get_previous_report(monthly_report, monthly_reports)
-        monthly_report.transaction_report = json.loads(str(monthly_report.transaction_report))
-        enriched_monthly_reports.append((monthly_report, calculate_report_change(monthly_report, prev_report)))
+        monthly_report.transaction_report = json.loads(
+            str(monthly_report.transaction_report)
+        )
+        enriched_monthly_reports.append(
+            (
+                monthly_report,
+                calculate_report_change(monthly_report, prev_report),
+            )
+        )
 
     enriched_weekly_reports = []
     for weekly_report in weekly_reports:
         prev_report = _get_previous_report(weekly_report, weekly_reports)
-        weekly_report.transaction_report = json.loads(str(weekly_report.transaction_report))
-        enriched_weekly_reports.append((weekly_report, calculate_report_change(weekly_report, prev_report), ))
+        weekly_report.transaction_report = json.loads(
+            str(weekly_report.transaction_report)
+        )
+        enriched_weekly_reports.append(
+            (
+                weekly_report,
+                calculate_report_change(weekly_report, prev_report),
+            )
+        )
 
     return render(request, "analytics_reports.html", locals())
-    
+
+
 def backfill_internal_transactions(request):
     transactions = Transaction.objects.filter(internal_transactions={})[:6000]
     total = len(transactions)
@@ -634,11 +763,18 @@ def backfill_internal_transactions(request):
     count = 0
     for transaction in transactions:
         count += 1
-        print("DOING THIS TRANSACTION {} on {} and {} to go".format(transaction.tx_hash, count, total - count))
-        transaction.internal_transactions = get_internal_transactions(transaction.tx_hash)
+        print(
+            "DOING THIS TRANSACTION {} on {} and {} to go".format(
+                transaction.tx_hash, count, total - count
+            )
+        )
+        transaction.internal_transactions = get_internal_transactions(
+            transaction.tx_hash
+        )
         transaction.save()
 
     return HttpResponse("ok")
+
 
 def tx_debug(request, tx_hash):
     transaction = ensure_transaction_and_downstream(tx_hash)
@@ -660,12 +796,18 @@ def _daily_rows(steps, latest_block_number):
     today = datetime.datetime.utcnow()
     if today.hour < 8:
         # No rebase guaranteed yet on this UTC day
-        today = (today - datetime.timedelta(seconds=24*60*60)).replace(tzinfo=datetime.timezone.utc)
-    selected = datetime.datetime(today.year, today.month, today.day).replace(tzinfo=datetime.timezone.utc)
-    for i in range(0,steps+1):
+        today = (today - datetime.timedelta(seconds=24 * 60 * 60)).replace(
+            tzinfo=datetime.timezone.utc
+        )
+    selected = datetime.datetime(today.year, today.month, today.day).replace(
+        tzinfo=datetime.timezone.utc
+    )
+    for i in range(0, steps + 1):
         day = ensure_day(selected)
         block_numbers.append(day.block_number)
-        selected = (selected - datetime.timedelta(seconds=24*60*60)).replace(tzinfo=datetime.timezone.utc)
+        selected = (
+            selected - datetime.timedelta(seconds=24 * 60 * 60)
+        ).replace(tzinfo=datetime.timezone.utc)
     # Deduplicate list and preserving order.
     # Sometimes latest_block_number supplied to the function and latest day block_number are the same block
     # Triggering division by 0 in the code below
@@ -681,15 +823,28 @@ def _daily_rows(steps, latest_block_number):
         block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number)
         s.block_time = block.block_time
-        s.effective_day = (block.block_time - datetime.timedelta(seconds=24*60*60)).replace(tzinfo=datetime.timezone.utc)
+        s.effective_day = (
+            block.block_time - datetime.timedelta(seconds=24 * 60 * 60)
+        ).replace(tzinfo=datetime.timezone.utc)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
-            change = ((
-                s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token
-            ) - Decimal(1)) * -1
-            s.apr = Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
+            change = (
+                (
+                    s.rebasing_credits_per_token
+                    / last_snapshot.rebasing_credits_per_token
+                )
+                - Decimal(1)
+            ) * -1
+            s.apr = (
+                Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
+            )
             s.apy = to_apy(s.apr, 1)
-            s.unboosted = to_apy((s.computed_supply - s.non_rebasing_supply) / s.computed_supply * s.apr, 1)
+            s.unboosted = to_apy(
+                (s.computed_supply - s.non_rebasing_supply)
+                / s.computed_supply
+                * s.apr,
+                1,
+            )
             s.gain = change * (s.computed_supply - s.non_rebasing_supply)
         rows.append(s)
         last_snapshot = s
@@ -700,26 +855,31 @@ def _daily_rows(steps, latest_block_number):
     rows[0].gain += dripper_available()
     return rows
 
+
 def staking_stats(request):
     data = active_stake_stats()
 
-    return JsonResponse({
-        "success": True,
-        "userCount": data["userCount"],
-        "lockupSum": sum(row['total_staked'] for row in data["stats"])
-    })
+    return JsonResponse(
+        {
+            "success": True,
+            "userCount": data["userCount"],
+            "lockupSum": sum(row["total_staked"] for row in data["stats"]),
+        }
+    )
+
 
 def staking_stats_by_duration(request):
     data = active_stake_stats()
     stats = data["stats"]
 
-    return JsonResponse({
-        "success": True,
-        "data": [
-            [row['duration'], float(row['total_staked'])]
-            for row in stats
-        ],
-    })
+    return JsonResponse(
+        {
+            "success": True,
+            "data": [
+                [row["duration"], float(row["total_staked"])] for row in stats
+            ],
+        }
+    )
 
 
 def coingecko_pools(request):
@@ -733,15 +893,15 @@ def coingecko_pools(request):
     ogn_365_liquidity = 0
 
     for stat in ogn_stats:
-        if stat['duration'] == 30:
-            ogn_30_liquidity = stat['total_staked']
-        elif stat['duration'] == 90:
-            ogn_90_liquidity = stat['total_staked']
-        elif stat['duration'] == 365:
-            ogn_365_liquidity = stat['total_staked']
+        if stat["duration"] == 30:
+            ogn_30_liquidity = stat["total_staked"]
+        elif stat["duration"] == 90:
+            ogn_90_liquidity = stat["total_staked"]
+        elif stat["duration"] == 365:
+            ogn_365_liquidity = stat["total_staked"]
 
-    ousd_price = get_price("OUSD").get('usd', 0)
-    ogn_price = get_price("OGN").get('usd', 0)
+    ousd_price = get_price("OUSD").get("usd", 0)
+    ogn_price = get_price("OGN").get("usd", 0)
 
     log.debug("CoinGecko OUSD Price: {}".format(ousd_price))
     log.debug("CoinGecko OGN Price: {}".format(ogn_price))
@@ -769,8 +929,8 @@ def coingecko_pools(request):
                     "identifier": "OGN 365-day Staking",
                     "liquidity_locked": float(ogn_365_liquidity) * ogn_price,
                     "apy": 25.0,
-                }
+                },
             ],
-            safe=False
-        )
+            safe=False,
+        ),
     )
