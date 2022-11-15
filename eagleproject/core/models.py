@@ -8,6 +8,8 @@ from django.db import models
 from core.logging import get_logger
 import simplejson as json
 
+from core.blockchain.strategies import STRATEGIES
+
 log = get_logger(__name__)
 
 
@@ -32,35 +34,25 @@ class AssetBlock(models.Model):
     aavestrat_holding = models.DecimalField(
         max_digits=64, decimal_places=18, default=0
     )
-    metastrat_holdings = models.JSONField(default=dict)
+    strat_holdings = models.JSONField(default=dict)
 
     def ora_diff_basis(self):
         return (self.ora_tok_usd_max - self.ora_tok_usd_min) * Decimal(10000)
 
     def total(self):
-        return (
-            self.vault_holding
-            + self.compstrat_holding
-            + self.threepoolstrat_holding
-            + self.aavestrat_holding
-            + self.total_metastrat_holdings()
-        )
+        return sum(self.get_strat_holdings(key) for key in STRATEGIES.keys())
 
-    def total_metastrat_holdings(self):
-        holdings = Decimal(0)
+    def get_strat_holdings(self, strat_key):
+        strat = STRATEGIES.get(strat_key)
+
+        if strat is None:
+            return Decimal(0)
+        elif True == strat.get("HARDCODED", False):
+            return getattr(self, strat_key, Decimal(0))
+        elif strat_key in self.strat_holdings:
+            return Decimal(self.strat_holdings.get(strat_key, 0))
         
-        for key, total in self.metastrat_holdings.items():
-            holdings += Decimal(total)
-
-        return holdings
-
-    def get_metastrat_holdings(self, strat):
-        holdings = Decimal(0)
-
-        if strat["KEY"] in self.metastrat_holdings:
-            holdings = Decimal(self.metastrat_holdings[strat["KEY"]])
-
-        return holdings
+        return Decimal(0)
 
     def redeem_value(self):
         return self.total() * self.redeem_price()

@@ -460,3 +460,11 @@ def trace_annotation(trace):
         return "CHAIN %f" % value
 
     return "."
+
+
+@register.filter
+def get_icon_file(strat, symbol):
+    if "icons" in strat:
+        return strat.get("icons").get(symbol, "buffer-icon.svg")
+
+    return symbol.lower() + "-icon.svg"

@@ -29,6 +29,7 @@ from core.blockchain.const import (
 )
 from core.blockchain.rpc import (
     AaveLendingPoolCore,
+    OUSDMetaStrategy,
     ThreePool,
     balanceOf,
     balanceOfUnderlying,
@@ -38,6 +39,7 @@ from core.blockchain.rpc import (
     exchangeRateStored,
     get_balance,
     getCash,
+    getPendingRewards,
     ogn_staking_total_outstanding,
     open_oracle_price,
     ousd_rebasing_credits,
@@ -68,7 +70,7 @@ from core.models import (
     ThreePoolSnapshot,
 )
 
-from core.blockchain.metastrategies import METASTRATEGIES
+from core.blockchain.strategies import STRATEGIES, DEFAULT_ASSETS
 
 logger = get_logger(__name__)
 
@@ -88,7 +90,7 @@ def build_asset_block(symbol, block_number):
     compstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
     threepoolstrat_holding = Decimal(0)
-    metastrat_holdings = {}
+    strat_holdings = {}
 
     # Compound Strats
     if isbetween(11060000, 13399969, block_number):
@@ -201,16 +203,37 @@ def build_asset_block(symbol, block_number):
         except:
             print("Failed to fetch price from oracle for {}".format(symbol))
 
-    if symbol in ("USDC", "USDT", "DAI"):
-        for strat in METASTRATEGIES:
-            if block_number > strat["FROM_BLOCK"]:
-                holding = strategyCheckBalance(
-                    strat["ADDRESS"],
-                    CONTRACT_FOR_SYMBOL[symbol],
-                    DECIMALS_FOR_SYMBOL[symbol],
-                    block_number,
-                )
-                metastrat_holdings[strat["KEY"]] = str(holding)
+
+    for (strat_key, strat) in STRATEGIES.items():
+        if strat.get("HARDCODED", False) == True:
+            # Ignore hardcoded contracts
+            continue
+        if block_number != "latest" and block_number <= strat.get("FROM_BLOCK", 0):
+            # Fetch events only after the specific block, if configured
+            continue
+        if symbol not in strat.get("SUPPORTED_ASSETS", DEFAULT_ASSETS):
+            # Unsupported asset
+            continue
+
+        holding = Decimal(0)
+
+        if strat.get("IS_OUSD_META"):
+            holding = OUSDMetaStrategy.get_underlying_balance(block_number).get(symbol, 0)
+        elif strat.get("IS_COMPOUND_COMPATIBLE", False) and symbol == "COMP":
+            holding = getPendingRewards(
+                strat.get("ADDRESS"),
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+        else:
+            holding = strategyCheckBalance(
+                strat.get("ADDRESS"),
+                CONTRACT_FOR_SYMBOL[symbol],
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
+
+        strat_holdings[strat_key] = str(holding)
 
     return AssetBlock(
         symbol=symbol,
@@ -226,9 +249,8 @@ def build_asset_block(symbol, block_number):
         compstrat_holding=compstrat_holding,
         threepoolstrat_holding=threepoolstrat_holding,
         aavestrat_holding=aavestrat_holding,
-        metastrat_holdings=metastrat_holdings,
+        strat_holdings=strat_holdings,
     )
-
 
 def ensure_asset(symbol, block_number):
     q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number)
