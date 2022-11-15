@@ -145,8 +145,6 @@ def dashboard(request):
     stratcomp_address = STRATCOMP
     strataavedai_address = STRATAAVEDAI
 
-    metastrats = []
-
     ui_layout = _get_strat_layout(assets)
 
     return _cache(20, render(request, "dashboard.html", locals()))
