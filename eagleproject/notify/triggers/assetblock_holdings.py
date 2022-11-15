@@ -5,7 +5,7 @@ from core.logging import get_logger
 
 from notify.events import event_critical, event_high, event_low
 
-from core.blockchain.metastrategies import METASTRATEGIES
+from core.blockchain.strategies import STRATEGIES
 
 log = get_logger(__name__)
 
@@ -18,20 +18,6 @@ PERCENT_INFO = Decimal(0.05)
 def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
     """ Template trigger """
     events = []
-
-    known_strategies = [
-        ("vault_holding", "Vault Holding"),
-        ("compstrat_holding", "Compound Strategy Holding"),
-        ("threepoolstrat_holding", "3Pool Strategy Holding"),
-        ("aavestrat_holding", "Aave Strategy Holding"),
-    ]
-
-    known_strategies_keys = [k for k in known_strategies]
-
-    # Include meta strategies
-    known_strategies.extend([
-        (strat["KEY"], strat["NAME"] + " Holdings") for strat in METASTRATEGIES
-    ])
 
     for symbol in ASSET_BLOCK_SYMBOLS:
         current = None
@@ -57,12 +43,14 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
 
         current = latest[0]
 
-        current_meta_holdings = getattr(current, 'metastrat_holdings')
-        previous_meta_holdings = getattr(previous, 'metastrat_holdings')
+        current_meta_holdings = getattr(current, 'strat_holdings')
+        previous_meta_holdings = getattr(previous, 'strat_holdings')
 
-        for prop, name in known_strategies:
-            current_holding = getattr(current, prop) if prop in known_strategies_keys else Decimal(current_meta_holdings.get(prop, 0))
-            previous_holding = getattr(previous, prop) if prop in known_strategies_keys else Decimal(previous_meta_holdings.get(prop, 0))
+        for (prop, strat) in STRATEGIES:
+            name = strat.get("NAME") + " Holding"
+
+            current_holding = current.get_strat_holding(prop)
+            previous_holding = previous.get_strat_holding(prop)
 
             diff = current_holding - previous_holding
             absdiff = abs(diff)

@@ -336,127 +336,36 @@
     </div>
 </div>
 
+{% for ui_row in ui_layout %}
+{% if 1 == forloop.counter %}
 <div class="vault-allocations columns">
-    <div class="module">
-        <div class="label">
-            Vault Holdings
-        </div>
-        {% for asset in assets %}
-        <div class="line-item">
-            <img src="/static/core/img/{{asset.symbol.lower}}-icon.svg" alt="{{asset.symbol}} icon" />
-            {{asset.symbol}}
-            <span class="value">{{asset.total|floatformat:2}}</span>
-        </div>
-        {% endfor %}
-        <div class="line-item">
-            <img src="/static/core/img/comp-icon.svg" alt="COMP icon" />
-            COMP
-            <span class="value">{{total_comp|floatformat:2}}</span>
-        </div>
-    </div>
-    <div class="module">
-        <div class="label">
-            Vault Strategy Allocations
-        </div>
-        <div class="line-item">
-            <img src="/static/core/img/comp-icon.svg" alt="COMP icon" />
-            Compound
-            <span class="value">{{total_compstrat|floatformat:2}}</span>
-        </div>
-        <div class="line-item">
-            <img class="coin-icon" src="/static/core/img/convex.png" alt="CRX icon" />
-            Convex
-            <span class="value">{{total_threepool|floatformat:2}}</span>
-        </div>
-        <div class="line-item">
-            <img src="/static/core/img/aave-icon.svg" alt="AAVE icon" />
-            Aave
-            <span class="value">{{total_aave|floatformat:2}}</span>
-        </div>
-        {% for strat in metastrats %}
-        <div class="line-item">
-            <img src="/static/core/img/buffer-icon.svg" alt="MetaStrategy icon" />
-            {{strat.name}}
-            <span class="value">{{strat.total|floatformat:2}}</span>
-        </div>
-        {% endfor %}
-        <div class="line-item">
-            <img src="/static/core/img/buffer-icon.svg" alt="Unallocated icon" />
-            Unallocated
-            <span class="value">{{total_vault|floatformat:2}}</span>
-        </div>
-    </div>
-</div>
-
+{% else %}
 <div class="strategy-allocations columns">
+{% endif %}
+    {% for strat in ui_row %}
     <div class="module">
         <div class="label">
-            <img src="/static/core/img/comp-icon.svg" alt="COMP icon" />
-            Compound Strategy Allocation
-        </div>
-        {% for asset in assets %}
-        <div class="line-item">
-            {{asset.symbol}}
-            <span class="value">{{asset.compstrat_holding|floatformat:2}}</span>
-        </div>
-        {% endfor %}
-        <div class="strategy-links">
-            <a href="https://etherscan.io/address/{{ stratcomp_address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Compound Strategy</a>
-        </div>
-    </div>
-    <div class="module">
-        <div class="label">
-            <img class="coin-icon" src="/static/core/img/convex.png" alt="CRX icon" />
-            Convex Strategy Allocation
-        </div>
-        {% for asset in assets %}
-        <div class="line-item">
-            {{asset.symbol}}
-            <span class="value">{{asset.threepoolstrat_holding|floatformat:2}}</span>
-        </div>
-        {% endfor %}
-        <div class="strategy-links">
-            <a href="https://etherscan.io/address/{{ stratconvex_address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Convex Strategy</a>
-        </div>
-    </div>
-    <div class="module">
-        <div class="label">
-            <img src="/static/core/img/aave-icon.svg" alt="AAVE icon" />
-            Aave Strategy Allocation
-        </div>
-        {% for asset in assets %}
-        <div class="line-item">
-            {{asset.symbol}}
-            <span class="value">{{asset.aavestrat_holding|floatformat:2}}</span>
-        </div>
-        {% endfor %}
-        <div class="strategy-links">
-            <a href="https://etherscan.io/address/{{ strataavedai_address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - Aave Strategy</a>
-        </div>
-    </div>
-</div>
-
-{% if metastrats %}
-<div class="strategy-allocations columns">
-    {% for strat in metastrats %}
-    <div class="module">
-        <div class="label">
-            <img src="/static/core/img/buffer-icon.svg" alt="{{strat.name}} icon" />
+            {% if forloop.parentloop.counter > 1 %}
+            <img src="/static/core/img/{{strat.icon_file}}" alt="{{strat.name}} icon" />
+            {% endif %}
             {{strat.name}}
         </div>
         {% for symbol, holding in strat.holdings %}
         <div class="line-item">
+            <img src="/static/core/img/{{strat|get_icon_file:symbol}}" alt="{{symbol}} icon"  height="30" width="30" />
             {{symbol}}
             <span class="value">{{holding|floatformat:2}}</span>
         </div>
         {% endfor %}
+        {% if strat.address and forloop.parentloop.counter > 1 %}
         <div class="strategy-links">
             <a href="https://etherscan.io/address/{{ strat.address }}" class="etherscan-logo-link"  onclick="window.open(this.href); return false">Etherscan - {{strat.name}} Strategy</a>
         </div>
+        {% endif %}
     </div>
     {% endfor %}
 </div>
-{% endif %}
+{% endfor %}
 
 <div class="columns d-flex flex-column">
     <div class="iframe-holder">
