@@ -61,6 +61,7 @@ from core.blockchain.rpc import (
     latest_block,
     rebasing_credits_per_token,
     totalSupply,
+    OUSDMetaStrategy
 )
 
 from core.coingecko import get_price
@@ -70,7 +71,7 @@ from core.models import Log, SupplySnapshot, OgnStaked, OusdTransfer, AnalyticsR
 from django.conf import settings
 import json
 
-from core.blockchain.metastrategies import METASTRATEGIES
+from core.blockchain.strategies import STRATEGIES, DEFAULT_ASSETS
 
 log = get_logger(__name__)
 
@@ -79,7 +80,8 @@ def fetch_assets(block_number):
     dai = ensure_asset("DAI", block_number)
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
-    return [dai, usdt, usdc]
+    ousd = ensure_asset("OUSD", block_number)
+    return [dai, usdt, usdc, ousd]
 
 def dashboard(request):
     block_number = latest_snapshot_block_number()
@@ -145,23 +147,60 @@ def dashboard(request):
 
     metastrats = []
 
-    for strat in METASTRATEGIES:
+    ui_layout = _get_strat_layout(assets)
+
+    return _cache(20, render(request, "dashboard.html", locals()))
+
+def _get_strat_layout(assets):
+    all_strats = {}
+    for (strat_key, strat) in STRATEGIES.items():
         total = 0
         holdings = []
 
         for asset in assets:
-            balance = asset.get_metastrat_holdings(strat)
+            if not asset.symbol in strat.get("SUPPORTED_ASSETS", DEFAULT_ASSETS):
+                continue
+            balance = asset.get_strat_holdings(strat_key)
             holdings.append((asset.symbol, balance))
             total += balance
 
-        metastrats.append({
+        all_strats[strat_key] = {
             "name": strat["NAME"],
             "address": strat["ADDRESS"],
+            "icon_file": strat.get("ICON_NAME", "buffer-icon.svg"),
             "total": total,
             "holdings": holdings
-        })
+        }
 
-    return _cache(20, render(request, "dashboard.html", locals()))
+    ui_layout = []
+
+    vault_holdings = dict(all_strats["vault_holding"])
+    vault_holdings["name"] = "Vault Holdings"
+
+    # First row contains vault holdings and strategy allocations
+    ui_layout.append([
+        vault_holdings,
+        {
+            "name": "Vault Strategy Allocations",
+            "icons": dict([(val["name"], val["icon_file"]) for key, val in all_strats.items()]),
+            "holdings": sorted([(val["name"] if key != "vault_holding" else "Unallocated", val["total"]) for key, val in all_strats.items()],  key=lambda x: -x[1]),
+        }
+    ])
+
+    del all_strats['vault_holding']
+
+    cols = 3
+    strat_keys = list(all_strats.keys())
+    rows = 1 + len(strat_keys) // cols
+
+    for i in range(0, rows):
+        start_index = i * cols
+        end_index = start_index + cols
+        ui_layout.append(
+            [all_strats[key] for key in strat_keys[start_index:end_index]]
+        )
+
+    return ui_layout
 
 
 def reload(request):

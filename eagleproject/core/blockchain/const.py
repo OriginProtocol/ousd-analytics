@@ -38,7 +38,7 @@ from core.blockchain.addresses import (
     OGV_BUYBACK,
 )
 
-from core.blockchain.metastrategies import METASTRATEGIES
+from core.blockchain.strategies import STRATEGIES
 
 START_OF_EVERYTHING = 10884500
 START_OF_EVERYTHING_TIME = datetime.strptime("18-9-2020", "%d-%m-%Y")
@@ -54,6 +54,7 @@ CONTRACT_FOR_SYMBOL = {
     "COMP": COMP,
     "OUSD": OUSD,
     "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "3CRV": "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
 }
 SYMBOL_FOR_CONTRACT = {v: k for (k, v) in CONTRACT_FOR_SYMBOL.items()}
 
@@ -69,6 +70,7 @@ DECIMALS_FOR_SYMBOL = {
     "veCRV": 18,
     "OUSD": 18,
     "OGV": 18,
+    "3CRV": 18,
 }
 
 THREEPOOLINDEX_FOR_ASSET = {
@@ -100,7 +102,7 @@ OUSD_CONTRACTS = [
     TIMELOCK,
 ]
 
-METASTRAT_CONTRACTS = [strat["ADDRESS"] for strat in METASTRATEGIES]
+OTHER_STRAT_CONTRACTS = [strat["ADDRESS"] for (_, strat) in STRATEGIES.items() if strat.get("HARDCODED", False) == False]
 
 LOG_CONTRACTS = (
     OUSD_CONTRACTS
@@ -112,7 +114,7 @@ LOG_CONTRACTS = (
         STORY_STAKING_SERIES,
         OGV_BUYBACK,
     ]
-    + METASTRAT_CONTRACTS
+    + OTHER_STRAT_CONTRACTS
 )
 
 # Skip log fetching for these contracts if SKIP_THIRD_PARTY is set to "true"
