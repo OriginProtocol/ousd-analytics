@@ -37,6 +37,7 @@ from core.blockchain.addresses import (
     GOVERNANCE,
     GOVERNANCE_TIMELOCK,
     OGV_BUYBACK,
+    THREEPOOL
 )
 
 from core.blockchain.strategies import STRATEGIES
@@ -55,8 +56,8 @@ CONTRACT_FOR_SYMBOL = {
     "USDC": USDC,
     "COMP": COMP,
     "OUSD": OUSD,
-    "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-    "3CRV": "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
+    "3CRV": THREEPOOL,
+    "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 }
 SYMBOL_FOR_CONTRACT = {v: k for (k, v) in CONTRACT_FOR_SYMBOL.items()}
 
