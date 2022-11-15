@@ -1,7 +1,7 @@
 """ Trigger for timelock transactions """
 from datetime import datetime, timedelta
 from django.db.models import Q
-from eth_utils import decode_hex
+from eth_utils import encode_hex, decode_hex
 from eth_abi import decode_single
 
 from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME

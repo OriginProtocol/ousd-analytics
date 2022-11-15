@@ -80,8 +80,8 @@ def run_trigger(new_logs):
                     mod,
                     format_ousd_human(diff),
                 ),
+                log_model=ev,
             ),
-            log_model=ev,
         )
 
     return events

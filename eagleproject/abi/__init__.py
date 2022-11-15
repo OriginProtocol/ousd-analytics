@@ -6,6 +6,9 @@ from eth_typing import HexStr
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from core.logging import get_logger
+
+log = get_logger(__name__)
 ABI_DIR = Path(__file__).parent.joinpath("data")
 
 # Singleton storage. Best to use functions below
@@ -68,5 +71,5 @@ def load_abis():
 
             process_abi(_abis[contract])
 
-    print(f"Loaded {getsizeof(_abis)} bytes of ABIs")
-    print(f"Stored {getsizeof(_selector_to_sig)} bytes of signature lookups")
+    log.info(f"Loaded {getsizeof(_abis)} bytes of ABIs")
+    log.info(f"Stored {getsizeof(_selector_to_sig)} bytes of signature lookups")

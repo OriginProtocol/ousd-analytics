@@ -20,6 +20,7 @@ from core.blockchain.addresses import (
     GOVERNOR,
     GOVERNORV2,
     GOVERNORV3,
+    OGN,
     OGN_STAKING,
     STORY_STAKING_VAULT,
     STORY_STAKING_SEASONS,
@@ -48,6 +49,7 @@ START_OF_OUSD_V2 = 11596940
 START_OF_OUSD_V2_TIME = datetime.strptime("29-12-2020", "%d-%m-%Y")
 
 CONTRACT_FOR_SYMBOL = {
+    "OGN": OGN,
     "DAI": DAI,
     "USDT": USDT,
     "USDC": USDC,
@@ -64,12 +66,12 @@ DECIMALS_FOR_SYMBOL = {
     "CRV": 18,
     "DAI": 18,
     "LINK": 18,
+    "OGN": 18,
+    "OGV": 18,
     "OUSD": 18,
     "USDT": 6,
     "USDC": 6,
     "veCRV": 18,
-    "OUSD": 18,
-    "OGV": 18,
     "3CRV": 18,
 }
 
