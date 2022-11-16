@@ -180,7 +180,7 @@ CONTRACT_ADDR_TO_NAME = {
 }
 
 # Also include strategies
-for (_, strat) in STRATEGIES.items():
+for strat in STRATEGIES.values():
     address = strat["ADDRESS"]
     if not address in CONTRACT_ADDR_TO_NAME:
         CONTRACT_ADDR_TO_NAME[address] = strat["NAME"]

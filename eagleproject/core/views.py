@@ -95,6 +95,8 @@ def dashboard(request):
         apy = 0
 
     assets = fetch_assets(block_number)
+    assets.append(comp)
+
     total_vault = sum(x.vault_holding for x in assets)
     total_aave = sum(x.aavestrat_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
