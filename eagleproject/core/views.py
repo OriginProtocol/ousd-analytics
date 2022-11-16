@@ -191,18 +191,14 @@ def _get_strat_layout(assets):
 
     del all_strats["vault_holding"]
 
-    ousd_metastrat = all_strats.get("ousd_metastrat")
+    ousd_metastrat = all_strats["ousd_metastrat"]
 
-    if ousd_metastrat is None:
-        # Ideally we should show the actual splits of the assets.
-        # This is a workaround until we change the contract code.
-        # Rel: `OUSDMetaStrategy.get_underlying_balance()` in `rpc.py`.
-        total = Decimal(0)
-        for asset in ("DAI", "USDT", "USDC"):
-            total += ousd_metastrat.holding[asset]
-            ousd_metastrat.holding[asset] = ousd_metastrat.holding[asset] / 2
-
-        ousd_metastrat.holding["OUSD"] = total / 2
+    if not ousd_metastrat is None:
+        ousd_holding = ousd_metastrat["total"] / 2
+        ousd_metastrat["holdings"] = [
+            (symbol, holding / 2) for (symbol, holding) in ousd_metastrat["holdings"] if symbol in ("DAI", "USDT", "USDC")
+        ]
+        ousd_metastrat["holdings"].append(("OUSD", ousd_holding))
             
         
     cols = 3
