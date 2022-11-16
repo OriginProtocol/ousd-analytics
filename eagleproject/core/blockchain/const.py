@@ -42,7 +42,7 @@ from core.blockchain.addresses import (
 
 from core.blockchain.strategies import STRATEGIES
 
-START_OF_EVERYTHING = 10884500
+START_OF_EVERYTHING = int(os.environ.get("LOCAL_START_OF_EVERYTHING", 10884500))
 START_OF_EVERYTHING_TIME = datetime.strptime("18-9-2020", "%d-%m-%Y")
 # TODO: this might need adjusting
 START_OF_CURVE_CAMPAIGN_TIME = datetime.strptime("11-11-2021", "%d-%m-%Y")

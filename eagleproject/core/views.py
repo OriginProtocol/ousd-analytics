@@ -189,8 +189,18 @@ def _get_strat_layout(assets):
         }
     ])
 
-    del all_strats['vault_holding']
+    del all_strats["vault_holding"]
 
+    ousd_metastrat = all_strats["ousd_metastrat"]
+
+    if not ousd_metastrat is None:
+        ousd_holding = ousd_metastrat["total"] / 2
+        ousd_metastrat["holdings"] = [
+            (symbol, holding / 2) for (symbol, holding) in ousd_metastrat["holdings"] if symbol in ("DAI", "USDT", "USDC")
+        ]
+        ousd_metastrat["holdings"].append(("OUSD", ousd_holding))
+            
+        
     cols = 3
     strat_keys = list(all_strats.keys())
     rows = 1 + len(strat_keys) // cols
