@@ -217,9 +217,7 @@ def build_asset_block(symbol, block_number):
 
         holding = Decimal(0)
 
-        if strat.get("IS_OUSD_META"):
-            holding = OUSDMetaStrategy.get_underlying_balance(block_number).get(symbol, 0)
-        elif strat.get("IS_COMPOUND_COMPATIBLE", False) and symbol == "COMP":
+        if strat.get("IS_COMPOUND_COMPATIBLE", False) and symbol == "COMP":
             holding = getPendingRewards(
                 strat.get("ADDRESS"),
                 DECIMALS_FOR_SYMBOL[symbol],
