@@ -388,11 +388,11 @@ def api_apr_history(request):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
-def api_apr_trailing_history(request, n=30):
+def api_apr_trailing_history(request, days):
     rows = _daily_rows(90, latest_snapshot_block_number())
     response = JsonResponse(
         {
-            "trailing_history": [{"day": x.block_time, "trailing_apy": get_trailing_apy(x.block_number, n)} for x in rows],
+            "trailing_history": [{"day": x.block_time, "trailing_apy": get_trailing_apy(x.block_number, days)} for x in rows],
         }
     )
     response.setdefault("Access-Control-Allow-Origin", "*")
