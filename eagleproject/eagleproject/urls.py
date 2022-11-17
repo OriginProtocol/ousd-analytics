@@ -61,7 +61,7 @@ urlpatterns = [
     path("api/v1/address/<slug:address>/history", core_views.api_address_history, name="api_address_history"),
     path("api/v1/strategies", core_views.strategies),
     path("api/v1/collateral", core_views.collateral),
-    path("api/v1/apr/trailing_history/<int:n>", core_views.api_apr_trailing_history),
+    path("api/v1/apr/trailing_history/<int:days>", core_views.api_apr_trailing_history),
 
     # Retired URLS
     path("powermint", redirect_to_ousd_dapp),
