@@ -388,16 +388,6 @@ def api_apr_history(request):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
-def api_apr_trailing_history(request, days):
-    rows = _daily_rows(90, latest_snapshot_block_number())
-    response = JsonResponse(
-        {
-            "trailing_history": [{"day": x.block_time, "trailing_apy": get_trailing_apy(x.block_number, days)} for x in rows],
-        }
-    )
-    response.setdefault("Access-Control-Allow-Origin", "*")
-    return _cache(120, response)
-
 
 def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
@@ -879,7 +869,6 @@ def _daily_rows(steps, latest_block_number):
             continue
         block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number)
-        s.block_number = block_number
         s.block_time = block.block_time
         s.effective_day = (
             block.block_time - datetime.timedelta(seconds=24 * 60 * 60)
