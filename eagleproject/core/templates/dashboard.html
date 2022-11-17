@@ -262,6 +262,10 @@
         font-size: 1.8rem;
     }
 
+    .floating-stat.larger {
+        width: 200px;
+    }
+
     .floating-stat .label {
         color: var(--dark-blue-grey);
         font-size: 0.875rem;
@@ -299,6 +303,14 @@
         }
         .logs .filters a {
             margin-left: 20px;
+        }
+        .hide-dune-title {
+            position: absolute;
+            top: 8px;
+            left: 286px;
+            min-width: 120px;
+            min-height: 30px;
+            background-color: #FAFBFC;
         }
     }
 </style>
@@ -414,6 +426,15 @@
     <div class="iframe-holder">
         <iframe src="https://dune.xyz/embeds/412267/786810/c0746688-f5a3-450e-b7ae-f6d7f86dec58" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
         </iframe>
+        <div class="floating-stat d-flex flex-column align-items-center">
+            <div class="label">
+                Total amount of current token holders
+            </div>
+            <div class="no-wrap">
+                {{token_holder_amount|floatformat:0}}
+            </div>
+        </div>
+        <div class="hide-dune-title"></div>
     </div>
     <div class="iframe-holder">
         <iframe src="https://dune.xyz/embeds/415779/792793/c522b4f5-65e4-467b-ae8c-2aec9cc5e5af" width="100%" height="300" style="border:1px solid #999999; border-radius: 10px; margin-bottom: 20px;">
