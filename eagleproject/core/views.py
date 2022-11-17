@@ -389,6 +389,17 @@ def api_apr_history(request):
     return _cache(120, response)
 
 
+def api_apr_trailing_history(request, days):
+    rows = _daily_rows(90, latest_snapshot_block_number())
+    response = JsonResponse(
+        {
+            "trailing_history": [{"day": x.block_time, "trailing_apy": get_trailing_apy(x.block_number, days)} for x in rows],
+        }
+    )
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return _cache(120, response)
+
+
 def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
 
@@ -629,17 +640,20 @@ def strategies(request):
     total_aave = sum(x.aavestrat_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
     total_threepool = sum(x.threepoolstrat_holding for x in assets)
+    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
 
     comp_tokens = []
     aave_tokens = []
     convex_tokens = []
     vault_tokens = []
+    meta_tokens = []
 
     for asset in assets:
         comp_tokens.append(asset.compstrat_holding)
         aave_tokens.append(asset.aavestrat_holding)
         convex_tokens.append(asset.threepoolstrat_holding)
         vault_tokens.append(asset.vault_holding)
+        meta_tokens.append(float(asset.strat_holdings["ousd_metastrat"]))
 
     response = JsonResponse(
         {
@@ -672,6 +686,14 @@ def strategies(request):
                     "usdt": vault_tokens[1],
                     "usdc": vault_tokens[2],
                 },
+                {
+                    "name": "meta",
+                    "total": str(total_meta),
+                    "dai": str(meta_tokens[0] / 2),
+                    "usdt": str(meta_tokens[1] / 2),
+                    "usdc": str(meta_tokens[2] / 2),
+                    "ousd": str(total_meta / 2),
+                },
             ]
         }
     )
@@ -682,12 +704,14 @@ def strategies(request):
 def collateral(request):
     block_number = latest_snapshot_block_number()
     assets = fetch_assets(block_number)
+    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
     response = JsonResponse(
         {
             "collateral": [
                 {"name": "dai", "total": assets[0].total()},
                 {"name": "usdt", "total": assets[1].total()},
                 {"name": "usdc", "total": assets[2].total()},
+                {"name": "ousd", "total": str(total_meta / 2)},
             ]
         }
     )
@@ -869,6 +893,7 @@ def _daily_rows(steps, latest_block_number):
             continue
         block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number)
+        s.block_number = block_number
         s.block_time = block.block_time
         s.effective_day = (
             block.block_time - datetime.timedelta(seconds=24 * 60 * 60)
