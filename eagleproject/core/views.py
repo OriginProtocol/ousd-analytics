@@ -672,19 +672,28 @@ def strategies(request):
     # Returns an object with UUID as keys when set, otherwise returns an array
     structured = request.GET.get("structured")
 
+    for (key, strat) in all_strats.items():
+        holdings = {}
+        for (asset, holding) in strat["holdings"]:
+            holdings[asset] = float(holding or 0)
+        strat["total"] = float(strat["total"] or 0)
+        strat["holdings"] = holdings
+
     if structured is None:
         # TODO: Backward compatibility, remove after making sure that every repo has been updated
         all_strats = [{
             "name": strat["name"],
             "total": strat["total"],
-            "dai": strat["holdings"]["DAI"],
-            "usdt": strat["holdings"]["USDT"],
-            "usdc": strat["holdings"]["USDC"],
-            "ousd": strat["holdings"]["OUSD"],
-            "comp": strat["holdings"]["COMP"],
+            "dai": strat["holdings"].get("DAI"),
+            "usdt": strat["holdings"].get("USDT"),
+            "usdc": strat["holdings"].get("USDC"),
+            "ousd": strat["holdings"].get("OUSD"),
+            "comp": strat["holdings"].get("COMP"),
         } for (strat_key, strat) in all_strats.items()]
 
-    response = JsonResponse(all_strats)
+    response = JsonResponse({
+        "strategies": all_strats
+    })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
