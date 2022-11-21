@@ -158,8 +158,40 @@ def dashboard(request):
 
     return _cache(20, render(request, "dashboard.html", locals()))
 
-def _get_strat_layout(assets):
+def _get_strat_holdings(assets):
     all_strats = {}
+    for (strat_key, strat) in STRATEGIES.items():
+        total = 0
+        holdings = []
+
+        for asset in assets:
+            if not asset.symbol in strat.get("SUPPORTED_ASSETS", DEFAULT_ASSETS):
+                continue
+            balance = asset.get_strat_holdings(strat_key)
+            holdings.append((asset.symbol, balance))
+            total += balance
+
+        if strat_key == "ousd_metastrat":
+            # Assume that half of holdings in ousd_metastrat is printed OUSD
+            ousd_holding = total / 2
+            holdings = [
+                (symbol, holding / 2) for (symbol, holding) in holdings if symbol in ("DAI", "USDT", "USDC")
+            ]
+            holdings.append(("OUSD", ousd_holding))
+
+        all_strats[strat_key] = {
+            "name": strat["NAME"],
+            "address": strat["ADDRESS"],
+            "icon_file": strat.get("ICON_NAME", "buffer-icon.svg"),
+            "total": total,
+            "holdings": holdings
+        }
+
+    return all_strats
+
+
+def _get_strat_layout(assets):
+    all_strats = _get_strat_holdings(assets)
     for (strat_key, strat) in STRATEGIES.items():
         total = 0
         holdings = []
@@ -181,6 +213,7 @@ def _get_strat_layout(assets):
 
     ui_layout = []
 
+    # Rename vault car title
     vault_holdings = dict(all_strats["vault_holding"])
     vault_holdings["name"] = "Vault Holdings"
 
@@ -196,16 +229,6 @@ def _get_strat_layout(assets):
 
     del all_strats["vault_holding"]
 
-    ousd_metastrat = all_strats["ousd_metastrat"]
-
-    if not ousd_metastrat is None:
-        ousd_holding = ousd_metastrat["total"] / 2
-        ousd_metastrat["holdings"] = [
-            (symbol, holding / 2) for (symbol, holding) in ousd_metastrat["holdings"] if symbol in ("DAI", "USDT", "USDC")
-        ]
-        ousd_metastrat["holdings"].append(("OUSD", ousd_holding))
-            
-        
     cols = 3
     strat_keys = list(all_strats.keys())
     rows = 1 + len(strat_keys) // cols
@@ -640,68 +663,37 @@ def api_address_history(request, address):
 
 def strategies(request):
     block_number = latest_snapshot_block_number()
+    comp = ensure_asset("COMP", block_number)
     assets = fetch_assets(block_number)
-    total_vault = sum(x.vault_holding for x in assets)
-    total_aave = sum(x.aavestrat_holding for x in assets)
-    total_compstrat = sum(x.compstrat_holding for x in assets)
-    total_threepool = sum(x.threepoolstrat_holding for x in assets)
-    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
+    assets.append(comp)
 
-    comp_tokens = []
-    aave_tokens = []
-    convex_tokens = []
-    vault_tokens = []
-    meta_tokens = []
+    all_strats = _get_strat_holdings(assets)
 
-    for asset in assets:
-        comp_tokens.append(asset.compstrat_holding)
-        aave_tokens.append(asset.aavestrat_holding)
-        convex_tokens.append(asset.threepoolstrat_holding)
-        vault_tokens.append(asset.vault_holding)
-        meta_tokens.append(float(asset.strat_holdings["ousd_metastrat"]))
+    # Returns an object with UUID as keys when set, otherwise returns an array
+    structured = request.GET.get("structured")
 
-    response = JsonResponse(
-        {
-            "strategies": [
-                {
-                    "name": "compound",
-                    "total": total_compstrat,
-                    "dai": comp_tokens[0],
-                    "usdt": comp_tokens[1],
-                    "usdc": comp_tokens[2],
-                },
-                {
-                    "name": "aave",
-                    "total": total_aave,
-                    "dai": aave_tokens[0],
-                    "usdt": aave_tokens[1],
-                    "usdc": aave_tokens[2],
-                },
-                {
-                    "name": "convex",
-                    "total": total_threepool,
-                    "dai": convex_tokens[0],
-                    "usdt": convex_tokens[1],
-                    "usdc": convex_tokens[2],
-                },
-                {
-                    "name": "vault",
-                    "total": total_vault,
-                    "dai": vault_tokens[0],
-                    "usdt": vault_tokens[1],
-                    "usdc": vault_tokens[2],
-                },
-                {
-                    "name": "meta",
-                    "total": str(total_meta),
-                    "dai": str(meta_tokens[0] / 2),
-                    "usdt": str(meta_tokens[1] / 2),
-                    "usdc": str(meta_tokens[2] / 2),
-                    "ousd": str(total_meta / 2),
-                },
-            ]
-        }
-    )
+    for (key, strat) in all_strats.items():
+        holdings = {}
+        for (asset, holding) in strat["holdings"]:
+            holdings[asset] = float(holding or 0)
+        strat["total"] = float(strat["total"] or 0)
+        strat["holdings"] = holdings
+
+    if structured is None:
+        # TODO: Backward compatibility, remove after making sure that every repo has been updated
+        all_strats = [{
+            "name": strat["name"],
+            "total": strat["total"],
+            "dai": strat["holdings"].get("DAI"),
+            "usdt": strat["holdings"].get("USDT"),
+            "usdc": strat["holdings"].get("USDC"),
+            "ousd": strat["holdings"].get("OUSD"),
+            "comp": strat["holdings"].get("COMP"),
+        } for (strat_key, strat) in all_strats.items()]
+
+    response = JsonResponse({
+        "strategies": all_strats
+    })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
