@@ -113,6 +113,11 @@ def dashboard(request):
     if topic:
         logs_q = logs_q.filter(topic_0=topic)
     latest_logs = logs_q[:100]
+    weekly_reports = AnalyticsReport.objects.filter(
+        week__isnull=False
+    ).order_by("-year", "-week")
+    if (len(weekly_reports) > 0):
+        token_holder_amount = weekly_reports[0].accounts_holding_ousd
 
     filters = [
         {
