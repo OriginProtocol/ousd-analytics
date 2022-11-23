@@ -192,24 +192,6 @@ def _get_strat_holdings(assets):
 
 def _get_strat_layout(assets):
     all_strats = _get_strat_holdings(assets)
-    for (strat_key, strat) in STRATEGIES.items():
-        total = 0
-        holdings = []
-
-        for asset in assets:
-            if not asset.symbol in strat.get("SUPPORTED_ASSETS", DEFAULT_ASSETS):
-                continue
-            balance = asset.get_strat_holdings(strat_key)
-            holdings.append((asset.symbol, balance))
-            total += balance
-
-        all_strats[strat_key] = {
-            "name": strat["NAME"],
-            "address": strat["ADDRESS"],
-            "icon_file": strat.get("ICON_NAME", "buffer-icon.svg"),
-            "total": total,
-            "holdings": holdings
-        }
 
     ui_layout = []
 
