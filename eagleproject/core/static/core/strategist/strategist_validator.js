@@ -28,7 +28,7 @@ const strategistValidator = (function () {
 
   const MULTI_SEND_ADDRESS = "0x40a2accbd92bca938b02010e17a5b8929b49130d";
   const VAULT = "0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70";
-  const CHECKER = "0x5B98B3255522E95f842967723Ee4Cc7dCEaa9150";
+  const CHECKER = "0xEEcD72c99749A1FC977704AB900a05e8300F4318";
 
   // App hooks up to events
   function app(opts) {

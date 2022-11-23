@@ -9,6 +9,11 @@ const abiVaultValueChecker = {
           "internalType": "address",
           "name": "_vault",
           "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_ousd",
+          "type": "address"
         }
       ],
       "stateMutability": "nonpayable",
@@ -18,22 +23,61 @@ const abiVaultValueChecker = {
       "inputs": [
         {
           "internalType": "int256",
-          "name": "maxLoss",
+          "name": "lowValueDelta",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "highValueDelta",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "lowSupplyDelta",
+          "type": "int256"
+        },
+        {
+          "internalType": "int256",
+          "name": "highSupplyDelta",
           "type": "int256"
         }
       ],
-      "name": "checkLoss",
+      "name": "checkDelta",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [],
-      "name": "snapshotValue",
+      "name": "ousd",
+      "outputs": [
+        {
+          "internalType": "contract OUSD",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "snapshots",
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "vaultValue",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "totalSupply",
           "type": "uint256"
         }
       ],
