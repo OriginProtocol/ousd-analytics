@@ -27,9 +27,12 @@ env = environ.Env(
     DEBUG=(bool, False),
     DATABASE_HOST_OVERRIDE=(str, None),
     SENTRY_DSN=(str, None),
+    APP_ENV=(str, "local"),
 )
-env_file = Path(__file__).resolve().parent.joinpath(".env")
-environ.Env.read_env(env.str("ENV_PATH", str(env_file)))
+if env("APP_ENV") != "staging":
+    # Staging is on heroku and doesn't use dotenv
+    env_file = Path(__file__).resolve().parent.joinpath(".env")
+    environ.Env.read_env(env.str("ENV_PATH", str(env_file)))
 
 SENTRY_DSN = env("SENTRY_DSN")
 
