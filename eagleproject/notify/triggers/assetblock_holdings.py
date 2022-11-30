@@ -9,10 +9,36 @@ from core.blockchain.strategies import STRATEGIES
 
 log = get_logger(__name__)
 
-ASSET_BLOCK_SYMBOLS = ["DAI", "USDC", "USDT"]
+ASSET_BLOCK_SYMBOLS = ["DAI", "USDC", "USDT", "OUSD"]
 PERCENT_CRITICAL = Decimal(0.25)
 PERCENT_WARNING = Decimal(0.1)
 PERCENT_INFO = Decimal(0.05)
+
+def get_recent_entries(symbol, latest_asset_blocks, last_week_asset_blocks):
+    current = None
+    previous = None
+
+    last_week = None
+    latest = list(latest_asset_blocks.filter(symbol=symbol))
+    last_week = list(last_week_asset_blocks.filter(symbol=symbol))
+
+    if len(latest) < 1:
+        log.debug("No recent asset blocks, skipping")
+        return (None, None)
+
+    elif len(latest) > 1:
+        previous = latest[1]
+
+    else:
+        if len(last_week) < 1:
+            log.debug("No asset blocks for last week, skipping")
+            return (None, None)
+
+        previous = last_week[-1]
+
+    current = latest[0]
+
+    return (current, previous)
 
 
 def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
@@ -20,28 +46,10 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
     events = []
 
     for symbol in ASSET_BLOCK_SYMBOLS:
-        current = None
-        previous = None
+        (current, previous) = get_recent_entries(symbol, latest_asset_blocks, last_week_asset_blocks)
 
-        last_week = None
-        latest = list(latest_asset_blocks.filter(symbol=symbol))
-        last_week = list(last_week_asset_blocks.filter(symbol=symbol))
-
-        if len(latest) < 1:
-            log.debug("No recent asset blocks, skipping")
+        if current is None or previous is None:
             continue
-
-        elif len(latest) > 1:
-            previous = latest[1]
-
-        else:
-            if len(last_week) < 1:
-                log.debug("No asset blocks for last week, skipping")
-                continue
-
-            previous = last_week[-1]
-
-        current = latest[0]
 
         current_meta_holdings = getattr(current, 'strat_holdings')
         previous_meta_holdings = getattr(previous, 'strat_holdings')
@@ -51,6 +59,25 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
 
             current_holding = current.get_strat_holding(prop)
             previous_holding = previous.get_strat_holding(prop)
+
+            if prop == "ousd_metastrat":
+                # For OUSD MetaStrategy, assume 50%-50% split
+                if symbol in ("DAI", "USDC", "USDT"):
+                    current_holding = current_holding / 2
+                    previous_holding = previous_holding / 2
+                elif symbol == "OUSD":
+                    current_total = 0
+                    previous_total = 0
+
+                    for symbol in ASSET_BLOCK_SYMBOLS:
+                        (c, p) = get_recent_entries(symbol, latest_asset_blocks, last_week_asset_blocks)
+                        if c is None or p is None:
+                            continue
+                        current_total += c.get_strat_holding(prop)
+                        previous_total += p.get_strat_holding(prop)
+
+                    current_holding = current_total / 2
+                    current_holding = previous_total / 2
 
             diff = current_holding - previous_holding
             absdiff = abs(diff)
