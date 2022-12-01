@@ -359,7 +359,7 @@ def api_apr_trailing(request):
     apr = get_trailing_apr()
     if apr < 0:
         apr = "0"
-    apy = get_trailing_apy()
+    apy = to_apy(Decimal(apr))
     if apy < 0:
         apy = 0
     response = JsonResponse({"apr": apr, "apy": apy})
@@ -371,7 +371,7 @@ def api_apr_trailing_days(request, days):
     apr = get_trailing_apr(days=int(days))
     if apr < 0:
         apr = "0"
-    apy = get_trailing_apy(days=int(days))
+    apy = to_apy(Decimal(apr), days=int(days))
     if apy < 0:
         apy = 0
     response = JsonResponse({"apr": apr, "apy": apy})

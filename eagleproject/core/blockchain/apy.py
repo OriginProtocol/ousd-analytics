@@ -6,6 +6,9 @@ from core.blockchain.harvest.snapshots import (
     latest_snapshot,
     latest_snapshot_block_number
 )
+from core.blockchain.harvest.transactions import (
+    get_rebasing_credits_per_token
+)
 from core.blockchain.const import (
     BLOCKS_PER_DAY
 )
@@ -34,8 +37,8 @@ def get_trailing_apr(block=None, days=30.00):
 
     # Calculate
     block = block if block is not None else latest_snapshot_block_number()
-    current = rebasing_credits_per_token(block)
-    past = rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
+    current = get_rebasing_credits_per_token(block)
+    past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
     ratio = Decimal(float(past) / float(current))
     apr = ((ratio - Decimal(1)) * Decimal(100) * Decimal(365.25) / Decimal(days))
 
@@ -51,6 +54,6 @@ def get_trailing_apy(block=None, days=30.00):
     apy = to_apy(apr, days)
     return round(apy, 2)
 
-def to_apy(apr, days):
+def to_apy(apr, days=30.00):
     periods_per_year = Decimal(365.25 / days)
     return ((1 + apr / periods_per_year / 100) ** periods_per_year - 1) * 100
