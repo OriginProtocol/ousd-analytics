@@ -149,7 +149,6 @@ def get_rebase_log(block_number):
 
 # get rebasing credits per token log at block number
 def get_rebasing_credits_per_token(block_number):
-    print("block_number", block_number)
     rebase_log = get_rebase_log(block_number)
     explode_log_data(rebase_log.data)
 
