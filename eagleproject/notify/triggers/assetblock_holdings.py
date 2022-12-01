@@ -19,8 +19,8 @@ def get_recent_entries(symbol, latest_asset_blocks, last_week_asset_blocks):
     previous = None
 
     last_week = None
-    latest = list(latest_asset_blocks.filter(symbol=symbol))
-    last_week = list(last_week_asset_blocks.filter(symbol=symbol))
+    latest = list(latest_asset_blocks.filter(symbol=symbol)) if type(latest_asset_blocks) is not list else []
+    last_week = list(last_week_asset_blocks.filter(symbol=symbol)) if type(last_week_asset_blocks) is not list else []
 
     if len(latest) < 1:
         log.debug("No recent asset blocks, skipping")
@@ -33,7 +33,6 @@ def get_recent_entries(symbol, latest_asset_blocks, last_week_asset_blocks):
         if len(last_week) < 1:
             log.debug("No asset blocks for last week, skipping")
             return (None, None)
-
         previous = last_week[-1]
 
     current = latest[0]
@@ -54,11 +53,11 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
         current_meta_holdings = getattr(current, 'strat_holdings')
         previous_meta_holdings = getattr(previous, 'strat_holdings')
 
-        for (prop, strat) in STRATEGIES:
+        for (prop, strat) in STRATEGIES.items():
             name = strat.get("NAME") + " Holding"
 
-            current_holding = current.get_strat_holding(prop)
-            previous_holding = previous.get_strat_holding(prop)
+            current_holding = current.get_strat_holdings(prop)
+            previous_holding = previous.get_strat_holdings(prop)
 
             if prop == "ousd_metastrat":
                 # For OUSD MetaStrategy, assume 50%-50% split
@@ -73,8 +72,8 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
                         (c, p) = get_recent_entries(symbol, latest_asset_blocks, last_week_asset_blocks)
                         if c is None or p is None:
                             continue
-                        current_total += c.get_strat_holding(prop)
-                        previous_total += p.get_strat_holding(prop)
+                        current_total += c.get_strat_holdings(prop)
+                        previous_total += p.get_strat_holdings(prop)
 
                     current_holding = current_total / 2
                     current_holding = previous_total / 2
