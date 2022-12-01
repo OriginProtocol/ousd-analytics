@@ -153,7 +153,7 @@ def get_rebasing_credits_per_token(block_number):
     rebase_log = get_rebase_log(block_number)
     explode_log_data(rebase_log.data)
 
-    credits_per_token = explode_log_data(rebase_log.data)[2]
+    credits_per_token = explode_log_data(rebase_log.data)[2] * 1e18
     # we have increased the accuracy from 1e18 to 1e27 for rebasing credits per token
     # at that block number
     if (block_number >= START_OF_OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES):
