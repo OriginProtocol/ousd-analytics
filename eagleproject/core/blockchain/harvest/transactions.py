@@ -22,6 +22,7 @@ from core.blockchain.const import (
     ETHERSCAN_CONTRACTS,
     LOG_CONTRACTS,
     START_OF_EVERYTHING,
+    START_OF_OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES,
 )
 from core.blockchain.conversion import human_duration_yield
 from core.blockchain.decode import decode_args, slot
@@ -137,6 +138,28 @@ def explode_log_data(value):
         out.append(int(value[2 + i * 64 : 2 + i * 64 + 64], 16) / 1e18)
     return out
 
+# get rebase log at block number
+def get_rebase_log(block_number):
+    rebase_log = Log.objects.filter(
+        topic_0='0x09516ecf4a8a86e59780a9befc6dee948bc9e60a36e3be68d31ea817ee8d2c80',
+        block_number__lte=block_number
+    ).order_by('-block_number')[:1].get()
+
+    return rebase_log
+
+# get rebasing credits per token log at block number
+def get_rebasing_credits_per_token(block_number):
+    print("block_number", block_number)
+    rebase_log = get_rebase_log(block_number)
+    explode_log_data(rebase_log.data)
+
+    credits_per_token = explode_log_data(rebase_log.data)[2]
+    # we have increased the accuracy from 1e18 to 1e27 for rebasing credits per token
+    # at that block number
+    if (block_number >= START_OF_OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES):
+        return credits_per_token / 1e9
+
+    return credits_per_token
 
 def get_internal_transactions(tx_hash):
     data = get_internal_txs_bt_txhash(tx_hash)
