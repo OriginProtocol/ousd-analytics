@@ -14,6 +14,7 @@ const strategistValidator = (function () {
     "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094": "Compound Strat",
     "0xEA2Ef2e2E5A749D4A66b41Db9aD85a38Aa264cb3": "Convex Strat",
     "0x89Eb88fEdc50FC77ae8a18aAD1cA0ac27f777a90": "OUSD Meta Strat",
+    "0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", "Morpho Compound Strat"
 
     "0x6B175474E89094C44Da98b954EedeAC495271d0F": "DAI",
     "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": "USDC",
