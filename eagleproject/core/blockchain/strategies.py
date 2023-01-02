@@ -46,14 +46,14 @@ STRATEGIES = {
     "ICON_NAME": "ousd-icon.svg",
   },
   "compstrat_holding": {
-    "NAME": "Compound Strategy",
+    "NAME": "Compound",
     "ADDRESS": STRATCOMP,
     "HARDCODED": True,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
     "ICON_NAME": "comp-icon.svg",
   },
   "threepoolstrat_holding": {
-    "NAME": "Convex Strategy",
+    "NAME": "Convex 3pool",
     "ADDRESS": STRATCONVEX,
     "HARDCODED": True,
     "HIDDEN": True,
@@ -61,14 +61,14 @@ STRATEGIES = {
     "ICON_NAME": "convex.png",
   },
   "aavestrat_holding": {
-    "NAME": "Aave Strategy",
+    "NAME": "Aave",
     "ADDRESS": STRATAAVE,
     "HARDCODED": True,
     "SUPPORTED_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "aave-icon.svg",
   },
   "morpho_strat": {
-    "NAME": "Morpho Strategy",
+    "NAME": "Morpho Compound",
     "ADDRESS": MORPHO,
     "FROM_BLOCK": 15949661,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
@@ -76,7 +76,7 @@ STRATEGIES = {
     "ICON_NAME": "morpho.png",
   },
   "ousd_metastrat": {
-    "NAME": "OUSD MetaStrategy",
+    "NAME": "Convex OUSD",
     "ADDRESS": OUSD_METASTRAT,
     "FROM_BLOCK": 15896478,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "OUSD"),
