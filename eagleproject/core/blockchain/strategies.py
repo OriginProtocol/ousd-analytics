@@ -37,7 +37,7 @@ STRATAAVE = "0x5e3646a1db86993f73e6b74a57d8640b69f7e259"
 MORPHO = "0x5a4eee58744d1430876d5ca93cab5ccb763c037d"
 OUSD_METASTRAT = "0x89eb88fedc50fc77ae8a18aad1ca0ac27f777a90"
 
-MORPHO_AAVE = "0xa97f983eeaa74b92a6475c71838d04238dda394d"
+MORPHO_AAVE = "0x79f2188ef9350a1dc11a062cca0abe90684b0197"
 LUSD_METASTRAT = "0x7a192dd9cc4ea9bdedec9992df74f1da55e60a19"
 
 STRATEGIES = {
@@ -90,14 +90,14 @@ STRATEGIES = {
     "NAME": "LUSD MetaStrategy",
     "ADDRESS": LUSD_METASTRAT,
     "FROM_BLOCK": 16226329,
-    "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI"),
-    "ICON_NAME": "buffer-icon.svg",
+    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
+    "ICON_NAME": "convex.png",
   },
-  # "morpho_aave_strat": {
-  #   "NAME": "Morpho Aave Strategy",
-  #   "ADDRESS": MORPHO_AAVE,
-  #   "FROM_BLOCK": 0,
-  #   "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI"),
-  #   "ICON_NAME": "morpho.png",
-  # },
+  "morpho_aave_strat": {
+    "NAME": "Morpho Aave Strategy",
+    "ADDRESS": MORPHO_AAVE,
+    "FROM_BLOCK": 0,
+    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
+    "ICON_NAME": "morpho.png",
+  },
 }
