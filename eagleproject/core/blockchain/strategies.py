@@ -96,7 +96,7 @@ STRATEGIES = {
   "morpho_aave_strat": {
     "NAME": "Morpho Aave Strategy",
     "ADDRESS": MORPHO_AAVE,
-    "FROM_BLOCK": 0,
+    "FROM_BLOCK": 16331904,
     "SUPPORTED_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "morpho.png",
   },
