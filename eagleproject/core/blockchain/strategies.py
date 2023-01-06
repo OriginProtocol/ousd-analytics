@@ -87,7 +87,7 @@ STRATEGIES = {
     "ICON_NAME": "buffer-icon.svg",
   },
   "lusd_metastrat": {
-    "NAME": "LUSD MetaStrategy",
+    "NAME": "Convex LUSD+3Crv",
     "ADDRESS": LUSD_METASTRAT,
     "FROM_BLOCK": 16226329,
     "SUPPORTED_ASSETS": DEFAULT_ASSETS,
