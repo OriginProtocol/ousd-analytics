@@ -71,7 +71,7 @@ STRATEGIES = {
     "ICON_NAME": "aave-icon.svg",
   },
   "morpho_strat": {
-    "NAME": "Morpho Strategy",
+    "NAME": "Morpho Compound",
     "ADDRESS": MORPHO,
     "FROM_BLOCK": 15949661,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
@@ -94,7 +94,7 @@ STRATEGIES = {
     "ICON_NAME": "convex.png",
   },
   "morpho_aave_strat": {
-    "NAME": "Morpho Aave Strategy",
+    "NAME": "Morpho Aave",
     "ADDRESS": MORPHO_AAVE,
     "FROM_BLOCK": 16331904,
     "SUPPORTED_ASSETS": DEFAULT_ASSETS,
