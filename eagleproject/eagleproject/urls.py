@@ -69,7 +69,7 @@ urlpatterns = [
     path("powermint", redirect_to_ousd_dapp),
     path("swap", redirect_to_ousd_dapp),
     path("flipper", redirect_to_ousd_dapp),
-
+    
     # Static dir
-    path(r'^static/(?P<path>.*)$', static.serve, {'document_root': STATIC_ROOT}),
+    re_path(r'^static/(?P<path>.+)$', static.serve, {'document_root': STATIC_ROOT}),
 ]
