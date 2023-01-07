@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load blockchain %}
 {% load humanize %}
+{% load static %}
 
 {% block title %}OUSD Analytics{% endblock %}
 
@@ -224,7 +225,7 @@
 
     .etherscan-logo-link {
         text-indent: -9999px;
-        background-image: url('/static/core/img/etherscan_logo.png');
+        background-image: url('{% static "core/img/etherscan_logo.png" %}');
         background-size: 20px 20px;
         text-indent: -9999px;
         height: 20px;
@@ -358,7 +359,7 @@
     <div class="module">
         <div class="label">
             {% if forloop.parentloop.counter > 1 %}
-            <img src="/static/core/img/{{strat.icon_file}}" alt="{{strat.name}} icon" />
+            <img src="{% static ('core/img/' + strat.icon_file) %}" alt="{{strat.name}} icon" />
             {% endif %}
             {{strat.name}}
         </div>
