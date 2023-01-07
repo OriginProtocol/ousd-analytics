@@ -359,13 +359,19 @@
     <div class="module">
         <div class="label">
             {% if forloop.parentloop.counter > 1 %}
-            <img src="{% static ('core/img/' + strat.icon_file) %}" alt="{{strat.name}} icon" />
+                {% with 'core/img/'|add:strat.icon_file as img_path %}
+            <img src="{% static img_path %}" alt="{{strat.name}} icon" />
+                {% endwith %}
             {% endif %}
             {{strat.name}}
         </div>
         {% for symbol, holding in strat.holdings %}
         <div class="line-item">
-            <img src="/static/core/img/{{strat|get_icon_file:symbol}}" alt="{{symbol}} icon"  height="30" width="30" />
+            {% with strat|get_icon_file:symbol as icon_file %}
+                {% with 'core/img/'|add:icon_file as img_path %}
+            <img src="{% static img_path %}" alt="{{symbol}} icon"  height="30" width="30" />
+                {% endwith %}
+            {% endwith %}
             {{symbol}}
             <span class="value">{{holding|floatformat:2}}</span>
         </div>
