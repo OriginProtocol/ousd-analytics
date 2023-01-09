@@ -90,9 +90,7 @@ def dashboard(request):
 
     comp = ensure_asset("COMP", block_number)
 
-    apy = get_trailing_apy(days=365)
-    if apy < 0:
-        apy = 0
+    apy = 0
 
     assets = fetch_assets(block_number)
     assets.append(comp)
@@ -613,10 +611,10 @@ def _my_assets(address, block_number):
     }
 
 
-# def test_email(request):
-#     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
-#     return HttpResponse("ok")
+def test_email(request):
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+    return HttpResponse("ok")
 
 
 def api_address_history(request, address):
@@ -765,6 +763,35 @@ def report_weekly(request, year, week):
     report.transaction_report = json.loads(str(report.transaction_report))
 
     return render(request, "analytics_report.html", locals())
+
+
+def email(request, year, week):
+    report = AnalyticsReport.objects.filter(week=week, year=year)[0]
+    prev_report = _get_previous_report(report)
+    stats = report_stats
+    stat_keys = stats.keys()
+    curve_stats = curve_report_stats
+    curve_stat_keys = curve_stats.keys()
+    is_monthly = False
+    type = 'Weekly'
+    change = calculate_report_change(report, prev_report)
+    report.transaction_report = json.loads(str(report.transaction_report))
+
+    return render(request, "analytics_report_email.html", locals())
+
+def email_old(request, year, week):
+    report = AnalyticsReport.objects.filter(week=week, year=year)[0]
+    prev_report = _get_previous_report(report)
+    stats = report_stats
+    stat_keys = stats.keys()
+    curve_stats = curve_report_stats
+    curve_stat_keys = curve_stats.keys()
+    is_monthly = False
+    type = 'Weekly'
+    change = calculate_report_change(report, prev_report)
+    report.transaction_report = json.loads(str(report.transaction_report))
+
+    return render(request, "analytics_report_email_old.html", locals())
 
 
 def reports(request):
