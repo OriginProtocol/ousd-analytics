@@ -5,20 +5,155 @@
 </head>
 
 <div>
+  <div class="box">
+    <img src="/static/core/img/origin-dollar.svg" alt="origin dollar" class="wordmark" />
+    <h1 class="mt-48">Analytics Report</h2>
+    <h4 class="mt-8">
+        {% if type == 'Weekly' %}
+          For the week ending {{report.end_time|date:"F d, Y"}} at {{report.end_time|date:"P"}}
+        {% else %}
+          For the month ending {{report.end_time|date:"F d, Y"}} at {{report.end_time|date:"P"}}
+        {% endif %}
+        UTC.
+    </h4>
+
+    <h2 class="mt-48 d-flex flex-row gap-2" style="font-weight:bold;">
+      <img src="/static/core/img/ousd.svg" alt="ousd" class="logo" />
+      OUSD
+    </h2>
+
+    <table class='value table mt-32 p-0'>
+      <tr>
+        <td class='text-start w-50 blue' style="min-width:265px;font-weight:bold;"><div class="m-14">Top indicators</div></td>
+        <td style="min-width:100px;"><div class="m-14">w/e {{report.end_time|date:'d M'}}</div></td>
+        <td style="min-width:100px;"><div class="m-14">w/e {{prev_report.end_time|date:'d M'}}</div></td>
+        <td style="min-width:100px;"><div class="m-14">Change</div></td>
+      </tr>
+      <tr>
+        <td class='text-start' style="font-weight:bold;"><div class="m-14 text-lg">Total Supply</div></td>
+        <td style="font-weight:bold;"><div class="m-14">{{report|class_value:'total_supply'}}</div></td>
+        <td style="font-weight:bold;"><div class="m-14 opacity-50">{{prev_report|class_value:'total_supply'}}</div></td>
+        <td><span style="{{change|dict_color_style:'total_supply'}}"><div class="m-14 text-sm">({{change|dict_value:'total_supply'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr>
+        <td class='text-start' style="font-weight:bold;"><div class="m-14 text-lg">30-Day APY</div></td>
+        <td style="font-weight:bold;"><div class="m-14">{{report|class_value:'apy'}}%</div></td>
+        <td style="font-weight:bold;"><div class="m-14 opacity-50">{{prev_report|class_value:'apy'}}%</div></td>
+        <td><span style="{{change|dict_color_style:'apy'}}"><div class="m-14 text-sm">({{change|dict_value:'apy'|floatformat_rnd_down:0}}bp)</div></span></td>
+      </tr>
+      <tr>
+        <td class='text-start' style="font-weight:bold;"><div class="m-14 text-lg">Stablecoin market share</div></td>
+        <td style="font-weight:bold;"><div class="m-14">{{report|class_value:'stablecoin_market_share'}}%</div></td>
+        <td style="font-weight:bold;"><div class="m-14 opacity-50">{{prev_report|class_value:'stablecoin_market_share'}}%</div></td>
+        <td><span style="{{change|dict_color_style:'stablecoin_market_share'}}"><div class="m-14 text-sm">({{change|dict_value:'stablecoin_market_share'|floatformat_rnd_down:0}}bp)</div></span></td>
+      </tr>
+    </table>
+
+    <table class="value table mt-32">
+      <tr>
+        <td class='text-start w-50 blue' style="min-width:265px;font-weight:bold;"><div class="m-14">More details</div></td>
+        <td style="min-width:100px;"><div class="m-14"></div></td>
+        <td style="min-width:100px;"><div class="m-14"></div></td>
+        <td style="min-width:100px;"><div class="m-14"></div></td>
+      </tr>
+        {% for statistic in stat_keys %}
+        <tr>
+            <td class='text-start'><div class="m-14 text-lg">{{stats|dict_value:statistic}}</div></td>
+            {%if statistic == "accounts_holding_more_than_100_ousd"%}
+              <td style="font-weight:bold;"><div class="m-14">{{report|class_value:statistic}}</div></td>
+              <td style="font-weight:bold;"><div class="m-14 opacity-50">{{prev_report|class_value:statistic}}</div></td>
+            {% else %}
+              <td style="font-weight:bold;"><div class="m-14">${{report|class_value:statistic}}</div></td>
+              <td style="font-weight:bold;"><div class="m-14 opacity-50">${{prev_report|class_value:statistic}}</div></td>
+            {% endif %}
+            <td><span style="{{change|dict_color_style:statistic}}"><div class="m-14 text-sm">({{change|dict_value:statistic|floatformat_rnd_down:2}}%)</div></span></td>
+        </tr>
+        {% endfor %}
+        
+    </table>
+
+    <h2 class="mt-48 d-flex flex-row gap-2" style="font-weight:bold;">
+      <img src="/static/core/img/ogv.svg" alt="ogv" class="logo" />
+      OGV
+      <span style="font-weight:normal;">(Origin Dollar Governance)</span>
+    </h2>
+
+    <table class="value table mt-32">
+      <tr>
+        <td class='text-start blue' style="min-width:265px;font-weight:bold;"><div class="m-14">Top indicators</div></td>
+        <td style="min-width:100px;"><div class="m-14">w/e {{report.end_time|date:'d M'}}</div></td>
+        <td style="min-width:100px;"><div class="m-14 opacity-50">w/e {{prev_report.end_time|date:'d M'}}</div></td>
+        <td style="min-width:100px;"><div class="m-14 text-sm">Change</div></td>
+      </tr>
+      <tr>
+        <td class='text-start'><div class="m-14 text-lg">Price</div></td>
+        <td style="font-weight:bold;"><div class="m-14">${{report|class_value:'ogv_price'}}</div></td>
+        <td style="font-weight:bold;"><div class="m-14 opacity-50">${{prev_report|class_value:'ogv_price'}}</div></td>
+        <td><span style="{{change|dict_color_style:'ogv_price'}}"><div class="m-14 text-sm">({{change|dict_value:'ogv_price'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr>
+        <td class='text-start'><div class="m-14 text-lg">Market cap</div></td>
+        <td style="font-weight:bold;"><div class="m-14">${{report|class_value:'ogv_market_cap'}}</div></td>
+        <td style="font-weight:bold;"><div class="m-14 opacity-50">${{prev_report|class_value:'ogv_market_cap'}}</div></td>
+        <td><span style="{{change|dict_color_style:'ogv_market_cap'}}"><div class="m-14 text-sm">({{change|dict_value:'ogv_market_cap'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr>
+        <td class='text-start'><div class="m-14 text-lg">Average daily trading volume</div></td>
+        <td style="font-weight:bold;"><div class="m-14">${{report|class_value:'average_ogv_volume'}}</div></td>
+        <td style="font-weight:bold;"><div class="m-14 opacity-50">${{prev_report|class_value:'average_ogv_volume'}}</div></td>
+        <td><span style="{{change|dict_color_style:'average_ogv_volume'}}"><div class="m-14 text-sm">({{change|dict_value:'average_ogv_volume'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr>
+        <td class='text-start'><div class="m-14 text-lg">Amount staked</div></td>
+        <td style="font-weight:bold;"><div class="m-14">${{report|class_value:'amount_staked'}}</div></td>
+        <td style="font-weight:bold;"><div class="m-14 opacity-50">${{prev_report|class_value:'amount_staked'}}</div></td>
+        <td><span style="{{change|dict_color_style:'amount_staked'}}"><div class="m-14 text-sm">({{change|dict_value:'amount_staked'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr>
+        <td class='text-start'><div class="m-14 text-lg">Percentage staked</div></td>
+        <td style="font-weight:bold;"><div class="m-14">${{report|class_value:'percentage_staked'}}%</div></td>
+        <td style="font-weight:bold;"><div class="m-14 opacity-50">${{prev_report|class_value:'percentage_staked'}}%</div></td>
+        <td><span style="{{change|dict_color_style:'percentage_staked'}}"><div class="m-14 text-sm">({{change|dict_value:'percentage_staked'|floatformat_rnd_down:0}}bp)</div></span></td>
+      </tr>
+    </table>
+  </div>
   <style>
     .box {
       margin: 32px;
-      padding: 40px;
+      padding: 48px 40px 48px 40px;
       background-color: #F0F2F4;
-      max-width: 1162px;
+      border-radius: 8px;
+      font-family: Helvetica;
     }
 
-    .table {
-      margin: auto;
+    .wordmark {
+      width: 50%;
+      height: auto;
+    }
+
+    h1 {
+      font-size: 36px;
+      line-height: 40px;
+      font-weight: bold;
     }
 
     h2 {
-        margin-bottom: 20px;
+      font-size: 28px;
+      line-height: 32px;
+    }
+
+    h4 {
+      font-size: 20px;
+      line-height: 23px;
+    }
+
+    .logo {
+      width: 32px;
+      height: 32px;
+    }
+
+    .blue {
+      color: #0074F0;
     }
 
     .green {
@@ -32,91 +167,43 @@
     .value {
       text-align: right;
     }
+
+    .mt-8 {
+      margin-top: 16px;
+    }
+
+    .m-14 {
+      margin-top: 14px;
+      margin-bottom: 14px;
+    }
+
+    .table {
+      border-bottom: 1px solid #B5BECA;
+    }
+
+    table tr {
+      padding: 0; 
+      margin: 0;
+      font-size: 18px;
+      line-height: 20px;
+    }
+
+    .mt-32 {
+      margin-top: 32px;
+    }
+
+    .mt-48 {
+      margin-top: 48px;
+    }
+
+    .text-lg {
+      font-size: 24px;
+      line-height: 23px;
+    }
+
+    .text-sm {
+      font-size: 16px;
+      line-height: 18px;
+    }
   </style>
-  <div class="box">
-    <div>
-      <img src="/static/core/img/origin-dollar.svg" alt="origin dollar" />
-      <h2>{{type}} Analytics Report</h2>
-      <h4>
-          {% if type == 'Weekly' %}
-            For the week ending {{report.end_time}}
-          {% else %}
-            For the month ending {{report.end_time}}
-          {% endif %}
-      </h4>
-
-      <h2>
-        <img src="/static/core/img/ousd.svg" alt="ousd" />
-        OUSD
-      </h2>
-
-        <table class='value table'>
-          <tr>
-            <td class='text-start w-50'>Top indicators</td>
-            <td>w/e {{report.end_time|date:'d M'}}</td>
-            <td>w/e {{report.start_time|date:'d M'}}</td>
-            <td>Change</td>
-          </tr>
-          <tr>
-            <td class='text-start'>Total Supply</td>
-            <td>{{report|class_value:'total_supply'}}<span style="{{change|dict_color_style:'total_supply'}}"> ({{change|dict_value:'total_supply'|floatformat_rnd_down:1}}%)</span></td>
-            <td></td>
-          </tr>
-          {% for pool in report.pools %}
-          <tr>
-              <td class='text-start'>{{pool|dict_value:'name'}}</td>
-              <td>{{pool|dict_value:'amount'|floatformat_rnd_down:0}}</td>
-              {% if pool.is_rebasing %}
-                <td>Rebasing</td>
-              {% else %}
-                <td>Non Rebasing</td>
-              {% endif %}
-          </tr>
-          {% endfor %}
-          <tr>
-              <td class='text-start'>Remaining Rebasing</td>
-              <td>{{report|class_value:'other_rebasing'|floatformat_rnd_down:0}}<span style="{{change|dict_color_style:'other_rebasing'}}"> ({{change|dict_value:'other_rebasing'|floatformat_rnd_down:1}}%)</span></td>
-              <td>Rebasing</td>
-          </tr>
-          <tr>
-              <td class='text-start'>Remaining Non-rebasing</td>
-              <td>{{report|class_value:'other_non_rebasing'|floatformat_rnd_down:0}}<span style="{{change|dict_color_style:'other_non_rebasing'}}"> ({{change|dict_value:'other_non_rebasing'|floatformat_rnd_down:1}}%)</span></td>
-              <td>Non Rebasing</td>
-          </tr>
-        </table>
-
-      <table class="value table">
-        <tr>
-          <td class='text-start w-50' style="min-width:265px;font-weight:bold;">More details</td>
-          <td style="min-width:100px;font-weight:bold;">w/e {{report.end_time|date:'d M'}}</td>
-          <td style="min-width:100px;font-weight:bold;">w/e {{report.start_time|date:'d M'}}</td>
-          <td style="min-width:100px;font-weight:bold;">{{report.start_time}}</td>
-        </tr>
-          {% for statistic in stat_keys %}
-          <tr>
-              <td class='text-start'>{{stats|dict_value:statistic}}</td>
-              <td>{{report|class_value:statistic}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat_rnd_down:1}}%)</span></td>
-          </tr>
-          {% endfor %}
-      </table>
-
-      <h2>
-        <img src="/static/core/img/ousd.svg" alt="ousd" />
-        OUSD
-      </h2>
-
-      <table class="value table">
-        <tr>
-          <td class='text-start' style="min-width:265px;font-weight:bold;">Top indicators</td>
-          <td style="min-width:100px;font-weight:bold;">w/e {{report.end_time|date:'d M'}}</td>
-          <td style="min-width:100px;font-weight:bold;">w/e {{report.start_time|date:'d M'}}</td>
-          <td style="min-width:100px;font-weight:bold;">{{report.start_time}}</td>
-        </tr>
-          {% for statistic in curve_stats %}
-          <tr>
-              <td class='text-start'>{{curve_stats|dict_value:statistic}}</td>
-              <td>{{report|class_value:statistic|floatformat_rnd_down:2}}<span style="{{change|dict_color_style:statistic}}"> ({{change|dict_value:statistic|floatformat_rnd_down:1}}%)</span></td>
-          </tr>
-          {% endfor %}
-      </table>
 </div>

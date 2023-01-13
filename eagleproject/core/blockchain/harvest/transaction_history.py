@@ -27,14 +27,14 @@ from core.blockchain.rpc import (
 )
 from core.blockchain.rpc import (
     balanceOf,
-    totalSupply
+    totalSupply,
+    dripper_available
 )
 from core.blockchain.apy import (
     get_trailing_apy,
+    to_apy
 )
-from datetime import (
-    datetime,
-)
+import datetime
 
 from core.blockchain.const import (
     START_OF_EVERYTHING_TIME,
@@ -42,7 +42,8 @@ from core.blockchain.const import (
     curve_report_stats,
     E_18,
     START_OF_CURVE_CAMPAIGN_TIME,
-    START_OF_OUSD_V2
+    START_OF_OUSD_V2,
+    BLOCKS_PER_DAY,
 )
 
 from core.blockchain.utils import (
@@ -52,6 +53,8 @@ from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
     calculate_snapshot_data
 )
+
+from core.blockchain.harvest.blocks import ensure_block, ensure_day
 
 import calendar
 
@@ -65,6 +68,13 @@ from core.blockchain.addresses import (
     CONTRACT_ADDR_TO_NAME,
     CURVE_METAPOOL,
     CURVE_METAPOOL_GAUGE,
+    OGV,
+    VEOGV
+)
+
+from core.coingecko import (
+    get_coin_history,
+    get_stablecoin_market_cap
 )
 
 import simplejson as json
@@ -135,7 +145,11 @@ class analytics_report:
         accounts_with_non_rebase_balance_decrease,
         supply_data,
         apy,
-        curve_data
+        curve_data,
+        fees_generated,
+        average_ousd_volume,
+        stablecoin_market_share,
+        ogv_data
     ):
         self.accounts_analyzed = accounts_analyzed
         self.accounts_holding_ousd = accounts_holding_ousd
@@ -148,9 +162,13 @@ class analytics_report:
         self.supply_data = supply_data
         self.apy = apy
         self.curve_data = curve_data
+        self.fees_generated = fees_generated
+        self.average_ousd_volume = average_ousd_volume
+        self.stablecoin_market_share = stablecoin_market_share
+        self.ogv_data = ogv_data
 
     def __str__(self):
-        return 'Analytics report: accounts_analyzed: {} accounts_holding_ousd: {} accounts_holding_more_than_100_ousd: {} accounts_holding_more_than_100_ousd_after_curve_start: {} new_accounts: {} new_accounts_after_curve_start: {} accounts_with_non_rebase_balance_increase: {} accounts_with_non_rebase_balance_decrease: {} apy: {} supply_data: {} curve_data: {}'.format(self.accounts_analyzed, self.accounts_holding_ousd, self.accounts_holding_more_than_100_ousd, self.accounts_holding_more_than_100_ousd_after_curve_start, self.new_accounts, self.new_accounts_after_curve_start, self.accounts_with_non_rebase_balance_increase, self.accounts_with_non_rebase_balance_decrease, self.apy, self.supply_data, self.curve_data)
+        return 'Analytics report: accounts_analyzed: {} accounts_holding_ousd: {} accounts_holding_more_than_100_ousd: {} accounts_holding_more_than_100_ousd_after_curve_start: {} new_accounts: {} new_accounts_after_curve_start: {} accounts_with_non_rebase_balance_increase: {} accounts_with_non_rebase_balance_decrease: {} apy: {} supply_data: {} curve_data: {} fees_generated: {} average_ousd_volume: {} stablecoin_market_share: {} ogv_data: {}'.format(self.accounts_analyzed, self.accounts_holding_ousd, self.accounts_holding_more_than_100_ousd, self.accounts_holding_more_than_100_ousd_after_curve_start, self.new_accounts, self.new_accounts_after_curve_start, self.accounts_with_non_rebase_balance_increase, self.accounts_with_non_rebase_balance_decrease, self.apy, self.supply_data, self.curve_data, self.fees_generated, self.average_ousd_volume, self.stablecoin_market_share, self.ogv_data)
 
 class transaction_analysis:
     def __init__(
@@ -235,6 +253,15 @@ def calculate_report_change(current_report, previous_report):
         "other_non_rebasing": 0,
         "curve_metapool_total_supply": 0,
         "share_earning_curve_ogn": 0,
+        "fees_generated": 0,
+        "curve_supply": 0,
+        "average_ousd_volume": 0,
+        "stablecoin_market_share": 0,
+        "ogv_price": 0,
+        "ogv_market_cap": 0,
+        "average_ogv_volume": 0,
+        "amount_staked": 0,
+        "percentage_staked": 0,
     }
 
     def calculate_difference(current_stat, previous_stat):
@@ -242,6 +269,12 @@ def calculate_report_change(current_report, previous_report):
             return 0
 
         return (current_stat - previous_stat) / previous_stat * 100
+
+    def calculate_difference_bp(current_stat, previous_stat):
+        if previous_stat == 0 or previous_stat is None:
+            return 0
+
+        return (current_stat - previous_stat) * 100
 
     if previous_report is None:
         return changes
@@ -252,11 +285,14 @@ def calculate_report_change(current_report, previous_report):
     supply_data = json_report["supply_data"] if "supply_data" in json_report else None
     supply_data_previous = json_report_previous["supply_data"] if "supply_data" in json_report_previous else None
 
+    ogv_data = json_report["ogv_data"] if "ogv_data" in json_report else None
+    ogv_data_previous = json_report_previous["ogv_data"] if "ogv_data" in json_report_previous else None
+
     curve_data = json_report["curve_data"] if "curve_data" in json_report else None
     curve_data_previous = json_report_previous["curve_data"] if "curve_data" in json_report_previous else None
 
     changes['total_supply'] = calculate_difference(current_report.total_supply, previous_report.total_supply)
-    changes['apy'] = calculate_difference(current_report.apy, previous_report.apy)
+    changes['apy'] = calculate_difference_bp(current_report.apy, previous_report.apy)
     changes['accounts_analyzed'] = calculate_difference(current_report.accounts_analyzed, previous_report.accounts_analyzed)
     changes['accounts_holding_ousd'] = calculate_difference(current_report.accounts_holding_ousd, previous_report.accounts_holding_ousd)
     changes['accounts_holding_more_than_100_ousd'] = calculate_difference(current_report.accounts_holding_more_than_100_ousd, previous_report.accounts_holding_more_than_100_ousd)
@@ -265,6 +301,16 @@ def calculate_report_change(current_report, previous_report):
     changes['new_accounts_after_curve_start'] = calculate_difference(current_report.new_accounts_after_curve_start, previous_report.new_accounts_after_curve_start)
     changes['accounts_with_non_rebase_balance_increase'] = calculate_difference(current_report.accounts_with_non_rebase_balance_increase, previous_report.accounts_with_non_rebase_balance_increase)
     changes['accounts_with_non_rebase_balance_decrease'] = calculate_difference(current_report.accounts_with_non_rebase_balance_decrease, previous_report.accounts_with_non_rebase_balance_decrease)
+    changes['fees_generated'] = calculate_difference(current_report.fees_generated, previous_report.fees_generated)
+    changes['curve_supply'] = calculate_difference(current_report.curve_supply, previous_report.curve_supply)
+    changes['average_ousd_volume'] = calculate_difference(current_report.average_ousd_volume, previous_report.average_ousd_volume)
+    changes['stablecoin_market_share'] = calculate_difference_bp(current_report.stablecoin_market_share, previous_report.stablecoin_market_share)
+    changes['ogv_price'] = calculate_difference(current_report.ogv_price, previous_report.ogv_price)
+    changes['ogv_market_cap'] = calculate_difference(current_report.ogv_market_cap, previous_report.ogv_market_cap)
+    changes['average_ogv_volume'] = calculate_difference(current_report.average_ogv_volume, previous_report.average_ogv_volume)
+    changes['amount_staked'] = calculate_difference(current_report.amount_staked, previous_report.amount_staked)
+    changes['percentage_staked'] = calculate_difference_bp(current_report.percentage_staked, previous_report.percentage_staked)
+
     if supply_data is not None and supply_data_previous is not None:
         changes['other_rebasing'] = calculate_difference(supply_data['other_rebasing'], supply_data_previous['other_rebasing'])
         changes['other_non_rebasing'] = calculate_difference(supply_data['other_non_rebasing'], supply_data_previous['other_non_rebasing'])
@@ -284,8 +330,8 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
         "block_end": block_end_number,
         "start_time": start_time,
         "end_time": end_time,
-        "created_at": datetime.now(),
-        "updated_at": datetime.now(),
+        "created_at": datetime.datetime.now(),
+        "updated_at": datetime.datetime.now(),
         "status": status,
         "accounts_analyzed": report.accounts_analyzed if report is not None else 0,
         "accounts_holding_ousd": report.accounts_holding_ousd if report is not None else 0,
@@ -341,9 +387,9 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
     return analyticsReport
 
 def create_time_interval_report_for_previous_week(week_override, do_only_transaction_analytics = False):
-    year_number = datetime.now().year
+    year_number = datetime.datetime.now().year
     # number of the week in a year - for the previous week
-    week_number = week_override if week_override is not None else int(datetime.now().strftime("%W")) - 1
+    week_number = week_override if week_override is not None else int(datetime.datetime.now().strftime("%W")) - 1
 
     if week_override is None and not should_create_new_report(year_number, None, week_number):
         print("Report for year: {} and week: {} does not need creation".format(year_number, week_number))
@@ -353,9 +399,9 @@ def create_time_interval_report_for_previous_week(week_override, do_only_transac
     week_interval = "{year}-W{week}".format(year = year_number, week=week_number)
 
     # Monday of selected week
-    start_time = datetime.strptime(week_interval + '-1', "%Y-W%W-%w")
+    start_time = datetime.datetime.strptime(week_interval + '-1', "%Y-W%W-%w")
     # Sunday of selected week
-    end_time = datetime.strptime(week_interval + '-0', "%Y-W%W-%w").replace(hour=23, minute=59, second=59)
+    end_time = datetime.datetime.strptime(week_interval + '-0', "%Y-W%W-%w").replace(hour=23, minute=59, second=59)
 
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
@@ -428,7 +474,7 @@ def should_create_new_report(year, month_option, week_option):
             return False
 
         # in seconds
-        report_age = (datetime.now() - existing_report.updated_at.replace(tzinfo=None)).total_seconds()
+        report_age = (datetime.datetime.now() - existing_report.updated_at.replace(tzinfo=None)).total_seconds()
 
         # report might still be processing
         if report_age < 3 * 60 * 60:
@@ -438,8 +484,8 @@ def should_create_new_report(year, month_option, week_option):
 
 def create_time_interval_report_for_previous_month(month_override, do_only_transaction_analytics = False):
     # number of the month in a year - for the previous month
-    month_number = month_override if month_override is not None else int(datetime.now().strftime("%m")) - 1
-    year_number = datetime.now().year + (-1 if month_number == 12 else 0)
+    month_number = month_override if month_override is not None else int(datetime.datetime.now().strftime("%m")) - 1
+    year_number = datetime.datetime.now().year + (-1 if month_number == 12 else 0)
 
     if month_override is None and not should_create_new_report(year_number, month_number, None):
         print("Report for year: {} and month: {} does not need creation".format(year_number, month_number))
@@ -450,9 +496,9 @@ def create_time_interval_report_for_previous_month(month_override, do_only_trans
     (start_day, end_day) = calendar.monthrange(year_number, month_number)
 
     # Monday of selected week
-    start_time = datetime.strptime(month_interval + '-1', "%Y-m%m-%d")
+    start_time = datetime.datetime.strptime(month_interval + '-1', "%Y-m%m-%d")
     # Sunday of selected week
-    end_time = datetime.strptime(month_interval + '-{}'.format(end_day), "%Y-m%m-%d").replace(hour=23, minute=59, second=59)
+    end_time = datetime.datetime.strptime(month_interval + '-{}'.format(end_day), "%Y-m%m-%d").replace(hour=23, minute=59, second=59)
 
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
@@ -529,6 +575,26 @@ def fetch_supply_data(block_number):
         'other_non_rebasing': other_non_rebasing,
     }
 
+def fetch_ogv_data(to_block, from_timestamp, to_timestamp):
+    ogv_history = get_coin_history('OGV', from_timestamp, to_timestamp)
+    index = len(ogv_history['prices']) - 1
+
+    price = ogv_history['prices'][index][1]
+    market_cap = ogv_history['market_caps'][index][1]
+    volume = ogv_history['total_volumes'][index][1]
+
+    amount_staked = balanceOf(OGV, VEOGV, 18, to_block)
+    total_supply = totalSupply(OGV, 18, to_block)
+    percentage_staked = (amount_staked / total_supply) * 100
+
+    return {
+        'price': price,
+        'market_cap': market_cap,
+        'volume': volume,
+        'amount_staked': amount_staked,
+        'percentage_staked': percentage_staked,
+    }
+
 def get_curve_data(to_block):
     balance = balanceOf(CURVE_METAPOOL, CURVE_METAPOOL_GAUGE, 18, to_block)
     supply = totalSupply(CURVE_METAPOOL, 18, to_block)
@@ -551,9 +617,50 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     rebase_logs = get_rebase_logs(from_block, to_block)
     analysis_list = []
 
+    from_timestamp = int(from_block_time.strftime('%s'))
+    to_timestamp = int(to_block_time.strftime('%s'))
+
     supply_data = fetch_supply_data(to_block)
     apy = get_trailing_apy(to_block)
     curve_data = get_curve_data(to_block)
+    ogv_data = fetch_ogv_data(to_block, from_timestamp, to_timestamp)
+
+    stablecoin_market_cap_history = get_stablecoin_market_cap()
+
+    stablecoin_market_cap = 0
+    for x in reversed(stablecoin_market_cap_history):
+        if int(x['date']) <= to_timestamp:
+            stablecoin_market_cap = x['totalCirculatingUSD']['peggedUSD']
+            break
+
+    days = (to_block_time - from_block_time).days + 1
+
+    rows = _daily_rows(days, to_block)
+    gain = 0
+    for row in rows:
+        gain += row.gain
+    fees_generated = gain / 10
+
+    ousd_history = get_coin_history('OUSD', from_timestamp, to_timestamp)
+    ousd_market_cap_history = ousd_history['market_caps']
+    ousd_volume_history = ousd_history['total_volumes']
+    index = len(ousd_market_cap_history) - 1
+
+    ousd_market_cap = ousd_market_cap_history[index][1]
+
+    ousd_market_cap = 0
+    for x in reversed(ousd_market_cap_history):
+        if x[0] / 1000 <= to_timestamp:
+            ousd_market_cap = x[1]
+            break
+
+    stablecoin_market_share = (ousd_market_cap / stablecoin_market_cap) * 100
+
+    volume_sum = 0
+    for x in ousd_volume_history:
+        volume_sum += x[1]
+
+    average_ousd_volume = volume_sum / len(ousd_volume_history)
 
     # Uncomment this to enable parallelism
     # manager = Manager()
@@ -603,7 +710,11 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         accounts_with_non_rebase_balance_decrease,
         supply_data,
         apy,
-        curve_data
+        curve_data,
+        fees_generated,
+        average_ousd_volume,
+        stablecoin_market_share,
+        ogv_data
     )
 
     # set the values back again
@@ -973,6 +1084,7 @@ def send_report_email(summary, report, prev_report, report_type):
     e = Email(summary, "test", render_to_string('analytics_report_email.html', {
         'type': report_type,
         'report': report,
+        'prev_report': prev_report,
         'change': calculate_report_change(report, prev_report),
         'stats': report_stats,
         'stat_keys': report_stats.keys(),
@@ -1012,3 +1124,70 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     balance_logs = enrich_transfer_logs(balance_logs)
     return (ensure_ousd_balance(credit_balance, balance_logs), previous_transfer_logs, ousd_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
     
+def _daily_rows(steps, latest_block_number):
+    # Blocks to display
+    # ...this could be a bit more efficient if we pre-loaded the days and blocks in
+    # on transaction, then only ensured the missing ones.
+    block_numbers = [latest_block_number]  # Start with today so far
+    today = datetime.datetime.utcnow()
+    if today.hour < 8:
+        # No rebase guaranteed yet on this UTC day
+        today = (today - datetime.timedelta(seconds=24 * 60 * 60)).replace(
+            tzinfo=datetime.timezone.utc
+        )
+    selected = datetime.datetime(today.year, today.month, today.day).replace(
+        tzinfo=datetime.timezone.utc
+    )
+    for i in range(0, steps + 1):
+        day = ensure_day(selected)
+        block_numbers.append(day.block_number)
+        selected = (
+            selected - datetime.timedelta(seconds=24 * 60 * 60)
+        ).replace(tzinfo=datetime.timezone.utc)
+    # Deduplicate list and preserving order.
+    # Sometimes latest_block_number supplied to the function and latest day block_number are the same block
+    # Triggering division by 0 in the code below
+    block_numbers = list(dict.fromkeys(block_numbers))
+    block_numbers.reverse()
+
+    # Snapshots for each block
+    rows = []
+    last_snapshot = None
+    for block_number in block_numbers:
+        if block_number < START_OF_OUSD_V2:
+            continue
+        block = ensure_block(block_number)
+        s = ensure_supply_snapshot(block_number)
+        s.block_number = block_number
+        s.block_time = block.block_time
+        s.effective_day = (
+            block.block_time - datetime.timedelta(seconds=24 * 60 * 60)
+        ).replace(tzinfo=datetime.timezone.utc)
+        if last_snapshot:
+            blocks = s.block_number - last_snapshot.block_number
+            change = (
+                (
+                    s.rebasing_credits_per_token
+                    / last_snapshot.rebasing_credits_per_token
+                )
+                - Decimal(1)
+            ) * -1
+            s.apr = (
+                Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
+            )
+            s.apy = to_apy(s.apr, 1)
+            s.unboosted = to_apy(
+                (s.computed_supply - s.non_rebasing_supply)
+                / s.computed_supply
+                * s.apr,
+                1,
+            )
+            s.gain = change * (s.computed_supply - s.non_rebasing_supply)
+        rows.append(s)
+        last_snapshot = s
+    rows.reverse()
+    # drop last row with incomplete information
+    rows = rows[:-1]
+    # Add dripper funds to today so far
+    rows[0].gain += dripper_available()
+    return rows

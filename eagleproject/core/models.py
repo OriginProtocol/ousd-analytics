@@ -369,7 +369,7 @@ class AnalyticsReport(models.Model):
     # Number of accounts that have increased their OUSD holdings ignoring rebases
     accounts_with_non_rebase_balance_increase = models.IntegerField()
     # Number of accounts that have decreased their OUSD holdings ignoring rebases
-    accounts_with_non_rebase_balance_decrease = models.IntegerField()
+    accounts_with_non_rebase_balance_decrease = models.IntegerField() 
 
     # Contains any info that didn't fit into other reporting stats
     report = models.JSONField(default=list)
@@ -381,9 +381,27 @@ class AnalyticsReport(models.Model):
         report_json = json.loads(str(self.report))
         if name == "total_supply":
             return (
-                round(report_json["supply_data"]["total_supply"], 2)
+                int(report_json["supply_data"]["total_supply"])
                 if "supply_data" in report_json
                 else None
+            )
+        elif name == "stablecoin_market_share":
+            return (
+                round(report_json["stablecoin_market_share"], 4)
+            )
+        elif name == "fees_generated":
+            return (
+                int(report_json["fees_generated"])
+            )
+        elif name == "curve_supply":
+            return (
+                int(report_json["supply_data"]["pools"][0]['amount'])
+                if "supply_data" in report_json
+                else None
+            )
+        elif name == "average_ousd_volume":
+            return (
+                int(report_json["average_ousd_volume"])
             )
         elif name == "curve_metapool_total_supply":
             return (
@@ -415,6 +433,36 @@ class AnalyticsReport(models.Model):
             return (
                 report_json["supply_data"]["other_non_rebasing"]
                 if "supply_data" in report_json
+                else []
+            )
+        elif name == "ogv_price":
+            return (
+                round(report_json["ogv_data"]["price"], 6)
+                if "ogv_data" in report_json
+                else []
+            )
+        elif name == "ogv_market_cap":
+            return (
+                int(report_json["ogv_data"]["market_cap"])
+                if "ogv_data" in report_json
+                else []
+            )
+        elif name == "average_ogv_volume":
+            return (
+                int(report_json["ogv_data"]["volume"])
+                if "ogv_data" in report_json
+                else []
+            )
+        elif name == "amount_staked":
+            return (
+                int(report_json["ogv_data"]["amount_staked"])
+                if "ogv_data" in report_json
+                else []
+            )
+        elif name == "percentage_staked":
+            return (
+                round(report_json["ogv_data"]["percentage_staked"], 2)
+                if "ogv_data" in report_json
                 else []
             )
 
