@@ -34,7 +34,7 @@ from core.blockchain.apy import (
     get_trailing_apy,
     to_apy
 )
-import datetime
+from datetime import ( datetime, timedelta, timezone )
 
 from core.blockchain.const import (
     START_OF_EVERYTHING_TIME,
@@ -72,10 +72,8 @@ from core.blockchain.addresses import (
     VEOGV
 )
 
-from core.coingecko import (
-    get_coin_history,
-    get_stablecoin_market_cap
-)
+from core.coingecko import get_coin_history
+from core.defillama import get_stablecoin_market_cap
 
 import simplejson as json
 
@@ -330,8 +328,8 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
         "block_end": block_end_number,
         "start_time": start_time,
         "end_time": end_time,
-        "created_at": datetime.datetime.now(),
-        "updated_at": datetime.datetime.now(),
+        "created_at": datetime.now(),
+        "updated_at": datetime.now(),
         "status": status,
         "accounts_analyzed": report.accounts_analyzed if report is not None else 0,
         "accounts_holding_ousd": report.accounts_holding_ousd if report is not None else 0,
@@ -387,9 +385,9 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
     return analyticsReport
 
 def create_time_interval_report_for_previous_week(week_override, do_only_transaction_analytics = False):
-    year_number = datetime.datetime.now().year
+    year_number = datetime.now().year
     # number of the week in a year - for the previous week
-    week_number = week_override if week_override is not None else int(datetime.datetime.now().strftime("%W")) - 1
+    week_number = week_override if week_override is not None else int(datetime.now().strftime("%W")) - 1
 
     if week_override is None and not should_create_new_report(year_number, None, week_number):
         print("Report for year: {} and week: {} does not need creation".format(year_number, week_number))
@@ -399,9 +397,9 @@ def create_time_interval_report_for_previous_week(week_override, do_only_transac
     week_interval = "{year}-W{week}".format(year = year_number, week=week_number)
 
     # Monday of selected week
-    start_time = datetime.datetime.strptime(week_interval + '-1', "%Y-W%W-%w")
+    start_time = datetime.strptime(week_interval + '-1', "%Y-W%W-%w")
     # Sunday of selected week
-    end_time = datetime.datetime.strptime(week_interval + '-0', "%Y-W%W-%w").replace(hour=23, minute=59, second=59)
+    end_time = datetime.strptime(week_interval + '-0', "%Y-W%W-%w").replace(hour=23, minute=59, second=59)
 
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
@@ -474,7 +472,7 @@ def should_create_new_report(year, month_option, week_option):
             return False
 
         # in seconds
-        report_age = (datetime.datetime.now() - existing_report.updated_at.replace(tzinfo=None)).total_seconds()
+        report_age = (datetime.now() - existing_report.updated_at.replace(tzinfo=None)).total_seconds()
 
         # report might still be processing
         if report_age < 3 * 60 * 60:
@@ -484,8 +482,8 @@ def should_create_new_report(year, month_option, week_option):
 
 def create_time_interval_report_for_previous_month(month_override, do_only_transaction_analytics = False):
     # number of the month in a year - for the previous month
-    month_number = month_override if month_override is not None else int(datetime.datetime.now().strftime("%m")) - 1
-    year_number = datetime.datetime.now().year + (-1 if month_number == 12 else 0)
+    month_number = month_override if month_override is not None else int(datetime.now().strftime("%m")) - 1
+    year_number = datetime.now().year + (-1 if month_number == 12 else 0)
 
     if month_override is None and not should_create_new_report(year_number, month_number, None):
         print("Report for year: {} and month: {} does not need creation".format(year_number, month_number))
@@ -496,9 +494,9 @@ def create_time_interval_report_for_previous_month(month_override, do_only_trans
     (start_day, end_day) = calendar.monthrange(year_number, month_number)
 
     # Monday of selected week
-    start_time = datetime.datetime.strptime(month_interval + '-1', "%Y-m%m-%d")
+    start_time = datetime.strptime(month_interval + '-1', "%Y-m%m-%d")
     # Sunday of selected week
-    end_time = datetime.datetime.strptime(month_interval + '-{}'.format(end_day), "%Y-m%m-%d").replace(hour=23, minute=59, second=59)
+    end_time = datetime.strptime(month_interval + '-{}'.format(end_day), "%Y-m%m-%d").replace(hour=23, minute=59, second=59)
 
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
@@ -576,16 +574,21 @@ def fetch_supply_data(block_number):
     }
 
 def fetch_ogv_data(to_block, from_timestamp, to_timestamp):
-    ogv_history = get_coin_history('OGV', from_timestamp, to_timestamp)
-    index = len(ogv_history['prices']) - 1
+    try:
+        ogv_history = get_coin_history('OGV', from_timestamp, to_timestamp)
+        index = len(ogv_history['prices']) - 1
 
-    price = ogv_history['prices'][index][1]
-    market_cap = ogv_history['market_caps'][index][1]
-    volume = ogv_history['total_volumes'][index][1]
+        price = ogv_history['prices'][index][1]
+        market_cap = ogv_history['market_caps'][index][1]
+        volume = ogv_history['total_volumes'][index][1]
 
-    amount_staked = balanceOf(OGV, VEOGV, 18, to_block)
-    total_supply = totalSupply(OGV, 18, to_block)
-    percentage_staked = (amount_staked / total_supply) * 100
+        amount_staked = balanceOf(OGV, VEOGV, 18, to_block)
+        total_supply = totalSupply(OGV, 18, to_block)
+        percentage_staked = (amount_staked / total_supply) * 100
+    except:
+        raise Exception(
+            "Failed to fetch OGV data"
+        )
 
     return {
         'price': price,
@@ -1129,21 +1132,21 @@ def _daily_rows(steps, latest_block_number):
     # ...this could be a bit more efficient if we pre-loaded the days and blocks in
     # on transaction, then only ensured the missing ones.
     block_numbers = [latest_block_number]  # Start with today so far
-    today = datetime.datetime.utcnow()
+    today = datetime.utcnow()
     if today.hour < 8:
         # No rebase guaranteed yet on this UTC day
-        today = (today - datetime.timedelta(seconds=24 * 60 * 60)).replace(
-            tzinfo=datetime.timezone.utc
+        today = (today - timedelta(seconds=24 * 60 * 60)).replace(
+            tzinfo=timezone.utc
         )
-    selected = datetime.datetime(today.year, today.month, today.day).replace(
-        tzinfo=datetime.timezone.utc
+    selected = datetime(today.year, today.month, today.day).replace(
+        tzinfo=timezone.utc
     )
     for i in range(0, steps + 1):
         day = ensure_day(selected)
         block_numbers.append(day.block_number)
         selected = (
-            selected - datetime.timedelta(seconds=24 * 60 * 60)
-        ).replace(tzinfo=datetime.timezone.utc)
+            selected - timedelta(seconds=24 * 60 * 60)
+        ).replace(tzinfo=timezone.utc)
     # Deduplicate list and preserving order.
     # Sometimes latest_block_number supplied to the function and latest day block_number are the same block
     # Triggering division by 0 in the code below
@@ -1161,8 +1164,8 @@ def _daily_rows(steps, latest_block_number):
         s.block_number = block_number
         s.block_time = block.block_time
         s.effective_day = (
-            block.block_time - datetime.timedelta(seconds=24 * 60 * 60)
-        ).replace(tzinfo=datetime.timezone.utc)
+            block.block_time - timedelta(seconds=24 * 60 * 60)
+        ).replace(tzinfo=timezone.utc)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
             change = (
