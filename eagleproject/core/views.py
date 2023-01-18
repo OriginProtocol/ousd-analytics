@@ -45,6 +45,7 @@ from core.blockchain.harvest.transaction_history import (
     calculate_report_change,
     send_report_email,
     get_history_for_address,
+    _daily_rows
 )
 
 from core.blockchain.rpc import (
@@ -90,9 +91,7 @@ def dashboard(request):
 
     comp = ensure_asset("COMP", block_number)
 
-    apy = get_trailing_apy(days=365)
-    if apy < 0:
-        apy = 0
+    apy = 0
 
     assets = fetch_assets(block_number)
     assets.append(comp)
@@ -613,10 +612,10 @@ def _my_assets(address, block_number):
     }
 
 
-# def test_email(request):
-#     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
-#     return HttpResponse("ok")
+#  def test_email(request):
+#      weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+#      send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#      return HttpResponse("ok")
 
 
 def api_address_history(request, address):
@@ -838,73 +837,7 @@ def _cache(seconds, response):
     return response
 
 
-def _daily_rows(steps, latest_block_number):
-    # Blocks to display
-    # ...this could be a bit more efficient if we pre-loaded the days and blocks in
-    # on transaction, then only ensured the missing ones.
-    block_numbers = [latest_block_number]  # Start with today so far
-    today = datetime.datetime.utcnow()
-    if today.hour < 8:
-        # No rebase guaranteed yet on this UTC day
-        today = (today - datetime.timedelta(seconds=24 * 60 * 60)).replace(
-            tzinfo=datetime.timezone.utc
-        )
-    selected = datetime.datetime(today.year, today.month, today.day).replace(
-        tzinfo=datetime.timezone.utc
-    )
-    for i in range(0, steps + 1):
-        day = ensure_day(selected)
-        block_numbers.append(day.block_number)
-        selected = (
-            selected - datetime.timedelta(seconds=24 * 60 * 60)
-        ).replace(tzinfo=datetime.timezone.utc)
-    # Deduplicate list and preserving order.
-    # Sometimes latest_block_number supplied to the function and latest day block_number are the same block
-    # Triggering division by 0 in the code below
-    block_numbers = list(dict.fromkeys(block_numbers))
-    block_numbers.reverse()
 
-    # Snapshots for each block
-    rows = []
-    last_snapshot = None
-    for block_number in block_numbers:
-        if block_number < START_OF_OUSD_V2:
-            continue
-        block = ensure_block(block_number)
-        s = ensure_supply_snapshot(block_number)
-        s.block_number = block_number
-        s.block_time = block.block_time
-        s.effective_day = (
-            block.block_time - datetime.timedelta(seconds=24 * 60 * 60)
-        ).replace(tzinfo=datetime.timezone.utc)
-        if last_snapshot:
-            blocks = s.block_number - last_snapshot.block_number
-            change = (
-                (
-                    s.rebasing_credits_per_token
-                    / last_snapshot.rebasing_credits_per_token
-                )
-                - Decimal(1)
-            ) * -1
-            s.apr = (
-                Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
-            )
-            s.apy = to_apy(s.apr, 1)
-            s.unboosted = to_apy(
-                (s.computed_supply - s.non_rebasing_supply)
-                / s.computed_supply
-                * s.apr,
-                1,
-            )
-            s.gain = change * (s.computed_supply - s.non_rebasing_supply)
-        rows.append(s)
-        last_snapshot = s
-    rows.reverse()
-    # drop last row with incomplete information
-    rows = rows[:-1]
-    # Add dripper funds to today so far
-    rows[0].gain += dripper_available()
-    return rows
 
 
 def staking_stats(request):

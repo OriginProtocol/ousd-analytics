@@ -175,13 +175,10 @@ TRUE_256BIT = (
 )
 
 report_stats = {
-    "apy": "Apy",
-    "accounts_analyzed": "Accounts processed",
-    "accounts_holding_ousd": "Accounts holding OUSD",
+    "fees_generated": "Fees generated",
     "accounts_holding_more_than_100_ousd": "Accounts holding over 100 OUSD",
-    "new_accounts": "New (first time seen) accounts",
-    "accounts_with_non_rebase_balance_increase": "Accounts with balance increased",
-    "accounts_with_non_rebase_balance_decrease": "Accounts with balance decreased",
+    "curve_supply": "Curve pool supply",
+    "average_ousd_volume": "Average daily trading volume"
 }
 
 curve_report_stats = {
