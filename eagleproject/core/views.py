@@ -91,7 +91,9 @@ def dashboard(request):
 
     comp = ensure_asset("COMP", block_number)
 
-    apy = 0
+    apy = get_trailing_apy(days=365)
+    if apy < 0:
+        apy = 0
 
     assets = fetch_assets(block_number)
     assets.append(comp)
