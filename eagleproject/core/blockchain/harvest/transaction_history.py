@@ -789,7 +789,7 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
 
         logs = Log.objects.filter(transaction_hash=transaction.tx_hash)
         account_starting_tx = transaction.receipt_data["from"]
-        contract_address = transaction.receipt_data["to"]
+        contract_address = transaction.receipt_data.get("to")
         internal_transactions = transaction.internal_transactions
         received_eth = len(list(filter(lambda tx: tx["to"] == account and float(tx["value"]) > 0, internal_transactions))) > 0
         sent_eth = transaction.data['value'] != '0x0'
