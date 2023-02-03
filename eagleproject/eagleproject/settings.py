@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "abi",
     "core",
     "notify",
+    "gtm",
 ]
 
 MIDDLEWARE = [
@@ -213,3 +214,5 @@ OGN_DISCORD_WEBHOOK_URL = os.environ.get(
 DISCORD_WEBHOOK_AT = os.environ.get("DISCORD_WEBHOOK_AT")
 
 ETHERSCAN_API_KEY = os.environ.get("ETHERSCAN_API_KEY")
+
+GOOGLE_TAG_ID = os.environ.get("GOOGLE_TAG_ID")
