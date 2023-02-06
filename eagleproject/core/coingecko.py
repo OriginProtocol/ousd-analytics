@@ -9,6 +9,7 @@ COINGECKO_ENDPOINT = "https://api.coingecko.com/api/v3"
 TICKER_TO_COINGECKO_ID = {
     "OGN": "origin-protocol",
     "OUSD": "origin-dollar",
+    "OGV": "origin-dollar-governance",
 }
 
 
@@ -40,3 +41,26 @@ def get_price(ticker, currencies=["usd"]):
         )
 
     return r.json().get(coingecko_id)
+
+def get_coin_history(ticker, from_timestamp, to_timestamp):
+    coingecko_id = TICKER_TO_COINGECKO_ID.get(ticker)
+
+    uri = "{}/coins/{}/market_chart/range?vs_currency=usd&from={}&to={}".format(
+        COINGECKO_ENDPOINT,
+        coingecko_id,
+        from_timestamp,
+        to_timestamp
+    )
+
+    log.debug("Fetching average volume data from {}".format(uri))
+
+    r = requests.get(uri)
+
+    if r.status_code != 200:
+        raise Exception(
+            "Failed to fetch ({}) volume data list from CoinGecko".format(
+                r.status_code
+            )
+        )
+
+    return r.json()

@@ -56,7 +56,7 @@ STRATEGIES = {
     "ICON_NAME": "comp-icon.svg",
   },
   "threepoolstrat_holding": {
-    "NAME": "Convex Strategy",
+    "NAME": "Convex DAI+USDC+USDT",
     "ADDRESS": STRATCONVEX,
     "HARDCODED": True,
     "HIDDEN": True,
@@ -79,7 +79,7 @@ STRATEGIES = {
     "ICON_NAME": "morpho.png",
   },
   "ousd_metastrat": {
-    "NAME": "OUSD MetaStrategy",
+    "NAME": "Convex OUSD+3Crv",
     "ADDRESS": OUSD_METASTRAT,
     "FROM_BLOCK": 15896478,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "OUSD"),

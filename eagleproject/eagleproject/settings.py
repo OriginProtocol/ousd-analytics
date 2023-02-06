@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "abi",
     "core",
     "notify",
+    "gtm",
 ]
 
 MIDDLEWARE = [
@@ -221,3 +222,5 @@ TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
 TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
 TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER")
 TWILIO_TO = os.environ.get("TWILIO_TO")
+
+GOOGLE_TAG_ID = os.environ.get("GOOGLE_TAG_ID")
