@@ -5,3 +5,4 @@ eagle-python
 cloud_sql_proxy
 **/.DS_Store
 eagleproject/entrypoint.sh
+venv

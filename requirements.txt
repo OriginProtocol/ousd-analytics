@@ -53,7 +53,7 @@ sqlparse==0.4.2
 toml==0.10.1
 toolz==0.10.0
 twilio==7.15.3
-typed-ast==1.4.1
+typed-ast==1.5.4
 typing-extensions==3.7.4.3
 urllib3==1.26.11
 varint==1.0.2
