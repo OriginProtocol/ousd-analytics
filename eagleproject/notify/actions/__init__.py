@@ -1,5 +1,5 @@
 from core.common import Severity
-from notify.actions.objects import SEVERITY_COLOR, Email, DiscordWebhook
+from notify.actions.objects import SEVERITY_COLOR, Email, DiscordWebhook, Twilio
 
 
 def create_all_actions(*args, **kwargs):
@@ -23,6 +23,10 @@ def create_actions_from_events(events):
         # TODO: Make this configurable?
         if ev.severity > Severity.NORMAL:
             email_events.append(ev)
+            actions.append(Twilio(
+                summary=ev.title,
+                details=ev.details,
+            ))
 
         # Everything goes to the webhook
         actions.append(DiscordWebhook(
