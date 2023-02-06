@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "core",
     "notify",
     "gtm",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
