@@ -1,5 +1,4 @@
 {% load blockchain %}
-{% load static %}
 
 <head>
   <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -7,7 +6,7 @@
 
 <div>
   <div style="max-width:576px;margin: 32px 32px 32px 0;padding: 48px 40px 48px 40px;border-radius: 8px;font-family: Helvetica;background-color:#F0F2F4;font-size: 12px;line-height: 13px;">
-    <img src="{{STATIC_ROOT}} /static/core/img/origin-dollar.png" alt="origin dollar" style="width: 50%;height: auto;" />
+    <img src="https://analytics.ousd.com/static/core/img/origin-dollar.png" alt="origin dollar" style="width: 50%;height: auto;" />
     <h1 style="margin-top: 48px;font-size: 24px;line-height: 28px;font-weight: bold;">Analytics Report</h1>
     <h4 style="margin-top:16px;font-size: 14px;line-height: 16px;">
         {% if type == 'Weekly' %}
@@ -18,9 +17,9 @@
         UTC.
     </h4>
 
-    <h2 class="d-flex flex-row gap-2" style="margin-top: 48px;font-size: 20px;line-height: 23px;font-weight:bold;">
-      <img src="{{STATIC_ROOT}} /static/core/img/ousd.png" alt="ousd" style="width: 32px;height: 32px;" />
-      OUSD
+    <h2 style="display:flex;flex-direction:row;align-items:center;margin-top: 48px;font-size: 20px;line-height: 23px;font-weight:bold;">
+      <img src="https://analytics.ousd.com/static/core/img/ousd.png" alt="ousd" style="width: 32px;height: 32px;padding-right:6px;" />
+      <div style="display:inline;padding-top:5px">OUSD</div>
     </h2>
 
     <table class='p-0' style="margin-top: 32px;text-align:right;border-collapse: collapse;">
@@ -73,10 +72,11 @@
         
     </table>
 
-    <h2 class="d-flex flex-row gap-2" style="margin-top: 48px;font-size: 20px;line-height: 23px;font-weight:bold;">
-      <img src="{{STATIC_ROOT}} /static/core/img/ogv.png" alt="ogv" style="width: 32px;height: 32px;" />
-      OGV
-      <span style="font-weight:normal;">(Origin Dollar Governance)</span>
+    <h2 style="display:flex;flex-direction:row;align-items:center;margin-top: 48px;font-size: 20px;line-height: 23px;font-weight:bold;">
+      <img src="https://analytics.ousd.com/static/core/img/ogv.png" alt="ogv" style="width: 32px;height: 32px;padding-right:6px;" />
+      <div style="display:inline;padding-top:5px">
+        OGV
+        <span style="font-weight:normal;">(Origin Dollar Governance)</span></div>
     </h2>
 
     <table style="margin-top: 32px;border-bottom: 1px solid #B5BECA;text-align:right;border-collapse: collapse;">
