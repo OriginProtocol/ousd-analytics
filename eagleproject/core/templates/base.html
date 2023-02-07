@@ -1,6 +1,9 @@
+{% load gtm_tags %}
+
 <html>
 
 <head>
+    {% gtm_head %}
     <title>{% block title %}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
@@ -187,6 +190,7 @@
 </head>
 
 <body>
+    {% gtm_body %}
     <!-- Bootstrap core JavaScript -->
     <script src="/static/vendor/jquery/jquery-3.6.0.min.js"></script>
     <script src="/static/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
