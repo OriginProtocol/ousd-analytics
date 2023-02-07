@@ -29,8 +29,8 @@ env = environ.Env(
     SENTRY_DSN=(str, None),
     APP_ENV=(str, "local"),
 )
-if env("APP_ENV") != "staging":
-    # Staging is on heroku and doesn't use dotenv
+if env("APP_ENV") == "local":
+    # Staging and Prod on heroku don't use dotenv
     env_file = Path(__file__).resolve().parent.joinpath(".env")
     environ.Env.read_env(env.str("ENV_PATH", str(env_file)))
 
