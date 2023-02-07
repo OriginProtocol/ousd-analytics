@@ -27,12 +27,9 @@ env = environ.Env(
     DEBUG=(bool, False),
     DATABASE_HOST_OVERRIDE=(str, None),
     SENTRY_DSN=(str, None),
-    APP_ENV=(str, "local"),
 )
-if env("APP_ENV") != "staging":
-    # Staging is on heroku and doesn't use dotenv
-    env_file = Path(__file__).resolve().parent.joinpath(".env")
-    environ.Env.read_env(env.str("ENV_PATH", str(env_file)))
+env_file = Path(__file__).resolve().parent.joinpath(".env")
+environ.Env.read_env(env.str("ENV_PATH", str(env_file)))
 
 SENTRY_DSN = env("SENTRY_DSN")
 
@@ -74,8 +71,6 @@ INSTALLED_APPS = [
     "abi",
     "core",
     "notify",
-    "gtm",
-    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -101,6 +96,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "eagleproject.context_processors.gtm",
             ],
         },
     },
@@ -195,8 +191,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = "static/"
-STATIC_ROOT = os.path.join(BASE_DIR, "core/static")
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 REPORT_RECEIVER_EMAIL_LIST = os.environ.get("REPORT_RECEIVER_EMAIL_LIST")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
@@ -218,10 +214,5 @@ OGN_DISCORD_WEBHOOK_URL = os.environ.get(
 DISCORD_WEBHOOK_AT = os.environ.get("DISCORD_WEBHOOK_AT")
 
 ETHERSCAN_API_KEY = os.environ.get("ETHERSCAN_API_KEY")
-
-TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
-TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
-TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER")
-TWILIO_TO = os.environ.get("TWILIO_TO")
 
 GOOGLE_TAG_ID = os.environ.get("GOOGLE_TAG_ID")
