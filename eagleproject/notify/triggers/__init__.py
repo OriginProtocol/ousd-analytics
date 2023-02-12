@@ -54,10 +54,12 @@ THIS_DIR = ME.parent
 ONLY_RUN_TRIGGER = os.environ.get("ONLY_RUN_TRIGGER")
 SKIP_TRIGGERS = [
     "noop",
-    "assetblock_holdings",
     # TODO: Maybe add these back when Aave v2 snapshots added
     "aave_lpc_supply_rates",
     "aave_lpc_total_liquidity",
+    # NOTE: Removing this since for some reason they seem to spam Discord notifications.
+    # Also, with the new Prometheus monitoring system, this is redundant
+    "assetblock_holdings",
 ]
 log = logging.getLogger("notify.triggers")
 

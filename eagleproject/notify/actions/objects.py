@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from core.common import Severity, first, truncate_elipsis
 from core.logging import get_logger
+from twilio.rest import Client
 
 log = get_logger(__name__)
 
@@ -17,6 +18,10 @@ SEVERITY_COLOR = {
 TAG_WEBHOOK_OVERRIDE = {
     'ogn': settings.OGN_DISCORD_WEBHOOK_URL
 }
+
+twilio_configured = None not in (settings.TWILIO_AUTH_TOKEN, settings.TWILIO_ACCOUNT_SID, settings.TWILIO_FROM_NUMBER, settings.TWILIO_TO)
+
+twilio_client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN) if twilio_configured else None
 
 
 class Action:
@@ -148,3 +153,25 @@ class DiscordWebhook(Action):
         else:
             # If we're not configured, don't die, but don't be silent
             log.info('Discord webhook is not configured')
+
+class Twilio(Action):
+    def __init__(self, summary, details):
+        super().__init__(summary, details)
+
+    def _is_configured(self):
+        return twilio_configured
+
+    def execute(self):
+        if self._is_configured():
+            msg = twilio_client.messages.create(
+                body=truncate_elipsis("[{}] {}".format(self.summary, self.details), max_length=300),
+                from_=settings.TWILIO_FROM_NUMBER,
+                to=settings.TWILIO_TO,
+            )
+
+            if msg.error_code is not None:
+                log.error("Error sending SMS ({}): {}".format(msg.error_code, msg.error_message))
+
+        else:
+            # If we're not configured, don't die, but don't be silent
+            log.info('Twilio is not configured')

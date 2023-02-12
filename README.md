@@ -12,7 +12,7 @@ Vault Eagle
     # Let's create a new virtual environment
     python3 -m venv eagle-python
     source ./eagle-python/bin/activate
-    pip install -r eagleproject/requirements.txt
+    pip install -r requirements.txt
     cd eagleproject
     cp eagleproject/.env.dev eagleproject/.env
     # edit eagleproject/.env and add in your provider URL (alchemy, for example)
