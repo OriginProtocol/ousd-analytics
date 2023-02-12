@@ -456,7 +456,7 @@ def create_time_interval_report_for_previous_week(week_override, do_only_transac
 
         week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number))
         preb_db_report = week_before_report[0] if len(week_before_report) != 0 else None
-        send_report_email('Weekly report', db_report, preb_db_report, "Weekly")
+        send_report_email('OUSD Analytics Weekly Report', db_report, preb_db_report, "Weekly")
 
 def should_create_new_report(year, month_option, week_option):
     if month_option is not None:
@@ -553,7 +553,7 @@ def create_time_interval_report_for_previous_month(month_override, do_only_trans
 
         month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number))
         preb_db_report = month_before_report[0] if len(month_before_report) != 0 else None
-        send_report_email('Monthly report', db_report, preb_db_report, "Monthly")
+        send_report_email('OUSD Analytics Monthly Report', db_report, preb_db_report, "Monthly")
 
 # get all accounts that at some point held OUSD
 def fetch_all_holders():

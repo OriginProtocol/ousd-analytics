@@ -71,7 +71,6 @@ INSTALLED_APPS = [
     "abi",
     "core",
     "notify",
-    "gtm",
 ]
 
 MIDDLEWARE = [
@@ -196,6 +195,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 REPORT_RECEIVER_EMAIL_LIST = os.environ.get("REPORT_RECEIVER_EMAIL_LIST")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
+REPLY_TO_EMAIL = os.environ.get("REPLY_TO_EMAIL")
 EMAIL_HOST = os.environ.get("EMAIL_HOST")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
