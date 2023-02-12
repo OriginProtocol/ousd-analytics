@@ -24,7 +24,7 @@
 
     <table class='p-0' style="margin-top: 32px;text-align:right;border-collapse: collapse;">
       <tr style="border-bottom: 1px solid #B5BECA;">
-        <td style="text-align:left;color:#0074F0;min-width:265px;font-weight:bold;"><div>Top indicators</div></td>
+        <td style="text-align:left;min-width:265px;font-weight:bold;"><div>Top indicators</div></td>
         <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;">w/e {{report.end_time|date:'d M'}}</div></td>
         <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;">w/e {{prev_report.end_time|date:'d M'}}</div></td>
         <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;">Change</div></td>
@@ -35,6 +35,14 @@
         <td style="font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;opacity:0.5">{{prev_report|class_value:'total_supply'}}</div></td>
         <td><span style="{{change|dict_color_style:'total_supply'}}"><div style="font-size:11px;line-height:13px;margin-top: 14px;margin-bottom: 14px;">({{change|dict_value:'total_supply'|floatformat_rnd_down:2}}%)</div></span></td>
       </tr>
+      {% if prev_report.assets_under_management is not None %}
+        <tr style="border-bottom: 1px solid #B5BECA;">
+          <td style="font-weight:bold;"><div style="text-align:left;font-size:14px;line-height:16px;padding-top: 14px;padding-bottom: 14px;">Assets Under Management</div></td>
+          <td style="font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;">{{report|class_value:'assets_under_management'}}</div></td>
+          <td style="font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;opacity:0.5">{{prev_report|class_value:'assets_under_management'}}</div></td>
+          <td><span style="{{change|dict_color_style:'assets_under_management'}}"><div style="font-size:11px;line-height:13px;margin-top: 14px;margin-bottom: 14px;">({{change|dict_value:'assets_under_management'|floatformat_rnd_down:2}}%)</div></span></td>
+        </tr>
+      {% endif %}
       <tr style="border-bottom: 1px solid #B5BECA;">
         <td style="font-weight:bold;"><div style="text-align:left;font-size:14px;line-height:16px;padding-top: 14px;padding-bottom: 14px;">30-Day APY</div></td>
         <td style="font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;">{{report|class_value:'apy'}}%</div></td>
@@ -51,7 +59,7 @@
 
     <table style="margin-top: 32px;text-align:right;border-collapse: collapse;">
       <tr style="border-bottom: 1px solid #B5BECA;">
-        <td style="text-align:left;color:#0074F0;min-width:265px;font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;">More details</div></td>
+        <td style="text-align:left;min-width:265px;font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;">More details</div></td>
         <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;"></div></td>
         <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;"></div></td>
         <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;"></div></td>
@@ -81,9 +89,9 @@
 
     <table style="margin-top: 32px;border-bottom: 1px solid #B5BECA;text-align:right;border-collapse: collapse;">
       <tr style="border-bottom: 1px solid #B5BECA;">
-        <td style="text-align:left;color:#0074F0;min-width:265px;font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;">Top indicators</div></td>
+        <td style="text-align:left;min-width:265px;font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;">Top indicators</div></td>
         <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;">w/e {{report.end_time|date:'d M'}}</div></td>
-        <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;opacity:0.5">w/e {{prev_report.end_time|date:'d M'}}</div></td>
+        <td style="min-width:100px;"><div style="margin-top: 14px;margin-bottom: 14px;">w/e {{prev_report.end_time|date:'d M'}}</div></td>
         <td style="min-width:100px;"><div style="font-size:11px;line-height:13px;margin-top: 14px;margin-bottom: 14px;">Change</div></td>
       </tr>
       <tr style="border-bottom: 1px solid #B5BECA;">
@@ -112,8 +120,8 @@
       </tr>
       <tr style="border-bottom: 1px solid #B5BECA;">
         <td><div style="text-align:left;font-size:14px;line-height:16px;margin-top: 14px;margin-bottom: 14px;">Percentage staked</div></td>
-        <td style="font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;">${{report|class_value:'percentage_staked'}}%</div></td>
-        <td style="font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;opacity:0.5">${{prev_report|class_value:'percentage_staked'}}%</div></td>
+        <td style="font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;">{{report|class_value:'percentage_staked'}}%</div></td>
+        <td style="font-weight:bold;"><div style="margin-top: 14px;margin-bottom: 14px;opacity:0.5">{{prev_report|class_value:'percentage_staked'}}%</div></td>
         <td><span style="{{change|dict_color_style:'percentage_staked'}}"><div style="font-size:11px;line-height:13px;margin-top: 14px;margin-bottom: 14px;">({{change|dict_value:'percentage_staked'|floatformat_rnd_down:0}}bp)</div></span></td>
       </tr>
     </table>

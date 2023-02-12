@@ -45,7 +45,8 @@ from core.blockchain.harvest.transaction_history import (
     calculate_report_change,
     send_report_email,
     get_history_for_address,
-    _daily_rows
+    _daily_rows,
+    fetch_assets
 )
 
 from core.blockchain.rpc import (
