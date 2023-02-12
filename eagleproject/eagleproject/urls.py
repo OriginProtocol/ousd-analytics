@@ -15,8 +15,10 @@ Including another URLconf
 """
 from django.urls import path, re_path
 from django.views.generic import RedirectView
+from django.views import static
 from core import views as core_views
 from notify import views as notify_views
+from .settings import STATIC_ROOT
 
 redirect_to_ousd_dapp = RedirectView.as_view(url='https://ousd.com/', permanent=True)
 
@@ -67,4 +69,7 @@ urlpatterns = [
     path("powermint", redirect_to_ousd_dapp),
     path("swap", redirect_to_ousd_dapp),
     path("flipper", redirect_to_ousd_dapp),
+    
+    # Static dir
+    re_path(r'^static/(?P<path>.+)$', static.serve, {'document_root': STATIC_ROOT}),
 ]
