@@ -22,6 +22,9 @@ from django.db.models import Q
 from core.blockchain.harvest.transactions import (
     explode_log_data
 )
+from core.blockchain.harvest.snapshots import (
+    ensure_asset
+)
 from core.blockchain.rpc import (
     creditsBalanceOf,
 )
@@ -238,6 +241,7 @@ def get_block_number_from_block_time(time, ascending = False):
 def calculate_report_change(current_report, previous_report):
     changes = {
         "total_supply": 0,
+        "assets_under_management": 0,
         "apy": 0,
         "accounts_analyzed": 0,
         "accounts_holding_ousd": 0,
@@ -290,6 +294,7 @@ def calculate_report_change(current_report, previous_report):
     curve_data_previous = json_report_previous["curve_data"] if "curve_data" in json_report_previous else None
 
     changes['total_supply'] = calculate_difference(current_report.total_supply, previous_report.total_supply)
+    changes['assets_under_management'] = calculate_difference(current_report.assets_under_management, previous_report.assets_under_management)
     changes['apy'] = calculate_difference_bp(current_report.apy, previous_report.apy)
     changes['accounts_analyzed'] = calculate_difference(current_report.accounts_analyzed, previous_report.accounts_analyzed)
     changes['accounts_holding_ousd'] = calculate_difference(current_report.accounts_holding_ousd, previous_report.accounts_holding_ousd)
@@ -456,7 +461,7 @@ def create_time_interval_report_for_previous_week(week_override, do_only_transac
 
         week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number))
         preb_db_report = week_before_report[0] if len(week_before_report) != 0 else None
-        send_report_email('Weekly report', db_report, preb_db_report, "Weekly")
+        send_report_email('OUSD Analytics Weekly Report', db_report, preb_db_report, "Weekly")
 
 def should_create_new_report(year, month_option, week_option):
     if month_option is not None:
@@ -553,7 +558,7 @@ def create_time_interval_report_for_previous_month(month_override, do_only_trans
 
         month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number))
         preb_db_report = month_before_report[0] if len(month_before_report) != 0 else None
-        send_report_email('Monthly report', db_report, preb_db_report, "Monthly")
+        send_report_email('OUSD Analytics Monthly Report', db_report, preb_db_report, "Monthly")
 
 # get all accounts that at some point held OUSD
 def fetch_all_holders():
@@ -561,12 +566,26 @@ def fetch_all_holders():
     from_addresses = list(map(lambda log: log['from_address'], OusdTransfer.objects.values('from_address').distinct()))
     return list(set(filter(lambda address: address not in ['0x0000000000000000000000000000000000000000', '0x000000000000000000000000000000000000dead'], to_addresses + from_addresses)))
 
+
+def fetch_assets(block_number):
+    # These probably won't harvest since block_number comes from snapshots
+    dai = ensure_asset("DAI", block_number)
+    usdt = ensure_asset("USDT", block_number)
+    usdc = ensure_asset("USDC", block_number)
+    ousd = ensure_asset("OUSD", block_number)
+    return [dai, usdt, usdc, ousd]
+
+
 def fetch_supply_data(block_number):
     ensure_supply_snapshot(block_number)
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
+    assets = fetch_assets(block_number)
+    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
+    aum = float(snapshot.reported_supply) - total_meta / 2
 
     return {
         'total_supply': snapshot.reported_supply,
+        'assets_under_management': aum,
         'pools': pools,
         'totals_by_rebasing': totals_by_rebasing,
         'other_rebasing': other_rebasing,

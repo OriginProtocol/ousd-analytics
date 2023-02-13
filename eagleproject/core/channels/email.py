@@ -1,6 +1,5 @@
 from django.conf import settings
-#from django.core.mail import EmailMessage
-from django.core import mail
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 
@@ -13,6 +12,7 @@ class Email():
     def _is_configured(self):
         return (
             settings.DEFAULT_FROM_EMAIL is not None
+            and settings.REPLY_TO_EMAIL is not None
             and settings.EMAIL_HOST is not None
             and settings.EMAIL_HOST_USER is not None
             and settings.EMAIL_HOST_PASSWORD is not None
@@ -21,15 +21,18 @@ class Email():
     def execute(self, recipients):
         if self._is_configured():
             from_email = settings.DEFAULT_FROM_EMAIL
+            reply_email = settings.REPLY_TO_EMAIL.split(",")
 
-            return mail.send_mail(
+            email = EmailMultiAlternatives(
                 self.summary,
                 self.plain_text_details,
                 from_email,
                 recipients,
-                fail_silently=False,
-                html_message=self.details
+                reply_to=reply_email
             )
+            email.attach_alternative(self.details, "text/html")
+
+            return email.send(fail_silently=False)
 
             # msg = EmailMessage(
             #   from_email=settings.DEFAULT_FROM_EMAIL,
