@@ -40,6 +40,7 @@ urlpatterns = [
     path("supply", core_views.supply),
     path("dripper", core_views.dripper),
     path("dune-analytics", core_views.dune_analytics),
+    path("dashboards", core_views.public_dashboards),
 
     path("strategist", core_views.strategist),
     path("strategist/creator", core_views.strategist_creator),

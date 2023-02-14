@@ -344,6 +344,11 @@ def dripper(request):
     dripper_drip_rate_per_day = dripper_drip_rate() * 24 * 60 * 60
     return _cache(10, render(request, "dripper.html", locals()))
 
+def public_dashboards(request):
+    embed_panel_width = 850
+    embed_panel_height = 400
+    return _cache(10, render(request, "public_dashboards.html", locals()))
+
 
 def dune_analytics(request):
     return render(request, "dune_analytics.html", locals())
