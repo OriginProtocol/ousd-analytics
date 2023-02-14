@@ -345,8 +345,8 @@ def dripper(request):
     return _cache(10, render(request, "dripper.html", locals()))
 
 def public_dashboards(request):
-    embed_panel_width = 850
-    embed_panel_height = 400
+    embed_panel_width = '100%'
+    embed_panel_height = '100%'
     return _cache(10, render(request, "public_dashboards.html", locals()))
 
 
