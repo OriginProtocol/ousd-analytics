@@ -13,7 +13,7 @@
         border-radius: 10px;
         flex-grow: 1;
         margin-bottom: var(--gutter-x);
-        padding: 30px;
+        padding: 10px;
     }
 
     .module .label {
@@ -22,9 +22,34 @@
         margin-bottom: 20px;
     }
 
-    .module iframe {
+    .module .frame-holder {
+        height: 150px;
         margin-bottom: 20px;
     }
+
+    .container {
+        --gutter-x: 8px;
+    }
+
+    @media (min-width: 992px) {
+        .container {
+            --gutter-x: 20px;
+        }
+
+        .module {
+            padding: 30px;
+        }
+
+        .module .frame-holder {
+            height: 350px;
+        }
+    }
+    @media (min-width: 1200px) {
+        .module .frame-holder {
+        height: 400px;
+        }
+    }
+
 </style>
 
 <h1>OUSD Public Dashboards</h1>
@@ -33,28 +58,28 @@
 
 <div class="module">
     <div class="label"> Macro Situation </div>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793245959&to=1676385245959&panelId=10" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793257000&to=1676385257000&panelId=22" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793270083&to=1676385270083&panelId=24" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793276352&to=1676385276352&panelId=34" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793285983&to=1676385285983&panelId=32" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793245959&to=1676385245959&panelId=10" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793257000&to=1676385257000&panelId=22" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793270083&to=1676385270083&panelId=24" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793276352&to=1676385276352&panelId=34" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793285983&to=1676385285983&panelId=32" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
 </div>
 
 <div class="module">
     <div class="label"> General Statistics </div>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793541120&to=1676385541120&panelId=26" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793577618&to=1676385577618&panelId=2" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793585315&to=1676385585316&panelId=4" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793592651&to=1676385592651&panelId=28" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793600597&to=1676385600597&panelId=30" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793541120&to=1676385541120&panelId=26" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793577618&to=1676385577618&panelId=2" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793585315&to=1676385585316&panelId=4" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793592651&to=1676385592651&panelId=28" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793600597&to=1676385600597&panelId=30" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
 </div>  
 
 <div class="module">
     <div class="label"> Strategies </div>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793633760&to=1676385633760&panelId=8" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793640864&to=1676385640864&panelId=18" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793640864&to=1676385640864&panelId=18" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
-    <iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793640864&to=1676385640864&panelId=18" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793633760&to=1676385633760&panelId=8" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793640864&to=1676385640864&panelId=18" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793640864&to=1676385640864&panelId=18" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
+    <div class="frame-holder"><iframe src="https://ousd-dashboard.ogn.app/d-solo/0YIjaWh4z/main-dashboard?orgId=1&from=1673793640864&to=1676385640864&panelId=18" width="{{embed_panel_width}}" height="{{embed_panel_height}}" frameborder="0"></iframe></div>
 </div> 
 
 
