@@ -46,6 +46,7 @@ from core.models import (
     Transaction,
 )
 from notify.models import CursorId, NotifyCursor
+from notify.events import event_high
 
 log = get_logger(__name__)
 
@@ -273,8 +274,10 @@ def run_all_triggers():
             log.debug(f"Executing trigger: {mod.__name__}")
             # Execute and save actions for return
             events.extend(mod.run_trigger(**script_kwargs))
-        except Exception:
+        except Exception as e:
             log.exception("Exception occurred running trigger")
+            log.exception(e)
+            events.extend(event_high("{} Trigger Failed for Block {}".format(mod.__name__, block_number), str(e)))
 
     if transfer_cursor.block_number != block_number:
         transfer_cursor.block_number = block_number
