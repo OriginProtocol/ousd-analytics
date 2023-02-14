@@ -89,6 +89,24 @@
             padding: 20px 20px 0px;
         }
 
+        .nav-links {
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-left: 10px;
+        }
+
+        .nav-links a {
+            margin-left: 8px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
         /* Bootstrap-inspired container */
         .container,
         .container-fluid,
@@ -147,7 +165,7 @@
             border: none;
             border-bottom: solid 1px var(--blue-grey);
             color: white;
-            font-size: 20px;
+            font-size: 14px;
             height: 42px;
             padding: 0 31px 0 0;
         }
@@ -173,17 +191,17 @@
 
         @media (min-width: 768px) {
             .search input {
-                width: 330px;
+                width: 150px;
             }
         }
         @media (min-width: 992px) {
             .search input {
-                width: 420px;
+                width: 220px;
             }
         }
         @media (min-width: 1200px) {
             .search input {
-                width: 510px;
+                width: 300px;
             }
         }
     </style>
@@ -203,6 +221,11 @@
                         <img src="/static/core/img/ousd-logo-white-bg.svg" alt="Origin Dollar logo" />
                     </a>
                 </div>
+            </div>
+            <div class="nav-links">
+                <a href="/dripper">Dripper</a>
+                <a href="/dashboards">Dashboards</a>
+                <a href="/supply">Supply</a>
             </div>
             <div class="search">
                 <script>
