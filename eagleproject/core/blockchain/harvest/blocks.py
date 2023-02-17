@@ -37,7 +37,11 @@ def ensure_block(block_number):
 def ensure_day(d):
     """
         Find the block number to represent the start of a day. This is a time 1-15 minutes
-        after the daily rebase is sceheduled to happen.
+        after the daily rebase is scheduled to happen.
+    
+        OUSDKeeper Chainlink contract that is responsible for the performing upkeep (rebase)
+        has windowEnd configured to: 26065.
+
         Uses a bisecting binary search to home in on the correct block.
             ... You could probably be faster by using an estimator to get close first.
         Requires there to be a block stored in the system before and after the target.
