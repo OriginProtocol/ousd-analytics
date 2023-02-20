@@ -387,7 +387,7 @@ class AnalyticsReport(models.Model):
             )
         elif name == "assets_under_management":
             return (
-                int(report_json["supply_data"]["assets_under_management"])
+                int(report_json["supply_data"].get("assets_under_management"))
                 if "supply_data" in report_json
                 else None
             )
