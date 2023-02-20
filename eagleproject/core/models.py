@@ -427,23 +427,23 @@ class AnalyticsReport(models.Model):
             )
         elif name == "ogv_price":
             return (
-                round(report_json.get("ogv_data").get("price", 0), 6)
+                round(report_json.get("ogv_data", {}).get("price", 0), 6)
             )
         elif name == "ogv_market_cap":
             return (
-                int(report_json.get("ogv_data").get("market_cap", 0))
+                int(report_json.get("ogv_data", {}).get("market_cap", 0))
             )
         elif name == "average_ogv_volume":
             return (
-                int(report_json.get("ogv_data").get("volume", 0))
+                int(report_json.get("ogv_data", {}).get("volume", 0))
             )
         elif name == "amount_staked":
             return (
-                int(report_json.get("ogv_data").get("amount_staked", 0))
+                int(report_json.get("ogv_data", {}).get("amount_staked", 0))
             )
         elif name == "percentage_staked":
             return (
-                round(report_json.get("ogv_data").get("percentage_staked", 0), 2)
+                round(report_json.get("ogv_data", {}).get("percentage_staked", 0), 2)
             )
 
 
