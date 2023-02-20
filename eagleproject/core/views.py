@@ -45,7 +45,8 @@ from core.blockchain.harvest.transaction_history import (
     calculate_report_change,
     send_report_email,
     get_history_for_address,
-    _daily_rows
+    _daily_rows,
+    fetch_assets
 )
 
 from core.blockchain.rpc import (
@@ -342,6 +343,11 @@ def dripper(request):
     dripper_drip_rate_per_hour = dripper_drip_rate() * 60 * 60
     dripper_drip_rate_per_day = dripper_drip_rate() * 24 * 60 * 60
     return _cache(10, render(request, "dripper.html", locals()))
+
+def public_dashboards(request):
+    embed_panel_width = '100%'
+    embed_panel_height = '100%'
+    return _cache(10, render(request, "public_dashboards.html", locals()))
 
 
 def dune_analytics(request):

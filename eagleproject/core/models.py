@@ -385,6 +385,12 @@ class AnalyticsReport(models.Model):
                 if "supply_data" in report_json
                 else None
             )
+        elif name == "assets_under_management":
+            return (
+                int(report_json["supply_data"].get("assets_under_management"))
+                if "supply_data" in report_json
+                else None
+            )
         elif name == "stablecoin_market_share":
             return (
                 round(report_json["stablecoin_market_share"], 4)
