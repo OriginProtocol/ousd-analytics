@@ -381,95 +381,69 @@ class AnalyticsReport(models.Model):
         report_json = json.loads(str(self.report))
         if name == "total_supply":
             return (
-                int(report_json["supply_data"]["total_supply"])
-                if "supply_data" in report_json
-                else None
+                int(report_json.get("supply_data", {}).get("total_supply", 0))
             )
         elif name == "assets_under_management":
             return (
-                int(report_json["supply_data"].get("assets_under_management", 0))
-                if "supply_data" in report_json
-                else None
+                int(report_json.get("supply_data", {}).get("assets_under_management", 0))
             )
         elif name == "stablecoin_market_share":
             return (
-                round(report_json["stablecoin_market_share"], 4)
+                round(report_json.get("stablecoin_market_share", 0), 4)
             )
         elif name == "fees_generated":
             return (
-                int(report_json["fees_generated"])
+                int(report_json.get("fees_generated", 0))
             )
         elif name == "curve_supply":
-            return (
-                int(report_json["supply_data"]["pools"][0]['amount'])
-                if "supply_data" in report_json
-                else None
-            )
+            pool = report_json.get("supply_data", {}).get("pools")
+            amount = int(pool[0].get("amount", 0)) if pool is not None and len(pool) > 0 else None
+            return amount
         elif name == "average_ousd_volume":
             return (
-                int(report_json["average_ousd_volume"])
+                int(report_json.get("average_ousd_volume", 0))
             )
         elif name == "curve_metapool_total_supply":
             return (
-                report_json["curve_data"]["total_supply"]
-                if "curve_data" in report_json
-                else None
+                report_json.get("curve_data", {}).get("total_supply")
             )
         elif name == "share_earning_curve_ogn":
             return (
-                report_json["curve_data"]["earning_ogn"]
-                if "curve_data" in report_json
-                else None
+                report_json.get("curve_data", {}).get("earning_ogn")
             )
         elif name == "apy":
-            return report_json["apy"]
+            return report_json.get("apy")
         elif name == "pools":
             return (
-                report_json["supply_data"]["pools"]
-                if "supply_data" in report_json
-                else []
+                report_json.get("supply_data", {}).get("pools", [])
             )
         elif name == "other_rebasing":
             return (
-                report_json["supply_data"]["other_rebasing"]
-                if "supply_data" in report_json
-                else []
+                report_json.get("supply_data", {}).get("other_rebasing", [])
             )
         elif name == "other_non_rebasing":
             return (
-                report_json["supply_data"]["other_non_rebasing"]
-                if "supply_data" in report_json
-                else []
+                report_json.get("supply_data", {}).get("other_non_rebasing", [])
             )
         elif name == "ogv_price":
             return (
-                round(report_json["ogv_data"]["price"], 6)
-                if "ogv_data" in report_json
-                else []
+                round(report_json.get("ogv_data", {}).get("price", 0), 6)
             )
         elif name == "ogv_market_cap":
             return (
-                int(report_json["ogv_data"]["market_cap"])
-                if "ogv_data" in report_json
-                else []
+                int(report_json.get("ogv_data", {}).get("market_cap", 0))
             )
         elif name == "average_ogv_volume":
             return (
-                int(report_json["ogv_data"]["volume"])
-                if "ogv_data" in report_json
-                else []
+                int(report_json.get("ogv_data", {}).get("volume", 0))
             )
         elif name == "amount_staked":
             return (
-                int(report_json["ogv_data"]["amount_staked"])
-                if "ogv_data" in report_json
-                else []
+                int(report_json.get("ogv_data", {}).get("amount_staked", 0))
             )
         elif name == "percentage_staked":
             return (
-                round(report_json["ogv_data"]["percentage_staked"], 2)
-                if "ogv_data" in report_json
-                else []
+                round(report_json.get("ogv_data", {}).get("percentage_staked", 0), 2)
             )
 
 
