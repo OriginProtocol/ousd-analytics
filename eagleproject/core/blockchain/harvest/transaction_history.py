@@ -268,13 +268,13 @@ def calculate_report_change(current_report, previous_report):
     }
 
     def calculate_difference(current_stat, previous_stat):
-        if previous_stat == 0 or previous_stat is None:
+        if current_stat == 0 or current_stat is None or previous_stat == 0 or previous_stat is None:
             return 0
 
         return (current_stat - previous_stat) / previous_stat * 100
 
     def calculate_difference_bp(current_stat, previous_stat):
-        if previous_stat == 0 or previous_stat is None:
+        if current_stat == 0 or current_stat is None or previous_stat == 0 or previous_stat is None:
             return 0
 
         return (current_stat - previous_stat) * 100
