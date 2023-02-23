@@ -28,18 +28,4 @@ class Migration(migrations.Migration):
                 ("confirmed", models.BooleanField(default=False)),
             ],
         ),
-        migrations.AlterField(
-            model_name="analyticsreport",
-            name="created_at",
-            field=models.DateTimeField(
-                default=datetime.datetime(2023, 2, 21, 14, 44, 51, 970983)
-            ),
-        ),
-        migrations.AlterField(
-            model_name="analyticsreport",
-            name="updated_at",
-            field=models.DateTimeField(
-                default=datetime.datetime(2023, 2, 21, 14, 44, 51, 970994)
-            ),
-        ),
     ]
