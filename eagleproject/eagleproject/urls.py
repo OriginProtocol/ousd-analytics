@@ -37,7 +37,7 @@ urlpatterns = [
     path("subscribe", core_views.subscribe, name='subscribe'),
     path("reports/confirm", core_views.confirm, name='confirm'),
     path("reports/unsubscribe", core_views.unsubscribe, name='unsubscribe'),
-    path("reports/test_email", core_views.test_email),
+    #path("reports/test_email", core_views.test_email),
     path("address/<slug:address>", core_views.address, name="address"),
     path("apy", core_views.apr_index, name="apy"),
     path("apr", RedirectView.as_view(pattern_name="apy", permanent=True)),

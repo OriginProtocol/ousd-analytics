@@ -1,7 +1,7 @@
 import datetime
 from decimal import Decimal
 from django.shortcuts import render, redirect
-from django.http import HttpResponse, JsonResponse, HttpResponseNotFound
+from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 
 from django.core.exceptions import ValidationError
@@ -631,13 +631,9 @@ def _my_assets(address, block_number):
 
 
 def test_email(request):
-    if settings.TEST_EMAIL:
-        weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-        send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
-        return HttpResponse("ok")
-    else:
-        return HttpResponseNotFound()
-
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+    return HttpResponse("ok")
 
 def api_address_history(request, address):
     page_number = request.GET.get("page", 1)
