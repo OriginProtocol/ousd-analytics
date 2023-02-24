@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<head>
+  <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class='box text-center'>
+    <h1>Sign up to the OUSD weekly report</h1>
+    {% if form %}
+      <div>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          {{ form }}
+          <br>
+          <button type="submit" class="submit">Subscribe</button>
+        </form>
+      </div>
+      <div class="text">No spam ever! Unsubscribe at any time.</div>
+    {% endif %}
+        {% if action == 'added' %}
+          <div class="message">You’re almost done. Check your email <span style="font-weight: bold;">{{ email }}</span> to confirm your subscription!</div>
+        {% elif action == 'confirmed' %}
+          <div class="message">Thanks for signing up to the OUSD weekly report.</div>
+        {% elif action == 'unsubscribed' %}
+          <div class="message">Email <span style="font-weight: bold;">{{ email }}</span> has been unsubscribed.</div>
+        {% elif action == 'exists' %}
+          <div class="message">Email <span style="font-weight: bold;">{{ email }}</span> is already subscribed.</div>
+        {% elif action == 'invalid' %}
+          <div class="message red">Invalid email.</div>
+        {% elif action == 'denied' %}
+          <div class="message red">Action denied.</div>
+        {% else %}
+          
+        {% endif %}
+
+    <a class='report' href="{{ request.get_host }}/reports/weekly" target="_blank">
+      View the latest report
+    </a>
+  </div>
+</body>
+<style>
+  @font-face {
+    font-family: "Sailec";
+    src: url("../static/core/fonts/sailec-medium.ttf") format("truetype");
+  }
+  @font-face {
+    font-family: "Inter";
+    src: url("../static/core/fonts/inter-regular.ttf") format("truetype");
+  }
+  .box {
+    font-family: "Inter";
+    max-width:576px;
+    margin: auto;
+    padding: 32px 40px;
+    border-radius: 8px;
+    font-family: Helvetica;
+    background-color:#F0F2F4;
+    font-size: 12px;
+    line-height: 13px;
+  }
+  h1 {
+    font-family: "Sailec";
+    font-size: 24px;
+    line-height: 32px;
+  }
+  form {
+    max-width: 350px;
+    margin: auto;
+    margin-top: 24px;
+  }
+  .text {
+    margin-top: 8px;
+  }
+  .message {
+    margin-top: 24px;
+    padding: 12px 16px;
+    font-size: 14px;
+    line-height: 23px;
+    background-color: #0074F01A;
+    color: #0074F0;
+    border: 1px solid #0074F0;
+    border-radius: 4px;
+  }
+  .message.red {
+    background-color: #F000001A;
+    color: #F00000;
+    border: 1px solid #F00000;
+  }
+  button {
+    font-size: 16px;
+    line-height: 28px;
+    width: 100%;
+    height: 48px;
+    color: white;
+    background-color: #0074F0;
+    border: 0;
+    border-radius: 4px;
+  }
+  .report, .report:hover {
+    display: inline-flex;
+    margin-top: 24px;
+    padding: 6px 24px;
+    font-size: 16px;
+    line-height: 28px;
+    text-decoration: none;
+    color: white;
+    background: linear-gradient(90deg, #8C66FC -28.99%, #0274F1 144.97%);
+    border-radius: 100px;
+  }
+  @media (max-width: 640px) {
+  h1 {
+    font-size: 20px;
+    line-height: 28px;
+  }
+  .box {
+    padding: 16px 20px;
+  }
+}
+</style>
+{% endblock %}
