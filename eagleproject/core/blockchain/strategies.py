@@ -64,6 +64,7 @@ OUSD_STRATEGIES = {
     "HARDCODED": True,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
     "POY_PROCESS": "compound",
+    "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "comp-icon.svg",
   },
   "threepoolstrat_holding": {
@@ -73,6 +74,7 @@ OUSD_STRATEGIES = {
     "HIDDEN": True,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "POY_PROCESS": "convex",
+    "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "convex.png",
   },
   "aavestrat_holding": {
@@ -81,6 +83,7 @@ OUSD_STRATEGIES = {
     "HARDCODED": True,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "POY_PROCESS": "aave",
+    "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "aave-icon.svg",
   },
   "morpho_strat": {
@@ -90,6 +93,7 @@ OUSD_STRATEGIES = {
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
     "IS_COMPOUND_COMPATIBLE": True,
     "POY_PROCESS": "morpho",
+    "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "morpho.png",
   },
   "ousd_metastrat": {
@@ -99,6 +103,7 @@ OUSD_STRATEGIES = {
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "OUSD"),
     "IS_OUSD_META": True,
     "POY_PROCESS": "convex",
+    "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "buffer-icon.svg",
   },
   "lusd_metastrat": {
@@ -107,6 +112,7 @@ OUSD_STRATEGIES = {
     "FROM_BLOCK": 16226329,
     "SUPPORTED_ASSETS": DEFAULT_ASSETS,
     "POY_PROCESS": "convex",
+    "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "convex.png",
   },
   "morpho_aave_strat": {
@@ -115,6 +121,7 @@ OUSD_STRATEGIES = {
     "FROM_BLOCK": 16331904,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "POY_PROCESS": "morpho",
+    "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "morpho.png",
   },
 }

@@ -66,15 +66,66 @@ class TokensIncreaseYieldSource(YieldSourceInterface):
     def yield_in_dollars():
         return self.amount * self.price
 
-class YieldUnit:
-    def __init__(self, balance, from_block, to_block, is_actual, yield_sources):
+class TokenBalance:
+    def __init__(self, token_address, balance):
+        self.token_address = token_address
         self.balance = balance
+
+    def __str__(self):
+        return 'TokenBalance: balance: {} address: {}'.format(self.balance, self.token_address)
+
+# just an interval with constant balances
+class BareYieldUnit:
+    def __init__(self, token_balances, from_block, to_block):
+        # balance of each of the assets
+        self.token_balances = token_balances
         self.from_block = from_block
         self.to_block = to_block
+
+    def __str__(self):
+        return 'BareYieldUnit: from_block: {} to_block: {} token_balances: {}'.format(self.from_block, self.to_block, list(map(lambda x: str(x), self.token_balances)))
+
+    def block_range(self):
+        return self.to_block - self.from_block
+
+class YieldUnitList:
+    def __init__(self, yield_units):
+        self.yield_units = yield_units
+
+    # average token balance per block for the whole list
+    def average_token_balances(self):
+        aggregator = {}
+        total_block_range = 0
+        for yield_unit in self.yield_units:
+            total_block_range += yield_unit.block_range()
+
+            for token_balance in yield_unit.token_balances:
+                if token_balance.token_address not in aggregator:
+                    aggregator[token_balance.token_address] = 0
+                aggregator[token_balance.token_address] += yield_unit.block_range() * token_balance.balance
+
+        total = 0        
+        for asset_address in aggregator.keys():
+            print("xxxxx", aggregator[asset_address], total_block_range)
+            average_asset_balance = aggregator[asset_address] / total_block_range
+            total += average_asset_balance
+            aggregator[asset_address] = average_asset_balance
+
+        
+        return [aggregator, total]
+
+
+    def __str__(self):
+        return 'YieldUnitList: {}'.format(list(map(lambda x: str(x), self.yield_units)))
+
+
+# includes yield sources
+class YieldUnitWithRewards(BareYieldUnit):
+    def __init__(self, token_balances, from_block, to_block, is_actual, yield_sources):
+        base.__init__(token_balances, from_block, to_block)
         # if true -> actual yield if false -> estimated yield. See top of this file for
         # further info on the terms
         self.is_actual = is_actual
-        self.balance = balance
         self.yield_sources = yield_sources
 
 class BaseStrategyYield:
