@@ -11,7 +11,8 @@ from core.models import (
     OusdTransfer,
     Block,
     Transaction,
-    AnalyticsReport
+    AnalyticsReport,
+    Subscriber
 )
 
 from core.blockchain.sigs import (
@@ -267,13 +268,13 @@ def calculate_report_change(current_report, previous_report):
     }
 
     def calculate_difference(current_stat, previous_stat):
-        if previous_stat == 0 or previous_stat is None:
+        if current_stat == 0 or current_stat is None or previous_stat == 0 or previous_stat is None:
             return 0
 
         return (current_stat - previous_stat) / previous_stat * 100
 
     def calculate_difference_bp(current_stat, previous_stat):
-        if previous_stat == 0 or previous_stat is None:
+        if current_stat == 0 or current_stat is None or previous_stat == 0 or previous_stat is None:
             return 0
 
         return (current_stat - previous_stat) * 100
@@ -1101,21 +1102,25 @@ def ensure_ousd_balance(credit_balance, logs):
         logs[x] = log
     return logs
 
+
 def send_report_email(summary, report, prev_report, report_type):
     report.transaction_report = json.loads(str(report.transaction_report))
-    e = Email(summary, "test", render_to_string('analytics_report_email.html', {
-        'type': report_type,
-        'report': report,
-        'prev_report': prev_report,
-        'change': calculate_report_change(report, prev_report),
-        'stats': report_stats,
-        'stat_keys': report_stats.keys(),
-        'curve_stats': curve_report_stats,
-        'curve_stat_keys': curve_report_stats.keys(),
-    }))
+    subscribers = Subscriber.objects.filter(confirmed=True)
+    for subscriber in subscribers:
+        e = Email(summary, "test", render_to_string('analytics_report_email.html', {
+            'type': report_type,
+            'report': report,
+            'prev_report': prev_report,
+            'change': calculate_report_change(report, prev_report),
+            'stats': report_stats,
+            'stat_keys': report_stats.keys(),
+            'curve_stats': curve_report_stats,
+            'curve_stat_keys': curve_report_stats.keys(),
+            'email': subscriber.email,
+            'conf_num': subscriber.conf_num
+        }))
+        result = e.execute([subscriber.email])
 
-    emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
-    result = e.execute(emails)
 
 def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False):
     if rebase_logs is None:

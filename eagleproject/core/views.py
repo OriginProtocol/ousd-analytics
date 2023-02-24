@@ -4,6 +4,13 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+
+from django.views.decorators.csrf import csrf_exempt
+import random
+from django.template.loader import render_to_string
+
 from django.db import connection
 from django.db.models import Q
 from core.blockchain.addresses import (
@@ -59,6 +66,7 @@ from core.blockchain.rpc import (
     OUSDMetaStrategy
 )
 
+from core.channels.email import Email
 from core.coingecko import get_price
 from core.common import dict_append
 from core.logging import get_logger
@@ -69,7 +77,9 @@ from core.models import (
     OusdTransfer,
     AnalyticsReport,
     Transaction,
+    Subscriber
 )
+from core.forms import SubscriberForm
 from django.conf import settings
 import json
 
@@ -620,11 +630,11 @@ def _my_assets(address, block_number):
     }
 
 
-#  def test_email(request):
-#      weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-#      send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
-#      return HttpResponse("ok")
-
+def test_email(request):
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+    return HttpResponse("ok")
+    
 
 def api_address_history(request, address):
     page_number = request.GET.get("page", 1)
@@ -774,6 +784,20 @@ def report_weekly(request, year, week):
     return render(request, "analytics_report.html", locals())
 
 
+def report_latest_weekly(request):
+    report = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-month")[0]
+    prev_report = _get_previous_report(report)
+    stats = report_stats
+    stat_keys = stats.keys()
+    curve_stats = curve_report_stats
+    curve_stat_keys = curve_stats.keys()
+    is_monthly = False
+    change = calculate_report_change(report, prev_report)
+    report.transaction_report = json.loads(str(report.transaction_report))
+
+    return render(request, "analytics_report.html", locals())
+
+
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(
         month__isnull=False
@@ -811,6 +835,60 @@ def reports(request):
         )
 
     return render(request, "analytics_reports.html", locals())
+
+
+def generate_token():
+    return "%0.12d" % random.randint(0, 999999999999)
+
+
+@csrf_exempt
+def subscribe(request):
+    latest_report_url = request.build_absolute_uri('/reports/weekly')
+    if request.method == 'POST':
+        sub = Subscriber.objects.filter(email=request.POST['email']).first()
+        if sub and sub.confirmed is True:
+            action = 'exists'
+        else:
+            try:
+                validate_email(request.POST['email'])
+            except ValidationError as e:
+                return render(request, 'subscription.html', {'action': 'invalid', 'form': SubscriberForm(), 'latest_report': latest_report_url})
+            else:
+                if not sub:
+                    sub = Subscriber(email=request.POST['email'], conf_num=generate_token())
+                    sub.save()
+                    
+                summary = 'OUSD Analytics Report Confirmation'
+                e = Email(summary, "test", render_to_string('subscription_confirmation.html', {
+                    'uri': request.build_absolute_uri('/reports/confirm'),
+                    'email': sub.email,
+                    'conf_num': sub.conf_num,
+                }))
+                result = e.execute([sub.email])
+                action = 'added'
+
+        return render(request, 'subscription.html', {'email': sub.email, 'action': action, 'form': SubscriberForm()})
+    else:
+        return render(request, 'subscription.html', {'form': SubscriberForm()})
+
+
+def confirm(request):
+    sub = Subscriber.objects.get(email=request.GET['email'])
+    if sub.conf_num == request.GET['conf_num']:
+        sub.confirmed = True
+        sub.save()
+        return render(request, 'subscription.html', {'email': sub.email, 'action': 'confirmed'})
+    else:
+        return render(request, 'subscription.html', {'email': sub.email, 'action': 'denied'})
+
+
+def unsubscribe(request):
+    sub = Subscriber.objects.get(email=request.GET['email'])
+    if sub.conf_num == request.GET['conf_num']:
+        sub.delete()
+        return render(request, 'subscription.html', {'email': sub.email, 'action': 'unsubscribed'})
+    else:
+        return render(request, 'subscription.html', {'email': sub.email, 'action': 'denied'})
 
 
 def backfill_internal_transactions(request):
