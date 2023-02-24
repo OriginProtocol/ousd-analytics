@@ -301,6 +301,28 @@ def make_specific_week_report(request, week):
     return HttpResponse("ok")
 
 
+def remove_specific_month_report(request, month):
+    if not settings.ENABLE_REPORTS:
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
+    year = datetime.datetime.now().year
+    report = AnalyticsReport.objects.get(month=month, year=year)
+    report.delete()
+    return HttpResponse("ok")
+
+
+def remove_specific_week_report(request, week):
+    if not settings.ENABLE_REPORTS:
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
+    year = datetime.datetime.now().year
+    report = AnalyticsReport.objects.get(week=week, year=year)
+    report.delete()
+    return HttpResponse("ok")
+
+
 def take_snapshot(request):
     latest = latest_block()
     snap(latest - 2)
