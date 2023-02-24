@@ -227,6 +227,12 @@ def totalSupply(coin_contract, decimals, block="latest"):
         math.pow(10, decimals)
     )
 
+def checkBalance(strategy_address, asset_address, decimals, block="latest"):
+    data = call_by_sig(strategy_address, "checkBalance(address)", [asset_address], block=block)
+    return Decimal(int(data["result"], 16)) / Decimal(
+        math.pow(10, decimals)
+    )
+
 
 def totalBorrows(coin_contract, decimals, block="latest"):
     signature = SIG_FUNC_TOTAL_BORROWS[:10]
