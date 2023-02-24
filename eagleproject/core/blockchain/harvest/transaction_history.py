@@ -1102,6 +1102,7 @@ def ensure_ousd_balance(credit_balance, logs):
         logs[x] = log
     return logs
 
+
 def send_report_email(summary, report, prev_report, report_type):
     report.transaction_report = json.loads(str(report.transaction_report))
     subscribers = Subscriber.objects.filter(confirmed=True)

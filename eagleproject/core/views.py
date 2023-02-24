@@ -634,6 +634,7 @@ def test_email(request):
     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
     return HttpResponse("ok")
+    
 
 def api_address_history(request, address):
     page_number = request.GET.get("page", 1)
