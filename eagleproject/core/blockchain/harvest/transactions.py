@@ -340,6 +340,7 @@ def ensure_latest_logs_for_contract(contract, pointers, upto):
         pointer.save()
     else:
         pointer = pointers[contract]
+    #pointer = LogPointer(contract=contract, last_block=16627535)
     start_block = pointer.last_block + 1
     while start_block <= upto:
         end_block = min(start_block + 1000, upto)

@@ -137,6 +137,9 @@ class Log(models.Model):
         ]
         unique_together = ("block_number", "transaction_index", "log_index")
 
+    def __str__(self):
+        return 'address:{} event_name:{} topic_0:{} topic_1:{} topic_2:{} topic_3:{} data:{} block_number:{} log_index:{} transaction_hash:{} transaction_index:{} account_balance:{}'.format(self.address, self.event_name, self.topic_0, self.topic_1, self.topic_2, self.topic_3, self.data, self.block_number, self.log_index, self.transaction_hash, self.transaction_index, self.account_balance)
+
 
 class SupplySnapshot(models.Model):
     block_number = models.IntegerField(db_index=True)

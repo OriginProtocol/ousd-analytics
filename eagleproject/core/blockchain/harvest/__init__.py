@@ -12,6 +12,11 @@ from core.blockchain.harvest.snapshots import (
 from core.blockchain.harvest.transactions import (
     ensure_all_transactions,
     ensure_latest_logs,
+    download_logs_from_contract,
+)
+
+from core.blockchain.harvest.yield_proof import (
+    ensure_yield_snapshot_at_block,
 )
 from core.models import OriginTokens
 
@@ -49,5 +54,12 @@ def snap(block_number):
     ensure_supply_snapshot(block_number, OriginTokens.OETH)
 
 def reload_all(block_number):
-    refresh_transactions(block_number)
-    snap(block_number)
+    # TODO un-comment
+    #refresh_transactions(block_number)
+    #snap(block_number)
+    #ensure_yield_snapshot_at_block(block_number)
+    # 16673225 -> meta strategy reward tokens harvested
+    # 16605149 -> morpho compound reward tokens harvested
+    #download_logs_from_contract("0x5A4eEe58744D1430876d5cA93cAB5CcB763C037D", 16605148, 16605150)
+    
+    ensure_yield_snapshot_at_block(16605149)
