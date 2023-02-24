@@ -1,18 +1,3 @@
-from django.db.models import Q
-
-from core.models import (
-    Log,
-)
-
-from core.blockchain.const import (
-    STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC,
-    STRATEGY_DEPOSIT_TOPIC,
-    STRATEGY_WITHDRAWAL_TOPIC
-)
-
-
-
-
 # yield units represent a sub interval of the strategy's larger yield interval. Strategies when earning
 # yield can have: variable APY, variable balance, and different yield types (estimated vs actual). Yield 
 # unit has a constant balance, APY and yield type.
@@ -57,6 +42,8 @@ class YieldSourceInterface:
     def yield_in_dollars():
         pass
 
+# when price increase is responsible for the yield e.g. curve virtual price increase,
+# Aave tokens (aTokens) price increase, ...
 class PriceIncreaseYieldSource(YieldSourceInterface):
     def __init__(self, token, amount, priceBefore, priceAfter):
         self.token = token
@@ -68,6 +55,7 @@ class PriceIncreaseYieldSource(YieldSourceInterface):
     def yield_in_dollars():
         return self.amount * (self.priceBefore - self.priceAfter)
 
+# when more tokens are handed out for the yield e.g. Curve, Convex rewards, Compound tokens...
 class TokensIncreaseYieldSource(YieldSourceInterface):
     def __init__(self, token, amount, price):
         self.token = token
@@ -79,7 +67,7 @@ class TokensIncreaseYieldSource(YieldSourceInterface):
         return self.amount * self.price
 
 class YieldUnit:
-    def __init__(self, balance, from_block, to_block, is_actual, base_yield, reward_yield_sources):
+    def __init__(self, balance, from_block, to_block, is_actual, yield_sources):
         self.balance = balance
         self.from_block = from_block
         self.to_block = to_block
@@ -87,9 +75,7 @@ class YieldUnit:
         # further info on the terms
         self.is_actual = is_actual
         self.balance = balance
-        self.base_yield = base_yield
-        self.reward_yield_sources = reward_yield_sources
-
+        self.yield_sources = yield_sources
 
 class BaseStrategyYield:
     def __init__(self, name, strategy_address, start_day_block, end_day_block):
@@ -97,18 +83,9 @@ class BaseStrategyYield:
         self.start_day_block = start_day_block
         self.end_day_block = end_day_block
         self.strategy_address = strategy_address
-        self.logs = list(self.load_logs())
 
     def __str__(self):
-        return 'base strategy: name: {} start_day_block: {} end_day_block: {} strategy_address:{} logs: {}'.format(self.name, self.start_day_block, self.end_day_block, self.strategy_address, self.logs)
-
-    # load all relevant logs required to do yield computation for the strategy
-    def load_logs(self):
-        logs_query = Q(block_number__gte=self.start_day_block) & Q(block_number__lte=self.end_day_block)
-        logs_query &= (Q(topic_0=STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC.lower()) | Q(topic_0=STRATEGY_WITHDRAWAL_TOPIC.lower()) | Q(topic_0=STRATEGY_DEPOSIT_TOPIC.lower()))
-        logs_query &= (Q(topic_0=STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC.lower()) | Q(topic_0=STRATEGY_WITHDRAWAL_TOPIC.lower()) | Q(topic_0=STRATEGY_DEPOSIT_TOPIC.lower()))
-        logs_query &= Q(address=self.strategy_address.lower())
-        return Log.objects.filter(logs_query)
+        return 'base strategy: name: {} start_day_block: {} end_day_block: {} strategy_address:{}'.format(self.name, self.start_day_block, self.end_day_block, self.strategy_address)
 
 
 
