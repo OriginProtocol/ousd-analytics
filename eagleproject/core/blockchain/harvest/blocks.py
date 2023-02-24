@@ -34,7 +34,15 @@ def ensure_block(block_number):
 
     return block
 
+# anything before 26100 seconds into the UTC (7h15m+UTC) is considered a day before. Anything after
+# that time is considered the same day as UTC
+def ensure_day_by_block(block_number):
+    block = ensure_block(block_number)
+    total_seconds = block.block_time.hour * 3600 + block.block_time.minute * 60 + block.block_time.second
+    return ensure_day(block.block_time - timedelta(days=1) if total_seconds <= 26100 else block.block_time)
+
 def ensure_day(d):
+    #2023-02-21 00:08
     """
         Find the block number to represent the start of a day. This is a time 1-15 minutes
         after the daily rebase is scheduled to happen.

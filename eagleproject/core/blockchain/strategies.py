@@ -54,6 +54,8 @@ OUSD_STRATEGIES = {
     "ADDRESS": OUSD_VAULT,
     "HARDCODED": True,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
+    # what process should handle proof of yield of this strategy
+    "POY_PROCESS": False,
     "ICON_NAME": "ousd-icon.svg",
   },
   "compstrat_holding": {
@@ -61,6 +63,7 @@ OUSD_STRATEGIES = {
     "ADDRESS": STRATCOMP,
     "HARDCODED": True,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
+    "POY_PROCESS": "compound",
     "ICON_NAME": "comp-icon.svg",
   },
   "threepoolstrat_holding": {
@@ -69,6 +72,7 @@ OUSD_STRATEGIES = {
     "HARDCODED": True,
     "HIDDEN": True,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
+    "POY_PROCESS": "convex",
     "ICON_NAME": "convex.png",
   },
   "aavestrat_holding": {
@@ -76,6 +80,7 @@ OUSD_STRATEGIES = {
     "ADDRESS": STRATAAVE,
     "HARDCODED": True,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
+    "POY_PROCESS": "aave",
     "ICON_NAME": "aave-icon.svg",
   },
   "morpho_strat": {
@@ -84,6 +89,7 @@ OUSD_STRATEGIES = {
     "FROM_BLOCK": 15949661,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
     "IS_COMPOUND_COMPATIBLE": True,
+    "POY_PROCESS": "morpho",
     "ICON_NAME": "morpho.png",
   },
   "ousd_metastrat": {
@@ -92,13 +98,15 @@ OUSD_STRATEGIES = {
     "FROM_BLOCK": 15896478,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "OUSD"),
     "IS_OUSD_META": True,
+    "POY_PROCESS": "convex",
     "ICON_NAME": "buffer-icon.svg",
   },
   "lusd_metastrat": {
     "NAME": "Convex LUSD+3Crv",
     "ADDRESS": LUSD_METASTRAT,
     "FROM_BLOCK": 16226329,
-    "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "LUSD"),
+    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
+    "POY_PROCESS": "convex",
     "ICON_NAME": "convex.png",
   },
   "morpho_aave_strat": {
@@ -106,6 +114,7 @@ OUSD_STRATEGIES = {
     "ADDRESS": MORPHO_AAVE,
     "FROM_BLOCK": 16331904,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
+    "POY_PROCESS": "morpho",
     "ICON_NAME": "morpho.png",
   },
 }

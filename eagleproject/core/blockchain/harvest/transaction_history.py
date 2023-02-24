@@ -57,6 +57,7 @@ from core.blockchain.const import (
 
 from core.blockchain.utils import (
     chunks,
+    datetime_to_start_day_utc,
 )
 from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
@@ -164,7 +165,7 @@ class analytics_report:
 
         # OUSD
         accounts_analyzed,
-        accounts_holding_ousd,
+        accounts_holding_ousd,  
         accounts_holding_more_than_100_ousd,
         accounts_holding_more_than_100_ousd_after_curve_start,
         new_accounts,
