@@ -125,5 +125,17 @@
         <td><span style="{{change|dict_color_style:'percentage_staked'}}"><div style="font-size:11px;line-height:13px;margin-top: 14px;margin-bottom: 14px;">({{change|dict_value:'percentage_staked'|floatformat_rnd_down:0}}bp)</div></span></td>
       </tr>
     </table>
+    <div style="margin-top:64px;">
+      {% if type == 'Weekly' %}
+        <a style="text-decoration:none;" href="https://analytics.ousd.com/reports/weekly/{{report.year|int_no_comma}}/{{report.week|int_no_comma}}">View in browser</a>
+      {% else %}
+        <a style="text-decoration:none;" href="https://analytics.ousd.com/reports/monthly/{{report.year|int_no_comma}}/{{report.month|int_no_comma}}">View in browser</a>
+      {% endif %}
+    </div>
+    <hr style="background-color:#B5BECA;height:1px;border:0;">
+    <div style="margin-top:0px;">
+      If you don't want to receive these updates any more, please unsubscribe 
+      <a style="text-decoration:none;" href="https://analytics.ousd.com/reports/unsubscribe?email={{email}}&conf_num={{conf_num}}">here.</a>
+    </div>
   </div>
 </div>
