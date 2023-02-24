@@ -355,7 +355,10 @@ def class_color_style(object, stat):
 
 @register.filter
 def class_value(object, key):
-    return getattr(object, key)
+    if object is None:
+        return None
+    else:
+        return getattr(object, key)
 
 @register.filter
 # if key contains a comma what comes after the comma is a default value
