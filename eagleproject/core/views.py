@@ -891,6 +891,15 @@ def unsubscribe(request):
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'denied'})
 
 
+def backfill_subscribers(request):
+    emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
+    for email in emails:
+        if Subscriber.objects.filter(email=email).first() is None:
+            sub = Subscriber(email=email, conf_num=generate_token(), confirmed=True)
+            sub.save()
+    return HttpResponse("ok")
+
+
 def backfill_internal_transactions(request):
     transactions = Transaction.objects.filter(internal_transactions={})[:6000]
     total = len(transactions)
