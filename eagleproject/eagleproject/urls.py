@@ -34,6 +34,8 @@ urlpatterns = [
     path("reports/do-weekly", core_views.make_weekly_report),
     path("reports/do-monthly/<int:month>", core_views.make_specific_month_report),
     path("reports/do-weekly/<int:week>", core_views.make_specific_week_report),
+    path("reports/remove-monthly/<int:month>", core_views.remove_specific_month_report),
+    path("reports/remove-weekly/<int:week>", core_views.remove_specific_week_report),
     path("reports/subscribe", core_views.subscribe, name='subscribe'),
     path("reports/confirm", core_views.confirm, name='confirm'),
     path("reports/unsubscribe", core_views.unsubscribe, name='unsubscribe'),
