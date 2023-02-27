@@ -1,3 +1,13 @@
+from core.blockchain.const import (
+    YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST,
+    STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC,
+    SYMBOL_FOR_CONTRACT
+)
+
+from core.blockchain.harvest.transactions import (
+    decode_reward_token_collected_log
+)
+
 # yield units represent a sub interval of the strategy's larger yield interval. Strategies when earning
 # yield can have: variable APY, variable balance, and different yield types (estimated vs actual). Yield 
 # unit has a constant balance, APY and yield type.
@@ -74,27 +84,70 @@ class TokenBalance:
     def __str__(self):
         return 'TokenBalance: balance: {} address: {}'.format(self.balance, self.token_address)
 
-# just an interval with constant balances
+# param price: price of reward token denominated in decimals of the rewards token. e.g. USDT ~= 1
+class TokenBalanceWithPrice:
+    def __init__(self, token_address, balance, price):
+        TokenBalance.__init__(self, token_address, balance)
+        self.price = price
+
+    def __str__(self):
+        return 'TokenBalanceWithPrice: balance: {} address: {} price: {}'.format(self.balance, self.token_address, self.price)
+
+
+# an interval with constant balances
 # param reason -> the start reason for this yield unit
 # param reasonLogsOption -> optional log(s) event that is(are) the cause to start this yield unit
 class BareYieldUnit:
-    def __init__(self, token_balances, from_block, to_block, reason, reasonLogsOption):
+    def __init__(
+        self,
+        token_balances,
+        from_block,
+        to_block,
+        reason,
+        reason_logs_option
+    ):
         # balance of each of the assets
         self.token_balances = token_balances
         self.from_block = from_block
         self.to_block = to_block
         self.reason = reason
-        self.reasonLogsOption = reasonLogsOption
+        self.reason_logs_option = reason_logs_option
 
     def __str__(self):
-        return 'BareYieldUnit: from_block: {} to_block: {} reason: {} reasonLogsOption: {} token_balances: {}'.format(self.from_block, self.to_block, self.reason, list(map(lambda x: str(x), self.reasonLogsOption)), list(map(lambda x: str(x), self.token_balances)))
+        return 'BareYieldUnit: from_block: {} to_block: {} reason: {} reason_logs_option: {} token_balances: {}'.format(self.from_block, self.to_block, self.reason, list(map(lambda x: str(x), self.reason_logs_option)), list(map(lambda x: str(x), self.token_balances)))
 
     def block_range(self):
         return self.to_block - self.from_block
 
+# an interval with constant balances and accompanying rewards
+# param baseReward: dollar amount of rewards gained due to LP token value accrue-al (cTokens, aToken, Convex LP tokens)
+# param rewardTokenBalances: reward token balances with price of this yield unit
+# param is_estimated: if true then prices in reward token balances are actual prices at which the protocol
+#                     has sold the reward tokens for. If false the prices are current and might change until 
+#                     the rewards are harvested and reward tokens sold.
+class YieldUnitWithReward(BareYieldUnit):
+    def __init__(
+        self,
+        token_balances,
+        from_block,
+        to_block,
+        reason,
+        reason_logs_option,
+        base_reward,
+        reward_token_balances,
+        is_estimated
+    ):
+        BareYieldUnit.__init__(self, token_balances, from_block, to_block, reason, reason_logs_option)
+        self.base_reward = base_reward
+        self.reward_token_balances = reward_token_balances
+        self.is_estimated = is_estimated
+
+
+
 class YieldUnitList:
     def __init__(self, yield_units):
         self.yield_units = yield_units
+        sorted(self.yield_units, key=lambda yu: yu.from_block)
 
     # average token balance per block for the whole list or yield units
     def average_token_balances(self):
@@ -120,6 +173,44 @@ class YieldUnitList:
 
     def __str__(self):
         return 'YieldUnitList: {}'.format(list(map(lambda x: str(x), self.yield_units)))
+
+
+    def to_yield_units_with_reward(self):
+        units_to_be_converted = []
+        for index, yield_unit in enumerate(self.yield_units):
+            # Harvest event found, calculate exact - non estimated rewards for yield units
+            if yield_unit.reason == YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST:
+                # harvest events apply to yield units in the past. If non in the array
+                # can not really apply them, so continue
+                if len(units_to_be_converted) == 0:
+                    continue
+            
+                harvest_logs = list(map(
+                    lambda log: decode_reward_token_collected_log(log), 
+                    filter(
+                        lambda log: log.topic_0 == STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC,
+                        yield_unit.reason_logs_option
+                    )
+                ))
+                #1. for each token reward get price
+                #2. create token balance with price
+                #3. split it up to each yield unit
+
+                print("harvest_logs", harvest_logs)
+                #units_to_be_converted    
+
+            # we have reached the final yield unit without a harvest event. Estimate the
+            # yield for all yield units in units_to_be_converted
+            if (index == len(self.yield_units) - 1):
+                pass
+
+            units_to_be_converted.append(yield_unit)
+
+
+class YieldUnitWithRewardsList(YieldUnitList):
+    def __init__(self, yield_units):
+        YieldUnitList.__init__(self, yield_units)
+
 
 
 # includes yield sources
