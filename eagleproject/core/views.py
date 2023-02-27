@@ -253,7 +253,7 @@ def make_monthly_report(request):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_month(
-        None, do_only_transaction_analytics
+        None, None, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
@@ -268,12 +268,12 @@ def make_weekly_report(request):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_week(
-        None, do_only_transaction_analytics
+        None, None, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
 
-def make_specific_month_report(request, month):
+def make_specific_month_report(request, year, month):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
@@ -282,12 +282,12 @@ def make_specific_month_report(request, month):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_month(
-        month, do_only_transaction_analytics
+        year, month, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
 
-def make_specific_week_report(request, week):
+def make_specific_week_report(request, year, week):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
@@ -296,30 +296,8 @@ def make_specific_week_report(request, week):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_week(
-        week, do_only_transaction_analytics
+        year, week, do_only_transaction_analytics
     )
-    return HttpResponse("ok")
-
-
-def remove_specific_month_report(request, month):
-    if not settings.ENABLE_REPORTS:
-        print("Reports disabled on this instance")
-        return HttpResponse("ok")
-
-    year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(month=month, year=year)
-    report.delete()
-    return HttpResponse("ok")
-
-
-def remove_specific_week_report(request, week):
-    if not settings.ENABLE_REPORTS:
-        print("Reports disabled on this instance")
-        return HttpResponse("ok")
-
-    year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(week=week, year=year)
-    report.delete()
     return HttpResponse("ok")
 
 
@@ -911,15 +889,6 @@ def unsubscribe(request):
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'unsubscribed'})
     else:
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'denied'})
-
-
-def backfill_subscribers(request):
-    emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
-    for email in emails:
-        if Subscriber.objects.filter(email=email).first() is None:
-            sub = Subscriber(email=email, conf_num=generate_token(), confirmed=True)
-            sub.save()
-    return HttpResponse("ok")
 
 
 def backfill_internal_transactions(request):
