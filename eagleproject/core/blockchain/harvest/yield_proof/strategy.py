@@ -75,15 +75,19 @@ class TokenBalance:
         return 'TokenBalance: balance: {} address: {}'.format(self.balance, self.token_address)
 
 # just an interval with constant balances
+# param reason -> the start reason for this yield unit
+# param reasonLogsOption -> optional log(s) event that is(are) the cause to start this yield unit
 class BareYieldUnit:
-    def __init__(self, token_balances, from_block, to_block):
+    def __init__(self, token_balances, from_block, to_block, reason, reasonLogsOption):
         # balance of each of the assets
         self.token_balances = token_balances
         self.from_block = from_block
         self.to_block = to_block
+        self.reason = reason
+        self.reasonLogsOption = reasonLogsOption
 
     def __str__(self):
-        return 'BareYieldUnit: from_block: {} to_block: {} token_balances: {}'.format(self.from_block, self.to_block, list(map(lambda x: str(x), self.token_balances)))
+        return 'BareYieldUnit: from_block: {} to_block: {} reason: {} reasonLogsOption: {} token_balances: {}'.format(self.from_block, self.to_block, self.reason, list(map(lambda x: str(x), self.reasonLogsOption)), list(map(lambda x: str(x), self.token_balances)))
 
     def block_range(self):
         return self.to_block - self.from_block
@@ -92,7 +96,7 @@ class YieldUnitList:
     def __init__(self, yield_units):
         self.yield_units = yield_units
 
-    # average token balance per block for the whole list
+    # average token balance per block for the whole list or yield units
     def average_token_balances(self):
         aggregator = {}
         total_block_range = 0
@@ -106,7 +110,6 @@ class YieldUnitList:
 
         total = 0        
         for asset_address in aggregator.keys():
-            print("xxxxx", aggregator[asset_address], total_block_range)
             average_asset_balance = aggregator[asset_address] / total_block_range
             total += average_asset_balance
             aggregator[asset_address] = average_asset_balance
