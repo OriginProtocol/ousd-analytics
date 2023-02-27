@@ -509,6 +509,12 @@ def receipt_has_unstake_transfer(receipt):
         for log in receipt["logs"]
     )
 
+def decode_reward_token_collected_log(log):
+    return {
+        'recipient': add_0x_prefix(slot(log.data, 0)[-40:]),
+        'rewardToken': add_0x_prefix(slot(log.data, 1)[-40:]),
+        'amount': int(slot(log.data, 2), 16)
+    }
 
 def maybe_store_stake(log, block, receipt):
     """ Store a story stake record """

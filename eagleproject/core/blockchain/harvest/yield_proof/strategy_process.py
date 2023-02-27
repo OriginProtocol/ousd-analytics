@@ -20,25 +20,23 @@ from core.blockchain.const import (
     STRATEGY_DEPOSIT_TOPIC,
     STRATEGY_WITHDRAWAL_TOPIC,
     CONTRACT_FOR_SYMBOL,
-    DECIMALS_FOR_SYMBOL
+    DECIMALS_FOR_SYMBOL,
+    YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST,
+    YIELD_UNIT_REASON_DEPOSIT,
+    YIELD_UNIT_REASON_WITHDRAWAL,
+    YIELD_UNIT_REASON_CUSTOM_BLOCK_BREAK
 )
-
-# yield unit creation reasons
-REWARD_TOKEN_HARVEST = "REWARD_TOKEN_HARVEST"
-DEPOSIT = "DEPOSIT"
-WITHDRAWAL = "WITHDRAWAL"
-CUSTOM_BLOCK_BREAK = "CUSTOM_BLOCK_BREAK"
 
 def create_yield_strategy(name, strategy_address, asset_name_list, start_day_block, end_day_block):
     # these are all the relevant logs. Potentially even before start block and after
     # end block. Each of these logs is a breaking point that ends one yield unit and
     # starts another.
     logs = get_relevant_logs(start_day_block, end_day_block, strategy_address)
-    yield_units = build_yield_units(logs, [start_day_block, end_day_block], strategy_address, asset_name_list)
+    bare_yield_units = build_yield_units(logs, [start_day_block, end_day_block], strategy_address, asset_name_list)
+    yield_units_with_reward = bare_yield_units.to_yield_units_with_reward()
 
-    average_token_balances, average_total = yield_units.average_token_balances()
-
-    print("yield_units", yield_units, average_token_balances, average_total)
+    #average_token_balances, average_total = bare_yield_units.average_token_balances()
+    #print("bare_yield_units", bare_yield_units, average_token_balances, average_total)
 
     return BaseStrategyYield(name, strategy_address, start_day_block, end_day_block)
 
@@ -51,17 +49,17 @@ def __build_start_reason_dict(logs, blocks):
 
         if log.topic_0 == STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC:
             start_reasons[log.block_number].append({
-                "reason": REWARD_TOKEN_HARVEST,
+                "reason": YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST,
                 "log": log
             })
         elif log.topic_0 == STRATEGY_DEPOSIT_TOPIC:
             start_reasons[log.block_number].append({
-                "reason": DEPOSIT,
+                "reason": YIELD_UNIT_REASON_DEPOSIT,
                 "log": log
             })
         elif log.topic_0 == STRATEGY_WITHDRAWAL_TOPIC:
             start_reasons[log.block_number].append({
-                "reason": WITHDRAWAL,
+                "reason": YIELD_UNIT_REASON_WITHDRAWAL,
                 "log": log
             })
         else: 
@@ -72,11 +70,11 @@ def __build_start_reason_dict(logs, blocks):
             start_reasons[block] = []
 
         start_reasons[block].append({
-            "reason": CUSTOM_BLOCK_BREAK,
+            "reason": YIELD_UNIT_REASON_CUSTOM_BLOCK_BREAK,
             "log": False
         })  
     return start_reasons
-    
+
 # create build units out of logs. Blocks play as additional breaking points that split yield
 # unit into 2.
 def build_yield_units(logs, blocks, strategy_address, asset_name_list):
@@ -102,7 +100,7 @@ def build_yield_units(logs, blocks, strategy_address, asset_name_list):
         reasons_info = start_reasons[block_number]
         if (len(reasons_info) > 1):
             # reward token harvest can instantiate multiple logs, that is acceptable
-            if not all(map(lambda reason_info: reason_info['reason'] == REWARD_TOKEN_HARVEST, reasons_info)):
+            if not all(map(lambda reason_info: reason_info['reason'] == YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST, reasons_info)):
                 print("reasons_info", reasons_info)
                 raise Exception("Unexpected reason length: {} block_number: {} strategy_address: {}".format(len(reasons_info), block_number, strategy_address))
 
