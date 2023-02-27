@@ -54,7 +54,9 @@ const strategistValidator = (function () {
     masterEl.innerHTML = ""; // Clear
 
     // Data in
-    const data = textareaEl.value;
+    const data = textareaEl.value
+      .replace(/^Data \(hex encoded\): /,'')
+      .replace(/ /g,'');
 
     if (data == "") {
       masterEl.appendChild(element("p", "Awaiting..."));
@@ -68,6 +70,7 @@ const strategistValidator = (function () {
         masterEl.appendChild(innerEl);
       }
     } else {
+      iVault.parseTransaction({ data: data });
       try {
         iVault.parseTransaction({ data: data });
         masterEl.appendChild(parseAndDisplayTx(VAULT, data));
@@ -93,6 +96,7 @@ const strategistValidator = (function () {
     // Think
     let successParse = false;
     let parsed;
+
     try {
       parsed = iface.parseTransaction({ data: data });
       successParse = true;
@@ -215,6 +219,10 @@ const strategistValidator = (function () {
     if (parsed.sighash == "0x7fe2d393") {
       // reallocate amounts use currency decimals
       return DECIMALS[parsed.args[2][i]] || 0;
+    }
+    if (parsed.sighash == "0x840c4c7a" || parsed.sighash == "0xae69f3cb") {
+      // depositTo/withdrawFrom amounts use currency decimals
+      return DECIMALS[parsed.args[1][i]] || 0;
     }
     if (parsed.sighash == "0x2cd47c23") {
       // reallocate amounts use currency decimals
