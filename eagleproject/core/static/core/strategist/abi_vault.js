@@ -891,6 +891,32 @@ const abiVault = {
       ],
       "name": "GovernorshipTransferred",
       "type": "event"
+    },
+    {
+      "inputs": [
+        { "internalType": "address", "name": "_strategyToAddress", "type": "address" },
+        { "internalType": "address[]", "name": "_assets", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" },
+      ],
+      "name": "depositToStrategy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function",
+    },
+    {
+      inputs: [
+        {
+          "internalType": "address",
+          "name": "_strategyFromAddress",
+          "type": "address",
+        },
+        { "internalType": "address[]", "name": "_assets", "type": "address[]" },
+        { "internalType": "uint256[]", "name": "_amounts", "type": "uint256[]" },
+      ],
+      "name": "withdrawFromStrategy",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function",
     }
   ],
   "transactionHash": "0xb49aed199923e8cfcfc42f4be68b34546c21203d358488b72a2c38ce98511957",
