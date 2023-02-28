@@ -70,7 +70,6 @@ const strategistValidator = (function () {
         masterEl.appendChild(innerEl);
       }
     } else {
-      iVault.parseTransaction({ data: data });
       try {
         iVault.parseTransaction({ data: data });
         masterEl.appendChild(parseAndDisplayTx(VAULT, data));
