@@ -301,6 +301,28 @@ def make_specific_week_report(request, year, week):
     return HttpResponse("ok")
 
 
+def remove_specific_month_report(request, month):
+    if not settings.ENABLE_REPORTS:
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
+    year = datetime.datetime.now().year
+    report = AnalyticsReport.objects.get(month=month, year=year)
+    report.delete()
+    return HttpResponse("ok")
+
+
+def remove_specific_week_report(request, week):
+    if not settings.ENABLE_REPORTS:
+        print("Reports disabled on this instance")
+        return HttpResponse("ok")
+
+    year = datetime.datetime.now().year
+    report = AnalyticsReport.objects.get(week=week, year=year)
+    report.delete()
+    return HttpResponse("ok")
+
+
 def take_snapshot(request):
     latest = latest_block()
     snap(latest - 2)
@@ -766,7 +788,13 @@ def report_monthly(request, year, month):
     is_monthly = True
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
-
+    latest = year == datetime.datetime.now().year and week == int(datetime.datetime.now().strftime("%W")) - 1
+    if month == 12:
+        next_month = 0
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
     return render(request, "analytics_report.html", locals())
 
 
@@ -780,22 +808,21 @@ def report_weekly(request, year, week):
     is_monthly = False
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
+    latest = year == datetime.datetime.now().year and week == int(datetime.datetime.now().strftime("%W")) - 1
+    if week == 51:
+        next_week = 0
+        next_year = year + 1
+    else:
+        next_week = week + 1
+        next_year = year
 
     return render(request, "analytics_report.html", locals())
 
 
 def report_latest_weekly(request):
-    report = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-month")[0]
-    prev_report = _get_previous_report(report)
-    stats = report_stats
-    stat_keys = stats.keys()
-    curve_stats = curve_report_stats
-    curve_stat_keys = curve_stats.keys()
-    is_monthly = False
-    change = calculate_report_change(report, prev_report)
-    report.transaction_report = json.loads(str(report.transaction_report))
-
-    return render(request, "analytics_report.html", locals())
+    year = datetime.datetime.now().year
+    week = int(datetime.datetime.now().strftime("%W")) - 1
+    return redirect("weekly", year, week)
 
 
 def reports(request):
