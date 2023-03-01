@@ -19,12 +19,13 @@ from core.blockchain.const import (
     STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC,
     STRATEGY_DEPOSIT_TOPIC,
     STRATEGY_WITHDRAWAL_TOPIC,
+    TOKENS_SWAPPED_ON_UNISWAP_V2,
     CONTRACT_FOR_SYMBOL,
     DECIMALS_FOR_SYMBOL,
     YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST,
     YIELD_UNIT_REASON_DEPOSIT,
     YIELD_UNIT_REASON_WITHDRAWAL,
-    YIELD_UNIT_REASON_CUSTOM_BLOCK_BREAK
+    YIELD_UNIT_REASON_CUSTOM_BLOCK_BREAK,
 )
 
 def create_yield_strategy(name, strategy_address, asset_name_list, start_day_block, end_day_block):
@@ -60,6 +61,11 @@ def __build_start_reason_dict(logs, blocks):
         elif log.topic_0 == STRATEGY_WITHDRAWAL_TOPIC:
             start_reasons[log.block_number].append({
                 "reason": YIELD_UNIT_REASON_WITHDRAWAL,
+                "log": log
+            })
+        elif log.topic_0 == TOKENS_SWAPPED_ON_UNISWAP_V2:
+            start_reasons[log.block_number].append({
+                "reason": YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST,
                 "log": log
             })
         else: 
@@ -101,8 +107,7 @@ def build_yield_units(logs, blocks, strategy_address, asset_name_list):
         if (len(reasons_info) > 1):
             # reward token harvest can instantiate multiple logs, that is acceptable
             if not all(map(lambda reason_info: reason_info['reason'] == YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST, reasons_info)):
-                print("reasons_info", reasons_info)
-                raise Exception("Unexpected reason length: {} block_number: {} strategy_address: {}".format(len(reasons_info), block_number, strategy_address))
+                raise Exception("Unexpected reason length: {} block_number: {} strategy_address: {} reasons_info: {}".format(len(reasons_info), block_number, strategy_address, reasons_info))
 
         # the [index + 1] is to fetch the next block in the list. -1 to set end block number
         # of this yield unit to 1 less than the stating block number of the next yield unit
@@ -170,6 +175,19 @@ def get_relevant_logs(start_day_block, end_day_block, strategy_address):
 
 def load_logs(start_block, end_block, strategy_address):
     logs_query = Q(block_number__gte=start_block) & Q(block_number__lte=end_block)
-    logs_query &= (Q(topic_0=STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC) | Q(topic_0=STRATEGY_WITHDRAWAL_TOPIC) | Q(topic_0=STRATEGY_DEPOSIT_TOPIC))
+    logs_query &= (
+        Q(topic_0=STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC) |
+        Q(topic_0=STRATEGY_WITHDRAWAL_TOPIC) |
+        Q(topic_0=STRATEGY_DEPOSIT_TOPIC)
+    )
     logs_query &= Q(address=strategy_address.lower())
-    return Log.objects.filter(logs_query)
+
+    logs = list(Log.objects.filter(logs_query))
+    log_block_numbers = list(map(lambda log: log.block_number, logs))
+    # swap logs are required to figure out the price for which the tokens were swapped at harvest
+    swap_logs = list(Log.objects.filter(
+        Q(block_number__in=log_block_numbers) &
+        Q(topic_0=TOKENS_SWAPPED_ON_UNISWAP_V2)
+    ))
+
+    return logs + swap_logs
