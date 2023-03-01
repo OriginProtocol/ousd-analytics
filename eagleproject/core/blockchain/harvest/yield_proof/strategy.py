@@ -1,11 +1,19 @@
+import math
+from decimal import Decimal
 from core.blockchain.const import (
     YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST,
     STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC,
-    SYMBOL_FOR_CONTRACT
+    TOKENS_SWAPPED_ON_UNISWAP_V2,
+    SYMBOL_FOR_CONTRACT,
+    SUSHI_POOL_TO_TOKEN,
+    SUSHI_REWARD_TOKEN_POOLS,
+    SUSHISWAP_USDT_WETH_POOL,
+    DECIMALS_FOR_SYMBOL
 )
 
 from core.blockchain.harvest.transactions import (
-    decode_reward_token_collected_log
+    decode_reward_token_collected_log,
+    decode_reward_token_swap_log
 )
 
 # yield units represent a sub interval of the strategy's larger yield interval. Strategies when earning
@@ -97,6 +105,8 @@ class TokenBalanceWithPrice:
 # an interval with constant balances
 # param reason -> the start reason for this yield unit
 # param reasonLogsOption -> optional log(s) event that is(are) the cause to start this yield unit
+#       ReardTokenCollected logs also have swap logs accompanying them so we can figure out the 
+#       tokens sold price.
 class BareYieldUnit:
     def __init__(
         self,
@@ -145,11 +155,15 @@ class YieldUnitWithReward(BareYieldUnit):
 
 
 class YieldUnitList:
-    def __init__(self, yield_units):
+    def __init__(self, yield_units, reward_balances=False):
         self.yield_units = yield_units
         sorted(self.yield_units, key=lambda yu: yu.from_block)
 
-    # average token balance per block for the whole list or yield units
+        if reward_balances != False:
+            average_token_balances, average_total = self.average_token_balances()
+
+    # average token balance per block for the whole list or yield units. Denominated in 
+    # token's decimals. And total average token balances
     def average_token_balances(self):
         aggregator = {}
         total_block_range = 0
@@ -168,6 +182,7 @@ class YieldUnitList:
             aggregator[asset_address] = average_asset_balance
 
         
+        # average token balances, total token balances
         return [aggregator, total]
 
 
@@ -192,12 +207,31 @@ class YieldUnitList:
                         yield_unit.reason_logs_option
                     )
                 ))
-                #1. for each token reward get price
-                #2. create token balance with price
-                #3. split it up to each yield unit
+                swap_logs = list(map(
+                    lambda log: decode_reward_token_swap_log(log), 
+                    filter(
+                        lambda log: log.topic_0 == TOKENS_SWAPPED_ON_UNISWAP_V2,
+                        yield_unit.reason_logs_option
+                    )
+                ))
+                token_prices = self.__get_USDT_token_price_from_swap_log(swap_logs)
 
-                print("harvest_logs", harvest_logs)
-                #units_to_be_converted    
+                # convert harvest logs to token balances with price
+                reward_token_balances = []
+                for harvest_log in harvest_logs:
+                    reward_token_symbol = SYMBOL_FOR_CONTRACT[harvest_log['rewardToken']]
+                    reward_token_decimals = DECIMALS_FOR_SYMBOL[reward_token_symbol]
+                    reward_token_balances.append(TokenBalanceWithPrice(
+                        harvest_log['rewardToken'],
+                        harvest_log['amount'] / Decimal(math.pow(10, reward_token_decimals)),
+                        token_prices[reward_token_symbol]
+                    ))
+                
+
+                unit_list_with_single_harvest = YieldUnitList(units_to_be_converted, reward_token_balances)
+
+
+                units_to_be_converted = []
 
             # we have reached the final yield unit without a harvest event. Estimate the
             # yield for all yield units in units_to_be_converted
@@ -206,6 +240,36 @@ class YieldUnitList:
 
             units_to_be_converted.append(yield_unit)
 
+    def __get_USDT_token_price_from_swap_log(self, swap_logs):
+        token_prices = {}
+        for swap_log in swap_logs:
+            if swap_log['pool'] in SUSHI_REWARD_TOKEN_POOLS:
+                reward_token = SUSHI_POOL_TO_TOKEN[swap_log['pool']]
+                reward_token_amount = swap_log['amount0In'] + swap_log['amount1In']
+                # since SUSHI pool swaps are done via: 
+                # reward token -> WETH -> USDT
+                # besides reward token swap (swapping reward token to WETH)
+                # there should be one more corresponding swap
+                # swapping it to USDT
+
+                # when swapping reward token for WETH the WETH is the amount
+                # out whether it is first or second token in the pool
+                weth_in = swap_log['amount0Out'] + swap_log['amount1Out']
+                # find corresponding USDT log match
+                for swap_log in swap_logs:
+                    if swap_log['amount0In'] == weth_in | swap_log['amount1In'] == weth_in:
+                        if swap_log['pool'] != SUSHISWAP_USDT_WETH_POOL:
+                            raise Exception("Expected corresponding swap log to be on USDT pool rather got: {}".format(swap_log['pool']))
+                        reward_token_symbol = SYMBOL_FOR_CONTRACT[reward_token]
+                        reward_token_decimals = DECIMALS_FOR_SYMBOL[reward_token_symbol]
+                        usdt_out = swap_log['amount0Out'] + swap_log['amount1Out']
+
+                        reward_token_amount_normalized = reward_token_amount / Decimal(math.pow(10, reward_token_decimals))
+                        usdt_normalized = usdt_out / Decimal(math.pow(10, 6))
+                        token_prices[reward_token_symbol] = usdt_normalized / reward_token_amount_normalized
+
+        return token_prices
+                            
 
 class YieldUnitWithRewardsList(YieldUnitList):
     def __init__(self, yield_units):

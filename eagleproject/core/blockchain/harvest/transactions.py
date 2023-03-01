@@ -27,6 +27,7 @@ from core.blockchain.const import (
     START_OF_OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES,
     OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
     OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
+    SUSHISWAP_USDT_WETH_POOL
 )
 from core.blockchain.conversion import human_duration_yield
 from core.blockchain.decode import decode_args, slot
@@ -514,6 +515,15 @@ def decode_reward_token_collected_log(log):
         'recipient': add_0x_prefix(slot(log.data, 0)[-40:]),
         'rewardToken': add_0x_prefix(slot(log.data, 1)[-40:]),
         'amount': int(slot(log.data, 2), 16)
+    }
+
+def decode_reward_token_swap_log(log):
+    return {
+        'pool': log.address,
+        'amount0In': int(slot(log.data, 0), 16),
+        'amount1In': int(slot(log.data, 1), 16),
+        'amount0Out': int(slot(log.data, 2), 16),
+        'amount1Out': int(slot(log.data, 3), 16),
     }
 
 def maybe_store_stake(log, block, receipt):
