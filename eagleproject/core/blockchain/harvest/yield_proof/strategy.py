@@ -92,6 +92,7 @@ class TokenBalance:
     def __str__(self):
         return 'TokenBalance: balance: {} address: {}'.format(self.balance, self.token_address)
 
+
 # param price: price of reward token denominated in decimals of the rewards token. e.g. USDT ~= 1
 class TokenBalanceWithPrice:
     def __init__(self, token_address, balance, price):
@@ -159,11 +160,28 @@ class YieldUnitList:
         self.yield_units = yield_units
         sorted(self.yield_units, key=lambda yu: yu.from_block)
 
+        # if reward balances are passed to constructor of a yield unit, according to the 
+        # weighted balance of assets in the strategy the reward token shall be split up
+        # between those assets
         if reward_balances != False:
             average_token_balances, average_total = self.average_token_balances()
+            self.reward_balances_per_asset = {}
+            for reward_balance in reward_balances:
+                for average_token_balance_address in average_token_balances.keys():
+                    reward_token_symbol = SYMBOL_FOR_CONTRACT[reward_balance.token_address]
+                    average_token_balance_symbol = SYMBOL_FOR_CONTRACT[average_token_balance_address]
 
-    # average token balance per block for the whole list or yield units. Denominated in 
-    # token's decimals. And total average token balances
+                    if reward_token_symbol not in self.reward_balances_per_asset:
+                        self.reward_balances_per_asset[reward_token_symbol] = {}
+
+                    # Share of the reward token that can be attributed to a single asset
+                    reward_token_amount = average_token_balances[average_token_balance_address] / average_total * reward_balance.balance
+                    self.reward_balances_per_asset[reward_token_symbol][average_token_balance_symbol] = TokenBalanceWithPrice(reward_balance.token_address, reward_token_amount, reward_balance.price)
+
+
+    # average token balance of every asset per block for the whole list of yield units. 
+    # Denominated in token's decimals. Second return value in the list is total average
+    # token balances which is the aggregate of all the average token balances
     def average_token_balances(self):
         aggregator = {}
         total_block_range = 0
@@ -187,10 +205,43 @@ class YieldUnitList:
 
 
     def __str__(self):
-        return 'YieldUnitList: {}'.format(list(map(lambda x: str(x), self.yield_units)))
+        return 'YieldUnitList: {} reward_tokens: {}'.format(list(map(lambda x: str(x), self.yield_units)), self.reward_balances_per_asset)
 
 
     def to_yield_units_with_reward(self):
+        def convert_to_reward_yield_units_with_harvest(units_to_be_converted, yield_unit):
+            harvest_logs = list(map(
+                lambda log: decode_reward_token_collected_log(log), 
+                filter(
+                    lambda log: log.topic_0 == STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC,
+                    yield_unit.reason_logs_option
+                )
+            ))
+            swap_logs = list(map(
+                lambda log: decode_reward_token_swap_log(log), 
+                filter(
+                    lambda log: log.topic_0 == TOKENS_SWAPPED_ON_UNISWAP_V2,
+                    yield_unit.reason_logs_option
+                )
+            ))
+            token_prices = self.__get_USDT_token_price_from_swap_log(swap_logs)
+
+            # convert harvest logs to token balances with price
+            reward_token_balances = []
+            for harvest_log in harvest_logs:
+                reward_token_symbol = SYMBOL_FOR_CONTRACT[harvest_log['rewardToken']]
+                reward_token_decimals = DECIMALS_FOR_SYMBOL[reward_token_symbol]
+                reward_token_balances.append(TokenBalanceWithPrice(
+                    harvest_log['rewardToken'],
+                    harvest_log['amount'] / Decimal(math.pow(10, reward_token_decimals)),
+                    token_prices[reward_token_symbol]
+                ))
+            
+            # these are all yield units tied to a single harvest event
+            unit_list_with_single_harvest = YieldUnitList(units_to_be_converted, reward_token_balances)
+            
+            #TODO: return yield units with reward
+
         units_to_be_converted = []
         for index, yield_unit in enumerate(self.yield_units):
             # Harvest event found, calculate exact - non estimated rewards for yield units
@@ -200,35 +251,7 @@ class YieldUnitList:
                 if len(units_to_be_converted) == 0:
                     continue
             
-                harvest_logs = list(map(
-                    lambda log: decode_reward_token_collected_log(log), 
-                    filter(
-                        lambda log: log.topic_0 == STRATEGY_REWARD_TOKEN_COLLECTED_TOPIC,
-                        yield_unit.reason_logs_option
-                    )
-                ))
-                swap_logs = list(map(
-                    lambda log: decode_reward_token_swap_log(log), 
-                    filter(
-                        lambda log: log.topic_0 == TOKENS_SWAPPED_ON_UNISWAP_V2,
-                        yield_unit.reason_logs_option
-                    )
-                ))
-                token_prices = self.__get_USDT_token_price_from_swap_log(swap_logs)
-
-                # convert harvest logs to token balances with price
-                reward_token_balances = []
-                for harvest_log in harvest_logs:
-                    reward_token_symbol = SYMBOL_FOR_CONTRACT[harvest_log['rewardToken']]
-                    reward_token_decimals = DECIMALS_FOR_SYMBOL[reward_token_symbol]
-                    reward_token_balances.append(TokenBalanceWithPrice(
-                        harvest_log['rewardToken'],
-                        harvest_log['amount'] / Decimal(math.pow(10, reward_token_decimals)),
-                        token_prices[reward_token_symbol]
-                    ))
-                
-
-                unit_list_with_single_harvest = YieldUnitList(units_to_be_converted, reward_token_balances)
+                yield_units_with_reward = convert_to_reward_yield_units_with_harvest(units_to_be_converted, yield_unit)
 
 
                 units_to_be_converted = []
