@@ -100,21 +100,17 @@ def fetch_assets(block_number):
 def dashboard(request):
     block_number = latest_snapshot_block_number()
 
-    comp = ensure_asset("COMP", block_number)
-
     apy = get_trailing_apy(days=365)
     if apy < 0:
         apy = 0
 
     assets = fetch_assets(block_number)
-    assets.append(comp)
 
     total_vault = sum(x.vault_holding for x in assets)
     total_aave = sum(x.aavestrat_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
     total_threepool = sum(x.threepoolstrat_holding for x in assets)
     total_assets = sum(x.total() for x in assets)
-    total_comp = comp.total()
     total_supply = totalSupply(OUSD, 18, block_number)
     total_value = sum(x.redeem_value() for x in assets)
     extra_assets = (total_assets - total_supply) * Decimal(0.9)
@@ -676,9 +672,7 @@ def api_address_history(request, address):
 
 def strategies(request):
     block_number = latest_snapshot_block_number()
-    comp = ensure_asset("COMP", block_number)
     assets = fetch_assets(block_number)
-    assets.append(comp)
 
     all_strats = _get_strat_holdings(assets)
 
@@ -702,7 +696,6 @@ def strategies(request):
             "usdc": strat["holdings"].get("USDC"),
             "ousd": strat["holdings"].get("OUSD"),
             "lusd": strat["holdings"].get("LUSD"),
-            "comp": strat["holdings"].get("COMP"),
         } for (strat_key, strat) in all_strats.items()]
 
     response = JsonResponse({

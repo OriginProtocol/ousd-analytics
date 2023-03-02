@@ -594,8 +594,6 @@ class ThreePoolStrat:
 
     @staticmethod
     def get_underlying_balance(block = "latest"):
-        holding = Decimal(0)
-
         # Total number of tokens held in pool
         crv3_balance_split = ThreePool.get_balance_split(block)
 
@@ -775,8 +773,6 @@ class OUSDMetaStrategy:
 
     @staticmethod
     def get_underlying_balance(block = "latest"):
-        holding = Decimal(0)
-
         # Total number of tokens held in pool
         ousd_balance_split = OUSDMetaPool.get_balance_split(block)
         crv3_balance_split = ThreePool.get_balance_split(block)
@@ -827,8 +823,6 @@ class LUSDMetaStrategy:
 
     @staticmethod
     def get_underlying_balance(block = "latest"):
-        holding = Decimal(0)
-
         # Total number of tokens held in pool
         lusd_balance_split = LUSDMetaPool.get_balance_split(block)
         crv3_balance_split = ThreePool.get_balance_split(block)
