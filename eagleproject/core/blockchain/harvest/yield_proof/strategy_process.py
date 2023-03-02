@@ -116,6 +116,7 @@ def build_yield_units(logs, blocks, strategy_address, asset_name_list):
                 token_balances,
                 block_number,
                 all_blocks[index + 1] - 1,
+                strategy_address,
                 reasons_info[0]['reason'],
                 list(map(lambda reason_info: reason_info['log'], reasons_info))
             )
