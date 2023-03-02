@@ -568,21 +568,11 @@ def fetch_all_holders():
     return list(set(filter(lambda address: address not in ['0x0000000000000000000000000000000000000000', '0x000000000000000000000000000000000000dead'], to_addresses + from_addresses)))
 
 
-def fetch_assets(block_number):
-    # These probably won't harvest since block_number comes from snapshots
-    dai = ensure_asset("DAI", block_number)
-    usdt = ensure_asset("USDT", block_number)
-    usdc = ensure_asset("USDC", block_number)
-    ousd = ensure_asset("OUSD", block_number)
-    return [dai, usdt, usdc, ousd]
-
-
 def fetch_supply_data(block_number):
     ensure_supply_snapshot(block_number)
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
-    assets = fetch_assets(block_number)
-    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
-    aum = float(snapshot.reported_supply) - total_meta / 2
+    ousd = ensure_asset("OUSD", block_number)
+    aum = float(snapshot.reported_supply) - float(ousd.strat_holdings["ousd_metastrat"])
 
     return {
         'total_supply': snapshot.reported_supply,

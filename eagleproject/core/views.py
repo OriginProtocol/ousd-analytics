@@ -52,8 +52,7 @@ from core.blockchain.harvest.transaction_history import (
     calculate_report_change,
     send_report_email,
     get_history_for_address,
-    _daily_rows,
-    fetch_assets
+    _daily_rows
 )
 
 from core.blockchain.rpc import (
@@ -94,7 +93,8 @@ def fetch_assets(block_number):
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
     ousd = ensure_asset("OUSD", block_number)
-    return [dai, usdt, usdc, ousd]
+    lusd = ensure_asset("LUSD", block_number)
+    return [dai, usdt, usdc, ousd, lusd]
 
 
 def dashboard(request):
@@ -182,14 +182,6 @@ def _get_strat_holdings(assets):
             balance = asset.get_strat_holdings(strat_key)
             holdings.append((asset.symbol, balance))
             total += balance
-
-        if strat_key == "ousd_metastrat":
-            # Assume that half of holdings in ousd_metastrat is printed OUSD
-            ousd_holding = total / 2
-            holdings = [
-                (symbol, holding / 2) for (symbol, holding) in holdings if symbol in ("DAI", "USDT", "USDC")
-            ]
-            holdings.append(("OUSD", ousd_holding))
 
         all_strats[strat_key] = {
             "name": strat["NAME"],
@@ -709,6 +701,7 @@ def strategies(request):
             "usdt": strat["holdings"].get("USDT"),
             "usdc": strat["holdings"].get("USDC"),
             "ousd": strat["holdings"].get("OUSD"),
+            "lusd": strat["holdings"].get("LUSD"),
             "comp": strat["holdings"].get("COMP"),
         } for (strat_key, strat) in all_strats.items()]
 
@@ -722,14 +715,13 @@ def strategies(request):
 def collateral(request):
     block_number = latest_snapshot_block_number()
     assets = fetch_assets(block_number)
-    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
     response = JsonResponse(
         {
             "collateral": [
                 {"name": "dai", "total": assets[0].total()},
                 {"name": "usdt", "total": assets[1].total()},
                 {"name": "usdc", "total": assets[2].total()},
-                {"name": "ousd", "total": str(total_meta / 2)},
+                {"name": "ousd", "total": assets[3].total()},
             ]
         }
     )

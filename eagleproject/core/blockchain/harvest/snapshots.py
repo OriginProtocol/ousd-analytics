@@ -30,6 +30,8 @@ from core.blockchain.const import (
 from core.blockchain.rpc import (
     AaveLendingPoolCore,
     OUSDMetaStrategy,
+    LUSDMetaStrategy,
+    ThreePoolStrat,
     ThreePool,
     balanceOf,
     balanceOfUnderlying,
@@ -55,6 +57,8 @@ from core.blockchain.rpc import (
     totalSupply,
     totalBorrows,
     totalReserves,
+    OUSDMetaPool,
+    LUSDMetaPool,
 )
 from core.logging import get_logger
 from core.models import (
@@ -166,12 +170,7 @@ def build_asset_block(symbol, block_number):
         or block_number > 13677000
         and symbol in ("USDC", "USDT", "DAI")
     ):
-        threepoolstrat_holding += strategyCheckBalance(
-            STRATCONVEX1,
-            CONTRACT_FOR_SYMBOL[symbol],
-            DECIMALS_FOR_SYMBOL[symbol],
-            block_number,
-        )
+        threepoolstrat_holding += ThreePoolStrat.get_underlying_balance(block_number).get(symbol)
     elif block_number > 11831747 and symbol in ("USDC", "USDT", "DAI"):
         threepoolstrat_holding += strategyCheckBalance(
             STRAT3POOL,
@@ -223,6 +222,10 @@ def build_asset_block(symbol, block_number):
                 DECIMALS_FOR_SYMBOL[symbol],
                 block_number,
             )
+        elif strat_key == "ousd_metastrat":
+            holding += OUSDMetaStrategy.get_underlying_balance(block_number).get(symbol)
+        elif strat_key == "lusd_metastrat":
+            holding += LUSDMetaStrategy.get_underlying_balance(block_number).get(symbol)
         else:
             holding = strategyCheckBalance(
                 strat.get("ADDRESS"),
@@ -250,6 +253,7 @@ def build_asset_block(symbol, block_number):
         strat_holdings=strat_holdings,
     )
 
+
 def ensure_asset(symbol, block_number):
     q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number)
     if q.count():
@@ -268,12 +272,14 @@ def ensure_supply_snapshot(block_number):
         dai = ensure_asset("DAI", block_number).total()
         usdt = ensure_asset("USDT", block_number).total()
         usdc = ensure_asset("USDC", block_number).total()
+        ousd = ensure_asset("OUSD", block_number).total()
+        lusd = ensure_asset("LUSD", block_number).total()
 
         s = SupplySnapshot()
         s.block_number = block_number
         s.non_rebasing_credits = Decimal(0)  # No longer used in contract
         s.credits = ousd_rebasing_credits(block_number) + s.non_rebasing_credits
-        s.computed_supply = dai + usdt + usdc
+        s.computed_supply = dai + usdt + usdc + ousd + lusd
         s.reported_supply = totalSupply(OUSD, 18, block_number)
         s.non_rebasing_supply = ousd_non_rebasing_supply(block_number)
         s.credits_ratio = s.computed_supply / s.credits
