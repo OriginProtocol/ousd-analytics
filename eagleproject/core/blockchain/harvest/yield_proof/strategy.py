@@ -116,6 +116,7 @@ class BareYieldUnit:
         token_balances,
         from_block,
         to_block,
+        strategy_address,
         reason,
         reason_logs_option
     ):
@@ -123,11 +124,12 @@ class BareYieldUnit:
         self.token_balances = token_balances
         self.from_block = from_block
         self.to_block = to_block
+        self.strategy_address = strategy_address
         self.reason = reason
         self.reason_logs_option = reason_logs_option
 
     def __str__(self):
-        return 'BareYieldUnit: from_block: {} to_block: {} reason: {} reason_logs_option: {} token_balances: {}'.format(self.from_block, self.to_block, self.reason, list(map(lambda x: str(x), self.reason_logs_option)), list(map(lambda x: str(x), self.token_balances)))
+        return 'BareYieldUnit: from_block: {} to_block: {} strategy_address: {} reason: {} reason_logs_option: {} token_balances: {}'.format(self.from_block, self.to_block, self.strategy_address, self.reason, list(map(lambda x: str(x), self.reason_logs_option)), list(map(lambda x: str(x), self.token_balances)))
 
     def block_range(self):
         return self.to_block - self.from_block
@@ -144,13 +146,14 @@ class YieldUnitWithReward(BareYieldUnit):
         token_balances,
         from_block,
         to_block,
+        strategy_address,
         reason,
         reason_logs_option,
         base_reward,
         reward_token_balances,
         is_estimated
     ):
-        BareYieldUnit.__init__(self, token_balances, from_block, to_block, reason, reason_logs_option)
+        BareYieldUnit.__init__(self, token_balances, from_block, to_block, strategy_address, reason, reason_logs_option)
         self.base_reward = base_reward
         self.reward_token_balances = reward_token_balances
         self.is_estimated = is_estimated
@@ -208,10 +211,13 @@ class YieldUnitList:
                         yield_unit_list_reward[token_balance.symbol].price
                     )
 
+            # use yield_unit.strategy_address to get to base reward do it as a function                    
+
             yield_units_with_reward.append(YieldUnitWithReward(
                 yield_unit.token_balances,
                 yield_unit.from_block,
                 yield_unit.to_block,
+                yield_unit.strategy_address,
                 yield_unit.reason,
                 yield_unit.reason_logs_option,
                 # TODO need to calculate base reward
@@ -290,9 +296,10 @@ class YieldUnitList:
             reward_yield_units = unit_list_with_single_harvest.generate_yield_units_with_rewards()
             return reward_yield_units
 
-        
+
         ###### MAIN to_yield_units_with_reward ####### 
         units_to_be_converted = []
+        final_yield_units = []
         for index, yield_unit in enumerate(self.yield_units):
             # Harvest event found, calculate exact - non estimated rewards for yield units
             if yield_unit.reason == YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST:
@@ -302,16 +309,18 @@ class YieldUnitList:
                     continue
             
                 yield_units_with_reward = convert_to_reward_yield_units_with_harvest(units_to_be_converted, yield_unit)
-
+                final_yield_units += yield_units_with_reward
 
                 units_to_be_converted = []
 
-            # we have reached the final yield unit without a harvest event. Estimate the
-            # yield for all yield units in units_to_be_converted
-            if (index == len(self.yield_units) - 1):
-                pass
 
             units_to_be_converted.append(yield_unit)
+
+        # final yield unit is not harvest event
+        if len(units_to_be_converted) > 0:
+            #units_to_be_converted -> turn into estimated units and add to final_yield_units
+            pass
+
 
     def __get_USDT_token_price_from_swap_log(self, swap_logs):
         token_prices = {}
