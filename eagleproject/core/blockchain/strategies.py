@@ -90,7 +90,7 @@ STRATEGIES = {
     "NAME": "Convex LUSD+3Crv",
     "ADDRESS": LUSD_METASTRAT,
     "FROM_BLOCK": 16226329,
-    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
+    "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "LUSD"),
     "ICON_NAME": "convex.png",
   },
   "morpho_aave_strat": {

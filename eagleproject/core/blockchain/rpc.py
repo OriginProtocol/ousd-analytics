@@ -17,9 +17,14 @@ from core.blockchain.addresses import (
     OPEN_ORACLE,
     OUSD,
     STORY_STAKING_SERIES,
+    STRATCONVEX1,
     OUSD_METASTRAT,
+    LUSD_METASTRAT,
     CURVE_METAPOOL,
-    CVX_REWARDS_POOL,
+    LUSD_METAPOOL,
+    CVX_3POOL_REWARDS_POOL,
+    CVX_OUSD_REWARDS_POOL,
+    CVX_LUSD_REWARDS_POOL,
     DAI,
     USDT,
     USDC
@@ -578,6 +583,51 @@ class ThreePool:
 
         return pcts
 
+class ThreePoolStrat:
+    """ RPC Calls for Convex Strategy """
+
+    @staticmethod
+    def assetToPToken(asset, block = "latest"):
+        data = call_by_sig(STRATCONVEX1, "assetToPToken(address)", [asset], block)
+        result = data["result"]
+        return decode_single("address", decode_hex(result))
+
+    @staticmethod
+    def get_underlying_balance(block = "latest"):
+        # Total number of tokens held in pool
+        crv3_balance_split = ThreePool.get_balance_split(block)
+
+        # LP token prices
+        crv3_meta_vp = ThreePool.get_virtual_price(block)
+
+        # Staked LP tokens
+        staked_bal = balanceOf(CVX_3POOL_REWARDS_POOL, STRATCONVEX1, 18, block)
+        
+        # Unstaked LP tokens
+        unstaked_bal = Decimal(0)
+        for asset in (DAI, USDT, USDC):
+            ptoken_addr = ThreePoolStrat.assetToPToken(asset, block)
+            asset_unstaked_bal = balanceOf(ptoken_addr, STRATCONVEX1, 18, block)
+
+            unstaked_bal += asset_unstaked_bal
+
+        total_lp = staked_bal + unstaked_bal
+
+        total_3crv_lp_value = total_lp * crv3_meta_vp
+        
+        retval = {}
+
+        for asset in (DAI, USDT, USDC):
+            symbol = SYMBOL_FOR_CONTRACT[asset.lower()]
+            decimals = DECIMALS_FOR_SYMBOL[symbol]
+
+            scaled_bal = total_3crv_lp_value * crv3_balance_split.get(symbol, 0)
+            scaled_bal = scaled_bal / 10**18
+
+            retval[symbol] = scaled_bal 
+    
+        return retval
+
 class OUSDMetaPool:
     """ RPC Calls for OUSD<>3CRV MetaPool """
 
@@ -593,6 +643,21 @@ class OUSDMetaPool:
             OUSDMetaPool.coins(0), # OUSD
             OUSDMetaPool.coins(1), # 3CRV
         ]
+
+    @staticmethod
+    def get_all_balances(block="latest"):
+        coins = OUSDMetaPool.get_all_coins(block)
+
+        retval = {}
+
+        for i, coin in enumerate(coins):
+            symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
+            decimals = DECIMALS_FOR_SYMBOL[symbol]
+            retval[symbol] = Decimal(OUSDMetaPool.balances(i)) / Decimal(
+                math.pow(10, decimals)
+            )
+
+        return retval
 
     @staticmethod
     def balances(index, block="latest"):
@@ -630,6 +695,73 @@ class OUSDMetaPool:
 
         return pcts
 
+class LUSDMetaPool:
+    """ RPC Calls for LUSD<>3CRV MetaPool """
+
+    @staticmethod
+    def coins(index, block="latest"):
+        data = call_by_sig(LUSD_METAPOOL, "coins(uint256)", [index], block=block)
+        result = data["result"]
+        return decode_single("address", decode_hex(result))
+
+    @staticmethod
+    def get_all_coins(block="latest"):
+        return [
+            LUSDMetaPool.coins(0), # LUSD
+            LUSDMetaPool.coins(1), # 3CRV
+        ]
+
+    @staticmethod
+    def get_all_balances(block="latest"):
+        coins = LUSDMetaPool.get_all_coins(block)
+
+        retval = {}
+
+        for i, coin in enumerate(coins):
+            symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
+            decimals = DECIMALS_FOR_SYMBOL[symbol]
+            retval[symbol] = Decimal(LUSDMetaPool.balances(i)) / Decimal(
+                math.pow(10, decimals)
+            )
+
+        return retval
+
+    @staticmethod
+    def balances(index, block="latest"):
+        data = call_by_sig(LUSD_METAPOOL, "balances(uint256)", [index], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
+
+    @staticmethod
+    def get_virtual_price(block="latest"):
+        data = call_by_sig(LUSD_METAPOOL, "get_virtual_price()", [], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
+
+    @staticmethod
+    def get_balance_split(block="latest"):
+        coins = LUSDMetaPool.get_all_coins(block)
+
+        balances = {}
+        pcts = {}
+        total = Decimal(0)
+
+        for i, coin in enumerate(coins):
+            symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
+            decimals = DECIMALS_FOR_SYMBOL[symbol]
+            bal = Decimal(LUSDMetaPool.balances(i))
+            if decimals != 18:
+                # Scale to 18 decimal places
+                bal = bal * Decimal(math.pow(10, 18)) / Decimal(math.pow(10, decimals))
+            balances[symbol] = bal
+            total += bal
+
+        for i, coin in enumerate(coins):
+            symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
+            pcts[symbol] = balances.get(symbol, Decimal(0)) / total if total > 0 else 0
+
+        return pcts
+
 class OUSDMetaStrategy:
     """ RPC Calls for OUSD MetaStrategy """
 
@@ -641,8 +773,6 @@ class OUSDMetaStrategy:
 
     @staticmethod
     def get_underlying_balance(block = "latest"):
-        holding = Decimal(0)
-
         # Total number of tokens held in pool
         ousd_balance_split = OUSDMetaPool.get_balance_split(block)
         crv3_balance_split = ThreePool.get_balance_split(block)
@@ -652,7 +782,7 @@ class OUSDMetaStrategy:
         crv3_meta_vp = ThreePool().get_virtual_price(block)
 
         # Staked LP tokens
-        staked_bal = balanceOf(CVX_REWARDS_POOL, OUSD_METASTRAT, 18, block)
+        staked_bal = balanceOf(CVX_OUSD_REWARDS_POOL, OUSD_METASTRAT, 18, block)
         
         # Unstaked LP tokens
         unstaked_bal = Decimal(0)
@@ -669,6 +799,56 @@ class OUSDMetaStrategy:
         
         retval = {
             'OUSD': total_ousd_lp_value / 10**18
+        }
+
+        for asset in (DAI, USDT, USDC):
+            symbol = SYMBOL_FOR_CONTRACT[asset.lower()]
+            decimals = DECIMALS_FOR_SYMBOL[symbol]
+
+            scaled_bal = total_3crv_lp_value * crv3_balance_split.get(symbol, 0)
+            scaled_bal = scaled_bal / 10**18
+
+            retval[symbol] = scaled_bal 
+    
+        return retval
+
+class LUSDMetaStrategy:
+    """ RPC Calls for LUSD MetaStrategy """
+
+    @staticmethod
+    def assetToPToken(asset, block = "latest"):
+        data = call_by_sig(LUSD_METASTRAT, "assetToPToken(address)", [asset], block)
+        result = data["result"]
+        return decode_single("address", decode_hex(result))
+
+    @staticmethod
+    def get_underlying_balance(block = "latest"):
+        # Total number of tokens held in pool
+        lusd_balance_split = LUSDMetaPool.get_balance_split(block)
+        crv3_balance_split = ThreePool.get_balance_split(block)
+
+        # LP token prices
+        lusd_meta_vp = LUSDMetaPool.get_virtual_price(block)
+        crv3_meta_vp = ThreePool().get_virtual_price(block)
+
+        # Staked LP tokens
+        staked_bal = balanceOf(CVX_LUSD_REWARDS_POOL, LUSD_METASTRAT, 18, block)
+        
+        # Unstaked LP tokens
+        unstaked_bal = Decimal(0)
+        for asset in (DAI, USDT, USDC):
+            ptoken_addr = LUSDMetaStrategy.assetToPToken(asset, block)
+            asset_unstaked_bal = balanceOf(ptoken_addr, LUSD_METASTRAT, 18, block)
+
+            unstaked_bal += asset_unstaked_bal
+
+        total_lp = staked_bal + unstaked_bal
+
+        total_lusd_lp_value = total_lp * lusd_balance_split.get("LUSD", 0) * lusd_meta_vp
+        total_3crv_lp_value = total_lp * lusd_balance_split.get("3CRV", 0) * crv3_meta_vp
+        
+        retval = {
+            'LUSD': total_lusd_lp_value / 10**18
         }
 
         for asset in (DAI, USDT, USDC):
