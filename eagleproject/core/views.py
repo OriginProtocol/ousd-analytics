@@ -771,7 +771,7 @@ def report_monthly(request, year, month):
     is_monthly = True
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
-    latest = year == datetime.datetime.now().year and week == int(datetime.datetime.now().strftime("%W")) - 1
+    latest = year == datetime.datetime.now().year and month == int(datetime.datetime.now().strftime("%m")) - 1
     if month == 12:
         next_month = 0
         next_year = year + 1

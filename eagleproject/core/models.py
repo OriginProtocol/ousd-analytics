@@ -379,13 +379,13 @@ class AnalyticsReport(models.Model):
             return None
 
         report_json = json.loads(str(self.report))
-        if name == "total_supply":
+        if name == "circulating_ousd":
             return (
-                int(report_json.get("supply_data", {}).get("total_supply", 0))
+                int(report_json.get("supply_data", {}).get("circulating_ousd", 0))
             )
-        elif name == "assets_under_management":
+        elif name == "protocol_owned_ousd":
             return (
-                int(report_json.get("supply_data", {}).get("assets_under_management", 0))
+                int(report_json.get("supply_data", {}).get("protocol_owned_ousd", 0))
             )
         elif name == "stablecoin_market_share":
             return (

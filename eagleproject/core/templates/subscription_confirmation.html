@@ -1,11 +1,26 @@
 <div>
-  <div style="max-width:576px;margin: 32px 32px 32px 0;padding: 48px 40px 48px 40px;border-radius: 8px;font-family: Helvetica;background-color:#F0F2F4;font-size: 16px;line-height: 24px;">
+  <div class="box" style="max-width:576px;margin: 32px 32px 32px 0;padding: 48px 40px;border-radius: 8px;font-family: Helvetica;background-color:#F0F2F4;font-size: 16px;line-height: 24px;">
     <img src="https://analytics.ousd.com/static/core/img/origin-dollar.png" alt="origin dollar" style="width: 50%;height: auto;" />
     <h1 style="margin-top: 48px;font-size: 24px;line-height: 28px;font-weight: bold;">Important:</h1>
     <div style="font-size: 16px;line-height: 24px;">To ensure you receive the OUSD analytics report every week, you must <span style="color: #0074F0;font-weight: 700;">confirm your subscription.</span></div>
     <a style="display:block;margin-top:48px;padding:10px 0;color:white;background-color:#0074F0;border-radius: 4px;font-size: 16px;line-height: 28px;font-weight: 700;text-align:center;text-decoration:none;" href="{{uri}}?email={{email}}&conf_num={{conf_num}}">
       Yes, subscribe me to the OUSD analytics report
     </a>
-    <div style="margin-top:48px;">If you received this email by mistake, simply delete it. You won't be subscribed if you don't click the confirmation link above.</div>
+    <div class="footer" style="margin-top:48px;">If you received this email by mistake, simply delete it. You won't be subscribed if you don't click the confirmation link above.</div>
   </div>
 </div>
+<style>
+  @media (max-width: 992px) {
+    img {
+      padding-left: 20px;
+    }
+    .box {
+      margin: 0 !important;
+      padding: 24px 20px !important;
+    }
+    .footer {
+      font-size: 12px;
+      line-height: 14px;
+    }
+  }
+</style>
