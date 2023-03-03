@@ -24,7 +24,7 @@ from core.blockchain.harvest.transactions import (
     explode_log_data
 )
 from core.blockchain.harvest.snapshots import (
-    ensure_asset
+    build_asset_block
 )
 from core.blockchain.rpc import (
     creditsBalanceOf,
@@ -588,7 +588,7 @@ def fetch_all_holders():
 def fetch_supply_data(block_number):
     ensure_supply_snapshot(block_number)
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
-    ousd = ensure_asset("OUSD", block_number)
+    ousd = build_asset_block("OUSD", block_number)
     protocol_owned_ousd = float(ousd.strat_holdings["ousd_metastrat"])
     circulating_ousd = float(snapshot.reported_supply) - protocol_owned_ousd
 
