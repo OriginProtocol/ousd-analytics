@@ -669,8 +669,10 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     rows = _daily_rows(days, to_block)
     gain = 0
     for row in rows:
-        gain += row.gain
+        if row.gain >= 0:
+            gain += row.gain
     fees_generated = gain / 10
+
 
     ousd_history = get_coin_history('OUSD', from_timestamp, to_timestamp)
     ousd_market_cap_history = ousd_history['market_caps']
