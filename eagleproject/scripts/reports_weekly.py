@@ -7,5 +7,5 @@ def run():
         return
 
     create_time_interval_report_for_previous_month(
-        None, False
+        None, None, False
     )

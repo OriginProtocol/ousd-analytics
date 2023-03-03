@@ -45,7 +45,7 @@ STRATEGIES = {
     "NAME": "Vault",
     "ADDRESS": VAULT,
     "HARDCODED": True,
-    "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP", "OUSD"),
+    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "ousd-icon.svg",
   },
   "compstrat_holding": {
