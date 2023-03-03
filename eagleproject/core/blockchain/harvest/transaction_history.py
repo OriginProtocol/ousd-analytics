@@ -241,8 +241,8 @@ def get_block_number_from_block_time(time, ascending = False):
 
 def calculate_report_change(current_report, previous_report):
     changes = {
-        "total_supply": 0,
-        "assets_under_management": 0,
+        "circulating_ousd": 0,
+        "protocol_owned_ousd": 0,
         "apy": 0,
         "accounts_analyzed": 0,
         "accounts_holding_ousd": 0,
@@ -294,8 +294,8 @@ def calculate_report_change(current_report, previous_report):
     curve_data = json_report["curve_data"] if "curve_data" in json_report else None
     curve_data_previous = json_report_previous["curve_data"] if "curve_data" in json_report_previous else None
 
-    changes['total_supply'] = calculate_difference(current_report.total_supply, previous_report.total_supply)
-    changes['assets_under_management'] = calculate_difference(current_report.assets_under_management, previous_report.assets_under_management)
+    changes['circulating_ousd'] = calculate_difference(current_report.circulating_ousd, previous_report.circulating_ousd)
+    changes['protocol_owned_ousd'] = calculate_difference(current_report.protocol_owned_ousd, previous_report.protocol_owned_ousd)
     changes['apy'] = calculate_difference_bp(current_report.apy, previous_report.apy)
     changes['accounts_analyzed'] = calculate_difference(current_report.accounts_analyzed, previous_report.accounts_analyzed)
     changes['accounts_holding_ousd'] = calculate_difference(current_report.accounts_holding_ousd, previous_report.accounts_holding_ousd)
@@ -589,11 +589,12 @@ def fetch_supply_data(block_number):
     ensure_supply_snapshot(block_number)
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
     ousd = ensure_asset("OUSD", block_number)
-    aum = float(snapshot.reported_supply) - float(ousd.strat_holdings["ousd_metastrat"])
+    protocol_owned_ousd = float(ousd.strat_holdings["ousd_metastrat"])
+    circulating_ousd = float(snapshot.reported_supply) - protocol_owned_ousd
 
     return {
-        'total_supply': snapshot.reported_supply,
-        'assets_under_management': aum,
+        'circulating_ousd': circulating_ousd,
+        'protocol_owned_ousd': protocol_owned_ousd,
         'pools': pools,
         'totals_by_rebasing': totals_by_rebasing,
         'other_rebasing': other_rebasing,
