@@ -708,14 +708,12 @@ def strategies(request):
 def collateral(request):
     block_number = latest_snapshot_block_number()
     assets = fetch_assets(block_number)
+    collateral = []
+    for asset in assets:
+        collateral.append({"name": asset.symbol.lower(), "total": asset.total()})
     response = JsonResponse(
         {
-            "collateral": [
-                {"name": "dai", "total": assets[0].total()},
-                {"name": "usdt", "total": assets[1].total()},
-                {"name": "usdc", "total": assets[2].total()},
-                {"name": "ousd", "total": assets[3].total()},
-            ]
+            "collateral": collateral
         }
     )
     response.setdefault("Access-Control-Allow-Origin", "*")
