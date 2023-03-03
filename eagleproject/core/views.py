@@ -52,8 +52,7 @@ from core.blockchain.harvest.transaction_history import (
     calculate_report_change,
     send_report_email,
     get_history_for_address,
-    _daily_rows,
-    fetch_assets
+    _daily_rows
 )
 
 from core.blockchain.rpc import (
@@ -94,27 +93,24 @@ def fetch_assets(block_number):
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
     ousd = ensure_asset("OUSD", block_number)
-    return [dai, usdt, usdc, ousd]
+    lusd = ensure_asset("LUSD", block_number)
+    return [dai, usdt, usdc, ousd, lusd]
 
 
 def dashboard(request):
     block_number = latest_snapshot_block_number()
-
-    comp = ensure_asset("COMP", block_number)
 
     apy = get_trailing_apy(days=365)
     if apy < 0:
         apy = 0
 
     assets = fetch_assets(block_number)
-    assets.append(comp)
 
     total_vault = sum(x.vault_holding for x in assets)
     total_aave = sum(x.aavestrat_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
     total_threepool = sum(x.threepoolstrat_holding for x in assets)
     total_assets = sum(x.total() for x in assets)
-    total_comp = comp.total()
     total_supply = totalSupply(OUSD, 18, block_number)
     total_value = sum(x.redeem_value() for x in assets)
     extra_assets = (total_assets - total_supply) * Decimal(0.9)
@@ -183,14 +179,6 @@ def _get_strat_holdings(assets):
             holdings.append((asset.symbol, balance))
             total += balance
 
-        if strat_key == "ousd_metastrat":
-            # Assume that half of holdings in ousd_metastrat is printed OUSD
-            ousd_holding = total / 2
-            holdings = [
-                (symbol, holding / 2) for (symbol, holding) in holdings if symbol in ("DAI", "USDT", "USDC")
-            ]
-            holdings.append(("OUSD", ousd_holding))
-
         all_strats[strat_key] = {
             "name": strat["NAME"],
             "address": strat["ADDRESS"],
@@ -253,7 +241,7 @@ def make_monthly_report(request):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_month(
-        None, do_only_transaction_analytics
+        None, None, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
@@ -268,12 +256,12 @@ def make_weekly_report(request):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_week(
-        None, do_only_transaction_analytics
+        None, None, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
 
-def make_specific_month_report(request, month):
+def make_specific_month_report(request, year, month):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
@@ -282,12 +270,12 @@ def make_specific_month_report(request, month):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_month(
-        month, do_only_transaction_analytics
+        year, month, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
 
-def make_specific_week_report(request, week):
+def make_specific_week_report(request, year, week):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
@@ -296,7 +284,7 @@ def make_specific_week_report(request, week):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_week(
-        week, do_only_transaction_analytics
+        year, week, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
@@ -684,9 +672,7 @@ def api_address_history(request, address):
 
 def strategies(request):
     block_number = latest_snapshot_block_number()
-    comp = ensure_asset("COMP", block_number)
     assets = fetch_assets(block_number)
-    assets.append(comp)
 
     all_strats = _get_strat_holdings(assets)
 
@@ -709,7 +695,7 @@ def strategies(request):
             "usdt": strat["holdings"].get("USDT"),
             "usdc": strat["holdings"].get("USDC"),
             "ousd": strat["holdings"].get("OUSD"),
-            "comp": strat["holdings"].get("COMP"),
+            "lusd": strat["holdings"].get("LUSD"),
         } for (strat_key, strat) in all_strats.items()]
 
     response = JsonResponse({
@@ -722,15 +708,12 @@ def strategies(request):
 def collateral(request):
     block_number = latest_snapshot_block_number()
     assets = fetch_assets(block_number)
-    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
+    collateral = []
+    for asset in assets:
+        collateral.append({"name": asset.symbol.lower(), "total": asset.total()})
     response = JsonResponse(
         {
-            "collateral": [
-                {"name": "dai", "total": assets[0].total()},
-                {"name": "usdt", "total": assets[1].total()},
-                {"name": "usdc", "total": assets[2].total()},
-                {"name": "ousd", "total": str(total_meta / 2)},
-            ]
+            "collateral": collateral
         }
     )
     response.setdefault("Access-Control-Allow-Origin", "*")
@@ -788,7 +771,13 @@ def report_monthly(request, year, month):
     is_monthly = True
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
-
+    latest = year == datetime.datetime.now().year and week == int(datetime.datetime.now().strftime("%W")) - 1
+    if month == 12:
+        next_month = 0
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
     return render(request, "analytics_report.html", locals())
 
 
@@ -802,22 +791,21 @@ def report_weekly(request, year, week):
     is_monthly = False
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
+    latest = year == datetime.datetime.now().year and week == int(datetime.datetime.now().strftime("%W")) - 1
+    if week == 51:
+        next_week = 0
+        next_year = year + 1
+    else:
+        next_week = week + 1
+        next_year = year
 
     return render(request, "analytics_report.html", locals())
 
 
 def report_latest_weekly(request):
-    report = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-month")[0]
-    prev_report = _get_previous_report(report)
-    stats = report_stats
-    stat_keys = stats.keys()
-    curve_stats = curve_report_stats
-    curve_stat_keys = curve_stats.keys()
-    is_monthly = False
-    change = calculate_report_change(report, prev_report)
-    report.transaction_report = json.loads(str(report.transaction_report))
-
-    return render(request, "analytics_report.html", locals())
+    year = datetime.datetime.now().year
+    week = int(datetime.datetime.now().strftime("%W")) - 1
+    return redirect("weekly", year, week)
 
 
 def reports(request):
@@ -911,15 +899,6 @@ def unsubscribe(request):
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'unsubscribed'})
     else:
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'denied'})
-
-
-def backfill_subscribers(request):
-    emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
-    for email in emails:
-        if Subscriber.objects.filter(email=email).first() is None:
-            sub = Subscriber(email=email, conf_num=generate_token(), confirmed=True)
-            sub.save()
-    return HttpResponse("ok")
 
 
 def backfill_internal_transactions(request):

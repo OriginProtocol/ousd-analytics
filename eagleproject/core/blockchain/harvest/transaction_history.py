@@ -390,10 +390,14 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
 
     return analyticsReport
 
-def create_time_interval_report_for_previous_week(week_override, do_only_transaction_analytics = False):
-    year_number = datetime.now().year
+def create_time_interval_report_for_previous_week(year_override, week_override, do_only_transaction_analytics = False):
+    year_number = year_override if year_override is not None else datetime.now().year
     # number of the week in a year - for the previous week
     week_number = week_override if week_override is not None else int(datetime.now().strftime("%W")) - 1
+
+    if week_override is not None and week_override > int(datetime.now().strftime("%W")) - 1 and year_override is not None and year_override >= datetime.now().year:
+        print("Week {} of year {} has not ended yet.".format(week_number, year_number))
+        return
 
     if week_override is None and not should_create_new_report(year_number, None, week_number):
         print("Report for year: {} and week: {} does not need creation".format(year_number, week_number))
@@ -486,10 +490,14 @@ def should_create_new_report(year, month_option, week_option):
 
     return True
 
-def create_time_interval_report_for_previous_month(month_override, do_only_transaction_analytics = False):
+def create_time_interval_report_for_previous_month(year_override, month_override, do_only_transaction_analytics = False):
     # number of the month in a year - for the previous month
     month_number = month_override if month_override is not None else int(datetime.now().strftime("%m")) - 1
-    year_number = datetime.now().year + (-1 if month_number == 12 else 0)
+    year_number = year_override if year_override is not None else datetime.now().year + (-1 if month_number == 12 else 0)
+
+    if month_override is not None and month_override > int(datetime.now().strftime("%m")) - 1 and year_override is not None and year_override >= datetime.now().year:
+        print("Month {} of year {} has not ended yet.".format(month_number, year_number))
+        return
 
     if month_override is None and not should_create_new_report(year_number, month_number, None):
         print("Report for year: {} and month: {} does not need creation".format(year_number, month_number))
@@ -561,6 +569,15 @@ def create_time_interval_report_for_previous_month(month_override, do_only_trans
         preb_db_report = month_before_report[0] if len(month_before_report) != 0 else None
         send_report_email('OUSD Analytics Monthly Report', db_report, preb_db_report, "Monthly")
 
+
+def backfill_subscribers():
+    emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
+    for email in emails:
+        if Subscriber.objects.filter(email=email).first() is None:
+            sub = Subscriber(email=email, conf_num=generate_token(), confirmed=True)
+            sub.save()
+
+
 # get all accounts that at some point held OUSD
 def fetch_all_holders():
     to_addresses = list(map(lambda log: log['to_address'], OusdTransfer.objects.values('to_address').distinct()))
@@ -568,21 +585,11 @@ def fetch_all_holders():
     return list(set(filter(lambda address: address not in ['0x0000000000000000000000000000000000000000', '0x000000000000000000000000000000000000dead'], to_addresses + from_addresses)))
 
 
-def fetch_assets(block_number):
-    # These probably won't harvest since block_number comes from snapshots
-    dai = ensure_asset("DAI", block_number)
-    usdt = ensure_asset("USDT", block_number)
-    usdc = ensure_asset("USDC", block_number)
-    ousd = ensure_asset("OUSD", block_number)
-    return [dai, usdt, usdc, ousd]
-
-
 def fetch_supply_data(block_number):
     ensure_supply_snapshot(block_number)
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
-    assets = fetch_assets(block_number)
-    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
-    aum = float(snapshot.reported_supply) - total_meta / 2
+    ousd = ensure_asset("OUSD", block_number)
+    aum = float(snapshot.reported_supply) - float(ousd.strat_holdings["ousd_metastrat"])
 
     return {
         'total_supply': snapshot.reported_supply,

@@ -27,6 +27,7 @@ from core.blockchain.addresses import (
     STORY_STAKING_SERIES,
     OUSD,
     OUSD_USDT_UNISWAP,
+    LUSD,
     STRATAAVEDAI,
     STRATCOMP,
     STRAT3POOL,
@@ -59,6 +60,7 @@ CONTRACT_FOR_SYMBOL = {
     "USDC": USDC,
     "COMP": COMP,
     "OUSD": OUSD,
+    "LUSD": LUSD,
     "3CRV": THREEPOOL,
     "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 }
@@ -73,6 +75,7 @@ DECIMALS_FOR_SYMBOL = {
     "OGN": 18,
     "OGV": 18,
     "OUSD": 18,
+    "LUSD": 18,
     "USDT": 6,
     "USDC": 6,
     "veCRV": 18,
