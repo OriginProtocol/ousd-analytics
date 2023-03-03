@@ -10,9 +10,12 @@
   <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<div>
+<div class="report">
   <div class="box">
-    <img src="https://analytics.ousd.com/static/core/img/origin-dollar.png" alt="origin dollar" style="width: 50%;height: auto;" />
+    <div class="stretch">
+      <img src="/static/core/img/origin-dollar.png" alt="origin dollar" style="width:50%;height:auto;align-self:flex-start;" />
+      <a class="subscribe" href="/reports/subscribe" target="_blank">Subscribe!</a>
+    </div>
     <h1>Analytics Report</h1>
     <h4>
         {% if is_monthly == True %}
@@ -22,9 +25,9 @@
         {% endif %}
         UTC.
     </h4>
-
+    
     <h2>
-      <img src="https://analytics.ousd.com/static/core/img/ousd.png" alt="ousd" style="width: 32px;height: 32px;margin-right:6px;" />
+      <img src="/static/core/img/ousd.png" alt="ousd" style="width: 32px;height: 32px;margin-right:6px;" />
       <div style="display:inline;padding-top:2px">OUSD</div>
     </h2>
 
@@ -85,7 +88,7 @@
     </table>
 
     <h2>
-      <img src="https://analytics.ousd.com/static/core/img/ogv.png" alt="ogv" style="width: 32px;height: 32px;margin-right:6px;" />
+      <img src="/static/core/img/ogv.png" alt="ogv" style="width: 32px;height: 32px;margin-right:6px;" />
       <div style="display:inline;padding-top:2px">
         OGV
         <span style="font-weight:normal;">(Origin Dollar Governance)</span></div>
@@ -130,6 +133,22 @@
       </tr>
     </table>
   </div>
+  <div class="navigation">
+    <span>
+      {% if prev_report is not None %}
+        <a class="route" href="/reports/weekly/{{prev_report.year|int_no_comma}}/{{prev_report.week|int_no_comma}}">
+          <img src="/static/core/img/arrow-left.svg" alt="arrow-left" style="margin-right:14px;" />
+          <div>Previous report</div>
+        </a>
+      {% endif %}
+    </span>
+    {% if not latest %}
+    <a class="route" href="/reports/weekly/{{next_year|int_no_comma}}/{{next_week|int_no_comma}}">
+      <div>Next report</div>
+      <img src="/static/core/img/arrow-right.svg" alt="arrow-right" style="margin-left:14px;" />
+    </a>
+    {% endif %}
+  </div>
 </div>
 <style>
   h1 {
@@ -141,9 +160,11 @@
   h4 {
     margin-top:16px;font-size: 14px;line-height: 16px;
   }
-  .box {
+  .report {
     max-width: 640px;
     margin: auto;
+  }
+  .box {
     margin-bottom: 45px;
     padding: 48px 40px;
     border-radius: 8px;
@@ -151,6 +172,11 @@
     background-color:#F0F2F4;
     font-size: 12px;
     line-height: 13px;
+  }
+  .stretch {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
   }
   .value {
     font-size: 12px;
@@ -167,6 +193,34 @@
   .change {
     font-size:11px;
     line-height:13px;
+  }
+  .subscribe, .subscribe:hover {
+    display: inline-flex;
+    padding: 6px 24px;
+    font-size: 16px;
+    line-height: 28px;
+    text-decoration: none;
+    color: white;
+    background: linear-gradient(90deg, #8C66FC -28.99%, #0274F1 144.97%);
+    border-radius: 100px;
+  }
+  .navigation {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 40px;
+    margin-bottom: 120px;
+  }
+  .route, .route:hover {
+    display: inline-flex;
+
+    padding: 8px 16px;
+    font-size: 14px;
+    line-height: 23px;
+    text-decoration: none;
+    color: black;
+    border: 1px solid #B5BECA;
+    border-radius: 100px;
   }
   @media (max-width: 992px) {
     .box {

@@ -241,7 +241,7 @@ def make_monthly_report(request):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_month(
-        None, do_only_transaction_analytics
+        None, None, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
@@ -256,12 +256,12 @@ def make_weekly_report(request):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_week(
-        None, do_only_transaction_analytics
+        None, None, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
 
-def make_specific_month_report(request, month):
+def make_specific_month_report(request, year, month):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
@@ -270,12 +270,12 @@ def make_specific_month_report(request, month):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_month(
-        month, do_only_transaction_analytics
+        year, month, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
 
-def make_specific_week_report(request, week):
+def make_specific_week_report(request, year, week):
     if not settings.ENABLE_REPORTS:
         print("Reports disabled on this instance")
         return HttpResponse("ok")
@@ -284,7 +284,7 @@ def make_specific_week_report(request, week):
         request.GET.get("only_tx_report", "false") == "true"
     )
     create_time_interval_report_for_previous_week(
-        week, do_only_transaction_analytics
+        year, week, do_only_transaction_analytics
     )
     return HttpResponse("ok")
 
@@ -773,7 +773,13 @@ def report_monthly(request, year, month):
     is_monthly = True
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
-
+    latest = year == datetime.datetime.now().year and week == int(datetime.datetime.now().strftime("%W")) - 1
+    if month == 12:
+        next_month = 0
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
     return render(request, "analytics_report.html", locals())
 
 
@@ -787,22 +793,21 @@ def report_weekly(request, year, week):
     is_monthly = False
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
+    latest = year == datetime.datetime.now().year and week == int(datetime.datetime.now().strftime("%W")) - 1
+    if week == 51:
+        next_week = 0
+        next_year = year + 1
+    else:
+        next_week = week + 1
+        next_year = year
 
     return render(request, "analytics_report.html", locals())
 
 
 def report_latest_weekly(request):
-    report = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-month")[0]
-    prev_report = _get_previous_report(report)
-    stats = report_stats
-    stat_keys = stats.keys()
-    curve_stats = curve_report_stats
-    curve_stat_keys = curve_stats.keys()
-    is_monthly = False
-    change = calculate_report_change(report, prev_report)
-    report.transaction_report = json.loads(str(report.transaction_report))
-
-    return render(request, "analytics_report.html", locals())
+    year = datetime.datetime.now().year
+    week = int(datetime.datetime.now().strftime("%W")) - 1
+    return redirect("weekly", year, week)
 
 
 def reports(request):
@@ -896,15 +901,6 @@ def unsubscribe(request):
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'unsubscribed'})
     else:
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'denied'})
-
-
-def backfill_subscribers(request):
-    emails = settings.REPORT_RECEIVER_EMAIL_LIST.split(",")
-    for email in emails:
-        if Subscriber.objects.filter(email=email).first() is None:
-            sub = Subscriber(email=email, conf_num=generate_token(), confirmed=True)
-            sub.save()
-    return HttpResponse("ok")
 
 
 def backfill_internal_transactions(request):
