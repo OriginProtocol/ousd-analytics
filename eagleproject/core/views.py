@@ -52,8 +52,7 @@ from core.blockchain.harvest.transaction_history import (
     calculate_report_change,
     send_report_email,
     get_history_for_address,
-    _daily_rows,
-    fetch_assets
+    _daily_rows
 )
 
 from core.blockchain.rpc import (
@@ -94,27 +93,24 @@ def fetch_assets(block_number):
     usdt = ensure_asset("USDT", block_number)
     usdc = ensure_asset("USDC", block_number)
     ousd = ensure_asset("OUSD", block_number)
-    return [dai, usdt, usdc, ousd]
+    lusd = ensure_asset("LUSD", block_number)
+    return [dai, usdt, usdc, ousd, lusd]
 
 
 def dashboard(request):
     block_number = latest_snapshot_block_number()
-
-    comp = ensure_asset("COMP", block_number)
 
     apy = get_trailing_apy(days=365)
     if apy < 0:
         apy = 0
 
     assets = fetch_assets(block_number)
-    assets.append(comp)
 
     total_vault = sum(x.vault_holding for x in assets)
     total_aave = sum(x.aavestrat_holding for x in assets)
     total_compstrat = sum(x.compstrat_holding for x in assets)
     total_threepool = sum(x.threepoolstrat_holding for x in assets)
     total_assets = sum(x.total() for x in assets)
-    total_comp = comp.total()
     total_supply = totalSupply(OUSD, 18, block_number)
     total_value = sum(x.redeem_value() for x in assets)
     extra_assets = (total_assets - total_supply) * Decimal(0.9)
@@ -182,14 +178,6 @@ def _get_strat_holdings(assets):
             balance = asset.get_strat_holdings(strat_key)
             holdings.append((asset.symbol, balance))
             total += balance
-
-        if strat_key == "ousd_metastrat":
-            # Assume that half of holdings in ousd_metastrat is printed OUSD
-            ousd_holding = total / 2
-            holdings = [
-                (symbol, holding / 2) for (symbol, holding) in holdings if symbol in ("DAI", "USDT", "USDC")
-            ]
-            holdings.append(("OUSD", ousd_holding))
 
         all_strats[strat_key] = {
             "name": strat["NAME"],
@@ -684,9 +672,7 @@ def api_address_history(request, address):
 
 def strategies(request):
     block_number = latest_snapshot_block_number()
-    comp = ensure_asset("COMP", block_number)
     assets = fetch_assets(block_number)
-    assets.append(comp)
 
     all_strats = _get_strat_holdings(assets)
 
@@ -709,7 +695,7 @@ def strategies(request):
             "usdt": strat["holdings"].get("USDT"),
             "usdc": strat["holdings"].get("USDC"),
             "ousd": strat["holdings"].get("OUSD"),
-            "comp": strat["holdings"].get("COMP"),
+            "lusd": strat["holdings"].get("LUSD"),
         } for (strat_key, strat) in all_strats.items()]
 
     response = JsonResponse({
@@ -722,14 +708,13 @@ def strategies(request):
 def collateral(request):
     block_number = latest_snapshot_block_number()
     assets = fetch_assets(block_number)
-    total_meta = sum(float(x.strat_holdings["ousd_metastrat"]) for x in assets)
     response = JsonResponse(
         {
             "collateral": [
                 {"name": "dai", "total": assets[0].total()},
                 {"name": "usdt", "total": assets[1].total()},
                 {"name": "usdc", "total": assets[2].total()},
-                {"name": "ousd", "total": str(total_meta / 2)},
+                {"name": "ousd", "total": assets[3].total()},
             ]
         }
     )
