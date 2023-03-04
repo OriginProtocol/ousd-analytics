@@ -777,9 +777,8 @@ class OUSDMetaStrategy:
         ousd_balance_split = OUSDMetaPool.get_balance_split(block)
         crv3_balance_split = ThreePool.get_balance_split(block)
 
-        # LP token prices
+        # LP token price
         ousd_meta_vp = OUSDMetaPool.get_virtual_price(block)
-        crv3_meta_vp = ThreePool().get_virtual_price(block)
 
         # Staked LP tokens
         staked_bal = balanceOf(CVX_OUSD_REWARDS_POOL, OUSD_METASTRAT, 18, block)
@@ -792,13 +791,13 @@ class OUSDMetaStrategy:
 
             unstaked_bal += asset_unstaked_bal
 
-        total_lp = staked_bal + unstaked_bal
+        total_lp = (staked_bal + unstaked_bal) * ousd_meta_vp / 10**18
 
-        total_ousd_lp_value = total_lp * ousd_balance_split.get("OUSD", 0) * ousd_meta_vp
-        total_3crv_lp_value = total_lp * ousd_balance_split.get("3CRV", 0) * crv3_meta_vp
+        total_ousd_lp_value = total_lp * ousd_balance_split.get("OUSD", 0)
+        total_3crv_lp_value = total_lp * ousd_balance_split.get("3CRV", 0)
         
         retval = {
-            'OUSD': total_ousd_lp_value / 10**18
+            'OUSD': total_ousd_lp_value
         }
 
         for asset in (DAI, USDT, USDC):
@@ -806,9 +805,8 @@ class OUSDMetaStrategy:
             decimals = DECIMALS_FOR_SYMBOL[symbol]
 
             scaled_bal = total_3crv_lp_value * crv3_balance_split.get(symbol, 0)
-            scaled_bal = scaled_bal / 10**18
 
-            retval[symbol] = scaled_bal 
+            retval[symbol] = scaled_bal
     
         return retval
 
@@ -827,9 +825,8 @@ class LUSDMetaStrategy:
         lusd_balance_split = LUSDMetaPool.get_balance_split(block)
         crv3_balance_split = ThreePool.get_balance_split(block)
 
-        # LP token prices
+        # LP token price
         lusd_meta_vp = LUSDMetaPool.get_virtual_price(block)
-        crv3_meta_vp = ThreePool().get_virtual_price(block)
 
         # Staked LP tokens
         staked_bal = balanceOf(CVX_LUSD_REWARDS_POOL, LUSD_METASTRAT, 18, block)
@@ -842,13 +839,13 @@ class LUSDMetaStrategy:
 
             unstaked_bal += asset_unstaked_bal
 
-        total_lp = staked_bal + unstaked_bal
+        total_lp = (staked_bal + unstaked_bal) * lusd_meta_vp / 10**18
 
-        total_lusd_lp_value = total_lp * lusd_balance_split.get("LUSD", 0) * lusd_meta_vp
-        total_3crv_lp_value = total_lp * lusd_balance_split.get("3CRV", 0) * crv3_meta_vp
+        total_lusd_lp_value = total_lp * lusd_balance_split.get("LUSD", 0)
+        total_3crv_lp_value = total_lp * lusd_balance_split.get("3CRV", 0)
         
         retval = {
-            'LUSD': total_lusd_lp_value / 10**18
+            'LUSD': total_lusd_lp_value
         }
 
         for asset in (DAI, USDT, USDC):
@@ -856,8 +853,7 @@ class LUSDMetaStrategy:
             decimals = DECIMALS_FOR_SYMBOL[symbol]
 
             scaled_bal = total_3crv_lp_value * crv3_balance_split.get(symbol, 0)
-            scaled_bal = scaled_bal / 10**18
 
-            retval[symbol] = scaled_bal 
+            retval[symbol] = scaled_bal
     
         return retval
