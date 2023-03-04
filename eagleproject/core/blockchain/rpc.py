@@ -686,8 +686,6 @@ class OUSDMetaPool:
             if decimals != 18:
                 # Scale to 18 decimal places
                 bal = bal * Decimal(math.pow(10, 18)) / Decimal(math.pow(10, decimals))
-            if symbol == "3CRV":
-                bal = bal * ThreePool.get_virtual_price(block) / Decimal(math.pow(10, 18))
             balances[symbol] = bal
             total += bal
 
@@ -755,8 +753,6 @@ class LUSDMetaPool:
             if decimals != 18:
                 # Scale to 18 decimal places
                 bal = bal * Decimal(math.pow(10, 18)) / Decimal(math.pow(10, decimals))
-            if symbol == "3CRV":
-                bal = bal * ThreePool.get_virtual_price(block) / Decimal(math.pow(10, 18))
             balances[symbol] = bal
             total += bal
 
