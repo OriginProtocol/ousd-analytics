@@ -24,7 +24,7 @@ from core.blockchain.harvest.transactions import (
     explode_log_data
 )
 from core.blockchain.harvest.snapshots import (
-    ensure_asset
+    build_asset_block
 )
 from core.blockchain.rpc import (
     creditsBalanceOf,
@@ -588,7 +588,7 @@ def fetch_all_holders():
 def fetch_supply_data(block_number):
     ensure_supply_snapshot(block_number)
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
-    ousd = ensure_asset("OUSD", block_number)
+    ousd = build_asset_block("OUSD", block_number)
     protocol_owned_ousd = float(ousd.strat_holdings["ousd_metastrat"])
     circulating_ousd = float(snapshot.reported_supply) - protocol_owned_ousd
 
@@ -665,11 +665,11 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
             break
 
     days = (to_block_time - from_block_time).days + 1
-
-    rows = _daily_rows(days, to_block)
+    rows = _daily_rows_past(days, to_block_time)
     gain = 0
     for row in rows:
-        gain += row.gain
+        if row.gain >= 0:
+            gain += row.gain
     fees_generated = gain / 10
 
     ousd_history = get_coin_history('OUSD', from_timestamp, to_timestamp)
@@ -1225,4 +1225,48 @@ def _daily_rows(steps, latest_block_number):
     rows = rows[:-1]
     # Add dripper funds to today so far
     rows[0].gain += dripper_available()
+    return rows
+
+
+def _daily_rows_past(steps, latest_block_time):
+    block_numbers = []
+    today = datetime.utcnow()
+    if today.hour < 8:
+        today = (today - timedelta(seconds=24 * 60 * 60)).replace(
+            tzinfo=timezone.utc
+        )
+    selected = datetime(latest_block_time.year, latest_block_time.month, latest_block_time.day).replace(
+        tzinfo=timezone.utc
+    )
+    for i in range(0, steps + 1):
+        day = ensure_day(selected)
+        block_numbers.append(day.block_number)
+        selected = (
+            selected - timedelta(seconds=24 * 60 * 60)
+        ).replace(tzinfo=timezone.utc)
+    block_numbers = list(dict.fromkeys(block_numbers))
+    block_numbers.reverse()
+
+    rows = []
+    last_snapshot = None
+    for block_number in block_numbers:
+        if block_number < START_OF_OUSD_V2:
+            continue
+        block = ensure_block(block_number)
+        s = ensure_supply_snapshot(block_number)
+        s.block_number = block_number
+        s.block_time = block.block_time
+        if last_snapshot:
+            change = (
+                (
+                    s.rebasing_credits_per_token
+                    / last_snapshot.rebasing_credits_per_token
+                )
+                - Decimal(1)
+            ) * -1
+            s.gain = change * (s.computed_supply - s.non_rebasing_supply)
+        rows.append(s)
+        last_snapshot = s
+    rows.reverse()
+    rows = rows[:-1]
     return rows
