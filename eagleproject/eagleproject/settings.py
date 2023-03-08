@@ -199,6 +199,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "core/static")
 
 REPORT_RECEIVER_EMAIL_LIST = os.environ.get("REPORT_RECEIVER_EMAIL_LIST")
+CORE_TEAM_EMAIL = os.environ.get("CORE_TEAM_EMAIL")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL")
 REPLY_TO_EMAIL = os.environ.get("REPLY_TO_EMAIL")
 EMAIL_HOST = os.environ.get("EMAIL_HOST")
