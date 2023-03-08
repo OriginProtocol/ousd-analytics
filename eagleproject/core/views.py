@@ -640,10 +640,10 @@ def _my_assets(address, block_number):
     }
 
 
-def test_email(request):
-    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-    send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
-    return HttpResponse("ok")
+# def test_email(request):
+#     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     return HttpResponse("ok")
     
 
 def api_address_history(request, address):
@@ -856,7 +856,7 @@ def subscribe(request):
     latest_report_url = request.build_absolute_uri('/reports/weekly')
     if request.method == 'POST':
         sub = Subscriber.objects.filter(email=request.POST['email']).first()
-        if sub and sub.confirmed is True:
+        if sub and sub.confirmed is True and sub.unsubscribed is False:
             action = 'exists'
         else:
             try:
@@ -869,7 +869,7 @@ def subscribe(request):
                     sub.save()
                     
                 summary = 'OUSD Analytics Report Confirmation'
-                e = Email(summary, "test", render_to_string('subscription_confirmation.html', {
+                e = Email(summary, render_to_string('subscription_confirmation.html', {
                     'uri': request.build_absolute_uri('/reports/confirm'),
                     'email': sub.email,
                     'conf_num': sub.conf_num,
@@ -883,22 +883,34 @@ def subscribe(request):
 
 
 def confirm(request):
-    sub = Subscriber.objects.get(email=request.GET['email'])
-    if sub.conf_num == request.GET['conf_num']:
+    try:
+        email = request.GET['email']
+        conf_num = request.GET['conf_num']
+        sub = Subscriber.objects.get(email=email)
+    except:
+        return render(request, 'subscription.html', {'action': 'denied'})
+    if sub.conf_num == conf_num:
         sub.confirmed = True
+        sub.unsubscribed = False
         sub.save()
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'confirmed'})
     else:
-        return render(request, 'subscription.html', {'email': sub.email, 'action': 'denied'})
+        return render(request, 'subscription.html', {'action': 'denied'})
 
 
 def unsubscribe(request):
-    sub = Subscriber.objects.get(email=request.GET['email'])
-    if sub.conf_num == request.GET['conf_num']:
-        sub.delete()
+    try:
+        email = request.GET['email']
+        conf_num = request.GET['conf_num']
+        sub = Subscriber.objects.get(email=email)
+    except:
+        return render(request, 'subscription.html', {'action': 'denied'})
+    if sub.conf_num == conf_num:
+        sub.unsubscribed = True
+        sub.save()
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'unsubscribed'})
     else:
-        return render(request, 'subscription.html', {'email': sub.email, 'action': 'denied'})
+        return render(request, 'subscription.html', {'action': 'denied'})
 
 
 def backfill_internal_transactions(request):
