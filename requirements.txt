@@ -8,7 +8,7 @@ chardet==3.0.4
 charset-normalizer==2.1.1
 click==7.1.2
 cytoolz==0.12.0
-Django==4.1.1
+Django==4.1.7
 django-environ==0.4.5
 django-extensions==3.2.1
 django-google-tag-manager==0.0.5
