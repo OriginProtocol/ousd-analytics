@@ -2,11 +2,12 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from core.channels.html_stripper import strip_tags
 
 class Email():
-    def __init__(self, summary, plain_text_details, details):
+    def __init__(self, summary, details):
         self.summary = summary
-        self.plain_text_details = plain_text_details
+        self.plain_text_details = strip_tags(details)
         self.details = details
 
     def _is_configured(self):
@@ -47,7 +48,6 @@ class Email():
             # return send_mail(
             #     self.summary,
             #     #self.plain_text_details,
-            #     "test",
             #     #settings.DEFAULT_FROM_EMAIL,
             #     "lalal@gmail.com",
             #     ['grabec@gmail.com'],

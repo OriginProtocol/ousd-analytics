@@ -1116,7 +1116,7 @@ def send_report_email(summary, report, prev_report, report_type):
     send_report_email_core(summary, report, prev_report, report_type)
     subscribers = Subscriber.objects.filter(confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
     for subscriber in subscribers:
-        e = Email(summary, "test", render_to_string('analytics_report_email.html', {
+        e = Email(summary, render_to_string('analytics_report_email.html', {
             'type': report_type,
             'report': report,
             'prev_report': prev_report,

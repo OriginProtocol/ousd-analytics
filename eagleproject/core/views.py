@@ -640,10 +640,10 @@ def _my_assets(address, block_number):
     }
 
 
-def test_email(request):
-    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-    send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
-    return HttpResponse("ok")
+# def test_email(request):
+#     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     return HttpResponse("ok")
     
 
 def api_address_history(request, address):
@@ -869,7 +869,7 @@ def subscribe(request):
                     sub.save()
                     
                 summary = 'OUSD Analytics Report Confirmation'
-                e = Email(summary, "test", render_to_string('subscription_confirmation.html', {
+                e = Email(summary, render_to_string('subscription_confirmation.html', {
                     'uri': request.build_absolute_uri('/reports/confirm'),
                     'email': sub.email,
                     'conf_num': sub.conf_num,
