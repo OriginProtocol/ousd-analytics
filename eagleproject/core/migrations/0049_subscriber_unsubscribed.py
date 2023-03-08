@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0050_remove_subscriber_unsubscribed_and_more"),
+        ("core", "0048_day_subscriber_alter_analyticsreport_created_at_and_more"),
     ]
 
     operations = [
@@ -15,19 +15,5 @@ class Migration(migrations.Migration):
             model_name="subscriber",
             name="unsubscribed",
             field=models.BooleanField(default=False),
-        ),
-        migrations.AlterField(
-            model_name="analyticsreport",
-            name="created_at",
-            field=models.DateTimeField(
-                default=datetime.datetime(2023, 3, 7, 16, 48, 19, 900290)
-            ),
-        ),
-        migrations.AlterField(
-            model_name="analyticsreport",
-            name="updated_at",
-            field=models.DateTimeField(
-                default=datetime.datetime(2023, 3, 7, 16, 48, 19, 900302)
-            ),
         ),
     ]
