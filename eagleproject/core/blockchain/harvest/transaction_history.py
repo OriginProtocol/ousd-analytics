@@ -1133,7 +1133,7 @@ def send_report_email(summary, report, prev_report, report_type):
 
 def send_report_email_core(summary, report, prev_report, report_type):
     core = settings.CORE_TEAM_EMAIL
-    e = Email(summary, "test", render_to_string('analytics_report_email.html', {
+    e = Email(summary, render_to_string('analytics_report_email.html', {
         'type': report_type,
         'report': report,
         'prev_report': prev_report,
@@ -1146,6 +1146,16 @@ def send_report_email_core(summary, report, prev_report, report_type):
         'conf_num': 0
     }))
     e.execute([core])
+
+
+def send_weekly_email():
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    send_report_email('OUSD Analytics Weekly Report', weekly_reports[0], weekly_reports[1], "Weekly")
+
+
+def send_monthly_email():
+    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
+    send_report_email('OUSD Analytics Monthly Report', monthly_reports[0], monthly_reports[1], "Monthly")
 
 
 def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False):
