@@ -851,6 +851,7 @@ def generate_token():
     return "%0.12d" % random.randint(0, 999999999999)
 
 
+@csrf_exempt
 def subscribe(request):
     latest_report_url = request.build_absolute_uri('/reports/weekly')
     if request.method == 'POST':
