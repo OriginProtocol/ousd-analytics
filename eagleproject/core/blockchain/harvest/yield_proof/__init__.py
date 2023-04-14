@@ -35,7 +35,7 @@ def ensure_yield_snapshot(day):
         strategyInfo = STRATEGIES[strategy_key]
         if (strategyInfo['POY_PROCESS']):
             # TODO: remove IF statement
-            if strategy_key == 'ousd_metastrat':
+            if strategy_key == 'morpho_comp_strat':
                 strategy = create_yield_strategy(
                     strategy_key,
                     strategyInfo['ADDRESS'],
@@ -43,6 +43,8 @@ def ensure_yield_snapshot(day):
                     start_day_block,
                     end_day_block
                 )
+
+                print("strat", strategy)
     
 
 # get block range for a given day. If the day is:

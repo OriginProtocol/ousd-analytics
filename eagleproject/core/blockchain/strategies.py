@@ -86,7 +86,7 @@ OUSD_STRATEGIES = {
     "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "aave-icon.svg",
   },
-  "morpho_strat": {
+  "morpho_comp_strat": {
     "NAME": "Morpho Compound",
     "ADDRESS": MORPHO,
     "FROM_BLOCK": 15949661,

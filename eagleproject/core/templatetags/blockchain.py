@@ -179,6 +179,7 @@ EVENT_NAMES = {
     "0x2ca0d37ecfc1b8853f4bc276c69586250b3978c1d467c05d6c143966026724ec": "SkippedWithdrawal(address,uint256)",
     "0xef6485b84315f9b1483beffa32aae9a0596890395e3d7521f1c5fbb51790e765": "PTokenAdded(address,address)",
     "0x5548c837ab068cf56a2c2479df0882a4922fd203edb7517321831d95078c5f62": "Deposit(address,address,uint256)",
+    "0xf6c07a063ed4e63808eb8da7112d46dbcd38de2b40a73dbcc9353c5a94c72353": "RewardTokenCollected(address,address,uint256)",
     "0x2717ead6b9200dd235aad468c9809ea400fe33ac69b5bfaa6d3e90fc922b6398": "Withdrawal(address,address,uint256)",
     "0x79236a0cb516e4a8800fe3ac58e17c1eeb924b29658a461c9e65ed41d7db88f4": "Approval(address,address,uint)",
     "0x930a61a57a70a73c2a503615b87e2e54fe5b9cdeacda518270b852296ab1a377": "Transfer(address,address,uint)",

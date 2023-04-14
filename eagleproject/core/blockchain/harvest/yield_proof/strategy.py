@@ -302,7 +302,8 @@ class YieldUnitList:
         final_yield_units = []
         for index, yield_unit in enumerate(self.yield_units):
             # Harvest event found, calculate exact - non estimated rewards for yield units
-            if yield_unit.reason == YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST:
+
+            if  YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST in yield_unit.reason:
                 # harvest events apply to yield units in the past. If non in the array
                 # can not really apply them, so continue
                 if len(units_to_be_converted) == 0:
@@ -377,6 +378,3 @@ class BaseStrategyYield:
 
     def __str__(self):
         return 'base strategy: name: {} start_day_block: {} end_day_block: {} strategy_address:{}'.format(self.name, self.start_day_block, self.end_day_block, self.strategy_address)
-
-
-
