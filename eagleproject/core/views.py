@@ -881,6 +881,40 @@ def subscribe(request):
     else:
         return render(request, 'subscription.html', {'form': SubscriberForm()})
 
+@csrf_exempt
+def add_subscription(request):
+    # Pre-flight request
+    if request.method == 'OPTIONS':
+        response = JsonResponse({'status': 'ok'})
+        response.setdefault("Access-Control-Allow-Origin", "*")
+        response.setdefault('Access-Control-Allow-Origin', '*')
+        response.setdefault('Access-Control-Allow-Methods', 'POST')
+        response.setdefault('Access-Control-Allow-Headers', 'Content-Type')
+        return response
+
+    data = json.loads(request.body.decode('utf-8'))
+    sub = Subscriber.objects.filter(email=data['email']).first()
+    if sub and sub.confirmed is True and sub.unsubscribed is False:
+        action = 'exists'
+    else:
+        try:
+            validate_email(data['email'])
+        except ValidationError as e:
+            response = JsonResponse({"email": data['email'], "action": 'invalid'})
+            response.setdefault("Access-Control-Allow-Origin", "*")
+            return response
+        else:
+            if not sub:
+                sub = Subscriber(email=data['email'], conf_num=generate_token())
+                sub.save()
+                action = 'added'
+            else:
+                action = 'exists'
+
+
+    response = JsonResponse({"email": sub.email, "action": action})
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return response
 
 def confirm(request):
     try:

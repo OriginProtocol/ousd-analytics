@@ -227,3 +227,7 @@ TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER")
 TWILIO_TO = os.environ.get("TWILIO_TO")
 
 GOOGLE_TAG_ID = os.environ.get("GOOGLE_TAG_ID")
+
+CSRF_TRUSTED_ORIGINS = [
+    env("CSRF_TRUSTED_ORIGIN")
+]
