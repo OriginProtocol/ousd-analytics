@@ -10,5 +10,5 @@ jobs:
           node-version: '14'
       - run: npm install -g snyk
       - run: snyk auth ${{ secrets.SNYK_TOKEN }}
-      - run: pip install -r ./eagleproject/requirements.txt
-      - run: snyk test --file=./eagleproject/requirements.txt --policy-path=./.snyk --severity-threshold=high
+      - run: pip install -r ./requirements.txt
+      - run: snyk test --file=./requirements.txt --policy-path=./.snyk --severity-threshold=high

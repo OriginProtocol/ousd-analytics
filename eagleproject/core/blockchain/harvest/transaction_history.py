@@ -1113,9 +1113,10 @@ def ensure_ousd_balance(credit_balance, logs):
 
 def send_report_email(summary, report, prev_report, report_type):
     report.transaction_report = json.loads(str(report.transaction_report))
-    subscribers = Subscriber.objects.filter(confirmed=True)
+    send_report_email_core(summary, report, prev_report, report_type)
+    subscribers = Subscriber.objects.filter(confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
     for subscriber in subscribers:
-        e = Email(summary, "test", render_to_string('analytics_report_email.html', {
+        e = Email(summary, render_to_string('analytics_report_email.html', {
             'type': report_type,
             'report': report,
             'prev_report': prev_report,
@@ -1127,7 +1128,34 @@ def send_report_email(summary, report, prev_report, report_type):
             'email': subscriber.email,
             'conf_num': subscriber.conf_num
         }))
-        result = e.execute([subscriber.email])
+        e.execute([subscriber.email])
+
+
+def send_report_email_core(summary, report, prev_report, report_type):
+    core = settings.CORE_TEAM_EMAIL
+    e = Email(summary, render_to_string('analytics_report_email.html', {
+        'type': report_type,
+        'report': report,
+        'prev_report': prev_report,
+        'change': calculate_report_change(report, prev_report),
+        'stats': report_stats,
+        'stat_keys': report_stats.keys(),
+        'curve_stats': curve_report_stats,
+        'curve_stat_keys': curve_report_stats.keys(),
+        'email': core,
+        'conf_num': 0
+    }))
+    e.execute([core])
+
+
+def send_weekly_email():
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    send_report_email('OUSD Analytics Weekly Report', weekly_reports[0], weekly_reports[1], "Weekly")
+
+
+def send_monthly_email():
+    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
+    send_report_email('OUSD Analytics Monthly Report', monthly_reports[0], monthly_reports[1], "Monthly")
 
 
 def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False):
