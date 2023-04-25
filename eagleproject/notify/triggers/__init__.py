@@ -277,7 +277,9 @@ def run_all_triggers():
         except Exception as e:
             log.exception("Exception occurred running trigger")
             log.exception(e)
-            events.extend(event_high("{} Trigger Failed for Block {}".format(mod.__name__, block_number), str(e)))
+            events.extend([
+                event_high("{} Trigger Failed for Block {}".format(mod.__name__, block_number), str(e))
+            ])
 
     if transfer_cursor.block_number != block_number:
         transfer_cursor.block_number = block_number
