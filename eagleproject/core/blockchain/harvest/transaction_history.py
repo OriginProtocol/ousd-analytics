@@ -8,11 +8,12 @@ from multiprocessing import (
 
 from core.models import (
     Log,
-    OusdTransfer,
+    TokenTransfer,
     Block,
     Transaction,
     AnalyticsReport,
-    Subscriber
+    Subscriber,
+    OriginTokens
 )
 
 from core.blockchain.sigs import (
@@ -353,12 +354,14 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
         if week_option != None:
             analyticsReport = AnalyticsReport.objects.get(
                 week=week_option,
-                year=year
+                year=year,
+                project=OriginTokens.OUSD
             )
         else:
             analyticsReport = AnalyticsReport.objects.get(
                 month=month_option,
-                year=year
+                year=year,
+                project=OriginTokens.OUSD
             )
 
         if analyticsReport is None:
@@ -371,12 +374,14 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
             analyticsReport, created = AnalyticsReport.objects.get_or_create(
                 week=week_option,
                 year=year,
+                project=OriginTokens.OUSD,
                 defaults=params,
             )
         else:
             analyticsReport, created = AnalyticsReport.objects.get_or_create(
                 month=month_option,
                 year=year,
+                project=OriginTokens.OUSD,
                 defaults=params,
             )
 
@@ -464,15 +469,15 @@ def create_time_interval_report_for_previous_week(year_override, week_override, 
         else :
             week_number -= 1
 
-        week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number))
+        week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number) & Q(project=OriginTokens.OUSD))
         preb_db_report = week_before_report[0] if len(week_before_report) != 0 else None
-        send_report_email('OUSD Analytics Weekly Report', db_report, preb_db_report, "Weekly")
+        send_report_email(OriginTokens.OUSD, 'OUSD Analytics Weekly Report', db_report, preb_db_report, "Weekly")
 
 def should_create_new_report(year, month_option, week_option):
     if month_option is not None:
-        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option))
+        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option) & Q(project=OriginTokens.OUSD))
     elif week_option is not None:
-        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option))
+        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option) & Q(project=OriginTokens.OUSD))
 
     if len(existing_report) == 1:
         existing_report = existing_report[0]
@@ -565,9 +570,9 @@ def create_time_interval_report_for_previous_month(year_override, month_override
         else :
             month_number -= 1
 
-        month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number))
+        month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number) & Q(project=OriginTokens.OUSD))
         preb_db_report = month_before_report[0] if len(month_before_report) != 0 else None
-        send_report_email('OUSD Analytics Monthly Report', db_report, preb_db_report, "Monthly")
+        send_report_email(OriginTokens.OUSD, 'OUSD Analytics Monthly Report', db_report, preb_db_report, "Monthly")
 
 
 def backfill_subscribers():
@@ -580,8 +585,8 @@ def backfill_subscribers():
 
 # get all accounts that at some point held OUSD
 def fetch_all_holders():
-    to_addresses = list(map(lambda log: log['to_address'], OusdTransfer.objects.values('to_address').distinct()))
-    from_addresses = list(map(lambda log: log['from_address'], OusdTransfer.objects.values('from_address').distinct()))
+    to_addresses = list(map(lambda log: log['to_address'], TokenTransfer.objects.filter(project=OriginTokens.OUSD).values('to_address').distinct()))
+    from_addresses = list(map(lambda log: log['from_address'], TokenTransfer.objects.filter(project=OriginTokens.OUSD).values('from_address').distinct()))
     return list(set(filter(lambda address: address not in ['0x0000000000000000000000000000000000000000', '0x000000000000000000000000000000000000dead'], to_addresses + from_addresses)))
 
 
@@ -793,7 +798,7 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
 # start_time and end_time might seem redundant, but are needed so we can query the transfer logs
 def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account='all'):
     tx_query = Q()
-    tran_query = Q()
+    tran_query = Q(project=OriginTokens.OUSD)
     if account != 'all':
         tx_query &= Q(from_address=account) | Q(to_address=account)
         tran_query &= Q(from_address=account) | Q(to_address=account)
@@ -805,7 +810,7 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
         tran_query &= Q(block_time__lt=end_time)
 
     transactions = Transaction.objects.filter(tx_query)
-    transfer_transactions = map(lambda transfer: transfer.tx_hash, OusdTransfer.objects.filter(tran_query))
+    transfer_transactions = map(lambda transfer: transfer.tx_hash, TokenTransfer.objects.filter(tran_query))
 
     analyzed_transactions = []
     analyzed_transaction_hashes = []
@@ -978,9 +983,9 @@ def get_rebase_logs(from_block, to_block):
 # and a negative one if OUSD was sent from the account
 def get_transfer_logs(account, from_block_time, to_block_time):
     if from_block_time is None and to_block_time is None:
-        transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)))
+        transfer_logs = TokenTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(project=OriginTokens.OUSD))
     else:
-        transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time))
+        transfer_logs = TokenTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time) & Q(project=OriginTokens.OUSD))
 
     return list(map(lambda log: transfer_log(
         log.tx_hash.block_number,
@@ -1111,10 +1116,10 @@ def ensure_ousd_balance(credit_balance, logs):
     return logs
 
 
-def send_report_email(summary, report, prev_report, report_type):
+def send_report_email(project, summary, report, prev_report, report_type):
     report.transaction_report = json.loads(str(report.transaction_report))
     send_report_email_core(summary, report, prev_report, report_type)
-    subscribers = Subscriber.objects.filter(confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
+    subscribers = Subscriber.objects.filter(project=project, confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
     for subscriber in subscribers:
         e = Email(summary, render_to_string('analytics_report_email.html', {
             'type': report_type,
@@ -1149,13 +1154,13 @@ def send_report_email_core(summary, report, prev_report, report_type):
 
 
 def send_weekly_email():
-    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-    send_report_email('OUSD Analytics Weekly Report', weekly_reports[0], weekly_reports[1], "Weekly")
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False, project=OriginTokens.OUSD).order_by("-year", "-week")
+    send_report_email(OriginTokens.OUSD, 'OUSD Analytics Weekly Report', weekly_reports[0], weekly_reports[1], "Weekly")
 
 
 def send_monthly_email():
-    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
-    send_report_email('OUSD Analytics Monthly Report', monthly_reports[0], monthly_reports[1], "Monthly")
+    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False, project=OriginTokens.OUSD).order_by("-year", "-month")
+    send_report_email(OriginTokens.OUSD, 'OUSD Analytics Monthly Report', monthly_reports[0], monthly_reports[1], "Monthly")
 
 
 def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False):

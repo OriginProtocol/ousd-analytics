@@ -34,14 +34,14 @@ from core.blockchain.addresses import (
     TIMELOCK,
     USDT,
     USDC,
-    VAULT,
+    OUSD_VAULT,
     GOVERNANCE,
     GOVERNANCE_TIMELOCK,
     OGV_BUYBACK,
     THREEPOOL
 )
 
-from core.blockchain.strategies import STRATEGIES
+from core.blockchain.strategies import OUSD_STRATEGIES
 
 START_OF_EVERYTHING = int(os.environ.get("LOCAL_START_OF_EVERYTHING", 10884500))
 START_OF_EVERYTHING_TIME = datetime.strptime("18-9-2020", "%d-%m-%Y")
@@ -102,7 +102,7 @@ OUSD_CONTRACTS = [
     GOVERNORV2,
     GOVERNORV3,
     OUSD,
-    VAULT,
+    OUSD_VAULT,
     GOVERNANCE,
     GOVERNANCE_TIMELOCK,
     STRATCOMP,
@@ -111,7 +111,7 @@ OUSD_CONTRACTS = [
     TIMELOCK,
 ]
 
-OTHER_STRAT_CONTRACTS = [strat["ADDRESS"] for (_, strat) in STRATEGIES.items() if strat.get("HARDCODED", False) == False]
+OTHER_STRAT_CONTRACTS = [strat["ADDRESS"] for (_, strat) in OUSD_STRATEGIES.items() if strat.get("HARDCODED", False) == False]
 
 LOG_CONTRACTS = (
     OUSD_CONTRACTS
@@ -147,7 +147,7 @@ ETHERSCAN_CONTRACTS = [
     GOVERNOR,
     GOVERNORV2,
     GOVERNORV3,
-    VAULT,
+    OUSD_VAULT,
     TIMELOCK,
     GOVERNANCE,
     GOVERNANCE_TIMELOCK,

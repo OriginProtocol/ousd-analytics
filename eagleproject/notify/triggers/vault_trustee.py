@@ -4,7 +4,7 @@ from eth_abi import decode_single
 from eth_utils import decode_hex
 from django.db.models import Q
 
-from core.blockchain.addresses import VAULT
+from core.blockchain.addresses import OUSD_VAULT
 from core.blockchain.sigs import (
     SIG_EVENT_YIELD_DISTRIBUTION,
     SIG_EVENT_TRUSTEE_ADDRESS_CHANGED,
@@ -16,7 +16,7 @@ from notify.events import event_low
 
 def get_pause_events(logs):
     """ Get Vault trustee events events """
-    return logs.filter(address=VAULT).filter(Q(
+    return logs.filter(address=OUSD_VAULT).filter(Q(
         Q(topic_0=SIG_EVENT_YIELD_DISTRIBUTION)
         | Q(topic_0=SIG_EVENT_TRUSTEE_ADDRESS_CHANGED)
         | Q(topic_0=SIG_EVENT_TRUSTEE_FEE_CHANGED)

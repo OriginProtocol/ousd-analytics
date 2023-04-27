@@ -28,24 +28,30 @@ Example Strategy Config:
   },
 """
 
-DEFAULT_ASSETS = ("USDC", "USDT", "DAI")
+OUSD_BACKING_ASSETS = ("USDC", "USDT", "DAI")
+OETH_BACKING_ASSETS = ("WETH", "FRXETH", "RETH", "STETH")
 
-VAULT = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70"
+# OUSD Contracts
+OUSD_VAULT = "0xe75d77b1865ae93c7eaa3040b038d7aa7bc02f70"
 STRATCOMP = "0x9c459eeb3fa179a40329b81c1635525e9a0ef094"
 STRATCONVEX = "0xea2ef2e2e5a749d4a66b41db9ad85a38aa264cb3"
 STRATAAVE = "0x5e3646a1db86993f73e6b74a57d8640b69f7e259"
 MORPHO = "0x5a4eee58744d1430876d5ca93cab5ccb763c037d"
 OUSD_METASTRAT = "0x89eb88fedc50fc77ae8a18aad1ca0ac27f777a90"
-
 MORPHO_AAVE = "0x79f2188ef9350a1dc11a062cca0abe90684b0197"
 LUSD_METASTRAT = "0x7a192dd9cc4ea9bdedec9992df74f1da55e60a19"
 
-STRATEGIES = {
+# OETH Contracts
+OETH_VAULT = "0x39254033945aa2e4809cc2977e7087bee48bd7ab"
+FRAX_ETH_STRATEGY = "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5"
+
+# OUSD Strategies
+OUSD_STRATEGIES = {
   "vault_holding": {
-    "NAME": "Vault",
-    "ADDRESS": VAULT,
+    "NAME": "OUSD Vault",
+    "ADDRESS": OUSD_VAULT,
     "HARDCODED": True,
-    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
+    "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "ICON_NAME": "ousd-icon.svg",
   },
   "compstrat_holding": {
@@ -60,14 +66,14 @@ STRATEGIES = {
     "ADDRESS": STRATCONVEX,
     "HARDCODED": True,
     "HIDDEN": True,
-    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
+    "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "ICON_NAME": "convex.png",
   },
   "aavestrat_holding": {
     "NAME": "Aave Strategy",
     "ADDRESS": STRATAAVE,
     "HARDCODED": True,
-    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
+    "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "ICON_NAME": "aave-icon.svg",
   },
   "morpho_strat": {
@@ -97,7 +103,25 @@ STRATEGIES = {
     "NAME": "Morpho Aave",
     "ADDRESS": MORPHO_AAVE,
     "FROM_BLOCK": 16331904,
-    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
+    "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "ICON_NAME": "morpho.png",
+  },
+}
+
+# OETH Strategies
+OETH_STRATEGIES = {
+  "oeth_vault_holding": {
+    "NAME": "OETH Vault",
+    "ADDRESS": OETH_VAULT,
+    "FROM_BLOCK": 17067001,
+    "SUPPORTED_ASSETS": OETH_BACKING_ASSETS,
+    "ICON_NAME": "ousd-icon.svg", # TODO: Change this
+  },
+  "frax_eth_strat": {
+    "NAME": "FraxETH",
+    "ADDRESS": FRAX_ETH_STRATEGY,
+    "FROM_BLOCK": 17067224,
+    "SUPPORTED_ASSETS": OETH_BACKING_ASSETS,
+    "ICON_NAME": "ousd-icon.svg", # TODO: Change this
   },
 }

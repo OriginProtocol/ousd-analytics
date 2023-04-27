@@ -18,7 +18,7 @@ from core.blockchain.addresses import (
     STRATCOMP2,
     STRAT3POOL,
     STRATCONVEX1,
-    VAULT,
+    OUSD_VAULT,
 )
 from core.blockchain.const import (
     BLOCKS_PER_YEAR,
@@ -72,9 +72,10 @@ from core.models import (
     StoryStakingSnapshot,
     SupplySnapshot,
     ThreePoolSnapshot,
+    OriginTokens
 )
 
-from core.blockchain.strategies import STRATEGIES, DEFAULT_ASSETS
+from core.blockchain.strategies import OUSD_STRATEGIES, OUSD_BACKING_ASSETS
 
 logger = get_logger(__name__)
 
@@ -90,6 +91,7 @@ def isbetween(start, end, v):
 
 
 def build_asset_block(symbol, block_number):
+    project = OriginTokens.OUSD
     symbol = symbol.upper()
     compstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
@@ -187,7 +189,7 @@ def build_asset_block(symbol, block_number):
             ora_tok_usd_min = (
                 0
                 if symbol == "COMP"
-                else priceUSDMint(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                else priceUSDMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
             )
         except:
             print("Failed to fetch price from oracle for {}".format(symbol))
@@ -197,20 +199,20 @@ def build_asset_block(symbol, block_number):
             ora_tok_usd_max = (
                 0
                 if symbol == "COMP"
-                else priceUSDRedeem(VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                else priceUSDRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
             )
         except:
             print("Failed to fetch price from oracle for {}".format(symbol))
 
 
-    for (strat_key, strat) in STRATEGIES.items():
+    for (strat_key, strat) in OUSD_STRATEGIES.items():
         if strat.get("HARDCODED", False) == True:
             # Ignore hardcoded contracts
             continue
         if block_number != "latest" and block_number <= strat.get("FROM_BLOCK", 0):
             # Fetch events only after the specific block, if configured
             continue
-        if symbol not in strat.get("SUPPORTED_ASSETS", DEFAULT_ASSETS):
+        if symbol not in strat.get("SUPPORTED_ASSETS", OUSD_BACKING_ASSETS):
             # Unsupported asset
             continue
 
@@ -237,13 +239,14 @@ def build_asset_block(symbol, block_number):
         strat_holdings[strat_key] = str(holding)
 
     return AssetBlock(
+        project=project,
         symbol=symbol,
         block_number=block_number,
         ora_tok_usd_min=ora_tok_usd_min,
         ora_tok_usd_max=ora_tok_usd_max,
         vault_holding=balanceOf(
             CONTRACT_FOR_SYMBOL[symbol],
-            VAULT,
+            OUSD_VAULT,
             DECIMALS_FOR_SYMBOL[symbol],
             block_number,
         ),
@@ -255,7 +258,7 @@ def build_asset_block(symbol, block_number):
 
 
 def ensure_asset(symbol, block_number):
-    q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number)
+    q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number, project=OriginTokens.OUSD)
     if q.count():
         return q.first()
     else:
@@ -265,7 +268,7 @@ def ensure_asset(symbol, block_number):
 
 
 def ensure_supply_snapshot(block_number):
-    q = SupplySnapshot.objects.filter(block_number=block_number)
+    q = SupplySnapshot.objects.filter(block_number=block_number,project=OriginTokens.OUSD)
     if q.count():
         return q.first()
     else:
@@ -276,6 +279,7 @@ def ensure_supply_snapshot(block_number):
         lusd = ensure_asset("LUSD", block_number).total()
 
         s = SupplySnapshot()
+        s.project = OriginTokens.OUSD
         s.block_number = block_number
         s.non_rebasing_credits = Decimal(0)  # No longer used in contract
         s.credits = ousd_rebasing_credits(block_number) + s.non_rebasing_credits
@@ -532,11 +536,11 @@ def ensure_3pool_snapshot(block_number):
 
 
 def latest_snapshot():
-    return SupplySnapshot.objects.order_by("-block_number")[0]
+    return SupplySnapshot.objects.filter(project=OriginTokens.OUSD).order_by("-block_number")[0]
 
 
 def snapshot_at_block(block):
-    return SupplySnapshot.objects.filter(block_number__lte=block).order_by(
+    return SupplySnapshot.objects.filter(block_number__lte=block,project=OriginTokens.OUSD).order_by(
         "-block_number"
     )[0]
 

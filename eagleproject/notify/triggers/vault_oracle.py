@@ -1,7 +1,7 @@
 """ Oracle prices drift """
 import locale
 from decimal import Decimal
-from core.blockchain.addresses import VAULT
+from core.blockchain.addresses import OUSD_VAULT
 from core.blockchain.const import CONTRACT_FOR_SYMBOL
 from core.blockchain.rpc import RPCError, priceUSDMint, priceUSDRedeem
 from notify.events import event_high
@@ -18,7 +18,7 @@ locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 def get_oracle_prices(symbol):
     """ Get min/max price for a token """
     address = CONTRACT_FOR_SYMBOL[symbol]
-    return (priceUSDRedeem(VAULT, address), priceUSDMint(VAULT, address))
+    return (priceUSDRedeem(OUSD_VAULT, address), priceUSDMint(OUSD_VAULT, address))
 
 
 def assert_price_in_bounds(symbol):

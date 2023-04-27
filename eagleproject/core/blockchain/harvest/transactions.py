@@ -62,9 +62,10 @@ from core.models import (
     Log,
     LogPointer,
     OgnStaked,
-    OusdTransfer,
+    TokenTransfer,
     StoryStake,
     Transaction,
+    OriginTokens,
 )
 
 logger = get_logger(__name__)
@@ -123,8 +124,11 @@ def maybe_store_transfer_record(log, block):
         "amount": int(slot(log["data"], 0), 16) / E_18,
     }
 
-    transfer, created = OusdTransfer.objects.get_or_create(
-        tx_hash_id=tx_hash, log_index=log_index, defaults=params
+    transfer, created = TokenTransfer.objects.get_or_create(
+        tx_hash_id=tx_hash, 
+        log_index=log_index, 
+        project=OriginTokens.OUSD,
+        defaults=params
     )
 
     if not created:

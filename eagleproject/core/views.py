@@ -73,16 +73,17 @@ from core.models import (
     Log,
     SupplySnapshot,
     OgnStaked,
-    OusdTransfer,
+    TokenTransfer,
     AnalyticsReport,
     Transaction,
-    Subscriber
+    Subscriber,
+    OriginTokens
 )
 from core.forms import SubscriberForm
 from django.conf import settings
 import json
 
-from core.blockchain.strategies import STRATEGIES, DEFAULT_ASSETS
+from core.blockchain.strategies import OUSD_STRATEGIES, OUSD_BACKING_ASSETS
 
 log = get_logger(__name__)
 
@@ -122,7 +123,8 @@ def dashboard(request):
         logs_q = logs_q.filter(topic_0=topic)
     latest_logs = logs_q[:100]
     weekly_reports = AnalyticsReport.objects.filter(
-        week__isnull=False
+        week__isnull=False,
+        project=OriginTokens.OUSD
     ).order_by("-year", "-week")
     if (len(weekly_reports) > 0):
         token_holder_amount = weekly_reports[0].accounts_holding_ousd
@@ -168,12 +170,12 @@ def dashboard(request):
 
 def _get_strat_holdings(assets):
     all_strats = {}
-    for (strat_key, strat) in STRATEGIES.items():
+    for (strat_key, strat) in OUSD_STRATEGIES.items():
         total = 0
         holdings = []
 
         for asset in assets:
-            if not asset.symbol in strat.get("SUPPORTED_ASSETS", DEFAULT_ASSETS):
+            if not asset.symbol in strat.get("SUPPORTED_ASSETS", OUSD_BACKING_ASSETS):
                 continue
             balance = asset.get_strat_holdings(strat_key)
             holdings.append((asset.symbol, balance))
@@ -295,7 +297,7 @@ def remove_specific_month_report(request, month):
         return HttpResponse("ok")
 
     year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(month=month, year=year)
+    report = AnalyticsReport.objects.get(month=month, year=year, project=OriginTokens.OUSD)
     report.delete()
     return HttpResponse("ok")
 
@@ -306,7 +308,7 @@ def remove_specific_week_report(request, week):
         return HttpResponse("ok")
 
     year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(week=week, year=year)
+    report = AnalyticsReport.objects.get(week=week, year=year, project=OriginTokens.OUSD)
     report.delete()
     return HttpResponse("ok")
 
@@ -469,7 +471,7 @@ def api_address_yield(request, address):
 
 def api_address(request):
     addresses = (
-        OusdTransfer.objects.filter(block_time__gte=START_OF_OUSD_V2_TIME)
+        TokenTransfer.objects.filter(block_time__gte=START_OF_OUSD_V2_TIME, project=OriginTokens.OUSD)
         .values("to_address")
         .distinct()
         .values_list("to_address", flat=True)
@@ -642,7 +644,7 @@ def _my_assets(address, block_number):
 
 # def test_email(request):
 #     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     send_report_email("OUSD", 'Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
 #     return HttpResponse("ok")
     
 
@@ -727,7 +729,7 @@ def _get_previous_report(report, all_reports=None):
         all_reports = (
             all_reports
             if all_reports is not None
-            else AnalyticsReport.objects.filter(month__isnull=False).order_by(
+            else AnalyticsReport.objects.filter(month__isnull=False, project=OriginTokens.OUSD).order_by(
                 "-year", "-month"
             )
         )
@@ -745,7 +747,7 @@ def _get_previous_report(report, all_reports=None):
         all_reports = (
             all_reports
             if all_reports is not None
-            else AnalyticsReport.objects.filter(week__isnull=False).order_by(
+            else AnalyticsReport.objects.filter(week__isnull=False, project=OriginTokens.OUSD).order_by(
                 "-year", "-week"
             )
         )
@@ -762,7 +764,7 @@ def _get_previous_report(report, all_reports=None):
 
 
 def report_monthly(request, year, month):
-    report = AnalyticsReport.objects.filter(month=month, year=year)[0]
+    report = AnalyticsReport.objects.filter(month=month, year=year, project=OriginTokens.OUSD)[0]
     prev_report = _get_previous_report(report)
     stats = report_stats
     stat_keys = stats.keys()
@@ -810,10 +812,12 @@ def report_latest_weekly(request):
 
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(
-        month__isnull=False
+        month__isnull=False,
+        project=OriginTokens.OUSD
     ).order_by("-year", "-month")
     weekly_reports = AnalyticsReport.objects.filter(
-        week__isnull=False
+        week__isnull=False,
+        project=OriginTokens.OUSD
     ).order_by("-year", "-week")
     stats = report_stats
     stat_keys = stats.keys()
@@ -854,8 +858,11 @@ def generate_token():
 @csrf_exempt
 def subscribe(request):
     latest_report_url = request.build_absolute_uri('/reports/weekly')
+
+    project = request.POST['project'] or OriginTokens.OUSD
+    
     if request.method == 'POST':
-        sub = Subscriber.objects.filter(email=request.POST['email']).first()
+        sub = Subscriber.objects.filter(email=request.POST['email'],project=project).first()
         if sub and sub.confirmed is True and sub.unsubscribed is False:
             action = 'exists'
         else:
@@ -865,7 +872,7 @@ def subscribe(request):
                 return render(request, 'subscription.html', {'action': 'invalid', 'form': SubscriberForm(), 'latest_report': latest_report_url})
             else:
                 if not sub:
-                    sub = Subscriber(email=request.POST['email'], conf_num=generate_token())
+                    sub = Subscriber(email=request.POST['email'], project=project, conf_num=generate_token())
                     sub.save()
                     
                 summary = 'OUSD Analytics Report Confirmation'
@@ -886,15 +893,13 @@ def confirm(request):
     try:
         email = request.GET['email']
         conf_num = request.GET['conf_num']
-        sub = Subscriber.objects.get(email=email)
-    except:
-        return render(request, 'subscription.html', {'action': 'denied'})
-    if sub.conf_num == conf_num:
+        sub = Subscriber.objects.get(email=email,conf_num=conf_num)
+
         sub.confirmed = True
         sub.unsubscribed = False
         sub.save()
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'confirmed'})
-    else:
+    except:
         return render(request, 'subscription.html', {'action': 'denied'})
 
 
@@ -902,16 +907,12 @@ def unsubscribe(request):
     try:
         email = request.GET['email']
         conf_num = request.GET['conf_num']
-        sub = Subscriber.objects.get(email=email)
-    except:
-        return render(request, 'subscription.html', {'action': 'denied'})
-    if sub.conf_num == conf_num:
+        sub = Subscriber.objects.get(email=email,conf_num=conf_num)
         sub.unsubscribed = True
         sub.save()
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'unsubscribed'})
-    else:
+    except:
         return render(request, 'subscription.html', {'action': 'denied'})
-
 
 def backfill_internal_transactions(request):
     transactions = Transaction.objects.filter(internal_transactions={})[:6000]

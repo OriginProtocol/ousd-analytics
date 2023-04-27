@@ -5,7 +5,7 @@ from core.logging import get_logger
 
 from notify.events import event_critical, event_high, event_low
 
-from core.blockchain.strategies import STRATEGIES
+from core.blockchain.strategies import OUSD_STRATEGIES
 
 log = get_logger(__name__)
 
@@ -53,7 +53,7 @@ def run_trigger(snapshot_cursor, latest_asset_blocks, last_week_asset_blocks):
         current_meta_holdings = getattr(current, 'strat_holdings')
         previous_meta_holdings = getattr(previous, 'strat_holdings')
 
-        for (prop, strat) in STRATEGIES.items():
+        for (prop, strat) in OUSD_STRATEGIES.items():
             name = strat.get("NAME") + " Holding"
 
             current_holding = current.get_strat_holdings(prop)

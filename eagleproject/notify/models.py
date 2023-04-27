@@ -1,5 +1,7 @@
 from django.db import models
 
+from core.models import OriginTokens
+
 
 class CursorId(models.TextChoices):
     TRANSACTIONS = 'tx', 'Transactions'
@@ -15,6 +17,11 @@ class NotifyCursor(models.Model):
     )
     block_number = models.IntegerField()
     last_update = models.DateTimeField()
+
+    project = models.TextField(
+        choices=OriginTokens.choices,
+        default=OriginTokens.OUSD
+    )
 
     class Meta:
         indexes = [
