@@ -38,7 +38,6 @@ urlpatterns = [
     path("reports/confirm", core_views.confirm, name='confirm'),
     path("reports/unsubscribe", core_views.unsubscribe, name='unsubscribe'),
     #path("reports/test_email", core_views.test_email),
-    path("address/<slug:address>", core_views.address, name="address"),
     path("apy", core_views.apr_index, name="apy"),
     path("apr", RedirectView.as_view(pattern_name="apy", permanent=True)),
     path("supply", core_views.supply),
@@ -57,37 +56,43 @@ urlpatterns = [
 
     path("api/v2/<slug:project>/speed_test", core_views.api_speed_test),
 
+    # v2 views
+    path("<slug:project>/address/<slug:address>", core_views.address, name="address"),
+
+    # Redirects
+    path("address/<slug:address>", RedirectView.as_view(url="/ousd/address/%(address)s", permanent=True)),
+
     # v2 API endpoints
     # TODO: Validate `project` param
-    # path("api/v2/<slug:project>/apr/trailing", core_views.api_apr_trailing),
-    # re_path(r'^api/v2/<slug:project>/apr/trailing/(?P<days>[0-9]{1,3})', core_views.api_apr_trailing_days),
-    # path("api/v2/<slug:project>/apr/history", core_views.api_apr_history),
-    # path("api/v2/<slug:project>/ratios", core_views.api_ratios),
+    path("api/v2/<slug:project>/apr/trailing", core_views.api_apr_trailing),
+    re_path(r'^api/v2/(?P<project>[\w-]+)/apr/trailing/(?P<days>[0-9]{1,3})', core_views.api_apr_trailing_days),
+    path("api/v2/<slug:project>/apr/history", core_views.api_apr_history),
+    path("api/v2/<slug:project>/ratios", core_views.api_ratios),
     path("api/v2/<slug:project>/staking_stats", core_views.staking_stats),
     path("api/v2/<slug:project>/staking_stats_by_duration", core_views.staking_stats_by_duration),
     path("api/v2/<slug:project>/pools", core_views.coingecko_pools),
-    # path("api/v2/<slug:project>/address/<slug:address>/yield", core_views.api_address_yield, name="api_address_yield"),
+    path("api/v2/<slug:project>/address/<slug:address>/yield", core_views.api_address_yield, name="api_address_yield"),
     path("api/v2/<slug:project>/address/", core_views.api_address),
     path("api/v2/<slug:project>/address/<slug:address>/history", core_views.api_address_history, name="api_address_history"),
     path("api/v2/<slug:project>/strategies", core_views.strategies),
     path("api/v2/<slug:project>/collateral", core_views.collateral),
-    # path("api/v2/<slug:project>/apr/trailing_history/<int:days>", core_views.api_apr_trailing_history),
+    path("api/v2/<slug:project>/apr/trailing_history/<int:days>", core_views.api_apr_trailing_history),
 
     ## TODO: Set up redirect from `api/v1/*` to `api/v2/ousd/*`
     # Deprecated v1 API endpoints (exists for backward compatibility)
-    # path("api/v1/apr/trailing", core_views.api_apr_trailing),
-    # re_path(r'^api/v1/apr/trailing/(?P<days>[0-9]{1,3})', core_views.api_apr_trailing_days),
-    # path("api/v1/apr/history", core_views.api_apr_history),
-    # path("api/v1/ratios", core_views.api_ratios),
-    # path("api/v1/staking_stats", core_views.staking_stats),
-    # path("api/v1/staking_stats_by_duration", core_views.staking_stats_by_duration),
-    # path("api/v1/pools", core_views.coingecko_pools),
-    # path("api/v1/address/<slug:address>/yield", core_views.api_address_yield, name="api_address_yield"),
-    # path("api/v1/address/", core_views.api_address),
-    # path("api/v1/address/<slug:address>/history", core_views.api_address_history, name="api_address_history"),
-    # path("api/v1/strategies", core_views.strategies),
-    # path("api/v1/collateral", core_views.collateral),
-    # path("api/v1/apr/trailing_history/<int:days>", core_views.api_apr_trailing_history),
+    path("api/v1/apr/trailing", RedirectView.as_view(url="/api/v2/ousd/apr/trailing", permanent=True)),
+    re_path(r'^api/v1/apr/trailing/(?P<days>[0-9]{1,3})', RedirectView.as_view(url="/api/v2/ousd/apr/trailing/%(days)s", permanent=True)),
+    path("api/v1/apr/history", RedirectView.as_view(url="/api/v2/ousd/apr/history", permanent=True)),
+    path("api/v1/ratios", RedirectView.as_view(url="/api/v2/ousd/ratios", permanent=True)),
+    path("api/v1/staking_stats", RedirectView.as_view(url="/api/v2/ousd/staking_stats", permanent=True)),
+    path("api/v1/staking_stats_by_duration", RedirectView.as_view(url="/api/v2/ousd/staking_stats_by_duration", permanent=True)),
+    path("api/v1/pools", RedirectView.as_view(url="/api/v2/ousd/pools", permanent=True)),
+    path("api/v1/address/<slug:address>/yield", RedirectView.as_view(url="/api/v2/ousd/address/%(address)s/yield", permanent=True)),
+    path("api/v1/address/", RedirectView.as_view(url="/api/v2/ousd/address", permanent=True)),
+    path("api/v1/address/<slug:address>/history", RedirectView.as_view(url="/api/v2/ousd/address/%(address)s/history", permanent=True)),
+    path("api/v1/strategies", RedirectView.as_view(url="/api/v2/ousd/strategies", permanent=True)),
+    path("api/v1/collateral", RedirectView.as_view(url="/api/v2/ousd/collateral", permanent=True)),
+    path("api/v1/apr/trailing_history/<int:days>", RedirectView.as_view(url="/api/v2/ousd/apr/trailing_history/%(days)s", permanent=True)),
 
     # Retired URLS
     path("powermint", redirect_to_ousd_dapp),

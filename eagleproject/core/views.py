@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.validators import validate_email
 
 from django.views.decorators.csrf import csrf_exempt
@@ -16,6 +16,7 @@ from django.db.models import Q
 from core.blockchain.addresses import (
     DRIPPER,
     OUSD,
+    OETH,
     USDT,
     STRAT3POOL,
     STRATCOMP,
@@ -422,14 +423,24 @@ def api_apr_trailing_days(request, project, days):
 
 
 def api_apr_history(request, project):
-    apr = get_trailing_apr(project=project)
+    # On OETH we miss some data 
+    # File "eagleproject/core/blockchain/harvest/transactions.py", line 157, in get_rebase_log
+    # ).order_by('-block_number')[:1].get()
+    # Crashes with `core.models.Log.DoesNotExist: Log matching query does not exist.`
+    try:
+        apr = get_trailing_apr(project=project)
+    except ObjectDoesNotExist:
+        apr = 0
     if apr < 0:
         apr = "0"
-    apy = get_trailing_apy(project=project)
+    try:
+        apy = get_trailing_apy(project=project)
+    except ObjectDoesNotExist:
+        apy = 0
     if apy < 0:
         apy = 0
-    latest_block_number = latest_snapshot_block_number()
-    days = _daily_rows(8, latest_block_number)
+    latest_block_number = latest_snapshot_block_number(project)
+    days = _daily_rows(8, latest_block_number, project)
     response = JsonResponse(
         {
             "apr": apr,
@@ -441,8 +452,8 @@ def api_apr_history(request, project):
     return _cache(120, response)
 
 
-def api_apr_trailing_history(request, days):
-    rows = _daily_rows(90, latest_snapshot_block_number())
+def api_apr_trailing_history(request, days, project):
+    rows = _daily_rows(90, latest_snapshot_block_number(project))
     response = JsonResponse(
         {
             "trailing_history": [{"day": x.block_time, "trailing_apy": get_trailing_apy(x.block_number, days)} for x in rows],
@@ -456,8 +467,8 @@ def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
 
 
-def api_ratios(request):
-    s = latest_snapshot()
+def api_ratios(request, project):
+    s = latest_snapshot(project)
     response = JsonResponse(
         {
             "current_credits_per_token": s.rebasing_credits_per_token,
@@ -468,10 +479,9 @@ def api_ratios(request):
     return _cache(30, response)
 
 
-def api_address_yield(request, address):
-    if address != address.lower():
-        return redirect("api_address_yield", address=address.lower())
-    data = _address_transfers(address)
+def api_address_yield(request, address, project):
+    address = address.lower()
+    data = _address_transfers(address, project)
     response = JsonResponse(
         {
             "address": data["address"],
@@ -586,16 +596,17 @@ def active_stake_stats():
     }
 
 
-def address(request, address):
-    if address != address.lower():
-        return redirect("address", address=address.lower())
-    data = _address_transfers(address)
+def address(request, address, project):
+    address = address.lower()
+    data = _address_transfers(address, project)
+    data["project"] = project.upper()
     return render(request, "address.html", data)
 
 
-def _address_transfers(address):
+def _address_transfers(address, project):
     long_address = address.replace("0x", "0x000000000000000000000000")
-    latest_block_number = latest_snapshot_block_number()
+    latest_block_number = latest_snapshot_block_number(project)
+    contract_address = OUSD if project == OriginTokens.OUSD else OETH
     # We want to avoid the case where the listener hasn't picked up a
     # transactions yet, but the user's balance has increased or decreased
     # due to a transfer. This would make a hugely wrong lifetime earned amount
@@ -604,7 +615,7 @@ def _address_transfers(address):
     # blocks - conservatively 120 / 10 = 12 blocks.
     block_number = latest_block_number - 12
     transfers = (
-        Log.objects.filter(address=OUSD, topic_0=TRANSFER)
+        Log.objects.filter(address=contract_address, topic_0=TRANSFER)
         .filter(Q(topic_1=long_address) | Q(topic_2=long_address))
         .filter(block_number__gte=START_OF_OUSD_V2)
         .filter(block_number__lte=block_number)
@@ -615,7 +626,7 @@ def _address_transfers(address):
     transfers_out = sum(
         [x.ousd_value() for x in transfers if x.topic_1 == long_address]
     )
-    current_balance = balanceOf(OUSD, address, 18, block=block_number)
+    current_balance = balanceOf(contract_address, address, 18, block=block_number)
     non_yield_balance = transfers_in - transfers_out
     yield_balance = current_balance - non_yield_balance
     return {
@@ -686,7 +697,7 @@ def api_address_history(request, address, project=OriginTokens.OUSD):
 
 
 def strategies(request, project=OriginTokens.OUSD):
-    block_number = latest_snapshot_block_number()
+    block_number = latest_snapshot_block_number(project)
     assets = fetch_assets(block_number, project)
 
     all_strats = _get_strat_holdings(assets, project=project)

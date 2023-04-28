@@ -78,7 +78,7 @@ from core.blockchain.addresses import (
     OGV,
     VEOGV,
     OUSD,
-    OETH
+    OETH,
 )
 
 from core.coingecko import get_coin_history
@@ -1205,8 +1205,8 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     pre_curve_campaign_transfer_logs = []
     post_curve_campaign_transfer_logs = []
     if project == OriginTokens.OUSD and not ignore_curve_data:
-        pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME)
-        post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time)
+        pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME, project)
+        post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time, project)
 
     token_balance = calculate_balance(credit_balance, credits_per_token)
 
@@ -1218,7 +1218,7 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     balance_logs = enrich_transfer_logs(balance_logs)
     return (ensure_origin_token_balance(credit_balance, balance_logs), previous_transfer_logs, token_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
     
-def _daily_rows(steps, latest_block_number):
+def _daily_rows(steps, latest_block_number, project):
     # Blocks to display
     # ...this could be a bit more efficient if we pre-loaded the days and blocks in
     # on transaction, then only ensured the missing ones.
@@ -1251,7 +1251,7 @@ def _daily_rows(steps, latest_block_number):
         if block_number < START_OF_OUSD_V2:
             continue
         block = ensure_block(block_number)
-        s = ensure_supply_snapshot(block_number)
+        s = ensure_supply_snapshot(block_number, project)
         s.block_number = block_number
         s.block_time = block.block_time
         s.effective_day = (
@@ -1270,12 +1270,16 @@ def _daily_rows(steps, latest_block_number):
                 Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
             )
             s.apy = to_apy(s.apr, 1)
-            s.unboosted = to_apy(
-                (s.computed_supply - s.non_rebasing_supply)
-                / s.computed_supply
-                * s.apr,
-                1,
-            )
+            try:
+                s.unboosted = to_apy(
+                    (s.computed_supply - s.non_rebasing_supply)
+                    / s.computed_supply
+                    * s.apr,
+                    1,
+                )
+            # If there is no non-rebasing supply, the above will divide by zero.
+            except (DivisionByZero, InvalidOperation):
+                s.unboosted = Decimal(0)
             s.gain = change * (s.computed_supply - s.non_rebasing_supply)
         rows.append(s)
         last_snapshot = s

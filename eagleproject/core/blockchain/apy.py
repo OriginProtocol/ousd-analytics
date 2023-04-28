@@ -13,6 +13,8 @@ from core.blockchain.const import (
     BLOCKS_PER_DAY
 )
 from core.models import OriginTokens
+from django.core.exceptions import ObjectDoesNotExist
+
 
 PREV_APR = None
 
@@ -37,9 +39,16 @@ def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
             return apr
 
     # Calculate
-    block = block if block is not None else latest_snapshot_block_number(project=project)
+    block = block if block is not None else latest_snapshot_block_number(project)
     current = get_rebasing_credits_per_token(block)
     past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
+    # try:
+    #     current = get_rebasing_credits_per_token(block, project)
+    #     past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days), project)
+    # # FIXME: This is a hack to get around the fact that we don't have data for the first day
+    # except ObjectDoesNotExist:
+    #     current = 1
+    #     past = 1
     ratio = Decimal(float(past) / float(current))
     apr = ((ratio - Decimal(1)) * Decimal(100) * Decimal(365.25) / Decimal(days))
 

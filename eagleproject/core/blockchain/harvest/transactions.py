@@ -148,17 +148,19 @@ def explode_log_data(value):
     return out
 
 # get rebase log at block number
-def get_rebase_log(block_number):
+def get_rebase_log(block_number, project):
+    address = OUSD if project == OriginTokens.OUSD else OETH
     rebase_log = Log.objects.filter(
         db.models.Q(topic_0=OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC) | db.models.Q(topic_0=OUSD_TOTAL_SUPPLY_UPDATED_TOPIC),
-        block_number__lte=block_number
+        block_number__lte=block_number,
+        address=address,
     ).order_by('-block_number')[:1].get()
 
     return rebase_log
 
 # get rebasing credits per token log at block number
-def get_rebasing_credits_per_token(block_number):
-    rebase_log = get_rebase_log(block_number)
+def get_rebasing_credits_per_token(block_number, project):
+    rebase_log = get_rebase_log(block_number, project)
     explode_log_data(rebase_log.data)
 
     credits_per_token = explode_log_data(rebase_log.data)[2] * 1e18
