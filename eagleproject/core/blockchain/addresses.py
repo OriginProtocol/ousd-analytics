@@ -16,6 +16,9 @@ from core.blockchain.strategies import (
     LUSD_METASTRAT,
     MORPHO_AAVE,
     STRATCONVEX,
+    OETH_STRATEGIES,
+    OETH_VAULT,
+    FRAX_ETH_STRATEGY
 )
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -212,11 +215,22 @@ CONTRACT_ADDR_TO_NAME = {
     OGV_BUYBACK: "OGV BuyBack",
     REWARDS_SOURCE: "RewardsSource",
 
+
     # OETH Contracts
+    OETH: "OETH Token",
+    OETH_VAULT: "OETH Vault",
+    FRAX_ETH_STRATEGY: "FraxETH Strategy",
+    OETH_ZAPPER: "OETH Zapper"
 }
 
 # Also include strategies
 for strat in OUSD_STRATEGIES.values():
+    address = strat["ADDRESS"]
+    if address not in CONTRACT_ADDR_TO_NAME:
+        CONTRACT_ADDR_TO_NAME[address] = strat.get("NAME", "Unknown Strategy")
+
+# Also include strategies
+for strat in OETH_STRATEGIES.values():
     address = strat["ADDRESS"]
     if address not in CONTRACT_ADDR_TO_NAME:
         CONTRACT_ADDR_TO_NAME[address] = strat.get("NAME", "Unknown Strategy")

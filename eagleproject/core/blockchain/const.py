@@ -38,10 +38,16 @@ from core.blockchain.addresses import (
     GOVERNANCE,
     GOVERNANCE_TIMELOCK,
     OGV_BUYBACK,
-    THREEPOOL
+    THREEPOOL,
+    OETH_VAULT,
+    OETH,
+    FRXETH,
+    RETH,
+    STETH,
+    WETH
 )
 
-from core.blockchain.strategies import OUSD_STRATEGIES
+from core.blockchain.strategies import OUSD_STRATEGIES, OETH_STRATEGIES
 
 START_OF_EVERYTHING = int(os.environ.get("LOCAL_START_OF_EVERYTHING", 10884500))
 START_OF_EVERYTHING_TIME = datetime.strptime("18-9-2020", "%d-%m-%Y")
@@ -62,7 +68,14 @@ CONTRACT_FOR_SYMBOL = {
     "OUSD": OUSD,
     "LUSD": LUSD,
     "3CRV": THREEPOOL,
-    "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+
+    "OETH": OETH,
+    "WETH": WETH,
+    "RETH": RETH,
+    "STETH": STETH,
+    "FRXETH": FRXETH,
+
 }
 SYMBOL_FOR_CONTRACT = {v: k for (k, v) in CONTRACT_FOR_SYMBOL.items()}
 
@@ -80,6 +93,13 @@ DECIMALS_FOR_SYMBOL = {
     "USDC": 6,
     "veCRV": 18,
     "3CRV": 18,
+
+    # TODO: Verify
+    "OETH": 18,
+    "WETH": 18,
+    "RETH": 18,
+    "STETH": 18,
+    "FRXETH": 18,
 }
 
 THREEPOOLINDEX_FOR_ASSET = {
@@ -111,7 +131,12 @@ OUSD_CONTRACTS = [
     TIMELOCK,
 ]
 
-OTHER_STRAT_CONTRACTS = [strat["ADDRESS"] for (_, strat) in OUSD_STRATEGIES.items() if strat.get("HARDCODED", False) == False]
+OETH_CONTRACTS = [
+    OETH_VAULT,
+]
+
+OTHER_OUSD_STRAT_CONTRACTS = [strat["ADDRESS"] for (_, strat) in OUSD_STRATEGIES.items() if strat.get("HARDCODED", False) == False]
+OETH_STRAT_CONTRACTS = [strat["ADDRESS"] for (_, strat) in OETH_STRATEGIES.items()]
 
 LOG_CONTRACTS = (
     OUSD_CONTRACTS
@@ -123,7 +148,9 @@ LOG_CONTRACTS = (
         STORY_STAKING_SERIES,
         OGV_BUYBACK,
     ]
-    + OTHER_STRAT_CONTRACTS
+    + OTHER_OUSD_STRAT_CONTRACTS
+    + OETH_CONTRACTS
+    + OETH_STRAT_CONTRACTS
 )
 
 # Skip log fetching for these contracts if SKIP_THIRD_PARTY is set to "true"

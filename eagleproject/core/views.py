@@ -384,8 +384,8 @@ def strategist_creator(request):
     return render(request, "strategist_creator.html", locals())
 
 
-def api_apr_trailing(request):
-    apr = get_trailing_apr()
+def api_apr_trailing(request, project):
+    apr = get_trailing_apr(project=project)
     if apr < 0:
         apr = "0"
     apy = to_apy(Decimal(apr))
@@ -396,8 +396,8 @@ def api_apr_trailing(request):
     return _cache(120, response)
 
 
-def api_apr_trailing_days(request, days):
-    apr = get_trailing_apr(days=int(days))
+def api_apr_trailing_days(request, project, days):
+    apr = get_trailing_apr(days=int(days), project=project)
     if apr < 0:
         apr = "0"
     apy = to_apy(Decimal(apr), days=int(days))
@@ -408,11 +408,11 @@ def api_apr_trailing_days(request, days):
     return _cache(120, response)
 
 
-def api_apr_history(request):
-    apr = get_trailing_apr()
+def api_apr_history(request, project):
+    apr = get_trailing_apr(project=project)
     if apr < 0:
         apr = "0"
-    apy = get_trailing_apy()
+    apy = get_trailing_apy(project=project)
     if apy < 0:
         apy = 0
     latest_block_number = latest_snapshot_block_number()

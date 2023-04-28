@@ -19,6 +19,8 @@ from core.blockchain.addresses import (
     STRAT3POOL,
     STRATCONVEX1,
     OUSD_VAULT,
+    OETH_VAULT,
+    OETH,
 )
 from core.blockchain.const import (
     BLOCKS_PER_YEAR,
@@ -44,10 +46,10 @@ from core.blockchain.rpc import (
     getPendingRewards,
     ogn_staking_total_outstanding,
     open_oracle_price,
-    ousd_rebasing_credits,
-    ousd_non_rebasing_supply,
-    priceUSDMint,
-    priceUSDRedeem,
+    origin_token_rebasing_credits,
+    origin_token_non_rebasing_supply,
+    priceUnitMint,
+    priceUnitRedeem,
     rebasing_credits_per_token,
     strategyCheckBalance,
     story_staking_total_supply,
@@ -76,6 +78,7 @@ from core.models import (
 )
 
 from core.blockchain.strategies import OUSD_STRATEGIES, OUSD_BACKING_ASSETS
+from core.blockchain.strategies import OETH_STRATEGIES, OETH_BACKING_ASSETS
 
 logger = get_logger(__name__)
 
@@ -89,10 +92,70 @@ def isbetween(start, end, v):
         return False
     return True
 
+def _build_asset_block_oeth(symbol, block_number):
+    strat_holdings = {}
 
-def build_asset_block(symbol, block_number):
-    project = OriginTokens.OUSD
+    # TODO: Rename these columns??
+    ora_tok_usd_min = 0
+    ora_tok_usd_max = 0
+
+    if ora_tok_usd_min < 0:
+        try:
+            ora_tok_usd_min = priceUnitMint(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+        except:
+            print("Failed to fetch price from oracle for {}".format(symbol))
+
+    if ora_tok_usd_max < 0:
+        try:
+            ora_tok_usd_max = priceUnitRedeem(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+        except:
+            print("Failed to fetch price from oracle for {}".format(symbol))
+
+    
+    for (strat_key, strat) in OETH_STRATEGIES.items():
+        if block_number != "latest" and block_number <= strat.get("FROM_BLOCK", 0):
+            # Fetch events only after the specific block, if configured
+            continue
+        if symbol not in strat.get("SUPPORTED_ASSETS", OETH_BACKING_ASSETS):
+            # Unsupported asset
+            continue
+
+        
+        holding = strategyCheckBalance(
+            strat.get("ADDRESS"),
+            CONTRACT_FOR_SYMBOL[symbol],
+            DECIMALS_FOR_SYMBOL[symbol],
+            block_number,
+        )
+
+        strat_holdings[strat_key] = str(holding)
+
+    return AssetBlock(
+        project=OriginTokens.OETH,
+        symbol=symbol,
+        block_number=block_number,
+        ora_tok_usd_min=ora_tok_usd_min,
+        ora_tok_usd_max=ora_tok_usd_max,
+        vault_holding=balanceOf(
+            CONTRACT_FOR_SYMBOL[symbol],
+            OETH_VAULT,
+            DECIMALS_FOR_SYMBOL[symbol],
+            block_number,
+        ),
+        strat_holdings=strat_holdings,
+        # Not used for OETH
+        compstrat_holding=Decimal(0),
+        threepoolstrat_holding=Decimal(0),
+        aavestrat_holding=Decimal(0),
+    )
+
+
+def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
     symbol = symbol.upper()
+
+    if project == OriginTokens.OETH:
+        return _build_asset_block_oeth(symbol, block_number)
+
     compstrat_holding = Decimal(0)
     aavestrat_holding = Decimal(0)
     threepoolstrat_holding = Decimal(0)
@@ -189,7 +252,7 @@ def build_asset_block(symbol, block_number):
             ora_tok_usd_min = (
                 0
                 if symbol == "COMP"
-                else priceUSDMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                else priceUnitMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
             )
         except:
             print("Failed to fetch price from oracle for {}".format(symbol))
@@ -199,7 +262,7 @@ def build_asset_block(symbol, block_number):
             ora_tok_usd_max = (
                 0
                 if symbol == "COMP"
-                else priceUSDRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                else priceUnitRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
             )
         except:
             print("Failed to fetch price from oracle for {}".format(symbol))
@@ -257,42 +320,68 @@ def build_asset_block(symbol, block_number):
     )
 
 
-def ensure_asset(symbol, block_number):
-    q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number, project=OriginTokens.OUSD)
+def ensure_asset(symbol, block_number, project=OriginTokens.OUSD):
+    q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number, project=project)
     if q.count():
         return q.first()
     else:
-        ab = build_asset_block(symbol, block_number)
+        ab = build_asset_block(symbol, block_number, project)
         ab.save()
         return ab
 
 
-def ensure_supply_snapshot(block_number):
-    q = SupplySnapshot.objects.filter(block_number=block_number,project=OriginTokens.OUSD)
+def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
+    q = SupplySnapshot.objects.filter(block_number=block_number,project=project)
     if q.count():
         return q.first()
     else:
-        dai = ensure_asset("DAI", block_number).total()
-        usdt = ensure_asset("USDT", block_number).total()
-        usdc = ensure_asset("USDC", block_number).total()
-        ousd = ensure_asset("OUSD", block_number).total()
-        lusd = ensure_asset("LUSD", block_number).total()
-
         s = SupplySnapshot()
-        s.project = OriginTokens.OUSD
+        s.project = project
         s.block_number = block_number
+
         s.non_rebasing_credits = Decimal(0)  # No longer used in contract
-        s.credits = ousd_rebasing_credits(block_number) + s.non_rebasing_credits
-        s.computed_supply = dai + usdt + usdc + ousd + lusd
-        s.reported_supply = totalSupply(OUSD, 18, block_number)
-        s.non_rebasing_supply = ousd_non_rebasing_supply(block_number)
-        s.credits_ratio = s.computed_supply / s.credits
-        future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.1)
-        next_rebase_supply = (
-            s.computed_supply - s.non_rebasing_supply - future_fee
-        )
-        s.rebasing_credits_ratio = next_rebase_supply / s.credits
-        s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
+
+        if project == OriginTokens.OUSD:
+            dai = ensure_asset("DAI", block_number).total()
+            usdt = ensure_asset("USDT", block_number).total()
+            usdc = ensure_asset("USDC", block_number).total()
+            ousd = ensure_asset("OUSD", block_number).total()
+            lusd = ensure_asset("LUSD", block_number).total()
+
+            s.credits = origin_token_rebasing_credits(block_number) + s.non_rebasing_credits
+
+            s.computed_supply = dai + usdt + usdc + ousd + lusd
+            s.reported_supply = totalSupply(OUSD, 18, block_number)
+            s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number)
+            s.credits_ratio = s.computed_supply / s.credits
+            # Updating to 20% since proposal's already live
+            future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.2)
+            next_rebase_supply = (
+                s.computed_supply - s.non_rebasing_supply - future_fee
+            )
+            s.rebasing_credits_ratio = next_rebase_supply / s.credits
+            s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
+        else:
+            weth = ensure_asset("WETH", block_number).total()
+            frxeth = ensure_asset("FRXETH", block_number).total()
+            reth = ensure_asset("RETH", block_number).total()
+            steth = ensure_asset("STETH", block_number).total()
+            oeth = ensure_asset("OETH", block_number).total()
+
+            s.credits = origin_token_rebasing_credits(block_number, contract=OETH) + s.non_rebasing_credits
+
+            s.computed_supply = oeth + steth + reth + frxeth + weth
+            s.reported_supply = totalSupply(OETH, 18, block_number)
+            s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number, contract=OETH)
+            s.credits_ratio = s.computed_supply / s.credits
+
+            future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.2)
+            next_rebase_supply = (
+                s.computed_supply - s.non_rebasing_supply - future_fee
+            )
+            s.rebasing_credits_ratio = next_rebase_supply / s.credits
+            s.rebasing_credits_per_token = rebasing_credits_per_token(block_number, contract=OETH)
+
         s.save()
         return s
 

@@ -12,11 +12,12 @@ from core.blockchain.harvest.transactions import (
 from core.blockchain.const import (
     BLOCKS_PER_DAY
 )
+from core.models import OriginTokens
 
 PREV_APR = None
 
 # if block is None, the latest block shall be considered
-def get_trailing_apr(block=None, days=30.00):
+def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
     """
     Calculates the APR by using the OUSD rebase ratio. 
 
@@ -49,8 +50,8 @@ def get_trailing_apr(block=None, days=30.00):
     return apr
 
 # if block is None, the latest block shall be considered
-def get_trailing_apy(block=None, days=30.00):
-    apr = Decimal(get_trailing_apr(block, days))
+def get_trailing_apy(block=None, days=30.00, project=OriginTokens.OUSD):
+    apr = Decimal(get_trailing_apr(block, days, project))
     apy = to_apy(apr, days)
     return round(apy, 2)
 
