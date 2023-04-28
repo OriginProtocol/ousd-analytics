@@ -37,7 +37,7 @@ def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
             return apr
 
     # Calculate
-    block = block if block is not None else latest_snapshot_block_number()
+    block = block if block is not None else latest_snapshot_block_number(project=project)
     current = get_rebasing_credits_per_token(block)
     past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
     ratio = Decimal(float(past) / float(current))

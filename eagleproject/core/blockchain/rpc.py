@@ -27,7 +27,8 @@ from core.blockchain.addresses import (
     CVX_LUSD_REWARDS_POOL,
     DAI,
     USDT,
-    USDC
+    USDC,
+    OETH
 )
 from core.blockchain.const import (
     DECIMALS_FOR_SYMBOL,
@@ -62,6 +63,8 @@ from core.blockchain.sigs import (
     SIG_FUNC_TOTAL_SUPPLY,
 )
 from core.logging import get_logger
+
+from core.models import OriginTokens
 
 log = get_logger(__name__)
 
@@ -174,10 +177,11 @@ def get_transaction_receipt(tx_hash):
     return data["result"]
 
 
-def creditsBalanceOf(holder, block="latest"):
+def creditsBalanceOf(holder, block="latest", project=OriginTokens.OUSD):
+    token_addr = OUSD  if project == OriginTokens.OUSD else OETH
     signature = encode_hex(keccak(b"creditsBalanceOf(address)"))[:10]
     payload = encode_single("(address)", [holder]).hex()
-    data = call(OUSD, signature, payload, block)
+    data = call(token_addr, signature, payload, block)
 
     return (
         Decimal(int(data["result"][0 : 64 + 2], 16))

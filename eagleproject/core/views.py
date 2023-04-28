@@ -661,11 +661,11 @@ def _my_assets(address, block_number):
 #     return HttpResponse("ok")
     
 
-def api_address_history(request, address):
+def api_address_history(request, address, project=OriginTokens.OUSD):
     page_number = request.GET.get("page", 1)
     per_page = request.GET.get("per_page", 50)
     transaction_filter = request.GET.get("filter")
-    history = get_history_for_address(address, transaction_filter)
+    history = get_history_for_address(address, transaction_filter, project=project)
     paginator = Paginator(history, per_page)
     page_obj = paginator.get_page(page_number)
     pages = paginator.num_pages
