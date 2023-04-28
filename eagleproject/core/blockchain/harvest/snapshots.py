@@ -626,18 +626,18 @@ def ensure_3pool_snapshot(block_number):
         return s
 
 
-def latest_snapshot():
-    return SupplySnapshot.objects.filter(project=OriginTokens.OUSD).order_by("-block_number")[0]
+def latest_snapshot(project=OriginTokens.OUSD):
+    return SupplySnapshot.objects.filter(project=project).order_by("-block_number")[0]
 
 
-def snapshot_at_block(block):
-    return SupplySnapshot.objects.filter(block_number__lte=block,project=OriginTokens.OUSD).order_by(
+def snapshot_at_block(block, project=OriginTokens.OUSD):
+    return SupplySnapshot.objects.filter(block_number__lte=block,project=project).order_by(
         "-block_number"
     )[0]
 
 
-def latest_snapshot_block_number():
-    return latest_snapshot().block_number
+def latest_snapshot_block_number(project=OriginTokens.OUSD):
+    return latest_snapshot(project=project).block_number
 
 
 def calculate_snapshot_data(block=None):

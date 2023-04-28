@@ -482,9 +482,9 @@ def api_address_yield(request, address):
     return response
 
 
-def api_address(request):
+def api_address(request, project):
     addresses = (
-        TokenTransfer.objects.filter(block_time__gte=START_OF_OUSD_V2_TIME, project=OriginTokens.OUSD)
+        TokenTransfer.objects.filter(block_time__gte=START_OF_OUSD_V2_TIME, project=project)
         .values("to_address")
         .distinct()
         .values_list("to_address", flat=True)
@@ -720,9 +720,9 @@ def strategies(request, project=OriginTokens.OUSD):
     return _cache(120, response)
 
 
-def collateral(request):
-    block_number = latest_snapshot_block_number()
-    assets = fetch_assets(block_number)
+def collateral(request, project):
+    block_number = latest_snapshot_block_number(project=project)
+    assets = fetch_assets(block_number, project=project)
     collateral = []
     for asset in assets:
         collateral.append({"name": asset.symbol.lower(), "total": asset.total()})
@@ -962,7 +962,7 @@ def _cache(seconds, response):
 
 
 
-def staking_stats(request):
+def staking_stats(request, project):
     data = active_stake_stats()
 
     return JsonResponse(
@@ -974,7 +974,7 @@ def staking_stats(request):
     )
 
 
-def staking_stats_by_duration(request):
+def staking_stats_by_duration(request, project):
     data = active_stake_stats()
     stats = data["stats"]
 
@@ -988,7 +988,7 @@ def staking_stats_by_duration(request):
     )
 
 
-def coingecko_pools(request):
+def coingecko_pools(request, project):
     """ API for CoinGecko to consume to get details about OUSD and OGN """
     ousd_liquidity = totalSupply(OUSD, 18)
     ousd_apy = get_trailing_apy()

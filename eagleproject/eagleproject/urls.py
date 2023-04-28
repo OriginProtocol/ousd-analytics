@@ -55,21 +55,22 @@ urlpatterns = [
     # path("runtriggers", notify_views.run_triggers),
     # path("notifygc", notify_views.gc),
 
+    path("api/v2/<slug:project>/speed_test", core_views.api_speed_test),
+
     # v2 API endpoints
     # TODO: Validate `project` param
     # path("api/v2/<slug:project>/apr/trailing", core_views.api_apr_trailing),
     # re_path(r'^api/v2/<slug:project>/apr/trailing/(?P<days>[0-9]{1,3})', core_views.api_apr_trailing_days),
     # path("api/v2/<slug:project>/apr/history", core_views.api_apr_history),
     # path("api/v2/<slug:project>/ratios", core_views.api_ratios),
-    # path("api/v2/<slug:project>/speed_test", core_views.api_speed_test),
-    # path("api/v2/<slug:project>/staking_stats", core_views.staking_stats),
-    # path("api/v2/<slug:project>/staking_stats_by_duration", core_views.staking_stats_by_duration),
-    # path("api/v2/<slug:project>/pools", core_views.coingecko_pools),
+    path("api/v2/<slug:project>/staking_stats", core_views.staking_stats),
+    path("api/v2/<slug:project>/staking_stats_by_duration", core_views.staking_stats_by_duration),
+    path("api/v2/<slug:project>/pools", core_views.coingecko_pools),
     # path("api/v2/<slug:project>/address/<slug:address>/yield", core_views.api_address_yield, name="api_address_yield"),
-    # path("api/v2/<slug:project>/address/", core_views.api_address),
+    path("api/v2/<slug:project>/address/", core_views.api_address),
     # path("api/v2/<slug:project>/address/<slug:address>/history", core_views.api_address_history, name="api_address_history"),
     path("api/v2/<slug:project>/strategies", core_views.strategies),
-    # path("api/v2/<slug:project>/collateral", core_views.collateral),
+    path("api/v2/<slug:project>/collateral", core_views.collateral),
     # path("api/v2/<slug:project>/apr/trailing_history/<int:days>", core_views.api_apr_trailing_history),
 
     ## TODO: Set up redirect from `api/v1/*` to `api/v2/ousd/*`
@@ -78,7 +79,6 @@ urlpatterns = [
     # re_path(r'^api/v1/apr/trailing/(?P<days>[0-9]{1,3})', core_views.api_apr_trailing_days),
     # path("api/v1/apr/history", core_views.api_apr_history),
     # path("api/v1/ratios", core_views.api_ratios),
-    # path("api/v1/speed_test", core_views.api_speed_test),
     # path("api/v1/staking_stats", core_views.staking_stats),
     # path("api/v1/staking_stats_by_duration", core_views.staking_stats_by_duration),
     # path("api/v1/pools", core_views.coingecko_pools),
