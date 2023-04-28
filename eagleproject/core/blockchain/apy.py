@@ -40,8 +40,8 @@ def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
 
     # Calculate
     block = block if block is not None else latest_snapshot_block_number(project)
-    current = get_rebasing_credits_per_token(block)
-    past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
+    current = get_rebasing_credits_per_token(block, project)
+    past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days), project)
     # try:
     #     current = get_rebasing_credits_per_token(block, project)
     #     past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days), project)
@@ -60,7 +60,11 @@ def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
 
 # if block is None, the latest block shall be considered
 def get_trailing_apy(block=None, days=30.00, project=OriginTokens.OUSD):
-    apr = Decimal(get_trailing_apr(block, days, project))
+    # We don't have enough data to calculate APR on OETH
+    try:
+        apr = Decimal(get_trailing_apr(block, days, project))
+    except ObjectDoesNotExist:
+        return 0
     apy = to_apy(apr, days)
     return round(apy, 2)
 

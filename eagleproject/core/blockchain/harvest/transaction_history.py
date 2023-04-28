@@ -1259,13 +1259,16 @@ def _daily_rows(steps, latest_block_number, project):
         ).replace(tzinfo=timezone.utc)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
-            change = (
-                (
-                    s.rebasing_credits_per_token
-                    / last_snapshot.rebasing_credits_per_token
-                )
-                - Decimal(1)
-            ) * -1
+            if last_snapshot.rebasing_credits_per_token == 0:
+                change = Decimal(0)
+            else:
+                change = (
+                    (
+                        s.rebasing_credits_per_token
+                        / last_snapshot.rebasing_credits_per_token
+                    )
+                    - Decimal(1)
+                ) * -1
             s.apr = (
                 Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
             )

@@ -339,20 +339,23 @@ def fetch_transactions(request):
     return HttpResponse("ok")
 
 
-def apr_index(request):
-    latest_block_number = latest_snapshot_block_number()
+def apr_index(request, project):
+    latest_block_number = latest_snapshot_block_number(project)
+    project_name = project.upper()
+
+    contract_address = OUSD if project == OriginTokens.OUSD else OETH
     try:
         num_rows = int(request.GET.get("rows", 30))
     except ValueError:
         num_rows = 30
-    rows = _daily_rows(min(120, num_rows), latest_block_number)
+    rows = _daily_rows(min(120, num_rows), latest_block_number, project)
     del num_rows
-    apy = get_trailing_apy()
-    apy_365 = get_trailing_apy(days=365)
+    apy = get_trailing_apy(project=project)
+    apy_365 = get_trailing_apy(days=365, project=project)
 
     assets = fetch_assets(latest_block_number)
     total_assets = sum(x.total() for x in assets)
-    total_supply = totalSupply(OUSD, 18, latest_block_number)
+    total_supply = totalSupply(contract_address, 18, latest_block_number)
     extra_assets = (total_assets - total_supply) + dripper_available()
     return _cache(1 * 60, render(request, "apr_index.html", locals()))
 

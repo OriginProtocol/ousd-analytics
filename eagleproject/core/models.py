@@ -189,8 +189,11 @@ class SupplySnapshot(models.Model):
         ) * 100
 
     def non_rebasing_boost_multiplier(self):
+        number = self.computed_supply - self.non_rebasing_supply
+        if number == 0:
+            return 0
         return self.computed_supply / (
-            self.computed_supply - self.non_rebasing_supply
+            number
         )
 
     class Meta:

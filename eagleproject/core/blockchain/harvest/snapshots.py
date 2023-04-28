@@ -375,13 +375,19 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
             s.computed_supply = oeth + steth + reth + frxeth + weth
             s.reported_supply = totalSupply(OETH, 18, block_number)
             s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number, contract=OETH)
-            s.credits_ratio = s.computed_supply / s.credits
+            if s.computed_supply == 0 and s.credits == 0:
+                s.credits_ratio = 0
+            else:
+                s.credits_ratio = s.computed_supply / s.credits
 
             future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.2)
             next_rebase_supply = (
                 s.computed_supply - s.non_rebasing_supply - future_fee
             )
-            s.rebasing_credits_ratio = next_rebase_supply / s.credits
+            if next_rebase_supply == 0 and s.credits == 0:
+                s.rebasing_credits_ratio = 0
+            else:
+                s.rebasing_credits_ratio = next_rebase_supply / s.credits
             s.rebasing_credits_per_token = rebasing_credits_per_token(block_number, contract=OETH)
 
         s.save()
