@@ -16,6 +16,8 @@ from core.blockchain.addresses import (
     OGN_STAKING,
     STORY_STAKING_SERIES,
     STORY_STAKING_SEASONS,
+    OETH,
+    OUSD
 )
 from core.blockchain.const import (
     E_18,
@@ -111,9 +113,10 @@ def maybe_store_transfer_record(log, block):
         return None
 
     # Must be on OUSD
-    if log["address"] != "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86":
+    if log["address"] != OUSD or log["address"] != OETH:
         return None
 
+    project = OriginTokens.OUSD if log["address"] == OUSD else OriginTokens.OETH
     tx_hash = log["transactionHash"]
     log_index = int(log["logIndex"], 16)
 
@@ -127,7 +130,7 @@ def maybe_store_transfer_record(log, block):
     transfer, created = TokenTransfer.objects.get_or_create(
         tx_hash_id=tx_hash, 
         log_index=log_index, 
-        project=OriginTokens.OUSD,
+        project=project,
         defaults=params
     )
 

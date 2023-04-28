@@ -50,6 +50,8 @@ from core.blockchain.rpc import (
     origin_token_non_rebasing_supply,
     priceUnitMint,
     priceUnitRedeem,
+    priceUSDMint,
+    priceUSDRedeem,
     rebasing_credits_per_token,
     strategyCheckBalance,
     story_staking_total_supply,
@@ -252,7 +254,7 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
             ora_tok_usd_min = (
                 0
                 if symbol == "COMP"
-                else priceUnitMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                else priceUSDMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
             )
         except:
             print("Failed to fetch price from oracle for {}".format(symbol))
@@ -262,7 +264,7 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
             ora_tok_usd_max = (
                 0
                 if symbol == "COMP"
-                else priceUnitRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                else priceUSDRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
             )
         except:
             print("Failed to fetch price from oracle for {}".format(symbol))
@@ -362,11 +364,11 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
             s.rebasing_credits_ratio = next_rebase_supply / s.credits
             s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
         else:
-            weth = ensure_asset("WETH", block_number).total()
-            frxeth = ensure_asset("FRXETH", block_number).total()
-            reth = ensure_asset("RETH", block_number).total()
-            steth = ensure_asset("STETH", block_number).total()
-            oeth = ensure_asset("OETH", block_number).total()
+            weth = ensure_asset("WETH", block_number, OriginTokens.OETH).total()
+            frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH).total()
+            reth = ensure_asset("RETH", block_number, OriginTokens.OETH).total()
+            steth = ensure_asset("STETH", block_number, OriginTokens.OETH).total()
+            oeth = ensure_asset("OETH", block_number, OriginTokens.OETH).total()
 
             s.credits = origin_token_rebasing_credits(block_number, contract=OETH) + s.non_rebasing_credits
 

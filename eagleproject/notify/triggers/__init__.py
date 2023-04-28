@@ -100,9 +100,9 @@ def load_triggers():
     ]
 
 
-def transfers(block_number):
+def transfers(block_number, project=OriginTokens.OUSD):
     """ Get all transfers since given block """
-    return TokenTransfer.objects.filter(tx_hash__block_number__gt=block_number,project=OriginTokens.OUSD)
+    return TokenTransfer.objects.filter(tx_hash__block_number__gt=block_number, project=project)
 
 
 def transactions(block_number):

@@ -84,18 +84,28 @@ from django.conf import settings
 import json
 
 from core.blockchain.strategies import OUSD_STRATEGIES, OUSD_BACKING_ASSETS
+from core.blockchain.strategies import OETH_STRATEGIES, OETH_BACKING_ASSETS
 
 log = get_logger(__name__)
 
 
-def fetch_assets(block_number):
+def fetch_assets(block_number, project=OriginTokens.OUSD):
     # These probably won't harvest since block_number comes from snapshots
-    dai = ensure_asset("DAI", block_number)
-    usdt = ensure_asset("USDT", block_number)
-    usdc = ensure_asset("USDC", block_number)
-    ousd = ensure_asset("OUSD", block_number)
-    lusd = ensure_asset("LUSD", block_number)
-    return [dai, usdt, usdc, ousd, lusd]
+    if project == OriginTokens.OUSD:
+        dai = ensure_asset("DAI", block_number)
+        usdt = ensure_asset("USDT", block_number)
+        usdc = ensure_asset("USDC", block_number)
+        ousd = ensure_asset("OUSD", block_number)
+        lusd = ensure_asset("LUSD", block_number)
+        return [dai, usdt, usdc, ousd, lusd]
+    elif project == OriginTokens.OETH:
+        weth = ensure_asset("WETH", block_number, OriginTokens.OETH)
+        frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH)
+        reth = ensure_asset("RETH", block_number, OriginTokens.OETH)
+        steth = ensure_asset("STETH", block_number, OriginTokens.OETH)
+        oeth = ensure_asset("OETH", block_number, OriginTokens.OETH)
+        return [weth, frxeth, reth, steth, oeth]
+    return []
 
 
 def dashboard(request):
@@ -168,14 +178,17 @@ def dashboard(request):
 
     return _cache(20, render(request, "dashboard.html", locals()))
 
-def _get_strat_holdings(assets):
+def _get_strat_holdings(assets, project=OriginTokens.OUSD):
     all_strats = {}
-    for (strat_key, strat) in OUSD_STRATEGIES.items():
+    strat_config = OUSD_STRATEGIES if project == OriginTokens.OUSD else OETH_STRATEGIES
+    backing_assets = OUSD_BACKING_ASSETS if project == OriginTokens.OUSD else OETH_BACKING_ASSETS
+
+    for (strat_key, strat) in strat_config.items():
         total = 0
         holdings = []
 
         for asset in assets:
-            if not asset.symbol in strat.get("SUPPORTED_ASSETS", OUSD_BACKING_ASSETS):
+            if not asset.symbol in strat.get("SUPPORTED_ASSETS", backing_assets):
                 continue
             balance = asset.get_strat_holdings(strat_key)
             holdings.append((asset.symbol, balance))
@@ -672,14 +685,14 @@ def api_address_history(request, address):
     return response
 
 
-def strategies(request):
+def strategies(request, project=OriginTokens.OUSD):
     block_number = latest_snapshot_block_number()
-    assets = fetch_assets(block_number)
+    assets = fetch_assets(block_number, project)
 
-    all_strats = _get_strat_holdings(assets)
+    all_strats = _get_strat_holdings(assets, project=project)
 
     # Returns an object with UUID as keys when set, otherwise returns an array
-    structured = request.GET.get("structured")
+    structured = project == OriginTokens.OETH or request.GET.get("structured") is not None
 
     for (key, strat) in all_strats.items():
         holdings = {}
