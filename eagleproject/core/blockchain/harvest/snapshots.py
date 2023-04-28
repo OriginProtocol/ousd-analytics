@@ -105,13 +105,13 @@ def _build_asset_block_oeth(symbol, block_number):
         try:
             ora_tok_usd_min = priceUnitMint(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
         except:
-            print("Failed to fetch price from oracle for {}".format(symbol))
+            print("Failed to fetch price from OETH oracle for {}".format(symbol))
 
     if ora_tok_usd_max < 0:
         try:
             ora_tok_usd_max = priceUnitRedeem(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
         except:
-            print("Failed to fetch price from oracle for {}".format(symbol))
+            print("Failed to fetch price from OETH oracle for {}".format(symbol))
 
     
     for (strat_key, strat) in OETH_STRATEGIES.items():
@@ -257,7 +257,7 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
                 else priceUSDMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
             )
         except:
-            print("Failed to fetch price from oracle for {}".format(symbol))
+            print("Failed to fetch price from OUSD oracle for {}".format(symbol))
  
     if ora_tok_usd_max < 0:
         try:
@@ -267,7 +267,7 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
                 else priceUSDRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
             )
         except:
-            print("Failed to fetch price from oracle for {}".format(symbol))
+            print("Failed to fetch price from OUSD oracle for {}".format(symbol))
 
 
     for (strat_key, strat) in OUSD_STRATEGIES.items():
