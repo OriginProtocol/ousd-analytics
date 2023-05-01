@@ -14,8 +14,8 @@ from core.blockchain.strategies import OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS
 log = get_logger(__name__)
 
 class OriginTokens(models.TextChoices):
-    OUSD = "ousd", "OUSD"
-    OETH = "oeth", "OETH"
+    OUSD = "ousd", "ousd"
+    OETH = "oeth", "oeth"
     
 class AssetBlock(models.Model):
     symbol = models.CharField(max_length=8, db_index=True)

@@ -113,7 +113,7 @@ def maybe_store_transfer_record(log, block):
         return None
 
     # Must be on OUSD
-    if log["address"] != OUSD or log["address"] != OETH:
+    if log["address"] != OUSD and log["address"] != OETH:
         return None
 
     project = OriginTokens.OUSD if log["address"] == OUSD else OriginTokens.OETH

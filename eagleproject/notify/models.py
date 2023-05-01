@@ -25,7 +25,7 @@ class NotifyCursor(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(fields=["cursor_id", "block_number"]),
+            models.Index(fields=["cursor_id", "block_number", "project"]),
         ]
 
 

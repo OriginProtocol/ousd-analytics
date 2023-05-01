@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
             model_name="notifycursor",
             name="project",
             field=models.TextField(
-                choices=[("OUSD", "OUSD"), ("OETH", "OETH")], default="OUSD"
+                choices=[("ousd", "ousd"), ("oeth", "oeth")], default="ousd"
             ),
         ),
     ]

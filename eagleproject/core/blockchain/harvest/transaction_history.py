@@ -1032,6 +1032,9 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
 
     (tx_history, ___, ____, _____, ______) = ensure_transaction_history(address, rebase_logs, None, None, None, None, True, project=project)
 
+    if len(tx_history) == 0:
+        return []
+
     if transaction_filter != None:
         transaction_filter = transaction_filter.replace('swap_ousd', 'swap_gain_ousd swap_give_ousd')
         transaction_filter = transaction_filter.replace('swap_oeth', 'swap_gain_oeth swap_give_oeth')
@@ -1044,7 +1047,7 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
             last_non_yield_tx_idx = i
             break;
 
-    for i in range(0, last_non_yield_tx_idx + 1 if last_non_yield_tx_idx != -1 else 1, 1):
+    for i in range(0, (last_non_yield_tx_idx + 1) if last_non_yield_tx_idx != -1 else 1, 1):
         if isinstance(tx_history[i], rebase_log):
             if transaction_filter == None or 'yield' in transaction_filter:
                 tx_history_filtered.append({

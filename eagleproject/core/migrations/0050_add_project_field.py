@@ -17,35 +17,35 @@ class Migration(migrations.Migration):
             model_name="tokentransfer",
             name="project",
             field=models.TextField(
-                choices=[("OUSD", "OUSD"), ("OETH", "OETH")], default="OUSD"
+                choices=[("ousd", "ousd"), ("oeth", "oeth")], default="ousd"
             ),
         ),
         migrations.AddField(
             model_name="analyticsreport",
             name="project",
             field=models.TextField(
-                choices=[("OUSD", "OUSD"), ("OETH", "OETH")], default="OUSD"
+                choices=[("ousd", "ousd"), ("oeth", "oeth")], default="ousd"
             ),
         ),
         migrations.AddField(
             model_name="assetblock",
             name="project",
             field=models.TextField(
-                choices=[("OUSD", "OUSD"), ("OETH", "OETH")], default="OUSD"
+                choices=[("ousd", "ousd"), ("oeth", "oeth")], default="ousd"
             ),
         ),
         migrations.AddField(
             model_name="subscriber",
             name="project",
             field=models.TextField(
-                choices=[("OUSD", "OUSD"), ("OETH", "OETH")], default="OUSD"
+                choices=[("ousd", "ousd"), ("oeth", "oeth")], default="ousd"
             ),
         ),
         migrations.AddField(
             model_name="supplysnapshot",
             name="project",
             field=models.TextField(
-                choices=[("OUSD", "OUSD"), ("OETH", "OETH")], default="OUSD"
+                choices=[("ousd", "ousd"), ("oeth", "oeth")], default="ousd"
             ),
         ),
     ]

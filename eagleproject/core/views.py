@@ -402,7 +402,11 @@ def strategist_creator(request):
 
 
 def api_apr_trailing(request, project):
-    apr = get_trailing_apr(project=project)
+    try:
+        apr = get_trailing_apr(project=project)
+    except ObjectDoesNotExist: 
+        apr = 0
+
     if apr < 0:
         apr = "0"
     apy = to_apy(Decimal(apr))
@@ -414,7 +418,11 @@ def api_apr_trailing(request, project):
 
 
 def api_apr_trailing_days(request, project, days):
-    apr = get_trailing_apr(days=int(days), project=project)
+    try:
+        apr = get_trailing_apr(days=int(days), project=project)
+    except ObjectDoesNotExist: 
+        apr = 0
+
     if apr < 0:
         apr = "0"
     apy = to_apy(Decimal(apr), days=int(days))
