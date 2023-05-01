@@ -252,9 +252,9 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
     if ora_tok_usd_min < 0:
         try:
             ora_tok_usd_min = (
-                0
-                if symbol == "COMP"
-                else priceUSDMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                priceUSDMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                if symbol in OUSD_BACKING_ASSETS
+                else 0
             )
         except:
             print("Failed to fetch price from OUSD oracle for {}".format(symbol))
@@ -262,9 +262,9 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
     if ora_tok_usd_max < 0:
         try:
             ora_tok_usd_max = (
-                0
-                if symbol == "COMP"
-                else priceUSDRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                priceUSDRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                if symbol in OUSD_BACKING_ASSETS
+                else 0
             )
         except:
             print("Failed to fetch price from OUSD oracle for {}".format(symbol))
