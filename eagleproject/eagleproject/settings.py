@@ -231,4 +231,4 @@ TWILIO_TO = os.environ.get("TWILIO_TO")
 GOOGLE_TAG_ID = os.environ.get("GOOGLE_TAG_ID")
 
 # TODO: Allow only DApps that use API endpoints from this server
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_ALL_ORIGINS = True
