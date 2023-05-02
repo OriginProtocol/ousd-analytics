@@ -8,10 +8,14 @@ class CursorId(models.TextChoices):
     TRANSFERS = 'tr', 'Transfers'
     SNAPSHOT = 'sn', 'Snapshots'
 
+    OETH_TRANSACTIONS = 'oeth_tx', 'OETH Transactions'
+    OETH_TRANSFERS = 'oeth_tr', 'OETH Transfers'
+    OETH_SNAPSHOT = 'oeth_sn', 'OETH Snapshots'
+
 
 class NotifyCursor(models.Model):
     cursor_id = models.CharField(
-        max_length=2,
+        max_length=8,
         choices=CursorId.choices,
         primary_key=True
     )

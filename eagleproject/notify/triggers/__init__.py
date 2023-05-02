@@ -49,6 +49,8 @@ from core.models import (
 from notify.models import CursorId, NotifyCursor
 from notify.events import event_high
 
+from core.blockchain.const import START_OF_OETH
+
 log = get_logger(__name__)
 
 ME = Path(__file__).resolve()
@@ -73,7 +75,7 @@ def strip_ext(fname):
     return ".".join(fname.split(".")[:-1])
 
 
-def load_triggers():
+def load_triggers(project = OriginTokens.OUSD):
     """ Loads all trigger modules in this dir """
 
     if ONLY_RUN_TRIGGER is not None:
@@ -92,6 +94,22 @@ def load_triggers():
             and not x.name.startswith("__")
         )
     ]
+
+    if project == OriginTokens.OETH:
+        files = [
+            x
+            for x in files
+            if not (
+                x.name.startswith("aave_")
+                or x.name.startswith("compound_")
+                or x.name.startswith("ctoken_")
+                or x.name.startswith("curve_")
+                or x.name.startswith("story_")
+                or x.name.startswith("staking_")
+                or x.name.startswith("series_")
+                or x.name.startswith("feevault_")
+            )
+        ]
 
     return [
         import_module("notify.triggers.{}".format(strip_ext(mod.name)))
@@ -196,16 +214,20 @@ def latest_story_snapshots(limit=2):
 def run_all_triggers():
     """ Run all triggers """
     events = []
-    mods = load_triggers()
 
     for project in [OriginTokens.OUSD, OriginTokens.OETH]:
+        mods = load_triggers(project=project)
+        
+        is_ousd = project == OriginTokens.OUSD
+        start_block_number = 0 if is_ousd else START_OF_OETH
+
         # Source from the DB to prevent a race with data collection
         max_block = Block.objects.all().aggregate(Max("block_number"))
         max_snapshot_block = SupplySnapshot.objects.filter(project=project).aggregate(
             Max("block_number")
         )
-        block_number = 0
-        snapshot_block_number = 0
+        block_number = start_block_number
+        snapshot_block_number = start_block_number
 
         if max_block:
             block_number = max_block.get("block_number__max", 0)
@@ -213,7 +235,7 @@ def run_all_triggers():
             snapshot_block_number = max_snapshot_block.get("block_number__max", 0)
 
         transfer_cursor, _ = NotifyCursor.objects.get_or_create(
-            cursor_id=CursorId.TRANSFERS,
+            cursor_id=CursorId.TRANSFERS if is_ousd else CursorId.OETH_TRANSFERS,
             project=project,
             defaults={
                 "block_number": block_number,
@@ -222,7 +244,7 @@ def run_all_triggers():
         )
 
         transaction_cursor, _ = NotifyCursor.objects.get_or_create(
-            cursor_id=CursorId.TRANSACTIONS,
+            cursor_id=CursorId.TRANSACTIONS if is_ousd else CursorId.OETH_TRANSACTIONS,
             project=project,
             defaults={
                 "block_number": block_number,
@@ -231,7 +253,7 @@ def run_all_triggers():
         )
 
         snapshot_cursor, _ = NotifyCursor.objects.get_or_create(
-            cursor_id=CursorId.SNAPSHOT,
+            cursor_id=CursorId.SNAPSHOT if is_ousd else CursorId.OETH_SNAPSHOT,
             project=project,
             defaults={
                 "block_number": snapshot_block_number,
@@ -249,9 +271,9 @@ def run_all_triggers():
             "new_transactions": lambda: transactions(
                 transaction_cursor.block_number
             ),
-            "transfers": lambda: transfers(0, project=project),
+            "transfers": lambda: transfers(start_block_number, project=project),
             "new_transfers": lambda: transfers(transfer_cursor.block_number, project=project),
-            "logs": lambda: logs(0),
+            "logs": lambda: logs(start_block_number),
             "new_logs": lambda: logs(transaction_cursor.block_number),
             "ogn_staking_snapshot": latest_ogn_staking_snap,
             "oracle_snapshots": lambda: oracles_snaps(snapshot_block_number),
