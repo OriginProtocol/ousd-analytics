@@ -1,7 +1,7 @@
 """ Oracle prices drift """
 import locale
 from decimal import Decimal
-from core.blockchain.addresses import OUSD_VAULT
+from core.blockchain.addresses import OUSD_VAULT, OETH_VAULT
 from core.blockchain.const import CONTRACT_FOR_SYMBOL
 from core.blockchain.rpc import RPCError, priceUSDMint, priceUSDRedeem, priceUnitMint, priceUnitRedeem
 from notify.events import event_high
@@ -32,19 +32,20 @@ def get_oracle_prices(symbol, vault=OUSD_VAULT):
 
 
 def assert_price_in_bounds(symbol):
-    max_price, min_price = get_oracle_prices(symbol)
+    is_ousd = symbol in OUSD_BACKING_ASSETS
+    max_price, min_price = get_oracle_prices(symbol, OUSD_VAULT if is_ousd else OETH_VAULT)
 
     if symbol != "RETH":
         # RETH accrues value rather than rebasing to increase supply
         assert (
-            max_price <= MAX_USD_PRICE if symbol in OUSD_BACKING_ASSETS else max_price <= MAX_ETH_PRICE
+            max_price <= MAX_USD_PRICE if is_ousd else max_price <= MAX_ETH_PRICE
         ), "{} price exceeds upper bound ({})".format(
             symbol,
             locale.currency(max_price),
         )
 
     assert (
-        min_price >= MIN_USD_PRICE if symbol in OUSD_BACKING_ASSETS else min_price >= MIN_ETH_PRICE
+        min_price >= MIN_USD_PRICE if is_ousd else min_price >= MIN_ETH_PRICE
     ), "{} price lower than acceptable lower bound ({})".format(
         symbol,
         locale.currency(min_price),
