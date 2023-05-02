@@ -157,7 +157,9 @@ def aave_reserve_snapshots(block_number):
 
 
 def past_asset_blocks(
-    after=datetime.now() - timedelta(days=7), until_block=None
+    after=datetime.now() - timedelta(days=7), 
+    until_block=None,
+    project=OriginTokens.OUSD
 ):
     """ Get previous asset blocks after `after` """
     try:
@@ -169,7 +171,7 @@ def past_asset_blocks(
 
     ablocks = AssetBlock.objects.filter(
         block_number__gte=first_block_after.block_number,
-        project=OriginTokens.OUSD,
+        project=project,
     )
 
     if until_block:
@@ -178,11 +180,11 @@ def past_asset_blocks(
     return ablocks.order_by("block_number")
 
 
-def latest_asset_blocks(after_block_number):
+def latest_asset_blocks(after_block_number, project=OriginTokens.OUSD):
     """ Get previous asset blocks after `after_block_number` """
     return AssetBlock.objects.filter(
         block_number__gt=after_block_number,
-        project=OriginTokens.OUSD,
+        project=project,
     ).order_by("block_number")
 
 
@@ -247,8 +249,8 @@ def run_all_triggers():
             "new_transactions": lambda: transactions(
                 transaction_cursor.block_number
             ),
-            "transfers": lambda: transfers(0),
-            "new_transfers": lambda: transfers(transfer_cursor.block_number),
+            "transfers": lambda: transfers(0, project=project),
+            "new_transfers": lambda: transfers(transfer_cursor.block_number, project=project),
             "logs": lambda: logs(0),
             "new_logs": lambda: logs(transaction_cursor.block_number),
             "ogn_staking_snapshot": latest_ogn_staking_snap,
@@ -260,10 +262,12 @@ def run_all_triggers():
             ),
             "recent_aave_reserve_snapshots": lambda: recent_aave_reserve_snapshots(),
             "latest_asset_blocks": lambda: latest_asset_blocks(
-                snapshot_cursor.block_number
+                snapshot_cursor.block_number,
+                project=project
             ),
             "last_week_asset_blocks": lambda: past_asset_blocks(
-                until_block=snapshot_cursor.block_number
+                until_block=snapshot_cursor.block_number,
+                project=project
             ),
             "latest_story_snapshots": lambda: latest_story_snapshots,
         }

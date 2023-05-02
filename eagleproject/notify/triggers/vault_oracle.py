@@ -6,9 +6,15 @@ from core.blockchain.const import CONTRACT_FOR_SYMBOL
 from core.blockchain.rpc import RPCError, priceUSDMint, priceUSDRedeem, priceUnitMint, priceUnitRedeem
 from notify.events import event_high
 
+from core.blockchain.strategies import OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS
+
 # USD-pegged stable coins drift thresholds
 MAX_USD_PRICE = Decimal("1.05")
 MIN_USD_PRICE = Decimal("0.95")
+
+MAX_ETH_PRICE = Decimal("1.03")
+MIN_ETH_PRICE = Decimal("0.97")
+
 ONE_E8 = Decimal(1e8)
 
 # TODO: Necessary?
@@ -28,15 +34,17 @@ def get_oracle_prices(symbol, vault=OUSD_VAULT):
 def assert_price_in_bounds(symbol):
     max_price, min_price = get_oracle_prices(symbol)
 
-    assert (
-        max_price <= MAX_USD_PRICE
-    ), "{} price exceeds upper bound ({})".format(
-        symbol,
-        locale.currency(max_price),
-    )
+    if symbol != "RETH":
+        # RETH accrues value rather than rebasing to increase supply
+        assert (
+            max_price <= MAX_USD_PRICE if symbol in OUSD_BACKING_ASSETS else max_price <= MAX_ETH_PRICE
+        ), "{} price exceeds upper bound ({})".format(
+            symbol,
+            locale.currency(max_price),
+        )
 
     assert (
-        min_price >= MIN_USD_PRICE
+        min_price >= MIN_USD_PRICE if symbol in OUSD_BACKING_ASSETS else min_price >= MIN_ETH_PRICE
     ), "{} price lower than acceptable lower bound ({})".format(
         symbol,
         locale.currency(min_price),
@@ -47,14 +55,15 @@ def run_trigger(transfers, new_transfers):
     """ Template trigger """
     events = []
 
-    for symbol in ["DAI", "USDT", "USDC"]:
-        try:
-            assert_price_in_bounds(symbol)
-        except AssertionError as e:
-            events.append(
-                event_high("Exceptional Oracle Price    🧙‍♀️", str(e))
-            )
-        except RPCError as e:
-            events.append(event_high("Oracle Price Revert    🔴", str(e)))
+    for assets in [OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS]:
+        for symbol in assets:
+            try:
+                assert_price_in_bounds(symbol)
+            except AssertionError as e:
+                events.append(
+                    event_high("Exceptional Oracle Price    🧙‍♀️", str(e))
+                )
+            except RPCError as e:
+                events.append(event_high("Oracle Price Revert    🔴", str(e)))
 
     return events

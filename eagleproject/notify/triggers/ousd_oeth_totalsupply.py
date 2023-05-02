@@ -3,7 +3,7 @@ from eth_abi import decode_single
 from eth_utils import decode_hex
 from django.db.models import Q
 from core.common import format_ousd_human
-from core.blockchain.addresses import OUSD
+from core.blockchain.addresses import OUSD, OETH
 from core.blockchain.const import E_18
 from core.blockchain.rpc import totalSupply
 from core.blockchain.sigs import (
@@ -13,7 +13,6 @@ from core.blockchain.sigs import (
     SIG_EVENT_TOTAL_SUPPLY_UPDATED_HIRES,
 )
 from notify.events import event_normal
-
 
 def get_supply_events(logs):
     """Get totalSupply changing events
@@ -58,6 +57,11 @@ def run_trigger(new_logs):
         if has_mint_or_burn(new_logs, ev.transaction_hash):
             continue
 
+        if not ev.address in (OETH, OUSD):
+            continue
+
+        token_symbol = "OUSD" if ev.address == OUSD else "OETH"
+
         (
             total_supply,
             rebasing_credits,
@@ -65,7 +69,7 @@ def run_trigger(new_logs):
         ) = decode_single("(uint256,uint256,uint256)", decode_hex(ev.data))
 
         total_supply_converted = Decimal(total_supply) / E_18
-        prev_total_supply = totalSupply(OUSD, 18, block=ev.block_number - 1)
+        prev_total_supply = totalSupply(ev.address, 18, block=ev.block_number - 1)
         diff = Decimal(total_supply_converted - prev_total_supply)
 
         mod = "+"
@@ -74,11 +78,13 @@ def run_trigger(new_logs):
 
         events.append(
             event_normal(
-                "Total supply updated   👛",
-                "Total supply is now {} OUSD ({}{} OUSD)".format(
+                "{} Total supply updated   👛".format(token_symbol),
+                "Total supply is now {} {}} ({}{} {}})".format(
                     format_ousd_human(total_supply_converted),
+                    token_symbol,
                     mod,
                     format_ousd_human(diff),
+                    token_symbol,
                 ),
                 log_model=ev,
             ),
