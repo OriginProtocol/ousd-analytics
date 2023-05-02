@@ -79,7 +79,7 @@ def run_trigger(new_logs):
         events.append(
             event_normal(
                 "{} Total supply updated   👛".format(token_symbol),
-                "Total supply is now {} {}} ({}{} {}})".format(
+                "Total supply is now {} {} ({}{} {})".format(
                     format_ousd_human(total_supply_converted),
                     token_symbol,
                     mod,
