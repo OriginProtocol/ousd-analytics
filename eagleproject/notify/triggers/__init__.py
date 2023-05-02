@@ -198,7 +198,7 @@ def run_all_triggers():
     events = []
     mods = load_triggers()
 
-    for project in [OriginTokens.OUSD]:
+    for project in [OriginTokens.OUSD, OriginTokens.OETH]:
         # Source from the DB to prevent a race with data collection
         max_block = Block.objects.all().aggregate(Max("block_number"))
         max_snapshot_block = SupplySnapshot.objects.filter(project=project).aggregate(
