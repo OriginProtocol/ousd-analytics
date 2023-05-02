@@ -64,6 +64,6 @@ def run_trigger(transfers, new_transfers):
                     event_high("Exceptional Oracle Price    🧙‍♀️", str(e))
                 )
             except RPCError as e:
-                events.append(event_high("Oracle Price Revert    🔴", str(e)))
+                events.append(event_high("Oracle Price Revert for {}    🔴".format(symbol), str(e)))
 
     return events
