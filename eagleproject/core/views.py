@@ -338,12 +338,12 @@ def fetch_transactions(request):
     refresh_transactions(latest - 2)
     return HttpResponse("ok")
 
-
 def apr_index(request):
+    project = OriginTokens.OUSD
     latest_block_number = latest_snapshot_block_number(project)
     project_name = project.upper()
 
-    contract_address = OUSD
+    contract_address = OUSD if project == OriginTokens.OUSD else OETH
     try:
         num_rows = int(request.GET.get("rows", 30))
     except ValueError:
