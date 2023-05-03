@@ -4,6 +4,7 @@ from eth_abi import decode_single
 from core.blockchain.sigs import SIG_EVENT_PRICE_PROVIDER
 from notify.events import event_normal
 
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 
 def get_events(logs):
     """ Get events """
@@ -19,10 +20,11 @@ def run_trigger(new_logs):
     for ev in get_events(new_logs):
         # Basis points in 18 decimal bigint
         oracle_address = decode_single('(address)', decode_hex(ev.data))[0]
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
 
         events.append(event_normal(
-            "Vault Oracle Changed   🧙",
-            "OUSD Vault oracle was changed to {}%".format(oracle_address),
+            "{} Oracle Changed   🧙".format(contract_name),
+            "{} oracle was changed to {}%".format(contract_name, oracle_address),
             log_model=ev
         ))
 

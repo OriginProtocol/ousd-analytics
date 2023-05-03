@@ -8,11 +8,15 @@ from django.db import models
 from core.logging import get_logger
 import simplejson as json
 
-from core.blockchain.strategies import STRATEGIES
+from core.blockchain.strategies import OUSD_STRATEGIES, OETH_STRATEGIES
+from core.blockchain.strategies import OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS
 
 log = get_logger(__name__)
 
-
+class OriginTokens(models.TextChoices):
+    OUSD = "ousd", "ousd"
+    OETH = "oeth", "oeth"
+    
 class AssetBlock(models.Model):
     symbol = models.CharField(max_length=8, db_index=True)
     block_number = models.IntegerField(db_index=True)
@@ -36,22 +40,32 @@ class AssetBlock(models.Model):
     )
     strat_holdings = models.JSONField(default=dict)
 
+    project = models.TextField(
+        choices=OriginTokens.choices,
+        default=OriginTokens.OUSD
+    )
+
     def ora_diff_basis(self):
         return (self.ora_tok_usd_max - self.ora_tok_usd_min) * Decimal(10000)
 
     def total(self):
-        return sum(self.get_strat_holdings(key) for key in STRATEGIES.keys())
+        if self.project == OriginTokens.OETH:
+            return Decimal(0)
+
+        return sum(self.get_strat_holdings(key) for key in OUSD_STRATEGIES.keys())
 
     def get_strat_holdings(self, strat_key):
-        strat = STRATEGIES.get(strat_key)
+        if self.project == OriginTokens.OUSD and strat_key in OUSD_STRATEGIES:
+            # Older OSUD strategies have their own columns in the model.
+            # The config var `HARDCODED`` is set to true for such columns.
+            if True == OUSD_STRATEGIES.get(strat_key).get("HARDCODED", False):
+                return getattr(self, strat_key, Decimal(0))
 
-        if strat is None:
-            return Decimal(0)
-        elif True == strat.get("HARDCODED", False):
-            return getattr(self, strat_key, Decimal(0))
-        elif strat_key in self.strat_holdings:
+        # Check if we have the value stored in the `strat_holdings` column
+        if strat_key in self.strat_holdings:
             return Decimal(self.strat_holdings.get(strat_key, 0))
-        
+
+        # Default to zero
         return Decimal(0)
 
     def redeem_value(self):
@@ -145,6 +159,11 @@ class SupplySnapshot(models.Model):
     apy = Decimal(0)  # Not persisted
     gain = Decimal(0)  # Not persisted
 
+    project = models.TextField(
+        choices=OriginTokens.choices,
+        default=OriginTokens.OUSD
+    )
+
     def rebasing_reported_supply(self):
         return self.reported_supply - self.non_rebasing_supply
 
@@ -170,8 +189,11 @@ class SupplySnapshot(models.Model):
         ) * 100
 
     def non_rebasing_boost_multiplier(self):
+        number = self.computed_supply - self.non_rebasing_supply
+        if number == 0:
+            return 0
         return self.computed_supply / (
-            self.computed_supply - self.non_rebasing_supply
+            number
         )
 
     class Meta:
@@ -218,7 +240,7 @@ class Transaction(models.Model):
     to_address = models.CharField(max_length=42, db_index=True, null=True)
 
 
-class OusdTransfer(models.Model):
+class TokenTransfer(models.Model):
     tx_hash = models.ForeignKey(
         "Transaction",
         to_field="tx_hash",
@@ -231,6 +253,10 @@ class OusdTransfer(models.Model):
     to_address = models.CharField(max_length=42, db_index=True)
     amount = models.DecimalField(max_digits=64, decimal_places=18, default=0)
 
+    project = models.TextField(
+        choices=OriginTokens.choices,
+        default=OriginTokens.OUSD
+    )
 
 class OgnStaked(models.Model):
     tx_hash = models.CharField(max_length=66, db_index=True)
@@ -374,6 +400,11 @@ class AnalyticsReport(models.Model):
     # Contains any info that didn't fit into other reporting stats
     report = models.JSONField(default=list)
 
+    project = models.TextField(
+        choices=OriginTokens.choices,
+        default=OriginTokens.OUSD
+    )
+
     def __getattr__(self, name):
         if not self.report or self.report == "[]":
             return None
@@ -452,6 +483,11 @@ class Subscriber(models.Model):
     conf_num = models.CharField(max_length=15)
     confirmed = models.BooleanField(default=False)
     unsubscribed = models.BooleanField(default=False)
+
+    project = models.TextField(
+        choices=OriginTokens.choices,
+        default=OriginTokens.OUSD
+    )
 
     def __str__(self):
         return self.email + " (" + ("not " if not self.confirmed else "") + "confirmed)"
@@ -559,6 +595,6 @@ def conditional_update(self, **kwargs):
 
 Log.add_to_class("conditional_update", conditional_update)
 Transaction.add_to_class("conditional_update", conditional_update)
-OusdTransfer.add_to_class("conditional_update", conditional_update)
+TokenTransfer.add_to_class("conditional_update", conditional_update)
 OgnStaked.add_to_class("conditional_update", conditional_update)
 StoryStake.add_to_class("conditional_update", conditional_update)

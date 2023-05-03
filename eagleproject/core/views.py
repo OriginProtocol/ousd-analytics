@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.core.paginator import Paginator
 
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.validators import validate_email
 
 from django.views.decorators.csrf import csrf_exempt
@@ -16,6 +16,7 @@ from django.db.models import Q
 from core.blockchain.addresses import (
     DRIPPER,
     OUSD,
+    OETH,
     USDT,
     STRAT3POOL,
     STRATCOMP,
@@ -32,7 +33,6 @@ from core.blockchain.const import (
     curve_report_stats,
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
-from core.blockchain.harvest.blocks import ensure_block, ensure_day
 from core.blockchain.harvest.snapshots import (
     ensure_asset,
     ensure_supply_snapshot,
@@ -73,28 +73,39 @@ from core.models import (
     Log,
     SupplySnapshot,
     OgnStaked,
-    OusdTransfer,
+    TokenTransfer,
     AnalyticsReport,
     Transaction,
-    Subscriber
+    Subscriber,
+    OriginTokens
 )
 from core.forms import SubscriberForm
 from django.conf import settings
 import json
 
-from core.blockchain.strategies import STRATEGIES, DEFAULT_ASSETS
+from core.blockchain.strategies import OUSD_STRATEGIES, OUSD_BACKING_ASSETS
+from core.blockchain.strategies import OETH_STRATEGIES, OETH_BACKING_ASSETS
 
 log = get_logger(__name__)
 
 
-def fetch_assets(block_number):
+def fetch_assets(block_number, project=OriginTokens.OUSD):
     # These probably won't harvest since block_number comes from snapshots
-    dai = ensure_asset("DAI", block_number)
-    usdt = ensure_asset("USDT", block_number)
-    usdc = ensure_asset("USDC", block_number)
-    ousd = ensure_asset("OUSD", block_number)
-    lusd = ensure_asset("LUSD", block_number)
-    return [dai, usdt, usdc, ousd, lusd]
+    if project == OriginTokens.OUSD:
+        dai = ensure_asset("DAI", block_number)
+        usdt = ensure_asset("USDT", block_number)
+        usdc = ensure_asset("USDC", block_number)
+        ousd = ensure_asset("OUSD", block_number)
+        lusd = ensure_asset("LUSD", block_number)
+        return [dai, usdt, usdc, ousd, lusd]
+    elif project == OriginTokens.OETH:
+        weth = ensure_asset("WETH", block_number, OriginTokens.OETH)
+        frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH)
+        reth = ensure_asset("RETH", block_number, OriginTokens.OETH)
+        steth = ensure_asset("STETH", block_number, OriginTokens.OETH)
+        oeth = ensure_asset("OETH", block_number, OriginTokens.OETH)
+        return [weth, frxeth, reth, steth, oeth]
+    return []
 
 
 def dashboard(request):
@@ -122,7 +133,8 @@ def dashboard(request):
         logs_q = logs_q.filter(topic_0=topic)
     latest_logs = logs_q[:100]
     weekly_reports = AnalyticsReport.objects.filter(
-        week__isnull=False
+        week__isnull=False,
+        project=OriginTokens.OUSD
     ).order_by("-year", "-week")
     if (len(weekly_reports) > 0):
         token_holder_amount = weekly_reports[0].accounts_holding_ousd
@@ -166,14 +178,17 @@ def dashboard(request):
 
     return _cache(20, render(request, "dashboard.html", locals()))
 
-def _get_strat_holdings(assets):
+def _get_strat_holdings(assets, project=OriginTokens.OUSD):
     all_strats = {}
-    for (strat_key, strat) in STRATEGIES.items():
+    strat_config = OUSD_STRATEGIES if project == OriginTokens.OUSD else OETH_STRATEGIES
+    backing_assets = OUSD_BACKING_ASSETS if project == OriginTokens.OUSD else OETH_BACKING_ASSETS
+
+    for (strat_key, strat) in strat_config.items():
         total = 0
         holdings = []
 
         for asset in assets:
-            if not asset.symbol in strat.get("SUPPORTED_ASSETS", DEFAULT_ASSETS):
+            if not asset.symbol in strat.get("SUPPORTED_ASSETS", backing_assets):
                 continue
             balance = asset.get_strat_holdings(strat_key)
             holdings.append((asset.symbol, balance))
@@ -295,7 +310,7 @@ def remove_specific_month_report(request, month):
         return HttpResponse("ok")
 
     year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(month=month, year=year)
+    report = AnalyticsReport.objects.get(month=month, year=year, project=OriginTokens.OUSD)
     report.delete()
     return HttpResponse("ok")
 
@@ -306,7 +321,7 @@ def remove_specific_week_report(request, week):
         return HttpResponse("ok")
 
     year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(week=week, year=year)
+    report = AnalyticsReport.objects.get(week=week, year=year, project=OriginTokens.OUSD)
     report.delete()
     return HttpResponse("ok")
 
@@ -322,21 +337,24 @@ def fetch_transactions(request):
     refresh_transactions(latest - 2)
     return HttpResponse("ok")
 
-
 def apr_index(request):
-    latest_block_number = latest_snapshot_block_number()
+    project = OriginTokens.OUSD
+    latest_block_number = latest_snapshot_block_number(project)
+    project_name = project.upper()
+
+    contract_address = OUSD if project == OriginTokens.OUSD else OETH
     try:
         num_rows = int(request.GET.get("rows", 30))
     except ValueError:
         num_rows = 30
-    rows = _daily_rows(min(120, num_rows), latest_block_number)
+    rows = _daily_rows(min(120, num_rows), latest_block_number, project)
     del num_rows
-    apy = get_trailing_apy()
-    apy_365 = get_trailing_apy(days=365)
+    apy = get_trailing_apy(project=project)
+    apy_365 = get_trailing_apy(days=365, project=project)
 
     assets = fetch_assets(latest_block_number)
     total_assets = sum(x.total() for x in assets)
-    total_supply = totalSupply(OUSD, 18, latest_block_number)
+    total_supply = totalSupply(contract_address, 18, latest_block_number)
     extra_assets = (total_assets - total_supply) + dripper_available()
     return _cache(1 * 60, render(request, "apr_index.html", locals()))
 
@@ -382,8 +400,12 @@ def strategist_creator(request):
     return render(request, "strategist_creator.html", locals())
 
 
-def api_apr_trailing(request):
-    apr = get_trailing_apr()
+def api_apr_trailing(request, project):
+    try:
+        apr = get_trailing_apr(project=project)
+    except ObjectDoesNotExist: 
+        apr = 0
+
     if apr < 0:
         apr = "0"
     apy = to_apy(Decimal(apr))
@@ -394,8 +416,12 @@ def api_apr_trailing(request):
     return _cache(120, response)
 
 
-def api_apr_trailing_days(request, days):
-    apr = get_trailing_apr(days=int(days))
+def api_apr_trailing_days(request, project, days):
+    try:
+        apr = get_trailing_apr(days=int(days), project=project)
+    except ObjectDoesNotExist: 
+        apr = 0
+
     if apr < 0:
         apr = "0"
     apy = to_apy(Decimal(apr), days=int(days))
@@ -406,15 +432,25 @@ def api_apr_trailing_days(request, days):
     return _cache(120, response)
 
 
-def api_apr_history(request):
-    apr = get_trailing_apr()
+def api_apr_history(request, project):
+    # On OETH we miss some data 
+    # File "eagleproject/core/blockchain/harvest/transactions.py", line 157, in get_rebase_log
+    # ).order_by('-block_number')[:1].get()
+    # Crashes with `core.models.Log.DoesNotExist: Log matching query does not exist.`
+    try:
+        apr = get_trailing_apr(project=project)
+    except ObjectDoesNotExist:
+        apr = 0
     if apr < 0:
         apr = "0"
-    apy = get_trailing_apy()
+    try:
+        apy = get_trailing_apy(project=project)
+    except ObjectDoesNotExist:
+        apy = 0
     if apy < 0:
         apy = 0
-    latest_block_number = latest_snapshot_block_number()
-    days = _daily_rows(8, latest_block_number)
+    latest_block_number = latest_snapshot_block_number(project)
+    days = _daily_rows(8, latest_block_number, project)
     response = JsonResponse(
         {
             "apr": apr,
@@ -426,8 +462,8 @@ def api_apr_history(request):
     return _cache(120, response)
 
 
-def api_apr_trailing_history(request, days):
-    rows = _daily_rows(90, latest_snapshot_block_number())
+def api_apr_trailing_history(request, days, project):
+    rows = _daily_rows(90, latest_snapshot_block_number(project))
     response = JsonResponse(
         {
             "trailing_history": [{"day": x.block_time, "trailing_apy": get_trailing_apy(x.block_number, days)} for x in rows],
@@ -441,8 +477,8 @@ def api_speed_test(request):
     return _cache(120, JsonResponse({"test": "test"}))
 
 
-def api_ratios(request):
-    s = latest_snapshot()
+def api_ratios(request, project):
+    s = latest_snapshot(project)
     response = JsonResponse(
         {
             "current_credits_per_token": s.rebasing_credits_per_token,
@@ -453,10 +489,9 @@ def api_ratios(request):
     return _cache(30, response)
 
 
-def api_address_yield(request, address):
-    if address != address.lower():
-        return redirect("api_address_yield", address=address.lower())
-    data = _address_transfers(address)
+def api_address_yield(request, address, project):
+    address = address.lower()
+    data = _address_transfers(address, project)
     response = JsonResponse(
         {
             "address": data["address"],
@@ -467,9 +502,9 @@ def api_address_yield(request, address):
     return response
 
 
-def api_address(request):
+def api_address(request, project):
     addresses = (
-        OusdTransfer.objects.filter(block_time__gte=START_OF_OUSD_V2_TIME)
+        TokenTransfer.objects.filter(block_time__gte=START_OF_OUSD_V2_TIME, project=project)
         .values("to_address")
         .distinct()
         .values_list("to_address", flat=True)
@@ -571,16 +606,17 @@ def active_stake_stats():
     }
 
 
-def address(request, address):
-    if address != address.lower():
-        return redirect("address", address=address.lower())
-    data = _address_transfers(address)
+def address(request, address, project):
+    address = address.lower()
+    data = _address_transfers(address, project)
+    data["project"] = project.upper()
     return render(request, "address.html", data)
 
 
-def _address_transfers(address):
+def _address_transfers(address, project):
     long_address = address.replace("0x", "0x000000000000000000000000")
-    latest_block_number = latest_snapshot_block_number()
+    latest_block_number = latest_snapshot_block_number(project)
+    contract_address = OUSD if project == OriginTokens.OUSD else OETH
     # We want to avoid the case where the listener hasn't picked up a
     # transactions yet, but the user's balance has increased or decreased
     # due to a transfer. This would make a hugely wrong lifetime earned amount
@@ -589,7 +625,7 @@ def _address_transfers(address):
     # blocks - conservatively 120 / 10 = 12 blocks.
     block_number = latest_block_number - 12
     transfers = (
-        Log.objects.filter(address=OUSD, topic_0=TRANSFER)
+        Log.objects.filter(address=contract_address, topic_0=TRANSFER)
         .filter(Q(topic_1=long_address) | Q(topic_2=long_address))
         .filter(block_number__gte=START_OF_OUSD_V2)
         .filter(block_number__lte=block_number)
@@ -600,7 +636,7 @@ def _address_transfers(address):
     transfers_out = sum(
         [x.ousd_value() for x in transfers if x.topic_1 == long_address]
     )
-    current_balance = balanceOf(OUSD, address, 18, block=block_number)
+    current_balance = balanceOf(contract_address, address, 18, block=block_number)
     non_yield_balance = transfers_in - transfers_out
     yield_balance = current_balance - non_yield_balance
     return {
@@ -642,15 +678,15 @@ def _my_assets(address, block_number):
 
 # def test_email(request):
 #     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     send_report_email("OUSD", 'Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
 #     return HttpResponse("ok")
     
 
-def api_address_history(request, address):
+def api_address_history(request, address, project=OriginTokens.OUSD):
     page_number = request.GET.get("page", 1)
     per_page = request.GET.get("per_page", 50)
     transaction_filter = request.GET.get("filter")
-    history = get_history_for_address(address, transaction_filter)
+    history = get_history_for_address(address, transaction_filter, project=project)
     paginator = Paginator(history, per_page)
     page_obj = paginator.get_page(page_number)
     pages = paginator.num_pages
@@ -670,14 +706,14 @@ def api_address_history(request, address):
     return response
 
 
-def strategies(request):
-    block_number = latest_snapshot_block_number()
-    assets = fetch_assets(block_number)
+def strategies(request, project=OriginTokens.OUSD):
+    block_number = latest_snapshot_block_number(project)
+    assets = fetch_assets(block_number, project)
 
-    all_strats = _get_strat_holdings(assets)
+    all_strats = _get_strat_holdings(assets, project=project)
 
     # Returns an object with UUID as keys when set, otherwise returns an array
-    structured = request.GET.get("structured")
+    structured = project == OriginTokens.OETH or request.GET.get("structured") is not None
 
     for (key, strat) in all_strats.items():
         holdings = {}
@@ -705,9 +741,9 @@ def strategies(request):
     return _cache(120, response)
 
 
-def collateral(request):
-    block_number = latest_snapshot_block_number()
-    assets = fetch_assets(block_number)
+def collateral(request, project):
+    block_number = latest_snapshot_block_number(project=project)
+    assets = fetch_assets(block_number, project=project)
     collateral = []
     for asset in assets:
         collateral.append({"name": asset.symbol.lower(), "total": asset.total()})
@@ -727,7 +763,7 @@ def _get_previous_report(report, all_reports=None):
         all_reports = (
             all_reports
             if all_reports is not None
-            else AnalyticsReport.objects.filter(month__isnull=False).order_by(
+            else AnalyticsReport.objects.filter(month__isnull=False, project=OriginTokens.OUSD).order_by(
                 "-year", "-month"
             )
         )
@@ -745,7 +781,7 @@ def _get_previous_report(report, all_reports=None):
         all_reports = (
             all_reports
             if all_reports is not None
-            else AnalyticsReport.objects.filter(week__isnull=False).order_by(
+            else AnalyticsReport.objects.filter(week__isnull=False, project=OriginTokens.OUSD).order_by(
                 "-year", "-week"
             )
         )
@@ -762,7 +798,7 @@ def _get_previous_report(report, all_reports=None):
 
 
 def report_monthly(request, year, month):
-    report = AnalyticsReport.objects.filter(month=month, year=year)[0]
+    report = AnalyticsReport.objects.filter(month=month, year=year, project=OriginTokens.OUSD)[0]
     prev_report = _get_previous_report(report)
     stats = report_stats
     stat_keys = stats.keys()
@@ -810,10 +846,12 @@ def report_latest_weekly(request):
 
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(
-        month__isnull=False
+        month__isnull=False,
+        project=OriginTokens.OUSD
     ).order_by("-year", "-month")
     weekly_reports = AnalyticsReport.objects.filter(
-        week__isnull=False
+        week__isnull=False,
+        project=OriginTokens.OUSD
     ).order_by("-year", "-week")
     stats = report_stats
     stat_keys = stats.keys()
@@ -854,8 +892,11 @@ def generate_token():
 @csrf_exempt
 def subscribe(request):
     latest_report_url = request.build_absolute_uri('/reports/weekly')
+
+    project = request.POST['project'] or OriginTokens.OUSD
+    
     if request.method == 'POST':
-        sub = Subscriber.objects.filter(email=request.POST['email']).first()
+        sub = Subscriber.objects.filter(email=request.POST['email'],project=project).first()
         if sub and sub.confirmed is True and sub.unsubscribed is False:
             action = 'exists'
         else:
@@ -865,7 +906,7 @@ def subscribe(request):
                 return render(request, 'subscription.html', {'action': 'invalid', 'form': SubscriberForm(), 'latest_report': latest_report_url})
             else:
                 if not sub:
-                    sub = Subscriber(email=request.POST['email'], conf_num=generate_token())
+                    sub = Subscriber(email=request.POST['email'], project=project, conf_num=generate_token())
                     sub.save()
                     
                 summary = 'OUSD Analytics Report Confirmation'
@@ -886,15 +927,13 @@ def confirm(request):
     try:
         email = request.GET['email']
         conf_num = request.GET['conf_num']
-        sub = Subscriber.objects.get(email=email)
-    except:
-        return render(request, 'subscription.html', {'action': 'denied'})
-    if sub.conf_num == conf_num:
+        sub = Subscriber.objects.get(email=email,conf_num=conf_num)
+
         sub.confirmed = True
         sub.unsubscribed = False
         sub.save()
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'confirmed'})
-    else:
+    except:
         return render(request, 'subscription.html', {'action': 'denied'})
 
 
@@ -902,16 +941,12 @@ def unsubscribe(request):
     try:
         email = request.GET['email']
         conf_num = request.GET['conf_num']
-        sub = Subscriber.objects.get(email=email)
-    except:
-        return render(request, 'subscription.html', {'action': 'denied'})
-    if sub.conf_num == conf_num:
+        sub = Subscriber.objects.get(email=email,conf_num=conf_num)
         sub.unsubscribed = True
         sub.save()
         return render(request, 'subscription.html', {'email': sub.email, 'action': 'unsubscribed'})
-    else:
+    except:
         return render(request, 'subscription.html', {'action': 'denied'})
-
 
 def backfill_internal_transactions(request):
     transactions = Transaction.objects.filter(internal_transactions={})[:6000]
@@ -948,7 +983,7 @@ def _cache(seconds, response):
 
 
 
-def staking_stats(request):
+def staking_stats(request, project):
     data = active_stake_stats()
 
     return JsonResponse(
@@ -960,7 +995,7 @@ def staking_stats(request):
     )
 
 
-def staking_stats_by_duration(request):
+def staking_stats_by_duration(request, project):
     data = active_stake_stats()
     stats = data["stats"]
 
@@ -974,7 +1009,7 @@ def staking_stats_by_duration(request):
     )
 
 
-def coingecko_pools(request):
+def coingecko_pools(request, project):
     """ API for CoinGecko to consume to get details about OUSD and OGN """
     ousd_liquidity = totalSupply(OUSD, 18)
     ousd_apy = get_trailing_apy()

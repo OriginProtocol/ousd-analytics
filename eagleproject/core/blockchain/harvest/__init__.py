@@ -13,7 +13,7 @@ from core.blockchain.harvest.transactions import (
     ensure_all_transactions,
     ensure_latest_logs,
 )
-
+from core.models import OriginTokens
 
 def refresh_transactions(block_number):
     ensure_latest_logs(block_number)
@@ -22,6 +22,7 @@ def refresh_transactions(block_number):
 
 def snap(block_number):
     """ Take snapshots of assets """
+    # OUSD
     ensure_asset("DAI", block_number)
     ensure_asset("USDT", block_number)
     ensure_asset("USDC", block_number)
@@ -39,6 +40,12 @@ def snap(block_number):
 
     ensure_3pool_snapshot(block_number)
 
+    # OETH
+    ensure_asset("WETH", block_number, OriginTokens.OETH)
+    ensure_asset("FRXETH", block_number, OriginTokens.OETH)
+    ensure_asset("RETH", block_number, OriginTokens.OETH)
+    ensure_asset("STETH", block_number, OriginTokens.OETH)
+    ensure_supply_snapshot(block_number, OriginTokens.OETH)
 
 def reload_all(block_number):
     refresh_transactions(block_number)

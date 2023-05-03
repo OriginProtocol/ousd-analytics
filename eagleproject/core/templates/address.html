@@ -6,7 +6,7 @@
 
 
 {% block content %}
-<p style="margin-bottom:1px">OUSD account history:</p>
+<p style="margin-bottom:1px">{{project}} account history:</p>
 <h2 style="margin-top:1px">{{address}}</h2>
 
 <style>
@@ -41,7 +41,7 @@
     <tr>
         <td>🔆</td>
         <td><strong>Transfer</strong></td>
-        <td>{{log.data|dec_18|floatformat:2}} <abbr>OUSD</abbr></td>
+        <td>{{log.data|dec_18|floatformat:2}} <abbr>{{project}}</abbr></td>
         <td><strong>{{log.topic_1|long_address_name}}</strong></td>
         <td>to</td>
         <td><strong>{{log.topic_2|long_address_name}}</strong></td>

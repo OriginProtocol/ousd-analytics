@@ -76,9 +76,11 @@ INSTALLED_APPS = [
     "notify",
     "gtm",
     "django_extensions",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -227,3 +229,6 @@ TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER")
 TWILIO_TO = os.environ.get("TWILIO_TO")
 
 GOOGLE_TAG_ID = os.environ.get("GOOGLE_TAG_ID")
+
+# TODO: Allow only DApps that use API endpoints from this server
+CORS_ALLOW_ALL_ORIGINS = True

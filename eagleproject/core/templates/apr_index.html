@@ -25,7 +25,7 @@
             <span class="{% if extra_assets < 0 %}negative{% endif %}">
                 {{extra_assets|floatformat:2}}
             {% if extra_assets > 0 %}
-                &nbsp;OUSD
+                &nbsp;{{project_name}}
             {% endif %}
             </span><br />
             <small>
@@ -54,7 +54,7 @@
             <th>Mul</th>
             <th>Raw</th>
             <th>Aprx. Yield</th>
-            <th>OUSD Supply</th>
+            <th>{{project_name}} Supply</th>
             <th>Backing Supply</th>
             <th>Rebasing Supply</th>
             <th>Non-Rebasing Supply</th>
