@@ -1256,6 +1256,8 @@ def _daily_rows(steps, latest_block_number, project):
             continue
         block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number, project)
+        if s is None:
+            continue
         s.block_number = block_number
         s.block_time = block.block_time
         s.effective_day = (
