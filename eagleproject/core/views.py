@@ -402,13 +402,13 @@ def strategist_creator(request):
 
 def api_apr_trailing(request, project):
     try:
-        apr = get_trailing_apr(project=project)
+        (apr, actual_days) = get_trailing_apr(project=project)
     except ObjectDoesNotExist: 
         apr = 0
 
     if apr < 0:
         apr = "0"
-    apy = to_apy(Decimal(apr))
+    apy = to_apy(Decimal(apr), actual_days)
     if apy < 0:
         apy = 0
     response = JsonResponse({"apr": apr, "apy": apy})
@@ -418,13 +418,13 @@ def api_apr_trailing(request, project):
 
 def api_apr_trailing_days(request, project, days):
     try:
-        apr = get_trailing_apr(days=int(days), project=project)
+        (apr, actual_days) = get_trailing_apr(days=int(days), project=project)
     except ObjectDoesNotExist: 
         apr = 0
 
     if apr < 0:
         apr = "0"
-    apy = to_apy(Decimal(apr), days=int(days))
+    apy = to_apy(Decimal(apr), days=actual_days)
     if apy < 0:
         apy = 0
     response = JsonResponse({"apr": apr, "apy": apy})
@@ -438,13 +438,13 @@ def api_apr_history(request, project):
     # ).order_by('-block_number')[:1].get()
     # Crashes with `core.models.Log.DoesNotExist: Log matching query does not exist.`
     try:
-        apr = get_trailing_apr(project=project)
+        (apr, actual_days) = get_trailing_apr(project=project)
     except ObjectDoesNotExist:
         apr = 0
     if apr < 0:
         apr = "0"
     try:
-        apy = get_trailing_apy(project=project)
+        apy = get_trailing_apy(project=project, days=actual_days)
     except ObjectDoesNotExist:
         apy = 0
     if apy < 0:
