@@ -40,13 +40,16 @@ from core.models import (
     Log,
     OgnStakingSnapshot,
     OracleSnapshot,
-    OusdTransfer,
+    TokenTransfer,
     StoryStakingSnapshot,
     SupplySnapshot,
     Transaction,
+    OriginTokens,
 )
 from notify.models import CursorId, NotifyCursor
 from notify.events import event_high
+
+from core.blockchain.const import START_OF_OETH
 
 log = get_logger(__name__)
 
@@ -72,7 +75,7 @@ def strip_ext(fname):
     return ".".join(fname.split(".")[:-1])
 
 
-def load_triggers():
+def load_triggers(project = OriginTokens.OUSD):
     """ Loads all trigger modules in this dir """
 
     if ONLY_RUN_TRIGGER is not None:
@@ -92,6 +95,22 @@ def load_triggers():
         )
     ]
 
+    if project == OriginTokens.OETH:
+        files = [
+            x
+            for x in files
+            if not (
+                x.name.startswith("aave_")
+                or x.name.startswith("compound_")
+                or x.name.startswith("ctoken_")
+                or x.name.startswith("curve_")
+                or x.name.startswith("story_")
+                or x.name.startswith("staking_")
+                or x.name.startswith("series_")
+                or x.name.startswith("feevault_")
+            )
+        ]
+
     return [
         import_module("notify.triggers.{}".format(strip_ext(mod.name)))
         for mod in files
@@ -99,9 +118,9 @@ def load_triggers():
     ]
 
 
-def transfers(block_number):
+def transfers(block_number, project=OriginTokens.OUSD):
     """ Get all transfers since given block """
-    return OusdTransfer.objects.filter(tx_hash__block_number__gt=block_number)
+    return TokenTransfer.objects.filter(tx_hash__block_number__gt=block_number, project=project)
 
 
 def transactions(block_number):
@@ -156,7 +175,9 @@ def aave_reserve_snapshots(block_number):
 
 
 def past_asset_blocks(
-    after=datetime.now() - timedelta(days=7), until_block=None
+    after=datetime.now() - timedelta(days=7), 
+    until_block=None,
+    project=OriginTokens.OUSD
 ):
     """ Get previous asset blocks after `after` """
     try:
@@ -167,7 +188,8 @@ def past_asset_blocks(
         return []
 
     ablocks = AssetBlock.objects.filter(
-        block_number__gte=first_block_after.block_number
+        block_number__gte=first_block_after.block_number,
+        project=project,
     )
 
     if until_block:
@@ -176,10 +198,11 @@ def past_asset_blocks(
     return ablocks.order_by("block_number")
 
 
-def latest_asset_blocks(after_block_number):
+def latest_asset_blocks(after_block_number, project=OriginTokens.OUSD):
     """ Get previous asset blocks after `after_block_number` """
     return AssetBlock.objects.filter(
-        block_number__gt=after_block_number
+        block_number__gt=after_block_number,
+        project=project,
     ).order_by("block_number")
 
 
@@ -191,110 +214,120 @@ def latest_story_snapshots(limit=2):
 def run_all_triggers():
     """ Run all triggers """
     events = []
-    mods = load_triggers()
 
-    # Source from the DB to prevent a race with data collection
-    max_block = Block.objects.all().aggregate(Max("block_number"))
-    max_snapshot_block = SupplySnapshot.objects.all().aggregate(
-        Max("block_number")
-    )
-    block_number = 0
-    snapshot_block_number = 0
+    for project in [OriginTokens.OUSD, OriginTokens.OETH]:
+        mods = load_triggers(project=project)
+        
+        is_ousd = project == OriginTokens.OUSD
+        start_block_number = 0 if is_ousd else START_OF_OETH
 
-    if max_block:
-        block_number = max_block.get("block_number__max", 0)
-    if max_snapshot_block:
-        snapshot_block_number = max_snapshot_block.get("block_number__max", 0)
+        # Source from the DB to prevent a race with data collection
+        max_block = Block.objects.all().aggregate(Max("block_number"))
+        max_snapshot_block = SupplySnapshot.objects.filter(project=project).aggregate(
+            Max("block_number")
+        )
+        block_number = start_block_number
+        snapshot_block_number = start_block_number
 
-    transfer_cursor, _ = NotifyCursor.objects.get_or_create(
-        cursor_id=CursorId.TRANSFERS,
-        defaults={
-            "block_number": block_number,
-            "last_update": datetime.now(tz=timezone.utc),
-        },
-    )
+        if max_block:
+            block_number = max_block.get("block_number__max", 0)
+        if max_snapshot_block:
+            snapshot_block_number = max_snapshot_block.get("block_number__max", 0)
 
-    transaction_cursor, _ = NotifyCursor.objects.get_or_create(
-        cursor_id=CursorId.TRANSACTIONS,
-        defaults={
-            "block_number": block_number,
-            "last_update": datetime.now(tz=timezone.utc),
-        },
-    )
+        transfer_cursor, _ = NotifyCursor.objects.get_or_create(
+            cursor_id=CursorId.TRANSFERS if is_ousd else CursorId.OETH_TRANSFERS,
+            project=project,
+            defaults={
+                "block_number": block_number,
+                "last_update": datetime.now(tz=timezone.utc),
+            },
+        )
 
-    snapshot_cursor, _ = NotifyCursor.objects.get_or_create(
-        cursor_id=CursorId.SNAPSHOT,
-        defaults={
-            "block_number": snapshot_block_number,
-            "last_update": datetime.now(tz=timezone.utc),
-        },
-    )
+        transaction_cursor, _ = NotifyCursor.objects.get_or_create(
+            cursor_id=CursorId.TRANSACTIONS if is_ousd else CursorId.OETH_TRANSACTIONS,
+            project=project,
+            defaults={
+                "block_number": block_number,
+                "last_update": datetime.now(tz=timezone.utc),
+            },
+        )
 
-    availible_kwargs_valgen = {
-        "latest_block": lambda: block_number,
-        "latest_snapshot_block": lambda: snapshot_block_number,
-        "snapshot_cursor": lambda: snapshot_cursor,
-        "transfer_cursor": lambda: transfer_cursor,
-        "transaction_cursor": lambda: transaction_cursor,
-        "transactions": lambda: transactions(transaction_cursor.block_number),
-        "new_transactions": lambda: transactions(
-            transaction_cursor.block_number
-        ),
-        "transfers": lambda: transfers(0),
-        "new_transfers": lambda: transfers(transfer_cursor.block_number),
-        "logs": lambda: logs(0),
-        "new_logs": lambda: logs(transaction_cursor.block_number),
-        "ogn_staking_snapshot": latest_ogn_staking_snap,
-        "oracle_snapshots": lambda: oracles_snaps(snapshot_block_number),
-        "ctoken_snapshots": lambda: ctoken_snapshots(snapshot_block_number),
-        "recent_ctoken_snapshots": lambda: recent_ctoken_snapshots(),
-        "aave_reserve_snapshots": lambda: aave_reserve_snapshots(
-            snapshot_block_number
-        ),
-        "recent_aave_reserve_snapshots": lambda: recent_aave_reserve_snapshots(),
-        "latest_asset_blocks": lambda: latest_asset_blocks(
-            snapshot_cursor.block_number
-        ),
-        "last_week_asset_blocks": lambda: past_asset_blocks(
-            until_block=snapshot_cursor.block_number
-        ),
-        "latest_story_snapshots": lambda: latest_story_snapshots,
-    }
+        snapshot_cursor, _ = NotifyCursor.objects.get_or_create(
+            cursor_id=CursorId.SNAPSHOT if is_ousd else CursorId.OETH_SNAPSHOT,
+            project=project,
+            defaults={
+                "block_number": snapshot_block_number,
+                "last_update": datetime.now(tz=timezone.utc),
+            },
+        )
 
-    for mod in mods:
-        # Figure out the kwargs it wants
-        func_spec = inspect.getfullargspec(mod.run_trigger)
-
-        # Give it values
-        script_kwargs = {
-            k: availible_kwargs_valgen[k]() for k in func_spec.args
+        availible_kwargs_valgen = {
+            "latest_block": lambda: block_number,
+            "latest_snapshot_block": lambda: snapshot_block_number,
+            "snapshot_cursor": lambda: snapshot_cursor,
+            "transfer_cursor": lambda: transfer_cursor,
+            "transaction_cursor": lambda: transaction_cursor,
+            "transactions": lambda: transactions(transaction_cursor.block_number),
+            "new_transactions": lambda: transactions(
+                transaction_cursor.block_number
+            ),
+            "transfers": lambda: transfers(start_block_number, project=project),
+            "new_transfers": lambda: transfers(transfer_cursor.block_number, project=project),
+            "logs": lambda: logs(start_block_number),
+            "new_logs": lambda: logs(transaction_cursor.block_number),
+            "ogn_staking_snapshot": latest_ogn_staking_snap,
+            "oracle_snapshots": lambda: oracles_snaps(snapshot_block_number),
+            "ctoken_snapshots": lambda: ctoken_snapshots(snapshot_block_number),
+            "recent_ctoken_snapshots": lambda: recent_ctoken_snapshots(),
+            "aave_reserve_snapshots": lambda: aave_reserve_snapshots(
+                snapshot_block_number
+            ),
+            "recent_aave_reserve_snapshots": lambda: recent_aave_reserve_snapshots(),
+            "latest_asset_blocks": lambda: latest_asset_blocks(
+                snapshot_cursor.block_number,
+                project=project
+            ),
+            "last_week_asset_blocks": lambda: past_asset_blocks(
+                until_block=snapshot_cursor.block_number,
+                project=project
+            ),
+            "latest_story_snapshots": lambda: latest_story_snapshots,
         }
 
-        try:
-            log.debug(f"Executing trigger: {mod.__name__}")
-            # Execute and save actions for return
-            events.extend(mod.run_trigger(**script_kwargs))
-        except Exception as e:
-            log.exception("Exception occurred running trigger")
-            log.exception(e)
-            events.extend([
-                event_high("{} Trigger Failed for Block {}".format(mod.__name__, block_number), str(e))
-            ])
+        for mod in mods:
+            # Figure out the kwargs it wants
+            func_spec = inspect.getfullargspec(mod.run_trigger)
 
-    if transfer_cursor.block_number != block_number:
-        transfer_cursor.block_number = block_number
-        transfer_cursor.last_update = datetime.now(tz=timezone.utc)
-        transfer_cursor.save()
+            # Give it values
+            script_kwargs = {
+                k: availible_kwargs_valgen[k]() for k in func_spec.args
+            }
 
-    if transaction_cursor.block_number != block_number:
-        transaction_cursor.block_number = block_number
-        transaction_cursor.last_update = datetime.now(tz=timezone.utc)
-        transaction_cursor.save()
+            try:
+                log.debug(f"Executing trigger: {mod.__name__}")
+                # Execute and save actions for return
+                events.extend(mod.run_trigger(**script_kwargs))
+            except Exception as e:
+                log.exception("Exception occurred running trigger")
+                log.exception(e)
+                events.extend([
+                    event_high("{} Trigger Failed for Block {}".format(mod.__name__, block_number), str(e))
+                ])
 
-    if snapshot_cursor.block_number != snapshot_block_number:
-        snapshot_cursor.block_number = snapshot_block_number
-        snapshot_cursor.last_update = datetime.now(tz=timezone.utc)
-        snapshot_cursor.save()
+        if transfer_cursor.block_number != block_number:
+            transfer_cursor.block_number = block_number
+            transfer_cursor.last_update = datetime.now(tz=timezone.utc)
+            transfer_cursor.save()
+
+        if transaction_cursor.block_number != block_number:
+            transaction_cursor.block_number = block_number
+            transaction_cursor.last_update = datetime.now(tz=timezone.utc)
+            transaction_cursor.save()
+
+        if snapshot_cursor.block_number != snapshot_block_number:
+            snapshot_cursor.block_number = snapshot_block_number
+            snapshot_cursor.last_update = datetime.now(tz=timezone.utc)
+            snapshot_cursor.save()
 
     events.sort()
 

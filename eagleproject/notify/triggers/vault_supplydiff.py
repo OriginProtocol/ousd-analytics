@@ -6,6 +6,7 @@ from eth_abi import decode_single
 from core.blockchain.sigs import SIG_EVENT_MAX_SUPPLY_DIFF
 from notify.events import event_high
 
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 
 def get_events(logs):
     """ Get events """
@@ -18,9 +19,10 @@ def run_trigger(new_logs):
 
     for ev in get_events(new_logs):
         diff = decode_single('(uint256)', decode_hex(ev.data))[0]
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
 
         events.append(event_high(
-            "Vault Max Supply Differential Changed   🔢",
+            "{} Max Supply Differential Changed   🔢".format(contract_name),
             "Vault supply differential limiter has been changed to {}".format(
                 Decimal(diff) / Decimal(1e18)
             ),

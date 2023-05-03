@@ -6,6 +6,7 @@ from core.common import format_ousd_human
 from core.blockchain.sigs import SIG_EVENT_MINT, SIG_EVENT_REDEEM
 from notify.events import event_normal
 
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME, OUSD_VAULT, OETH_VAULT
 
 def get_mint_redeem_events(logs):
     """ Get Mint/Redeem events """
@@ -22,12 +23,16 @@ def run_trigger(new_logs):
     for ev in get_mint_redeem_events(new_logs):
         is_mint = ev.topic_0 == SIG_EVENT_MINT
         addr, value = decode_single('(address,uint256)', decode_hex(ev.data))
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
+        token_symbol = "OUSD" if ev.address == OUSD_VAULT else "OETH"
+        dec_places = 4 if ev.address == OUSD_VAULT else 8 
 
         events.append(
             event_normal(
-                "Mint   🪙" if is_mint else "Redeem   💵",
-                "{} OUSD was {}".format(
-                    format_ousd_human(Decimal(value) / Decimal(1e18)),
+                "{} Mint   🪙".format(token_symbol) if is_mint else "{} Redeem   💵".format(token_symbol),
+                "{} {} was {}".format(
+                    format_ousd_human(Decimal(value) / Decimal(1e18), dec_places),
+                    token_symbol,
                     "minted" if is_mint else "redeemed",
                 ),
                 log_model=ev

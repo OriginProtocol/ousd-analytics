@@ -4,7 +4,7 @@ from eth_utils import decode_hex
 from eth_abi import decode_single
 from core.blockchain.sigs import SIG_EVENT_REDEEM_FEE
 from notify.events import event_normal
-
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 
 def get_events(logs):
     """ Get events """
@@ -22,9 +22,11 @@ def run_trigger(new_logs):
         bps_int = decode_single('(uint256)', decode_hex(ev.data))[0]
         bps = Decimal(bps_int) / Decimal(10000)
 
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
+
         events.append(event_normal(
-            "Vault Redeem Fee Updated   🦴",
-            "OUSD Vault redeem fee was changed to {}%".format(bps),
+            "{} Redeem Fee Updated   🦴".format(contract_name),
+            "Vault redeem fee was changed to {}%".format(bps),
             log_model=ev
         ))
 

@@ -12,6 +12,7 @@ from core.blockchain.sigs import (
 )
 from notify.events import event_high
 
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 
 def get_strategy_events(logs):
     """ Get strategy related events """
@@ -32,37 +33,41 @@ def run_trigger(new_logs):
         title = ""
         description = ""
 
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
+
         if ev.topic_0 == SIG_EVENT_DEFAULT_STRATEGY:
             title = "Asset Default Strategy Set   ♟️"
             asset, strat_addr = decode_single(
                 "(address,address)", decode_hex(ev.data)
             )
             description = (
-                "New default strategy for {} has been set to {}"
+                "New default strategy for {} has been set to {} on {}"
             ).format(
                 SYMBOL_FOR_CONTRACT.get(asset, asset),
                 strat_addr,
+                contract_name,
             )
 
         elif ev.topic_0 == SIG_EVENT_STRATEGY_APPROVED:
-            title = "Strategy Added To Vault    🏦♟️"
+            title = "Strategy Approved On {}    🏦♟️".format(contract_name)
             strat_addr = decode_single("(address)", decode_hex(ev.data))[0]
-            description = "New strategy {} has been added to the vault".format(
+            description = "New strategy {} has been approved on the {}".format(
                 strat_addr,
+                contract_name,
             )
 
         elif ev.topic_0 == SIG_EVENT_STRATEGY_ADDED:
-            title = "Strategy Added   ♘"
+            title = "Strategy Added to {}   ♘".format(contract_name)
             strat_addr = decode_single("(address)", decode_hex(ev.data))[0]
             description = "https://etherscan.io/address/{}".format(strat_addr)
 
         elif ev.topic_0 == SIG_EVENT_STRATEGY_REMOVED:
-            title = "Strategy Removed   ♞"
+            title = "Strategy Removed from {}   ♞".format(contract_name)
             strat_addr = decode_single("(address)", decode_hex(ev.data))[0]
             description = "https://etherscan.io/address/{}".format(strat_addr)
 
         elif ev.topic_0 == SIG_EVENT_WEIGHTS_UPDATED:
-            title = "Strategy Weights Updated   ⚖️"
+            title = "Strategy Weights Updated on {}   ⚖️".format(contract_name)
             addresses, weights = decode_single(
                 "(address[],uint256[])", decode_hex(ev.data)
             )

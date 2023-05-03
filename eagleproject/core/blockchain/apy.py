@@ -12,11 +12,14 @@ from core.blockchain.harvest.transactions import (
 from core.blockchain.const import (
     BLOCKS_PER_DAY
 )
+from core.models import OriginTokens
+from django.core.exceptions import ObjectDoesNotExist
+
 
 PREV_APR = None
 
 # if block is None, the latest block shall be considered
-def get_trailing_apr(block=None, days=30.00):
+def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
     """
     Calculates the APR by using the OUSD rebase ratio. 
 
@@ -36,9 +39,10 @@ def get_trailing_apr(block=None, days=30.00):
             return apr
 
     # Calculate
-    block = block if block is not None else latest_snapshot_block_number()
-    current = get_rebasing_credits_per_token(block)
-    past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days))
+    block = block if block is not None else latest_snapshot_block_number(project)
+    current = get_rebasing_credits_per_token(block, project)
+    past = get_rebasing_credits_per_token(int(block - BLOCKS_PER_DAY * days), project)
+
     ratio = Decimal(float(past) / float(current))
     apr = ((ratio - Decimal(1)) * Decimal(100) * Decimal(365.25) / Decimal(days))
 
@@ -49,8 +53,12 @@ def get_trailing_apr(block=None, days=30.00):
     return apr
 
 # if block is None, the latest block shall be considered
-def get_trailing_apy(block=None, days=30.00):
-    apr = Decimal(get_trailing_apr(block, days))
+def get_trailing_apy(block=None, days=30.00, project=OriginTokens.OUSD):
+    # We don't have enough data to calculate APR on OETH
+    try:
+        apr = Decimal(get_trailing_apr(block, days, project))
+    except ObjectDoesNotExist:
+        return 0
     apy = to_apy(apr, days)
     return round(apy, 2)
 

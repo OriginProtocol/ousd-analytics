@@ -8,11 +8,12 @@ from multiprocessing import (
 
 from core.models import (
     Log,
-    OusdTransfer,
+    TokenTransfer,
     Block,
     Transaction,
     AnalyticsReport,
-    Subscriber
+    Subscriber,
+    OriginTokens
 )
 
 from core.blockchain.sigs import (
@@ -48,6 +49,8 @@ from core.blockchain.const import (
     START_OF_CURVE_CAMPAIGN_TIME,
     START_OF_OUSD_V2,
     BLOCKS_PER_DAY,
+    OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
+    OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC
 )
 
 from core.blockchain.utils import (
@@ -73,7 +76,9 @@ from core.blockchain.addresses import (
     CURVE_METAPOOL,
     CURVE_METAPOOL_GAUGE,
     OGV,
-    VEOGV
+    VEOGV,
+    OUSD,
+    OETH,
 )
 
 from core.coingecko import get_coin_history
@@ -181,15 +186,16 @@ class transaction_analysis:
         internal_transactions,
         received_eth,
         sent_eth,
-        transfer_ousd_out,
-        transfer_ousd_in,
+        transfer_origin_token_out, # origin_token == OETH/OUSD
+        transfer_origin_token_in,
         transfer_coin_out,
         transfer_coin_in,
-        ousd_transfer_from,
-        ousd_transfer_to,
-        ousd_transfer_amount,
+        origin_token_transfer_from,
+        origin_token_transfer_to,
+        origin_token_transfer_amount,
         transfer_log_count,
-        classification
+        classification,
+        project=OriginTokens.OUSD
     ):
         self.account = account
         self.tx_hash = tx_hash
@@ -197,31 +203,32 @@ class transaction_analysis:
         self.internal_transactions = internal_transactions
         self.received_eth = received_eth
         self.sent_eth = sent_eth
-        self.transfer_ousd_out = transfer_ousd_out
-        self.transfer_ousd_in = transfer_ousd_in
+        self.transfer_origin_token_out = transfer_origin_token_out
+        self.transfer_origin_token_in = transfer_origin_token_in
         self.transfer_coin_out = transfer_coin_out
         self.transfer_coin_in = transfer_coin_in
-        self.ousd_transfer_from = ousd_transfer_from
-        self.ousd_transfer_to = ousd_transfer_to
-        self.ousd_transfer_amount = ousd_transfer_amount
+        self.origin_token_transfer_from = origin_token_transfer_from
+        self.origin_token_transfer_to = origin_token_transfer_to
+        self.origin_token_transfer_amount = origin_token_transfer_amount
         self.transfer_log_count = transfer_log_count
         self.classification = classification
+        self.project = project
 
     def __str__(self):
-        return 'transaction analysis: account: {} tx_hash: {} classification: {} contract_address: {} received_eth: {} sent_eth: {} transfer_ousd_out: {} transfer_ousd_in: {} transfer_coin_out {} transfer_coin_in {} ousd_transfer_from {} ousd_transfer_to {} ousd_transfer_amount {} transfer_log_count {}'.format(
+        return 'transaction analysis: account: {} tx_hash: {} classification: {} contract_address: {} received_eth: {} sent_eth: {} transfer_origin_token_out: {} transfer_origin_token_in: {} transfer_coin_out {} transfer_coin_in {} origin_token_transfer_from {} origin_token_transfer_to {} origin_token_transfer_amount {} transfer_log_count {}'.format(
             self.account,
             self.tx_hash,
             self.classification,
             self.contract_address,
             self.received_eth,
             self.sent_eth,
-            self.transfer_ousd_out,
-            self.transfer_ousd_in,
+            self.transfer_origin_token_out,
+            self.transfer_origin_token_in,
             self.transfer_coin_out,
             self.transfer_coin_in,
-            self.ousd_transfer_from,
-            self.ousd_transfer_to,
-            self.ousd_transfer_amount,
+            self.origin_token_transfer_from,
+            self.origin_token_transfer_to,
+            self.origin_token_transfer_amount,
             self.transfer_log_count
         )
 
@@ -353,12 +360,14 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
         if week_option != None:
             analyticsReport = AnalyticsReport.objects.get(
                 week=week_option,
-                year=year
+                year=year,
+                project=OriginTokens.OUSD
             )
         else:
             analyticsReport = AnalyticsReport.objects.get(
                 month=month_option,
-                year=year
+                year=year,
+                project=OriginTokens.OUSD
             )
 
         if analyticsReport is None:
@@ -371,12 +380,14 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
             analyticsReport, created = AnalyticsReport.objects.get_or_create(
                 week=week_option,
                 year=year,
+                project=OriginTokens.OUSD,
                 defaults=params,
             )
         else:
             analyticsReport, created = AnalyticsReport.objects.get_or_create(
                 month=month_option,
                 year=year,
+                project=OriginTokens.OUSD,
                 defaults=params,
             )
 
@@ -464,15 +475,15 @@ def create_time_interval_report_for_previous_week(year_override, week_override, 
         else :
             week_number -= 1
 
-        week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number))
+        week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number) & Q(project=OriginTokens.OUSD))
         preb_db_report = week_before_report[0] if len(week_before_report) != 0 else None
-        send_report_email('OUSD Analytics Weekly Report', db_report, preb_db_report, "Weekly")
+        send_report_email(OriginTokens.OUSD, 'OUSD Analytics Weekly Report', db_report, preb_db_report, "Weekly")
 
 def should_create_new_report(year, month_option, week_option):
     if month_option is not None:
-        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option))
+        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option) & Q(project=OriginTokens.OUSD))
     elif week_option is not None:
-        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option))
+        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option) & Q(project=OriginTokens.OUSD))
 
     if len(existing_report) == 1:
         existing_report = existing_report[0]
@@ -565,9 +576,9 @@ def create_time_interval_report_for_previous_month(year_override, month_override
         else :
             month_number -= 1
 
-        month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number))
+        month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number) & Q(project=OriginTokens.OUSD))
         preb_db_report = month_before_report[0] if len(month_before_report) != 0 else None
-        send_report_email('OUSD Analytics Monthly Report', db_report, preb_db_report, "Monthly")
+        send_report_email(OriginTokens.OUSD, 'OUSD Analytics Monthly Report', db_report, preb_db_report, "Monthly")
 
 
 def backfill_subscribers():
@@ -580,8 +591,8 @@ def backfill_subscribers():
 
 # get all accounts that at some point held OUSD
 def fetch_all_holders():
-    to_addresses = list(map(lambda log: log['to_address'], OusdTransfer.objects.values('to_address').distinct()))
-    from_addresses = list(map(lambda log: log['from_address'], OusdTransfer.objects.values('from_address').distinct()))
+    to_addresses = list(map(lambda log: log['to_address'], TokenTransfer.objects.filter(project=OriginTokens.OUSD).values('to_address').distinct()))
+    from_addresses = list(map(lambda log: log['from_address'], TokenTransfer.objects.filter(project=OriginTokens.OUSD).values('from_address').distinct()))
     return list(set(filter(lambda address: address not in ['0x0000000000000000000000000000000000000000', '0x000000000000000000000000000000000000dead'], to_addresses + from_addresses)))
 
 
@@ -791,9 +802,9 @@ def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, f
     )
 
 # start_time and end_time might seem redundant, but are needed so we can query the transfer logs
-def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account='all'):
+def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account='all', project=OriginTokens.OUSD):
     tx_query = Q()
-    tran_query = Q()
+    tran_query = Q(project=project)
     if account != 'all':
         tx_query &= Q(from_address=account) | Q(to_address=account)
         tran_query &= Q(from_address=account) | Q(to_address=account)
@@ -805,7 +816,7 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
         tran_query &= Q(block_time__lt=end_time)
 
     transactions = Transaction.objects.filter(tx_query)
-    transfer_transactions = map(lambda transfer: transfer.tx_hash, OusdTransfer.objects.filter(tran_query))
+    transfer_transactions = map(lambda transfer: transfer.tx_hash, TokenTransfer.objects.filter(tran_query))
 
     analyzed_transactions = []
     analyzed_transaction_hashes = []
@@ -821,56 +832,56 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
         internal_transactions = transaction.internal_transactions
         received_eth = len(list(filter(lambda tx: tx["to"] == account and float(tx["value"]) > 0, internal_transactions))) > 0
         sent_eth = transaction.data['value'] != '0x0'
-        transfer_ousd_out = False
-        transfer_ousd_in = False
+        transfer_origin_token_out = False
+        transfer_origin_token_in = False
         transfer_coin_out = False
         transfer_coin_in = False
-        ousd_transfer_from = None
-        ousd_transfer_to = None
-        ousd_transfer_amount = None
+        origin_token_transfer_from = None
+        origin_token_transfer_to = None
+        origin_token_transfer_amount = None
         transfer_log_count = 0
 
         for log in logs:
             if log.topic_0 == TRANSFER:
                 transfer_log_count += 1
-                is_ousd_token = log.address == '0x2a8e1e676ec238d8a992307b495b45b3feaa5e86'
+                is_origin_token = (log.address == OUSD and project == OriginTokens.OUSD) or (log.address == OETH and project == OriginTokens.OETH)
                 from_address = "0x" + log.topic_1[-40:]
                 to_address = "0x" + log.topic_2[-40:]
 
-                if is_ousd_token:
-                    ousd_transfer_from = from_address
-                    ousd_transfer_to = to_address
-                    ousd_transfer_amount = int(slot(log.data, 0), 16) / E_18
+                if is_origin_token:
+                    origin_token_transfer_from = from_address
+                    origin_token_transfer_to = to_address
+                    origin_token_transfer_amount = int(slot(log.data, 0), 16) / E_18
 
                 if account != 'all':
                     if from_address == account:
-                        if is_ousd_token:
-                            transfer_ousd_out = True
+                        if is_origin_token:
+                            transfer_origin_token_out = True
                         else:
                             transfer_coin_out = True
                     if to_address == account:
-                        if is_ousd_token:
-                            transfer_ousd_in = True
+                        if is_origin_token:
+                            transfer_origin_token_in = True
                         else:
                             transfer_coin_in = True
 
         classification = 'unknown'
         if account != 'all':
-            swap_receive_ousd = transfer_ousd_in and (transfer_coin_out or sent_eth)
-            swap_send_ousd = transfer_ousd_out and (transfer_coin_in or received_eth)
+            swap_receive_origin_token = transfer_origin_token_in and (transfer_coin_out or sent_eth)
+            swap_send_origin_token = transfer_origin_token_out and (transfer_coin_in or received_eth)
 
             if transfer_log_count > 0:
-                if transfer_ousd_in:
+                if transfer_origin_token_in:
                     classification = 'transfer_in'
-                elif transfer_ousd_out:
+                elif transfer_origin_token_out:
                     classification = 'transfer_out'
                 else:
                     classification = 'unknown_transfer'
 
-            if swap_receive_ousd:
-                classification = 'swap_gain_ousd'
-            elif swap_send_ousd:
-                classification = 'swap_give_ousd'
+            if swap_receive_origin_token:
+                classification = 'swap_gain_ousd' if project == OriginTokens.OUSD else 'swap_gain_oeth'
+            elif swap_send_origin_token:
+                classification = 'swap_give_ousd' if project == OriginTokens.OUSD else 'swap_give_oeth'
 
         analyzed_transaction_hashes.append(transaction.tx_hash)
         analyzed_transactions.append(transaction_analysis(
@@ -880,15 +891,16 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
             internal_transactions,
             received_eth,
             sent_eth,
-            transfer_ousd_out,
-            transfer_ousd_in,
+            transfer_origin_token_out,
+            transfer_origin_token_in,
             transfer_coin_out,
             transfer_coin_in,
-            ousd_transfer_from,
-            ousd_transfer_to,
-            ousd_transfer_amount,
+            origin_token_transfer_from,
+            origin_token_transfer_to,
+            origin_token_transfer_amount,
             transfer_log_count,
-            classification
+            classification,
+            project=project
         ))
 
     for transaction in transactions:
@@ -900,6 +912,7 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
     return analyzed_transactions
 
 def do_transaction_analytics(from_block, to_block, start_time, end_time, account='all'):
+    # TODO: Come back to this function later
     report = {
         'contracts_swaps': {},
         'contracts_other': {}
@@ -908,10 +921,10 @@ def do_transaction_analytics(from_block, to_block, start_time, end_time, account
 
     for analyzed_tx in analyzed_transactions:
 
-        tx_hash, contract_address, received_eth, sent_eth, transfer_ousd_out, transfer_ousd_in, transfer_coin_out, transfer_coin_in, ousd_transfer_from, ousd_transfer_amount, transfer_log_count, classification = attrgetter('tx_hash', 'contract_address', 'received_eth', 'sent_eth', 'transfer_ousd_out', 'transfer_ousd_in', 'transfer_coin_out', 'transfer_coin_in', 'ousd_transfer_from', 'ousd_transfer_amount', 'transfer_log_count', 'classification')(analyzed_tx)
+        tx_hash, contract_address, received_eth, sent_eth, transfer_origin_token_out, transfer_origin_token_in, transfer_coin_out, transfer_coin_in, origin_token_transfer_from, origin_token_transfer_amount, transfer_log_count, classification, project = attrgetter('tx_hash', 'contract_address', 'received_eth', 'sent_eth', 'transfer_origin_token_out', 'transfer_origin_token_in', 'transfer_coin_out', 'transfer_coin_in', 'origin_token_transfer_from', 'origin_token_transfer_amount', 'transfer_log_count', 'classification', 'project')(analyzed_tx)
 
         if (transfer_log_count > 1 or sent_eth or received_eth) and (classification != 'swap_gain_ousd' or classification != 'swap_give_ousd'):
-            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} ousd in: {} ousd out: {}".format(tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_ousd_in, transfer_ousd_out))
+            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} ousd in: {} ousd out: {}".format(tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_origin_token_in, transfer_origin_token_out))
 
         report_key = "contracts_swaps" if (classification == 'swap_gain_ousd' or classification == 'swap_give_ousd') else "contracts_other"
         contract_data = report[report_key][contract_address] if contract_address in report[report_key] else {
@@ -923,9 +936,9 @@ def do_transaction_analytics(from_block, to_block, start_time, end_time, account
         }
 
         contract_data["total_transactions"] += 1
-        if ousd_transfer_amount is not None:
+        if origin_token_transfer_amount is not None:
             contract_data["total_swaps"] += 1
-            contract_data["total_ousd_swapped"] += ousd_transfer_amount
+            contract_data["total_ousd_swapped"] += origin_token_transfer_amount
 
         report[report_key][contract_address] = contract_data
 
@@ -945,14 +958,31 @@ def do_transaction_analytics(from_block, to_block, start_time, end_time, account
 
     return json.dumps(report)
 
-def get_rebase_logs(from_block, to_block):
+def get_rebase_logs(from_block, to_block, project=OriginTokens.OUSD):
+    contract_address = OUSD if project == OriginTokens.OUSD else OETH
     # we use distinct to mitigate the problem of possibly having double logs in database
     if from_block is None and to_block is None:
-        old_logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1").order_by('transaction_hash').distinct('transaction_hash')
-        new_logs = Log.objects.filter(topic_0="0x41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e257235").order_by('transaction_hash').distinct('transaction_hash')
+        old_logs = Log.objects.filter(
+            topic_0=OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
+            address=contract_address
+        ).order_by('transaction_hash').distinct('transaction_hash')
+        new_logs = Log.objects.filter(
+            topic_0=OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
+            address=contract_address
+        ).order_by('transaction_hash').distinct('transaction_hash')
     else:
-        old_logs = Log.objects.filter(topic_0="0x99e56f783b536ffacf422d59183ea321dd80dcd6d23daa13023e8afea38c3df1", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
-        new_logs = Log.objects.filter(topic_0="0x41645eb819d3011b13f97696a8109d14bfcddfaca7d063ec0564d62a3e257235", block_number__gte=from_block, block_number__lte=to_block).order_by('transaction_hash').distinct('transaction_hash')
+        old_logs = Log.objects.filter(
+            topic_0=OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
+            address=contract_address,
+            block_number__gte=from_block,
+            block_number__lte=to_block
+        ).order_by('transaction_hash').distinct('transaction_hash')
+        new_logs = Log.objects.filter(
+            topic_0=OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
+            address=contract_address,
+            block_number__gte=from_block,
+            block_number__lte=to_block
+        ).order_by('transaction_hash').distinct('transaction_hash')
 
     rebase_logs_old = list(map(lambda log: rebase_log(log.block_number, log.transaction_index, explode_log_data(log.data)[2], log.transaction_hash), old_logs))
     rebase_logs_new = list(map(lambda log: rebase_log(log.block_number, log.transaction_index, explode_log_data(log.data)[2] / 10 ** 9, log.transaction_hash), new_logs))
@@ -976,11 +1006,11 @@ def get_rebase_logs(from_block, to_block):
 
 # returns a list of transfer_logs where amount is a positive number if account received OUSD
 # and a negative one if OUSD was sent from the account
-def get_transfer_logs(account, from_block_time, to_block_time):
+def get_transfer_logs(account, from_block_time, to_block_time, project=OriginTokens.OUSD):
     if from_block_time is None and to_block_time is None:
-        transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)))
+        transfer_logs = TokenTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(project=project))
     else:
-        transfer_logs = OusdTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time))
+        transfer_logs = TokenTransfer.objects.filter((Q(from_address=account) | Q(to_address=account)) & Q(block_time__gte=from_block_time) & Q(block_time__lt=to_block_time) & Q(project=project))
 
     return list(map(lambda log: transfer_log(
         log.tx_hash.block_number,
@@ -996,14 +1026,18 @@ def get_transfer_logs(account, from_block_time, to_block_time):
         log.log_index
     ), transfer_logs))
 
-def get_history_for_address(address, transaction_filter):
-    rebase_logs = get_rebase_logs(None, None)
-    hash_to_classification = dict((ana_tx.tx_hash, ana_tx.classification) for ana_tx in ensure_analyzed_transactions(None, None, None, None, address))
+def get_history_for_address(address, transaction_filter, project=OriginTokens.OUSD):
+    rebase_logs = get_rebase_logs(None, None, project=project)
+    hash_to_classification = dict((ana_tx.tx_hash, ana_tx.classification) for ana_tx in ensure_analyzed_transactions(None, None, None, None, address, project=project))
 
-    (tx_history, ___, ____, _____, ______) = ensure_transaction_history(address, rebase_logs, None, None, None, None, True)
+    (tx_history, ___, ____, _____, ______) = ensure_transaction_history(address, rebase_logs, None, None, None, None, True, project=project)
+
+    if len(tx_history) == 0:
+        return []
 
     if transaction_filter != None:
         transaction_filter = transaction_filter.replace('swap_ousd', 'swap_gain_ousd swap_give_ousd')
+        transaction_filter = transaction_filter.replace('swap_oeth', 'swap_gain_oeth swap_give_oeth')
     tx_history_filtered = []
 
     # find last non rebase transaction, and remove later transactions
@@ -1013,7 +1047,7 @@ def get_history_for_address(address, transaction_filter):
             last_non_yield_tx_idx = i
             break;
 
-    for i in range(0, last_non_yield_tx_idx + 1 if last_non_yield_tx_idx != -1 else 0, 1):
+    for i in range(0, (last_non_yield_tx_idx + 1) if last_non_yield_tx_idx != -1 else 1, 1):
         if isinstance(tx_history[i], rebase_log):
             if transaction_filter == None or 'yield' in transaction_filter:
                 tx_history_filtered.append({
@@ -1080,7 +1114,7 @@ def calculate_balance(credits, credits_per_token):
         return Decimal(0)
     return credits / credits_per_token
 
-def ensure_ousd_balance(credit_balance, logs):
+def ensure_origin_token_balance(credit_balance, logs):
     def find_previous_rebase_log(current_index, logs):
         current_index += 1
         while(current_index < len(logs)):
@@ -1111,10 +1145,10 @@ def ensure_ousd_balance(credit_balance, logs):
     return logs
 
 
-def send_report_email(summary, report, prev_report, report_type):
+def send_report_email(project, summary, report, prev_report, report_type):
     report.transaction_report = json.loads(str(report.transaction_report))
     send_report_email_core(summary, report, prev_report, report_type)
-    subscribers = Subscriber.objects.filter(confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
+    subscribers = Subscriber.objects.filter(project=project, confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
     for subscriber in subscribers:
         e = Email(summary, render_to_string('analytics_report_email.html', {
             'type': report_type,
@@ -1149,35 +1183,35 @@ def send_report_email_core(summary, report, prev_report, report_type):
 
 
 def send_weekly_email():
-    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-    send_report_email('OUSD Analytics Weekly Report', weekly_reports[0], weekly_reports[1], "Weekly")
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False, project=OriginTokens.OUSD).order_by("-year", "-week")
+    send_report_email(OriginTokens.OUSD, 'OUSD Analytics Weekly Report', weekly_reports[0], weekly_reports[1], "Weekly")
 
 
 def send_monthly_email():
-    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
-    send_report_email('OUSD Analytics Monthly Report', monthly_reports[0], monthly_reports[1], "Monthly")
+    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False, project=OriginTokens.OUSD).order_by("-year", "-month")
+    send_report_email(OriginTokens.OUSD, 'OUSD Analytics Monthly Report', monthly_reports[0], monthly_reports[1], "Monthly")
 
 
-def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False):
+def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False, project=OriginTokens.OUSD):
     if rebase_logs is None:
-        rebase_logs = get_rebase_logs(from_block, to_block)
+        rebase_logs = get_rebase_logs(from_block, to_block, project=project)
 
     if from_block_time is None and to_block_time is None:
-        transfer_logs = get_transfer_logs(account, None, None)
+        transfer_logs = get_transfer_logs(account, None, None, project=project)
         previous_transfer_logs = []
     else:
-        transfer_logs = get_transfer_logs(account, from_block_time, to_block_time)
-        previous_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, from_block_time)
+        transfer_logs = get_transfer_logs(account, from_block_time, to_block_time, project=project)
+        previous_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, from_block_time, project=project)
 
-    credit_balance, credits_per_token = creditsBalanceOf(account, to_block if to_block is not None else 'latest')
+    credit_balance, credits_per_token = creditsBalanceOf(account, to_block if to_block is not None else 'latest', project=project)
 
     pre_curve_campaign_transfer_logs = []
     post_curve_campaign_transfer_logs = []
-    if not ignore_curve_data:
-        pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME)
-        post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time)
+    if project == OriginTokens.OUSD and not ignore_curve_data:
+        pre_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_EVERYTHING_TIME, START_OF_CURVE_CAMPAIGN_TIME, project)
+        post_curve_campaign_transfer_logs = get_transfer_logs(account, START_OF_CURVE_CAMPAIGN_TIME, to_block_time, project)
 
-    ousd_balance = calculate_balance(credit_balance, credits_per_token)
+    token_balance = calculate_balance(credit_balance, credits_per_token)
 
     # filter out transactions that happened before the OUSD relaunch
     balance_logs = list(filter(lambda balance_log: balance_log.block_number > START_OF_OUSD_V2, list(transfer_logs + rebase_logs)))
@@ -1185,9 +1219,9 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     # sort transfer and rebase logs by block number descending
     balance_logs.sort(key=lambda log: (-log.block_number, -log.position))
     balance_logs = enrich_transfer_logs(balance_logs)
-    return (ensure_ousd_balance(credit_balance, balance_logs), previous_transfer_logs, ousd_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
+    return (ensure_origin_token_balance(credit_balance, balance_logs), previous_transfer_logs, token_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
     
-def _daily_rows(steps, latest_block_number):
+def _daily_rows(steps, latest_block_number, project):
     # Blocks to display
     # ...this could be a bit more efficient if we pre-loaded the days and blocks in
     # on transaction, then only ensured the missing ones.
@@ -1203,7 +1237,8 @@ def _daily_rows(steps, latest_block_number):
     )
     for i in range(0, steps + 1):
         day = ensure_day(selected)
-        block_numbers.append(day.block_number)
+        if day is not None:
+            block_numbers.append(day.block_number)
         selected = (
             selected - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)
@@ -1220,7 +1255,7 @@ def _daily_rows(steps, latest_block_number):
         if block_number < START_OF_OUSD_V2:
             continue
         block = ensure_block(block_number)
-        s = ensure_supply_snapshot(block_number)
+        s = ensure_supply_snapshot(block_number, project)
         s.block_number = block_number
         s.block_time = block.block_time
         s.effective_day = (
@@ -1228,23 +1263,30 @@ def _daily_rows(steps, latest_block_number):
         ).replace(tzinfo=timezone.utc)
         if last_snapshot:
             blocks = s.block_number - last_snapshot.block_number
-            change = (
-                (
-                    s.rebasing_credits_per_token
-                    / last_snapshot.rebasing_credits_per_token
-                )
-                - Decimal(1)
-            ) * -1
+            if last_snapshot.rebasing_credits_per_token == 0:
+                change = Decimal(0)
+            else:
+                change = (
+                    (
+                        s.rebasing_credits_per_token
+                        / last_snapshot.rebasing_credits_per_token
+                    )
+                    - Decimal(1)
+                ) * -1
             s.apr = (
                 Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
             )
             s.apy = to_apy(s.apr, 1)
-            s.unboosted = to_apy(
-                (s.computed_supply - s.non_rebasing_supply)
-                / s.computed_supply
-                * s.apr,
-                1,
-            )
+            try:
+                s.unboosted = to_apy(
+                    (s.computed_supply - s.non_rebasing_supply)
+                    / s.computed_supply
+                    * s.apr,
+                    1,
+                )
+            # If there is no non-rebasing supply, the above will divide by zero.
+            except (DivisionByZero, InvalidOperation):
+                s.unboosted = Decimal(0)
             s.gain = change * (s.computed_supply - s.non_rebasing_supply)
         rows.append(s)
         last_snapshot = s
@@ -1268,7 +1310,8 @@ def _daily_rows_past(steps, latest_block_time):
     )
     for i in range(0, steps + 1):
         day = ensure_day(selected)
-        block_numbers.append(day.block_number)
+        if day is not None:
+            block_numbers.append(day.block_number)
         selected = (
             selected - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)

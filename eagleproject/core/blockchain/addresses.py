@@ -7,8 +7,8 @@ Notes
 """
 
 from core.blockchain.strategies import (
-    STRATEGIES,
-    VAULT,
+    OUSD_STRATEGIES,
+    OUSD_VAULT,
     STRATCOMP,
     STRATAAVE,
     MORPHO,
@@ -16,6 +16,9 @@ from core.blockchain.strategies import (
     LUSD_METASTRAT,
     MORPHO_AAVE,
     STRATCONVEX,
+    OETH_STRATEGIES,
+    OETH_VAULT,
+    FRAX_ETH_STRATEGY
 )
 
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
@@ -36,6 +39,12 @@ AUSDT = "0x3ed3b47dd13ec9a98b44e6204a523e766b225811"
 LINK = "0x514910771af9ca656af840dff83e8264ecf986ca"
 
 THREEPOOL = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490"
+
+WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+FRXETH = "0x5e8422345238f34275888049021821e8e08caa1f"
+SFRXETH = "0xac3e018457b222d93114458476f3e3416abbe38f"
+RETH = "0xae78736cd615f374d3085123a210448e74fc6393"
+STETH = "0xae7ab96520de3a18e5e111b5eaab095312d7fe84"
 
 # OUSD
 GOVERNOR = "0x8e7bdfecd1164c46ad51b58e49a611f954d23377"
@@ -66,6 +75,10 @@ OGV = "0x9c354503c38481a7a7a51629142963f98ecc12d0"
 VEOGV = "0x0C4576Ca1c365868E162554AF8e385dc3e7C66D9"
 OGV_BUYBACK = "0x6c5cdfb47150efc52072cb93eea1e0f123529748"
 REWARDS_SOURCE = "0x7d82e86cf1496f9485a8ea04012afeb3c7489397"
+
+# OETH
+OETH = "0x856c4efb76c1d1ae02e20ceb03a2a6a08b0b8dc3"
+OETH_ZAPPER = "0x8c135f50c7317a93cc95bb208a494e5ade5b66b0"
 
 # Strategies
 STRATCOMP1 = "0xd5433168ed0b1f7714819646606db509d9d8ec1f"
@@ -150,7 +163,7 @@ CURVE_ARAGON_60 = "0xbcff8b0b9419b9a88c44546519b1e909cf330399"
 CONTRACT_ADDR_TO_NAME = {
     OUSD: "OUSD Token",
     COMP: "COMP Token",
-    VAULT: "Vault",
+    OUSD_VAULT: "OUSD Vault",
     GOVERNANCE: "OUSD Governance",
     GOVERNANCE_TIMELOCK: "OUSD Timelock",
     MIX_ORACLE: "MixOracle",
@@ -201,10 +214,23 @@ CONTRACT_ADDR_TO_NAME = {
     OGV: "OGV",
     OGV_BUYBACK: "OGV BuyBack",
     REWARDS_SOURCE: "RewardsSource",
+
+
+    # OETH Contracts
+    OETH: "OETH Token",
+    OETH_VAULT: "OETH Vault",
+    FRAX_ETH_STRATEGY: "FraxETH Strategy",
+    OETH_ZAPPER: "OETH Zapper"
 }
 
 # Also include strategies
-for strat in STRATEGIES.values():
+for strat in OUSD_STRATEGIES.values():
+    address = strat["ADDRESS"]
+    if address not in CONTRACT_ADDR_TO_NAME:
+        CONTRACT_ADDR_TO_NAME[address] = strat.get("NAME", "Unknown Strategy")
+
+# Also include strategies
+for strat in OETH_STRATEGIES.values():
     address = strat["ADDRESS"]
     if address not in CONTRACT_ADDR_TO_NAME:
         CONTRACT_ADDR_TO_NAME[address] = strat.get("NAME", "Unknown Strategy")

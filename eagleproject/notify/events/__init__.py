@@ -208,12 +208,20 @@ def seen_filter(events, since):
     ]
 
     filtered = []
+    events_parsed = []
 
     for ev in events:
-        if ev.hash() not in hashes_since:
+        event_hash = ev.hash()
+
+        # Deduplicate unprocessed events
+        if event_hash in events_parsed:
+            continue
+        events_parsed.append(event_hash)
+        
+        if event_hash not in hashes_since:
             filtered.append(ev)
 
-            EventSeen.objects.update_or_create(event_hash=ev.hash(), defaults={
+            EventSeen.objects.update_or_create(event_hash=event_hash, defaults={
                 'last_seen': datetime.now(tz=timezone.utc)
             })
 

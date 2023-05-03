@@ -16,6 +16,8 @@ from core.blockchain.addresses import (
     OGN_STAKING,
     STORY_STAKING_SERIES,
     STORY_STAKING_SEASONS,
+    OETH,
+    OUSD
 )
 from core.blockchain.const import (
     E_18,
@@ -62,9 +64,10 @@ from core.models import (
     Log,
     LogPointer,
     OgnStaked,
-    OusdTransfer,
+    TokenTransfer,
     StoryStake,
     Transaction,
+    OriginTokens,
 )
 
 logger = get_logger(__name__)
@@ -110,9 +113,10 @@ def maybe_store_transfer_record(log, block):
         return None
 
     # Must be on OUSD
-    if log["address"] != "0x2a8e1e676ec238d8a992307b495b45b3feaa5e86":
+    if log["address"] != OUSD and log["address"] != OETH:
         return None
 
+    project = OriginTokens.OUSD if log["address"] == OUSD else OriginTokens.OETH
     tx_hash = log["transactionHash"]
     log_index = int(log["logIndex"], 16)
 
@@ -123,8 +127,11 @@ def maybe_store_transfer_record(log, block):
         "amount": int(slot(log["data"], 0), 16) / E_18,
     }
 
-    transfer, created = OusdTransfer.objects.get_or_create(
-        tx_hash_id=tx_hash, log_index=log_index, defaults=params
+    transfer, created = TokenTransfer.objects.get_or_create(
+        tx_hash_id=tx_hash, 
+        log_index=log_index, 
+        project=project,
+        defaults=params
     )
 
     if not created:
@@ -141,17 +148,19 @@ def explode_log_data(value):
     return out
 
 # get rebase log at block number
-def get_rebase_log(block_number):
+def get_rebase_log(block_number, project):
+    address = OUSD if project == OriginTokens.OUSD else OETH
     rebase_log = Log.objects.filter(
         db.models.Q(topic_0=OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC) | db.models.Q(topic_0=OUSD_TOTAL_SUPPLY_UPDATED_TOPIC),
-        block_number__lte=block_number
+        block_number__lte=block_number,
+        address=address,
     ).order_by('-block_number')[:1].get()
 
     return rebase_log
 
 # get rebasing credits per token log at block number
-def get_rebasing_credits_per_token(block_number):
-    rebase_log = get_rebase_log(block_number)
+def get_rebasing_credits_per_token(block_number, project):
+    rebase_log = get_rebase_log(block_number, project)
     explode_log_data(rebase_log.data)
 
     credits_per_token = explode_log_data(rebase_log.data)[2] * 1e18
