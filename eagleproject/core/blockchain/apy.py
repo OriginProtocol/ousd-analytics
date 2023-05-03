@@ -71,10 +71,10 @@ def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
 def get_trailing_apy(block=None, days=30.00, project=OriginTokens.OUSD):
     # We don't have enough data to calculate APR on OETH
     try:
-        (apr, actual_days) = Decimal(get_trailing_apr(block, days, project))
+        (apr, actual_days) = get_trailing_apr(block, days, project)
     except ObjectDoesNotExist:
         return 0
-    apy = to_apy(apr, actual_days)
+    apy = to_apy(Decimal(apr), actual_days)
     return round(apy, 2)
 
 def to_apy(apr, days=30.00):
