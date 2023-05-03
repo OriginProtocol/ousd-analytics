@@ -158,6 +158,16 @@ def get_rebase_log(block_number, project):
 
     return rebase_log
 
+# get rebase log at block number
+def get_earliest_rebase_block_number(block_number, project):
+    address = OUSD if project == OriginTokens.OUSD else OETH
+    rebase_log = Log.objects.filter(
+        db.models.Q(topic_0=OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC) | db.models.Q(topic_0=OUSD_TOTAL_SUPPLY_UPDATED_TOPIC),
+        address=address,
+    ).order_by('block_number').first()
+
+    return rebase_log.block_number if rebase_log.block_number > block_number else block_number
+
 # get rebasing credits per token log at block number
 def get_rebasing_credits_per_token(block_number, project):
     rebase_log = get_rebase_log(block_number, project)

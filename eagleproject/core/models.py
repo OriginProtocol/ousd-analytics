@@ -50,7 +50,7 @@ class AssetBlock(models.Model):
 
     def total(self):
         if self.project == OriginTokens.OETH:
-            return Decimal(0)
+            return sum(self.get_strat_holdings(key) for key in OETH_STRATEGIES.keys())
 
         return sum(self.get_strat_holdings(key) for key in OUSD_STRATEGIES.keys())
 
