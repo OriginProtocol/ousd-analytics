@@ -1295,8 +1295,9 @@ def _daily_rows(steps, latest_block_number, project):
     rows.reverse()
     # drop last row with incomplete information
     rows = rows[:-1]
-    # Add dripper funds to today so far
-    rows[0].gain += dripper_available()
+    if len(rows) > 0:
+        # Add dripper funds to today so far
+        rows[0].gain += dripper_available()
     return rows
 
 
@@ -1327,6 +1328,8 @@ def _daily_rows_past(steps, latest_block_time):
             continue
         block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number)
+        if s is None:
+            continue
         s.block_number = block_number
         s.block_time = block.block_time
         if last_snapshot:
