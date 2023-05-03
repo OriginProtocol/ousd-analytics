@@ -49,9 +49,6 @@ class AssetBlock(models.Model):
         return (self.ora_tok_usd_max - self.ora_tok_usd_min) * Decimal(10000)
 
     def total(self):
-        if self.project == OriginTokens.OETH:
-            return Decimal(0)
-
         return sum(self.get_strat_holdings(key) for key in OUSD_STRATEGIES.keys())
 
     def get_strat_holdings(self, strat_key):
