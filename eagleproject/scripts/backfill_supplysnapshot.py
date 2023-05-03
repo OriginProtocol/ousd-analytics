@@ -10,7 +10,7 @@ def run(*script_args):
 
     bad_block = 17171685 # The block from which the data got bad
     
-    start_block = (script_args[0]) if len(script_args) > 0 else bad_block # The block from which the data got bad
+    start_block = int(script_args[0]) if len(script_args) > 0 else bad_block # The block from which the data got bad
 
     print("Deleting older rows from DB")
     SupplySnapshot.objects.filter(
