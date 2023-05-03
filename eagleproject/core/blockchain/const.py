@@ -96,7 +96,6 @@ DECIMALS_FOR_SYMBOL = {
     "veCRV": 18,
     "3CRV": 18,
 
-    # TODO: Verify
     "OETH": 18,
     "WETH": 18,
     "RETH": 18,

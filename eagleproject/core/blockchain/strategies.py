@@ -115,13 +115,13 @@ OETH_STRATEGIES = {
     "ADDRESS": OETH_VAULT,
     "FROM_BLOCK": 17067001,
     "SUPPORTED_ASSETS": OETH_BACKING_ASSETS,
-    "ICON_NAME": "ousd-icon.svg", # TODO: Change this
+    "ICON_NAME": "oeth-icon.svg",
   },
   "frax_eth_strat": {
     "NAME": "FraxETH",
     "ADDRESS": FRAX_ETH_STRATEGY,
     "FROM_BLOCK": 17067224,
     "SUPPORTED_ASSETS": ["FRXETH"],
-    "ICON_NAME": "ousd-icon.svg", # TODO: Change this
+    "ICON_NAME": "frxeth-icon.svg",
   },
 }
