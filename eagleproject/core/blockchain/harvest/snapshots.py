@@ -82,6 +82,8 @@ from core.models import (
 from core.blockchain.strategies import OUSD_STRATEGIES, OUSD_BACKING_ASSETS
 from core.blockchain.strategies import OETH_STRATEGIES, OETH_BACKING_ASSETS
 
+from django.core.exceptions import ObjectDoesNotExist
+
 logger = get_logger(__name__)
 
 
@@ -323,20 +325,18 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
 
 
 def ensure_asset(symbol, block_number, project=OriginTokens.OUSD):
-    q = AssetBlock.objects.filter(symbol=symbol, block_number=block_number, project=project)
-    if q.count():
-        return q.first()
-    else:
+    try:
+        return AssetBlock.objects.filter(symbol=symbol, block_number=block_number, project=project).first()
+    except ObjectDoesNotExist:
         ab = build_asset_block(symbol, block_number, project)
         ab.save()
         return ab
 
 
 def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
-    q = SupplySnapshot.objects.filter(block_number=block_number,project=project)
-    if q.count():
-        return q.first()
-    else:
+    try:
+        return SupplySnapshot.objects.filter(block_number=block_number,project=project).first()
+    except ObjectDoesNotExist:
         s = SupplySnapshot()
         s.project = project
         s.block_number = block_number
