@@ -49,8 +49,18 @@ def ensure_day(d):
     d = datetime(d.year, d.month, d.day) # Zero seconds, keep timezone
     # Offset for the window on the next day
     target = (d + timedelta(seconds=26100)).replace(tzinfo=timezone.utc)
-    after_block = Block.objects.filter(block_time__gte = target).order_by('block_time')[0]
-    before_block = Block.objects.filter(block_time__lt = target).order_by('-block_time')[0]
+    _blocks = Block.objects.filter(block_time__gte = target).order_by('block_time')
+    after_block = _blocks[0] if len(_blocks) > 0 else None
+
+    _blocks = Block.objects.filter(block_time__lt = target).order_by('-block_time')
+    before_block = _blocks[0] if len(_blocks) > 0 else None
+
+
+
+
+    if after_block is None or before_block is None:
+        return None
+
     while after_block.block_number - before_block.block_number > 2:
         difference = after_block.block_number - before_block.block_number
         pivot_block_number = after_block.block_number - int(difference / 2)
@@ -59,7 +69,9 @@ def ensure_day(d):
             after_block = pivot
         else:
             before_block = pivot
+
     end_day_block = after_block
+
     day = Day(date=d.date(), block_number=end_day_block.block_number)
     day.save()
     return day

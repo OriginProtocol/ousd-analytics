@@ -1237,7 +1237,8 @@ def _daily_rows(steps, latest_block_number, project):
     )
     for i in range(0, steps + 1):
         day = ensure_day(selected)
-        block_numbers.append(day.block_number)
+        if day is not None:
+            block_numbers.append(day.block_number)
         selected = (
             selected - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)
@@ -1309,7 +1310,8 @@ def _daily_rows_past(steps, latest_block_time):
     )
     for i in range(0, steps + 1):
         day = ensure_day(selected)
-        block_numbers.append(day.block_number)
+        if day is not None:
+            block_numbers.append(day.block_number)
         selected = (
             selected - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)

@@ -33,7 +33,6 @@ from core.blockchain.const import (
     curve_report_stats,
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
-from core.blockchain.harvest.blocks import ensure_block, ensure_day
 from core.blockchain.harvest.snapshots import (
     ensure_asset,
     ensure_supply_snapshot,
