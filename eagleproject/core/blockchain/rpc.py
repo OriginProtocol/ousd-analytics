@@ -27,7 +27,8 @@ from core.blockchain.addresses import (
     CVX_LUSD_REWARDS_POOL,
     DAI,
     USDT,
-    USDC
+    USDC,
+    OETH
 )
 from core.blockchain.const import (
     DECIMALS_FOR_SYMBOL,
@@ -54,12 +55,16 @@ from core.blockchain.sigs import (
     SIG_FUNC_GET_CASH,
     SIG_FUNC_PRICE_USD_MINT,
     SIG_FUNC_PRICE_USD_REDEEM,
+    SIG_FUNC_PRICE_UNIT_MINT,
+    SIG_FUNC_PRICE_UNIT_REDEEM,
     SIG_FUNC_SUPPLY_RATE,
     SIG_FUNC_TOTAL_BORROWS,
     SIG_FUNC_TOTAL_RESERVES,
     SIG_FUNC_TOTAL_SUPPLY,
 )
 from core.logging import get_logger
+
+from core.models import OriginTokens
 
 log = get_logger(__name__)
 
@@ -172,10 +177,11 @@ def get_transaction_receipt(tx_hash):
     return data["result"]
 
 
-def creditsBalanceOf(holder, block="latest"):
+def creditsBalanceOf(holder, block="latest", project=OriginTokens.OUSD):
+    token_addr = OUSD  if project == OriginTokens.OUSD else OETH
     signature = encode_hex(keccak(b"creditsBalanceOf(address)"))[:10]
     payload = encode_single("(address)", [holder]).hex()
-    data = call(OUSD, signature, payload, block)
+    data = call(token_addr, signature, payload, block)
 
     return (
         Decimal(int(data["result"][0 : 64 + 2], 16))
@@ -189,7 +195,14 @@ def balanceOf(coin_contract, holder, decimals, block="latest"):
     signature = "0x70a08231"
     payload = encode_single("(address)", [holder]).hex()
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+    # this can happen if not live yet
+    try:
+        number = data["result"][0 : 64 + 2]
+    except KeyError:
+        return Decimal(0)
+    if number == "0x":
+        number = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    return Decimal(int(number, 16)) / Decimal(
         math.pow(10, decimals)
     )
 
@@ -198,7 +211,14 @@ def totalSupply(coin_contract, decimals, block="latest"):
     signature = SIG_FUNC_TOTAL_SUPPLY[:10]
     payload = ""
     data = call(coin_contract, signature, payload, block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / Decimal(
+    # this can happen if not live yet
+    try:
+        number = data["result"][0 : 64 + 2]
+    except KeyError:
+        return Decimal(0)
+    if number == "0x":
+        number = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    return Decimal(int(number, 16)) / Decimal(
         math.pow(10, decimals)
     )
 
@@ -320,26 +340,48 @@ def strategyCheckBalance(strategy, coin_contract, decimals, block="latest"):
         )
     except Exception as e:
         log.error("strategyCheckBalance failed")
+        log.error(f"strategy: {strategy}, coin_contract: {coin_contract}")
         log.error(e)
         return Decimal(0)
 
 
-def rebasing_credits_per_token(block="latest"):
+def rebasing_credits_per_token(block="latest", contract=OUSD):
     signature = "0x6691cb3d"  # rebasingCreditsPerToken()
-    data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
+    data = call(contract, signature, "", block)
+    # this can happen if not live yet
+    try:
+        number = data["result"][0 : 64 + 2]
+    except KeyError:
+        return Decimal(0)
+    if number == "0x":
+        number = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    return Decimal(int(number, 16)) / E_18
 
 
-def ousd_rebasing_credits(block="latest"):
+def origin_token_rebasing_credits(block="latest", contract=OUSD):
     signature = "0x077f22b7"  # rebasingCredits()
-    data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
+    data = call(contract, signature, "", block)
+    # this can happen if not live yet
+    try:
+        number = data["result"][0 : 64 + 2]
+    except KeyError:
+        return Decimal(0)
+    if number == "0x":
+        number = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    return Decimal(int(number, 16)) / E_18
 
 
-def ousd_non_rebasing_supply(block="latest"):
+def origin_token_non_rebasing_supply(block="latest", contract=OUSD):
     signature = "0xe696393a"  # nonRebasingSupply()
-    data = call(OUSD, signature, "", block)
-    return Decimal(int(data["result"][0 : 64 + 2], 16)) / E_18
+    data = call(contract, signature, "", block)
+    # this can happen if not live yet
+    try:
+        number = data["result"][0 : 64 + 2]
+    except KeyError:
+        return Decimal(0)
+    if number == "0x":
+        number = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    return Decimal(int(number, 16)) / E_18
 
 
 def ogn_staking_total_outstanding(block):
@@ -378,6 +420,28 @@ def priceUSDMint(coin_contract, assetAddress, block="latest"):
 
 def priceUSDRedeem(coin_contract, assetAddress, block="latest"):
     signature = SIG_FUNC_PRICE_USD_REDEEM[:10]  # priceUSDRedeem(address)
+    payload = encode_single("(address)", [assetAddress]).hex()
+    data = call(coin_contract, signature, payload, block)
+
+    if data.get("error") is not None:
+        raise RPCError(data["error"]["code"], data["error"]["message"])
+
+    return Decimal(int(data["result"], 16)) / E_18
+
+
+def priceUnitMint(coin_contract, assetAddress, block="latest"):
+    signature = SIG_FUNC_PRICE_UNIT_MINT[:10]  # priceUnitMint(address)
+    payload = encode_single("(address)", [assetAddress]).hex()
+    data = call(coin_contract, signature, payload, block)
+
+    if data.get("error") is not None:
+        raise RPCError(data["error"]["code"], data["error"]["message"])
+
+    return Decimal(int(data["result"], 16)) / E_18
+
+
+def priceUnitRedeem(coin_contract, assetAddress, block="latest"):
+    signature = SIG_FUNC_PRICE_UNIT_REDEEM[:10]  # priceUnitRedeem(address)
     payload = encode_single("(address)", [assetAddress]).hex()
     data = call(coin_contract, signature, payload, block)
 

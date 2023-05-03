@@ -114,6 +114,8 @@ SIG_EVENT_TOTAL_SUPPLY_UPDATED_HIRES = encode_hex(
 # Vault
 SIG_FUNC_PRICE_USD_MINT = encode_hex(keccak(b"priceUSDMint(address)"))
 SIG_FUNC_PRICE_USD_REDEEM = encode_hex(keccak(b"priceUSDRedeem(address)"))
+SIG_FUNC_PRICE_UNIT_MINT = encode_hex(keccak(b"priceUnitMint(address)"))
+SIG_FUNC_PRICE_UNIT_REDEEM = encode_hex(keccak(b"priceUnitRedeem(address)"))
 SIG_EVENT_MINT = encode_hex(keccak(b"Mint(address,uint256)"))
 SIG_EVENT_REDEEM = encode_hex(keccak(b"Redeem(address,uint256)"))
 SIG_EVENT_CAPITAL_PAUSED = encode_hex(keccak(b"CapitalPaused()"))

@@ -4,10 +4,10 @@ from core.blockchain.sigs import (
     SIG_EVENT_CAPITAL_UNPAUSED,
 )
 from notify.events import event_high
-
+from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME
 
 def get_pause_events(logs):
-    """ Get DepositsPaused/DepositsUnpaused events """
+    """ Get CapitalPaused/CapitalUnpaused events """
     return logs.filter(
         Q(topic_0=SIG_EVENT_CAPITAL_PAUSED)
         | Q(topic_0=SIG_EVENT_CAPITAL_UNPAUSED)
@@ -20,11 +20,13 @@ def run_trigger(new_logs):
 
     for ev in get_pause_events(new_logs):
         is_pause = ev.topic_0 == SIG_EVENT_CAPITAL_PAUSED
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
 
         events.append(
             event_high(
                 "Capital Paused   ⏸️" if is_pause else "Capital Unpaused   ▶️",
-                "OUSD Vault capital has been {}".format(
+                "{} capital has been {}".format(
+                    contract_name,
                     "paused" if is_pause else "unpaused",
                 ),
                 log_model=ev
