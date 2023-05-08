@@ -28,6 +28,7 @@ from core.blockchain.const import (
     COMPOUND_FOR_SYMBOL,
     CONTRACT_FOR_SYMBOL,
     DECIMALS_FOR_SYMBOL,
+    VAULT_FEE_UPGRADE_BLOCK,
 )
 from core.blockchain.rpc import (
     AaveLendingPoolCore,
@@ -364,8 +365,10 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
         s.reported_supply = totalSupply(OUSD, 18, block_number)
         s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number)
         s.credits_ratio = s.computed_supply / s.credits
-        # Updating to 20% since proposal's already live
-        future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.2)
+        fee_bps = Decimal(0.1)
+        if block_number > VAULT_FEE_UPGRADE_BLOCK:
+            fee_bps = Decimal(0.2)
+        future_fee = (s.computed_supply - s.reported_supply) * fee_bps
         next_rebase_supply = (
             s.computed_supply - s.non_rebasing_supply - future_fee
         )
