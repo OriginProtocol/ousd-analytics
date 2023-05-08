@@ -1053,9 +1053,9 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
                 tx_history_filtered.append({
                     'block_number': tx_history[i].block_number,
                     'time': tx_history[i].block_time,
-                    'balance': tx_history[i].balance,
+                    'balance': "{:.18f}".format(float(tx_history[i].balance)),
                     'tx_hash': tx_history[i].tx_hash,
-                    'amount': tx_history[i].amount,
+                    'amount': "{:.18f}".format(float(tx_history[i].amount)),
                     'type': 'yield'
                 })
         else:
@@ -1065,9 +1065,9 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
                 tx_history_filtered.append({
                     'block_number': tx_history[i].block_number,
                     'time': tx_history[i].block_time,
-                    'balance': tx_history[i].balance,
+                    'balance': "{:.18f}".format(float(tx_history[i].balance)),
                     'tx_hash': tx_hash,
-                    'amount': tx_history[i].amount,
+                    'amount': "{:.18f}".format(float(tx_history[i].amount)),
                     'from_address': tx_history[i].from_address,
                     'to_address': tx_history[i].to_address,
                     'log_index' : tx_history[i].log_index,
