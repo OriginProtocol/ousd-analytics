@@ -55,12 +55,13 @@ class AssetBlock(models.Model):
         return sum(self.get_strat_holdings(key) for key in OUSD_STRATEGIES.keys())
 
     def get_strat_holdings(self, strat_key):
-        if self.project == OriginTokens.OUSD and strat_key in OUSD_STRATEGIES:
+        if strat_key == "vault_holding":
+            return Decimal(self.vault_holding)
+        elif self.project == OriginTokens.OUSD and strat_key in OUSD_STRATEGIES:
             # Older OSUD strategies have their own columns in the model.
             # The config var `HARDCODED`` is set to true for such columns.
             if True == OUSD_STRATEGIES.get(strat_key).get("HARDCODED", False):
                 return getattr(self, strat_key, Decimal(0))
-
         # Check if we have the value stored in the `strat_holdings` column
         if strat_key in self.strat_holdings:
             return Decimal(self.strat_holdings.get(strat_key, 0))
