@@ -50,7 +50,8 @@ from core.blockchain.const import (
     START_OF_OUSD_V2,
     BLOCKS_PER_DAY,
     OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
-    OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC
+    OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
+    VAULT_FEE_UPGRADE_BLOCK
 )
 
 from core.blockchain.utils import (
@@ -683,11 +684,13 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
 
     days = (to_block_time - from_block_time).days + 1
     rows = _daily_rows_past(days, to_block_time, project=project)
-    gain = 0
+    fees_generated = 0
     for row in rows:
         if row.gain >= 0:
-            gain += row.gain
-    fees_generated = gain / 5 # 20% fee == 20/100 == 1/5
+            if row.block_number > VAULT_FEE_UPGRADE_BLOCK:
+                fees_generated += row.gain / 5 # 20% fee == 20/100 == 1/5
+            else:
+                fees_generated += row.gain / 10 # 10% fee == 10/100 == 1/10
 
     ousd_history = get_coin_history('OUSD', from_timestamp, to_timestamp)
     ousd_market_cap_history = ousd_history['market_caps']
@@ -1334,8 +1337,6 @@ def _daily_rows_past(steps, latest_block_time, project=OriginTokens.OUSD):
             continue
         block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number, project=project)
-        if s is None:
-            continue
         s.block_number = block_number
         s.block_time = block.block_time
         if last_snapshot:
