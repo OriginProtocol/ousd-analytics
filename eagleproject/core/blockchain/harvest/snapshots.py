@@ -118,7 +118,10 @@ def _build_asset_block_oeth(symbol, block_number):
 
     
     for (strat_key, strat) in OETH_STRATEGIES.items():
-        if block_number != "latest" and block_number <= strat.get("FROM_BLOCK", 0):
+        if strat.get("HARDCODED", False) == True:
+            # Ignore hardcoded contracts
+            continue
+        elif block_number != "latest" and block_number <= strat.get("FROM_BLOCK", 0):
             # Fetch events only after the specific block, if configured
             continue
         if symbol not in strat.get("SUPPORTED_ASSETS", OETH_BACKING_ASSETS):
