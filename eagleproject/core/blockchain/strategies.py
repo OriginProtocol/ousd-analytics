@@ -110,8 +110,9 @@ OUSD_STRATEGIES = {
 
 # OETH Strategies
 OETH_STRATEGIES = {
-  "oeth_vault_holding": {
+  "vault_holding": {
     "NAME": "OETH Vault",
+    "HARDCODED": True,
     "ADDRESS": OETH_VAULT,
     "FROM_BLOCK": 17067001,
     "SUPPORTED_ASSETS": OETH_BACKING_ASSETS,

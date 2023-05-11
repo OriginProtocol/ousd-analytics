@@ -27,6 +27,7 @@ from core.blockchain.sigs import TRANSFER
 from core.blockchain.const import (
     OUSD_CONTRACTS,
     START_OF_OUSD_V2,
+    START_OF_OETH,
     BLOCKS_PER_DAY,
     START_OF_OUSD_V2_TIME,
     report_stats,
@@ -495,7 +496,7 @@ def api_address_yield(request, address, project):
     response = JsonResponse(
         {
             "address": data["address"],
-            "lifetime_yield": "{:.2f}".format(data["yield_balance"]),
+            "lifetime_yield": "{:.2f}".format(data["yield_balance"]) if project == OriginTokens.OUSD else "{:.8f}".format(data["yield_balance"]) ,
         }
     )
     response.setdefault("Access-Control-Allow-Origin", "*")
@@ -617,6 +618,7 @@ def _address_transfers(address, project):
     long_address = address.replace("0x", "0x000000000000000000000000")
     latest_block_number = latest_snapshot_block_number(project)
     contract_address = OUSD if project == OriginTokens.OUSD else OETH
+    start_block = START_OF_OUSD_V2 if project == OriginTokens.OUSD else START_OF_OETH
     # We want to avoid the case where the listener hasn't picked up a
     # transactions yet, but the user's balance has increased or decreased
     # due to a transfer. This would make a hugely wrong lifetime earned amount
@@ -627,7 +629,7 @@ def _address_transfers(address, project):
     transfers = (
         Log.objects.filter(address=contract_address, topic_0=TRANSFER)
         .filter(Q(topic_1=long_address) | Q(topic_2=long_address))
-        .filter(block_number__gte=START_OF_OUSD_V2)
+        .filter(block_number__gte=start_block)
         .filter(block_number__lte=block_number)
     )
     transfers_in = sum(
@@ -639,6 +641,7 @@ def _address_transfers(address, project):
     current_balance = balanceOf(contract_address, address, 18, block=block_number)
     non_yield_balance = transfers_in - transfers_out
     yield_balance = current_balance - non_yield_balance
+
     return {
         "address": address,
         "transfers": transfers,
