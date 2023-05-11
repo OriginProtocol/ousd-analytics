@@ -14,9 +14,9 @@ logger = get_logger(__name__)
 
 
 def ensure_block(block_number):
-    blocks = list(Block.objects.filter(block_number=block_number))
-    if len(blocks) > 0:
-        return blocks[0]
+    stored_block = Block.objects.filter(block_number=block_number).first()
+    if stored_block is not None:
+        return stored_block
     
     raw_block = get_block(block_number)
     block_time = datetime.fromtimestamp(
@@ -43,9 +43,9 @@ def ensure_day(d):
         Requires there to be a block stored in the system before and after the target.
             ... More code could easily remove this restriction.
     """
-    days = Day.objects.filter(date=d.date())
-    if len(days) == 1:
-        return days[0]
+    stored_day = Day.objects.filter(date=d.date()).first()
+    if stored_day is not None:
+        return stored_day
     d = datetime(d.year, d.month, d.day) # Zero seconds, keep timezone
     # Offset for the window on the next day
     target = (d + timedelta(seconds=26100)).replace(tzinfo=timezone.utc)

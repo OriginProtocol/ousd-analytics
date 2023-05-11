@@ -80,7 +80,6 @@ urlpatterns = [
     path("api/v2/<slug:project>/collateral", core_views.collateral),
     path("api/v2/<slug:project>/apr/trailing_history/<int:days>", core_views.api_apr_trailing_history),
 
-    ## TODO: Set up redirect from `api/v1/*` to `api/v2/ousd/*`
     # Deprecated v1 API endpoints (exists for backward compatibility)
     path("api/v1/apr/trailing", RedirectView.as_view(url="/api/v2/ousd/apr/trailing", permanent=True)),
     re_path(r'^api/v1/apr/trailing/(?P<days>[0-9]{1,3})', RedirectView.as_view(url="/api/v2/ousd/apr/trailing/%(days)s", permanent=True)),

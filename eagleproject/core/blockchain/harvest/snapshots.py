@@ -28,6 +28,7 @@ from core.blockchain.const import (
     COMPOUND_FOR_SYMBOL,
     CONTRACT_FOR_SYMBOL,
     DECIMALS_FOR_SYMBOL,
+    VAULT_FEE_UPGRADE_BLOCK,
 )
 from core.blockchain.rpc import (
     AaveLendingPoolCore,
@@ -326,72 +327,82 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
 
 def ensure_asset(symbol, block_number, project=OriginTokens.OUSD):
     try:
-        return AssetBlock.objects.filter(symbol=symbol, block_number=block_number, project=project).first()
+        ab = AssetBlock.objects.filter(symbol=symbol, block_number=block_number, project=project).first()
+        if ab is not None:
+            return ab
     except ObjectDoesNotExist:
-        ab = build_asset_block(symbol, block_number, project)
-        ab.save()
-        return ab
+        pass
+
+    ab = build_asset_block(symbol, block_number, project)
+    ab.save()
+    return ab
 
 
 def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
     try:
-        return SupplySnapshot.objects.filter(block_number=block_number,project=project).first()
+        s = SupplySnapshot.objects.filter(block_number=block_number,project=project).first()
+        if s is not None:
+            return s
     except ObjectDoesNotExist:
-        s = SupplySnapshot()
-        s.project = project
-        s.block_number = block_number
+        pass
 
-        s.non_rebasing_credits = Decimal(0)  # No longer used in contract
+    s = SupplySnapshot()
+    s.project = project
+    s.block_number = block_number
 
-        if project == OriginTokens.OUSD:
-            dai = ensure_asset("DAI", block_number).total()
-            usdt = ensure_asset("USDT", block_number).total()
-            usdc = ensure_asset("USDC", block_number).total()
-            ousd = ensure_asset("OUSD", block_number).total()
-            lusd = ensure_asset("LUSD", block_number).total()
+    s.non_rebasing_credits = Decimal(0)  # No longer used in contract
 
-            s.credits = origin_token_rebasing_credits(block_number) + s.non_rebasing_credits
+    if project == OriginTokens.OUSD:
+        dai = ensure_asset("DAI", block_number).total()
+        usdt = ensure_asset("USDT", block_number).total()
+        usdc = ensure_asset("USDC", block_number).total()
+        ousd = ensure_asset("OUSD", block_number).total()
+        lusd = ensure_asset("LUSD", block_number).total()
 
-            s.computed_supply = dai + usdt + usdc + ousd + lusd
-            s.reported_supply = totalSupply(OUSD, 18, block_number)
-            s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number)
-            s.credits_ratio = s.computed_supply / s.credits
-            # Updating to 20% since proposal's already live
-            future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.2)
-            next_rebase_supply = (
-                s.computed_supply - s.non_rebasing_supply - future_fee
-            )
-            s.rebasing_credits_ratio = next_rebase_supply / s.credits
-            s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
+        s.credits = origin_token_rebasing_credits(block_number) + s.non_rebasing_credits
+
+        s.computed_supply = dai + usdt + usdc + ousd + lusd
+        s.reported_supply = totalSupply(OUSD, 18, block_number)
+        s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number)
+        s.credits_ratio = s.computed_supply / s.credits
+        fee_bps = Decimal(0.1)
+        if block_number > VAULT_FEE_UPGRADE_BLOCK:
+            fee_bps = Decimal(0.2)
+        future_fee = (s.computed_supply - s.reported_supply) * fee_bps
+        next_rebase_supply = (
+            s.computed_supply - s.non_rebasing_supply - future_fee
+        )
+        s.rebasing_credits_ratio = next_rebase_supply / s.credits
+        s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
+    else:
+        weth = ensure_asset("WETH", block_number, OriginTokens.OETH).total()
+        frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH).total()
+        reth = ensure_asset("RETH", block_number, OriginTokens.OETH).total()
+        steth = ensure_asset("STETH", block_number, OriginTokens.OETH).total()
+        oeth = ensure_asset("OETH", block_number, OriginTokens.OETH).total()
+
+        s.credits = origin_token_rebasing_credits(block_number, contract=OETH) + s.non_rebasing_credits
+
+        s.computed_supply = oeth + steth + reth + frxeth + weth
+        s.reported_supply = totalSupply(OETH, 18, block_number)
+        s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number, contract=OETH)
+        if s.computed_supply == 0 and s.credits == 0:
+            s.credits_ratio = 0
         else:
-            weth = ensure_asset("WETH", block_number, OriginTokens.OETH).total()
-            frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH).total()
-            reth = ensure_asset("RETH", block_number, OriginTokens.OETH).total()
-            steth = ensure_asset("STETH", block_number, OriginTokens.OETH).total()
-            oeth = ensure_asset("OETH", block_number, OriginTokens.OETH).total()
+            s.credits_ratio = s.computed_supply / s.credits
 
-            s.credits = origin_token_rebasing_credits(block_number, contract=OETH) + s.non_rebasing_credits
+        future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.2)
+        next_rebase_supply = (
+            s.computed_supply - s.non_rebasing_supply - future_fee
+        )
+        if next_rebase_supply == 0 and s.credits == 0:
+            s.rebasing_credits_ratio = 0
+        else:
+            s.rebasing_credits_ratio = next_rebase_supply / s.credits
+        s.rebasing_credits_per_token = rebasing_credits_per_token(block_number, contract=OETH)
 
-            s.computed_supply = oeth + steth + reth + frxeth + weth
-            s.reported_supply = totalSupply(OETH, 18, block_number)
-            s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number, contract=OETH)
-            if s.computed_supply == 0 and s.credits == 0:
-                s.credits_ratio = 0
-            else:
-                s.credits_ratio = s.computed_supply / s.credits
-
-            future_fee = (s.computed_supply - s.reported_supply) * Decimal(0.2)
-            next_rebase_supply = (
-                s.computed_supply - s.non_rebasing_supply - future_fee
-            )
-            if next_rebase_supply == 0 and s.credits == 0:
-                s.rebasing_credits_ratio = 0
-            else:
-                s.rebasing_credits_ratio = next_rebase_supply / s.credits
-            s.rebasing_credits_per_token = rebasing_credits_per_token(block_number, contract=OETH)
-
-        s.save()
-        return s
+    s.save()
+    return s
 
 
 def ensure_staking_snapshot(block_number):

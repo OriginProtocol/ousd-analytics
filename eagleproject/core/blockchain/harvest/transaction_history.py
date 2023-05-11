@@ -50,7 +50,8 @@ from core.blockchain.const import (
     START_OF_OUSD_V2,
     BLOCKS_PER_DAY,
     OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
-    OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC
+    OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
+    VAULT_FEE_UPGRADE_BLOCK
 )
 
 from core.blockchain.utils import (
@@ -480,24 +481,27 @@ def create_time_interval_report_for_previous_week(year_override, week_override, 
         send_report_email(OriginTokens.OUSD, 'OUSD Analytics Weekly Report', db_report, preb_db_report, "Weekly")
 
 def should_create_new_report(year, month_option, week_option):
-    if month_option is not None:
-        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option) & Q(project=OriginTokens.OUSD))
-    elif week_option is not None:
-        existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option) & Q(project=OriginTokens.OUSD))
+    try:
+        if month_option is not None:
+            existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option) & Q(project=OriginTokens.OUSD)).first()
+        elif week_option is not None:
+            existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option) & Q(project=OriginTokens.OUSD)).first()
+        if existing_report is None:
+            return True
+    except ObjectDoesNotExist:
+        return True
+    
 
-    if len(existing_report) == 1:
-        existing_report = existing_report[0]
+    # nothing to do here, report is already done
+    if existing_report.status == 'done':
+        return False
 
-        # nothing to do here, report is already done
-        if existing_report.status == 'done':
-            return False
+    # in seconds
+    report_age = (datetime.now() - existing_report.updated_at.replace(tzinfo=None)).total_seconds()
 
-        # in seconds
-        report_age = (datetime.now() - existing_report.updated_at.replace(tzinfo=None)).total_seconds()
-
-        # report might still be processing
-        if report_age < 3 * 60 * 60:
-            return False
+    # report might still be processing
+    if report_age < 3 * 60 * 60:
+        return False
 
     return True
 
@@ -590,16 +594,16 @@ def backfill_subscribers():
 
 
 # get all accounts that at some point held OUSD
-def fetch_all_holders():
-    to_addresses = list(map(lambda log: log['to_address'], TokenTransfer.objects.filter(project=OriginTokens.OUSD).values('to_address').distinct()))
-    from_addresses = list(map(lambda log: log['from_address'], TokenTransfer.objects.filter(project=OriginTokens.OUSD).values('from_address').distinct()))
+def fetch_all_holders(project=OriginTokens.OUSD):
+    to_addresses = list(map(lambda log: log['to_address'], TokenTransfer.objects.filter(project=project).values('to_address').distinct()))
+    from_addresses = list(map(lambda log: log['from_address'], TokenTransfer.objects.filter(project=project).values('from_address').distinct()))
     return list(set(filter(lambda address: address not in ['0x0000000000000000000000000000000000000000', '0x000000000000000000000000000000000000dead'], to_addresses + from_addresses)))
 
 
-def fetch_supply_data(block_number):
-    ensure_supply_snapshot(block_number)
+def fetch_supply_data(block_number, project=OriginTokens.OUSD):
+    ensure_supply_snapshot(block_number, project=project)
     [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
-    ousd = build_asset_block("OUSD", block_number)
+    ousd = build_asset_block("OUSD", block_number, project=project)
     protocol_owned_ousd = float(ousd.strat_holdings["ousd_metastrat"])
     circulating_ousd = float(snapshot.reported_supply) - protocol_owned_ousd
 
@@ -645,7 +649,10 @@ def get_curve_data(to_block):
         "earning_ogn": balance/supply,
     }
 
-def create_time_interval_report(from_block, to_block, from_block_time, to_block_time):
+def create_time_interval_report(from_block, to_block, from_block_time, to_block_time, project=OriginTokens.OUSD):
+    if project == OriginTokens.OETH:
+        raise Exception("Unimplemented for OETH")
+
     decimal_context = getcontext()
     decimal_prec = decimal_context.prec
     decimal_rounding = decimal_context.rounding
@@ -654,16 +661,16 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     decimal_context.prec = 18
     decimal_context.rounding = 'ROUND_DOWN'
 
-    all_addresses = fetch_all_holders()
+    all_addresses = fetch_all_holders(project=project)
 
-    rebase_logs = get_rebase_logs(from_block, to_block)
+    rebase_logs = get_rebase_logs(from_block, to_block, project=project)
     analysis_list = []
 
     from_timestamp = int(from_block_time.strftime('%s'))
     to_timestamp = int(to_block_time.strftime('%s'))
 
-    supply_data = fetch_supply_data(to_block)
-    apy = get_trailing_apy(to_block)
+    supply_data = fetch_supply_data(to_block, project=project)
+    apy = get_trailing_apy(to_block, project=project)
     curve_data = get_curve_data(to_block)
     ogv_data = fetch_ogv_data(to_block, from_timestamp, to_timestamp)
 
@@ -676,12 +683,14 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
             break
 
     days = (to_block_time - from_block_time).days + 1
-    rows = _daily_rows_past(days, to_block_time)
-    gain = 0
+    rows = _daily_rows_past(days, to_block_time, project=project)
+    fees_generated = 0
     for row in rows:
         if row.gain >= 0:
-            gain += row.gain
-    fees_generated = gain / 10
+            if row.block_number > VAULT_FEE_UPGRADE_BLOCK:
+                fees_generated += row.gain / 5 # 20% fee == 20/100 == 1/5
+            else:
+                fees_generated += row.gain / 10 # 10% fee == 10/100 == 1/10
 
     ousd_history = get_coin_history('OUSD', from_timestamp, to_timestamp)
     ousd_market_cap_history = ousd_history['market_caps']
@@ -1053,9 +1062,9 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
                 tx_history_filtered.append({
                     'block_number': tx_history[i].block_number,
                     'time': tx_history[i].block_time,
-                    'balance': tx_history[i].balance,
+                    'balance': "{:.18f}".format(float(tx_history[i].balance)),
                     'tx_hash': tx_history[i].tx_hash,
-                    'amount': tx_history[i].amount,
+                    'amount': "{:.18f}".format(float(tx_history[i].amount)),
                     'type': 'yield'
                 })
         else:
@@ -1065,9 +1074,9 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
                 tx_history_filtered.append({
                     'block_number': tx_history[i].block_number,
                     'time': tx_history[i].block_time,
-                    'balance': tx_history[i].balance,
+                    'balance': "{:.18f}".format(float(tx_history[i].balance)),
                     'tx_hash': tx_hash,
-                    'amount': tx_history[i].amount,
+                    'amount': "{:.18f}".format(float(tx_history[i].amount)),
                     'from_address': tx_history[i].from_address,
                     'to_address': tx_history[i].to_address,
                     'log_index' : tx_history[i].log_index,
@@ -1301,7 +1310,7 @@ def _daily_rows(steps, latest_block_number, project):
     return rows
 
 
-def _daily_rows_past(steps, latest_block_time):
+def _daily_rows_past(steps, latest_block_time, project=OriginTokens.OUSD):
     block_numbers = []
     today = datetime.utcnow()
     if today.hour < 8:
@@ -1327,9 +1336,7 @@ def _daily_rows_past(steps, latest_block_time):
         if block_number < START_OF_OUSD_V2:
             continue
         block = ensure_block(block_number)
-        s = ensure_supply_snapshot(block_number)
-        if s is None:
-            continue
+        s = ensure_supply_snapshot(block_number, project=project)
         s.block_number = block_number
         s.block_time = block.block_time
         if last_snapshot:
