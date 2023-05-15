@@ -52,6 +52,9 @@ def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
     if desired_block < earliest_block:
         days = int((block - earliest_block) / BLOCKS_PER_DAY)
 
+    if days == 0:
+        days = 1
+
     current = get_rebasing_credits_per_token(block, project)
     past = get_rebasing_credits_per_token(
         earliest_block, 
