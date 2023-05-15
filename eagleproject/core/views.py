@@ -467,7 +467,10 @@ def api_apr_trailing_history(request, days, project):
     rows = _daily_rows(90, latest_snapshot_block_number(project), project=project)
     response = JsonResponse(
         {
-            "trailing_history": [{"day": x.block_time, "trailing_apy": get_trailing_apy(x.block_number, days)} for x in rows],
+            "trailing_history": [{
+                "day": x.block_time, 
+                "trailing_apy": get_trailing_apy(x.block_number, days, project=project)
+            } for x in rows],
         }
     )
     response.setdefault("Access-Control-Allow-Origin", "*")
