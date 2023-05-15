@@ -411,25 +411,34 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
 def ensure_staking_snapshot(block_number):
     try:
         return OgnStakingSnapshot.objects.get(block_number=block_number)
-    except OgnStakingSnapshot.DoesNotExist:
+    except ObjectDoesNotExist:
         pass
 
     ogn_balance = balanceOf(OGN, OGN_STAKING, 18, block=block_number)
     total_outstanding = ogn_staking_total_outstanding(block_number)
     user_count = OgnStaked.objects.values("user_address").distinct().count()
 
-    return OgnStakingSnapshot.objects.create(
+    params = {
+        "ogn_balance": ogn_balance,
+        "total_outstanding": total_outstanding,
+        "user_count": user_count,
+    }
+
+    tx, created = OgnStakingSnapshot.objects.get_or_create(
         block_number=block_number,
-        ogn_balance=ogn_balance,
-        total_outstanding=total_outstanding,
-        user_count=user_count,
+        defaults=params
     )
+
+    if not created:
+        tx.conditional_update(**params)
+
+    return tx
 
 
 def ensure_story_staking_snapshot(block_number):
     try:
         return StoryStakingSnapshot.objects.get(block_number=block_number)
-    except StoryStakingSnapshot.DoesNotExist:
+    except ObjectDoesNotExist:
         pass
 
     total_supply = story_staking_total_supply(block_number)
