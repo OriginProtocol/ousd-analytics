@@ -109,17 +109,15 @@ def _build_asset_block_oeth(symbol, block_number):
         ora_tok_usd_max = 1
         ora_tok_usd_min = 1
     else:
-        if ora_tok_usd_min < 0:
-            try:
-                ora_tok_usd_min = priceUnitMint(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
-            except:
-                print("Failed to fetch price from OETH oracle for {}".format(symbol))
+        try:
+            ora_tok_usd_min = priceUnitMint(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+        except:
+            print("Failed to fetch price from OETH oracle for {}".format(symbol))
 
-        if ora_tok_usd_max < 0:
-            try:
-                ora_tok_usd_max = priceUnitRedeem(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
-            except:
-                print("Failed to fetch price from OETH oracle for {}".format(symbol))
+        try:
+            ora_tok_usd_max = priceUnitRedeem(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+        except:
+            print("Failed to fetch price from OETH oracle for {}".format(symbol))
 
     for (strat_key, strat) in OETH_STRATEGIES.items():
         if strat.get("HARDCODED", False) == True:
