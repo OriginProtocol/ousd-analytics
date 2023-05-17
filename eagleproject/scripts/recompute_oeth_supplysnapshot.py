@@ -4,16 +4,13 @@ from decimal import Decimal
 
 from core.blockchain.addresses import OETH
 from core.blockchain.const import START_OF_OETH
-from core.blockchain.rpc import latest_block
 from core.blockchain.harvest.snapshots import ensure_supply_snapshot, ensure_asset
 from core.models import OriginTokens, SupplySnapshot
 
 from core.blockchain.rpc import origin_token_rebasing_credits, totalSupply, origin_token_non_rebasing_supply, rebasing_credits_per_token
 
 def run(*script_args):
-    latest = latest_block()
-
-    start_block = START_OF_OETH
+    start_block = 17249890 # Block when Curve AMO strategy was deployed 
 
     snapshots = SupplySnapshot.objects.filter(
         block_number__gte=start_block,
@@ -23,9 +20,12 @@ def run(*script_args):
     print("Found {} OETH Supply snapshots".format(len(snapshots)))
     for s in snapshots:
         print("Recomputing supply at block {}".format(s.block_number))
-        for a in ("WETH", "FRXETH", "RETH", "STETH", "OETH"):
-            ensure_asset(a, s.block_number, OriginTokens.OETH).delete()
 
+        # ETH asset doesn't exist. The other assets aren't affected.
+        # OETH is the only one we need to delete and recompute
+        ensure_asset("OETH", s.block_number, OriginTokens.OETH).delete()
+
+        eth = ensure_asset("ETH", s.block_number, OriginTokens.OETH).total()
         weth = ensure_asset("WETH", s.block_number, OriginTokens.OETH).total()
         frxeth = ensure_asset("FRXETH", s.block_number, OriginTokens.OETH).total()
         reth = ensure_asset("RETH", s.block_number, OriginTokens.OETH).total()
@@ -34,7 +34,7 @@ def run(*script_args):
 
         s.credits = origin_token_rebasing_credits(s.block_number, contract=OETH) + s.non_rebasing_credits
 
-        s.computed_supply = oeth + steth + reth + frxeth + weth
+        s.computed_supply = oeth + steth + reth + frxeth + weth + eth
         s.reported_supply = totalSupply(OETH, 18, s.block_number)
         s.non_rebasing_supply = origin_token_non_rebasing_supply(s.block_number, contract=OETH)
 

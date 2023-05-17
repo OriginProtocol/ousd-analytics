@@ -41,6 +41,7 @@ def snap(block_number):
     ensure_3pool_snapshot(block_number)
 
     # OETH
+    ensure_asset("ETH", block_number, OriginTokens.OETH)
     ensure_asset("WETH", block_number, OriginTokens.OETH)
     ensure_asset("FRXETH", block_number, OriginTokens.OETH)
     ensure_asset("RETH", block_number, OriginTokens.OETH)
