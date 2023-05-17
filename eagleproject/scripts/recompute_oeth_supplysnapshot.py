@@ -4,15 +4,12 @@ from decimal import Decimal
 
 from core.blockchain.addresses import OETH
 from core.blockchain.const import START_OF_OETH
-from core.blockchain.rpc import latest_block
 from core.blockchain.harvest.snapshots import ensure_supply_snapshot, ensure_asset
 from core.models import OriginTokens, SupplySnapshot
 
 from core.blockchain.rpc import origin_token_rebasing_credits, totalSupply, origin_token_non_rebasing_supply, rebasing_credits_per_token
 
 def run(*script_args):
-    latest = latest_block()
-
     start_block = 17249890 # Block when Curve AMO strategy was deployed 
 
     snapshots = SupplySnapshot.objects.filter(
