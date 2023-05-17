@@ -131,6 +131,6 @@ OETH_STRATEGIES = {
     "ADDRESS": OETH_CURVE_AMO_STRATEGY,
     "FROM_BLOCK": 17249902,
     "SUPPORTED_ASSETS": ["ETH", "OETH"],
-    "ICON_NAME": "frxeth-icon.svg",
+    "ICON_NAME": "oeth-icon.svg",
   },
 }
