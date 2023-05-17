@@ -44,7 +44,8 @@ from core.blockchain.addresses import (
     FRXETH,
     RETH,
     STETH,
-    WETH
+    WETH,
+    ETH
 )
 
 from core.blockchain.strategies import OUSD_STRATEGIES, OETH_STRATEGIES
@@ -72,7 +73,7 @@ CONTRACT_FOR_SYMBOL = {
     "OUSD": OUSD,
     "LUSD": LUSD,
     "3CRV": THREEPOOL,
-    "ETH": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "ETH": ETH,
 
     "OETH": OETH,
     "WETH": WETH,
@@ -97,8 +98,8 @@ DECIMALS_FOR_SYMBOL = {
     "USDC": 6,
     "veCRV": 18,
     "3CRV": 18,
-    "ETH": 18,
 
+    "ETH": 18,
     "OETH": 18,
     "WETH": 18,
     "RETH": 18,

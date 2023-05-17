@@ -105,20 +105,22 @@ def _build_asset_block_oeth(symbol, block_number):
     # TODO: Rename these columns??
     ora_tok_usd_min = 0
     ora_tok_usd_max = 0
+    if symbol == "ETH":
+        ora_tok_usd_max = 1
+        ora_tok_usd_min = 1
+    else:
+        if ora_tok_usd_min < 0:
+            try:
+                ora_tok_usd_min = priceUnitMint(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+            except:
+                print("Failed to fetch price from OETH oracle for {}".format(symbol))
 
-    if ora_tok_usd_min < 0:
-        try:
-            ora_tok_usd_min = priceUnitMint(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
-        except:
-            print("Failed to fetch price from OETH oracle for {}".format(symbol))
+        if ora_tok_usd_max < 0:
+            try:
+                ora_tok_usd_max = priceUnitRedeem(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+            except:
+                print("Failed to fetch price from OETH oracle for {}".format(symbol))
 
-    if ora_tok_usd_max < 0:
-        try:
-            ora_tok_usd_max = priceUnitRedeem(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
-        except:
-            print("Failed to fetch price from OETH oracle for {}".format(symbol))
-
-    
     for (strat_key, strat) in OETH_STRATEGIES.items():
         if strat.get("HARDCODED", False) == True:
             # Ignore hardcoded contracts
@@ -126,21 +128,30 @@ def _build_asset_block_oeth(symbol, block_number):
         elif block_number != "latest" and block_number <= strat.get("FROM_BLOCK", 0):
             # Fetch events only after the specific block, if configured
             continue
-        elif strat_key == "oeth_curve_amo":
-            holding += OETHCurveAMOStrategy.get_underlying_balance(block_number).get(symbol)
         if symbol not in strat.get("SUPPORTED_ASSETS", OETH_BACKING_ASSETS):
             # Unsupported asset
             continue
 
-        
-        holding = strategyCheckBalance(
-            strat.get("ADDRESS"),
-            CONTRACT_FOR_SYMBOL[symbol],
-            DECIMALS_FOR_SYMBOL[symbol],
-            block_number,
-        )
+        holding = 0
+
+        if strat_key == "oeth_curve_amo":
+            holding = OETHCurveAMOStrategy.get_underlying_balance(block_number).get(symbol, Decimal(0))
+        else:
+            holding = strategyCheckBalance(
+                strat.get("ADDRESS"),
+                CONTRACT_FOR_SYMBOL[symbol],
+                DECIMALS_FOR_SYMBOL[symbol],
+                block_number,
+            )
 
         strat_holdings[strat_key] = str(holding)
+
+    vault_balance = balanceOf(
+        CONTRACT_FOR_SYMBOL[symbol],
+        OETH_VAULT,
+        DECIMALS_FOR_SYMBOL[symbol],
+        block_number,
+    ) if symbol != "ETH" else get_balance(OETH_VAULT, block_number)
 
     return AssetBlock(
         project=OriginTokens.OETH,
@@ -148,12 +159,7 @@ def _build_asset_block_oeth(symbol, block_number):
         block_number=block_number,
         ora_tok_usd_min=ora_tok_usd_min,
         ora_tok_usd_max=ora_tok_usd_max,
-        vault_holding=balanceOf(
-            CONTRACT_FOR_SYMBOL[symbol],
-            OETH_VAULT,
-            DECIMALS_FOR_SYMBOL[symbol],
-            block_number,
-        ),
+        vault_holding=vault_balance,
         strat_holdings=strat_holdings,
         # Not used for OETH
         compstrat_holding=Decimal(0),
@@ -382,6 +388,7 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
         s.rebasing_credits_ratio = next_rebase_supply / s.credits
         s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
     else:
+        eth = ensure_asset("ETH", block_number, OriginTokens.OETH).total()
         weth = ensure_asset("WETH", block_number, OriginTokens.OETH).total()
         frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH).total()
         reth = ensure_asset("RETH", block_number, OriginTokens.OETH).total()
@@ -390,7 +397,7 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
 
         s.credits = origin_token_rebasing_credits(block_number, contract=OETH) + s.non_rebasing_credits
 
-        s.computed_supply = oeth + steth + reth + frxeth + weth
+        s.computed_supply = oeth + steth + reth + frxeth + weth + eth
         s.reported_supply = totalSupply(OETH, 18, block_number)
         s.non_rebasing_supply = origin_token_non_rebasing_supply(block_number, contract=OETH)
         if s.computed_supply == 0 and s.credits == 0:
