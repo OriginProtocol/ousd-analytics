@@ -21,6 +21,7 @@ from core.blockchain.addresses import (
     OUSD_VAULT,
     OETH_VAULT,
     OETH,
+    OETH_CURVE_AMO_STRATEGY,
 )
 from core.blockchain.const import (
     BLOCKS_PER_YEAR,
@@ -64,6 +65,7 @@ from core.blockchain.rpc import (
     totalReserves,
     OUSDMetaPool,
     LUSDMetaPool,
+    OETHCurveAMOStrategy,
 )
 from core.logging import get_logger
 from core.models import (
@@ -124,6 +126,8 @@ def _build_asset_block_oeth(symbol, block_number):
         elif block_number != "latest" and block_number <= strat.get("FROM_BLOCK", 0):
             # Fetch events only after the specific block, if configured
             continue
+        elif strat_key == "oeth_curve_amo":
+            holding += OETHCurveAMOStrategy.get_underlying_balance(block_number).get(symbol)
         if symbol not in strat.get("SUPPORTED_ASSETS", OETH_BACKING_ASSETS):
             # Unsupported asset
             continue

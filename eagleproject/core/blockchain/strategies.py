@@ -44,6 +44,7 @@ LUSD_METASTRAT = "0x7a192dd9cc4ea9bdedec9992df74f1da55e60a19"
 # OETH Contracts
 OETH_VAULT = "0x39254033945aa2e4809cc2977e7087bee48bd7ab"
 FRAX_ETH_STRATEGY = "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5"
+OETH_CURVE_AMO_STRATEGY = "0x1827f9ea98e0bf96550b2fc20f7233277fcd7e63"
 
 # OUSD Strategies
 OUSD_STRATEGIES = {
@@ -123,6 +124,13 @@ OETH_STRATEGIES = {
     "ADDRESS": FRAX_ETH_STRATEGY,
     "FROM_BLOCK": 17067224,
     "SUPPORTED_ASSETS": ["FRXETH"],
+    "ICON_NAME": "frxeth-icon.svg",
+  },
+  "oeth_curve_amo": {
+    "NAME": "OETH/ETH Curve AMO",
+    "ADDRESS": OETH_CURVE_AMO_STRATEGY,
+    "FROM_BLOCK": 17249902,
+    "SUPPORTED_ASSETS": ["WETH"],
     "ICON_NAME": "frxeth-icon.svg",
   },
 }

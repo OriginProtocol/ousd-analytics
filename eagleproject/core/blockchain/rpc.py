@@ -28,7 +28,10 @@ from core.blockchain.addresses import (
     DAI,
     USDT,
     USDC,
-    OETH
+    OETH,
+    OETH_CURVE_AMO_STRATEGY,
+    OETH_ETH_AMO_METAPOOL,
+    OETH_CURVE_AMO_REWARDS_POOL
 )
 from core.blockchain.const import (
     DECIMALS_FOR_SYMBOL,
@@ -37,6 +40,7 @@ from core.blockchain.const import (
     E_18,
     E_27,
     SYMBOL_FOR_CONTRACT,
+    CONTRACT_FOR_SYMBOL,
     TRUE_256BIT,
 )
 from core.blockchain.decode import encode_args
@@ -921,3 +925,111 @@ class LUSDMetaStrategy:
             retval[symbol] = scaled_bal
     
         return retval
+
+class GenericCurveAMOStrategy:
+    def __init__(self, strategy_addr, metapool_addr, rewards_pool_addr, all_coins):
+        self.strategy_addr = strategy_addr
+        self.metapool_addr = metapool_addr
+        self.rewards_pool_addr = rewards_pool_addr
+        self.all_coins = all_coins
+    
+    """ RPC Calls for LUSD<>3CRV MetaPool """
+
+    def coins(self, index, block="latest"):
+        data = call_by_sig(self.metapool_addr, "coins(uint256)", [index], block=block)
+        result = data["result"]
+        return decode_single("address", decode_hex(result))
+
+    def get_all_coins(self, block="latest"):
+        return [self.coins(x) for x in range(0, len(self.all_coins))]
+
+    def get_all_balances(self, block="latest"):
+        coins = self.get_all_coins(block)
+
+        retval = {}
+
+        for i, coin in enumerate(coins):
+            symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
+            decimals = DECIMALS_FOR_SYMBOL[symbol]
+            retval[symbol] = Decimal(self.balances(i)) / Decimal(
+                math.pow(10, decimals)
+            )
+
+        return retval
+
+    def balances(self, index, block="latest"):
+        data = call_by_sig(self.metapool_addr, "balances(uint256)", [index], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
+
+    def get_virtual_price(self, block="latest"):
+        data = call_by_sig(self.metapool_addr, "get_virtual_price()", [], block)
+        result = data["result"]
+        return decode_single("uint256", decode_hex(result))
+
+    def get_balance_split(self, block="latest"):
+        coins = self.get_all_coins(block)
+
+        balances = {}
+        pcts = {}
+        total = Decimal(0)
+
+        for i, coin in enumerate(coins):
+            symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
+            decimals = DECIMALS_FOR_SYMBOL[symbol]
+            bal = Decimal(self.balances(i))
+            if decimals != 18:
+                # Scale to 18 decimal places
+                bal = bal * Decimal(math.pow(10, 18)) / Decimal(math.pow(10, decimals))
+            balances[symbol] = bal
+            total += bal
+
+        for i, coin in enumerate(coins):
+            symbol = SYMBOL_FOR_CONTRACT[coin.lower()]
+            pcts[symbol] = balances.get(symbol, Decimal(0)) / total if total > 0 else 0
+
+        return pcts
+
+    def asset_to_ptoken(self, asset, block = "latest"):
+        data = call_by_sig(self.strategy_addr, "assetToPToken(address)", [asset], block)
+        result = data["result"]
+        return decode_single("address", decode_hex(result))
+
+    def get_underlying_balance(self, block = "latest"):
+        retval = {}
+
+        # Total number of tokens held in pool
+        coins_split = self.get_balance_split(block)
+
+        # LP token price
+        lp_price = self.get_virtual_price(block)
+
+        # Staked LP tokens
+        staked_bal = balanceOf(self.rewards_pool_addr, self.strategy_addr, 18, block)
+
+        # Unstaked LP tokens
+        unstaked_bal = Decimal(0)
+        for asset_symbol in self.all_coins:
+            if asset_symbol == "OETH":
+                continue
+            asset = CONTRACT_FOR_SYMBOL[asset_symbol]
+            ptoken_addr = self.asset_to_ptoken(asset, block)
+            asset_unstaked_bal = balanceOf(ptoken_addr, self.strategy_addr, 18, block)
+
+            unstaked_bal += asset_unstaked_bal
+
+        # Total LP tokens
+        total_lp = (staked_bal + unstaked_bal) * lp_price / 10**18
+
+        for asset_symbol in self.all_coins:
+            retval[asset_symbol] = coins_split.get(asset_symbol, Decimal(0)) * total_lp
+
+        return retval
+
+
+OETHCurveAMOStrategy = GenericCurveAMOStrategy(
+    OETH_CURVE_AMO_STRATEGY,
+    OETH_ETH_AMO_METAPOOL,
+    OETH_CURVE_AMO_REWARDS_POOL,
+    ("ETH", "OETH")
+)

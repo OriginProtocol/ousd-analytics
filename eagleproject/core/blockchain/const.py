@@ -78,7 +78,7 @@ CONTRACT_FOR_SYMBOL = {
     "WETH": WETH,
     "RETH": RETH,
     "STETH": STETH,
-    "FRXETH": FRXETH,
+    "FRXETH": FRXETH
 
 }
 SYMBOL_FOR_CONTRACT = {v: k for (k, v) in CONTRACT_FOR_SYMBOL.items()}
@@ -97,6 +97,7 @@ DECIMALS_FOR_SYMBOL = {
     "USDC": 6,
     "veCRV": 18,
     "3CRV": 18,
+    "ETH": 18,
 
     "OETH": 18,
     "WETH": 18,
