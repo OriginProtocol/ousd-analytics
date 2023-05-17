@@ -345,7 +345,6 @@ def ensure_asset(symbol, block_number, project=OriginTokens.OUSD):
             return ab
     except ObjectDoesNotExist:
         pass
-
     ab = build_asset_block(symbol, block_number, project)
     ab.save()
     return ab
