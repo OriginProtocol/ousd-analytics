@@ -108,7 +108,7 @@ def _build_asset_block_oeth(symbol, block_number):
     if symbol == "ETH":
         ora_tok_usd_max = 1
         ora_tok_usd_min = 1
-    else:
+    elif symbol != "OETH":
         try:
             ora_tok_usd_min = priceUnitMint(OETH_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
         except:
