@@ -40,6 +40,7 @@ CONTRACT_NAMES = {
     "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48": "USDC",
     "0xb7277a6e95992041568d9391d09d0122023778a2": "USDC Internal",
     "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2": "WETH",
+    "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee": "ETH",
     "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643": "cDAI",
     "0xbb8be4772faa655c255309afc3c5207aa7b896fd": "cDAI Storage",
     "0x3d9819210a31b4961b30ef54be2aed79b9c9cd3b": "Compound Comptroller",

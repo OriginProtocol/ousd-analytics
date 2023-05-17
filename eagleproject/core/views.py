@@ -100,12 +100,13 @@ def fetch_assets(block_number, project=OriginTokens.OUSD):
         lusd = ensure_asset("LUSD", block_number)
         return [dai, usdt, usdc, ousd, lusd]
     elif project == OriginTokens.OETH:
+        eth = ensure_asset("ETH", block_number, OriginTokens.OETH)
         weth = ensure_asset("WETH", block_number, OriginTokens.OETH)
         frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH)
         reth = ensure_asset("RETH", block_number, OriginTokens.OETH)
         steth = ensure_asset("STETH", block_number, OriginTokens.OETH)
         oeth = ensure_asset("OETH", block_number, OriginTokens.OETH)
-        return [weth, frxeth, reth, steth, oeth]
+        return [eth, weth, frxeth, reth, steth, oeth]
     return []
 
 
