@@ -21,10 +21,6 @@ def run(*script_args):
     for s in snapshots:
         print("Recomputing supply at block {}".format(s.block_number))
 
-        # ETH asset doesn't exist. The other assets aren't affected.
-        # OETH is the only one we need to delete and recompute
-        ensure_asset("OETH", s.block_number, OriginTokens.OETH).delete()
-
         eth = ensure_asset("ETH", s.block_number, OriginTokens.OETH).redeem_value()
         weth = ensure_asset("WETH", s.block_number, OriginTokens.OETH).redeem_value()
         frxeth = ensure_asset("FRXETH", s.block_number, OriginTokens.OETH).redeem_value()
