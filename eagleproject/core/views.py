@@ -732,7 +732,7 @@ def strategies(request, project=OriginTokens.OUSD):
             holdings[asset] = float(holding or 0)
         strat["total"] = float(strat["total"] or 0)
         strat["tvl"] = float(strat["tvl"] or 0)
-        net_tvl =+ strat["tvl"]
+        net_tvl += strat["tvl"]
         strat["holdings"] = holdings
 
     if structured is None:
