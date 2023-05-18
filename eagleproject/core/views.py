@@ -40,6 +40,7 @@ from core.blockchain.harvest.snapshots import (
     latest_snapshot,
     latest_snapshot_block_number,
     calculate_snapshot_data,
+    snapshot_at_block,
 )
 from core.blockchain.apy import get_trailing_apr, get_trailing_apy, to_apy
 from core.blockchain.harvest.transactions import (
@@ -719,19 +720,20 @@ def api_address_history(request, address, project=OriginTokens.OUSD):
 def strategies(request, project=OriginTokens.OUSD):
     block_number = latest_snapshot_block_number(project)
     assets = fetch_assets(block_number, project)
+    snapshot = snapshot_at_block(block_number, project)
 
     all_strats = _get_strat_holdings(assets, project=project)
 
     # Returns an object with UUID as keys when set, otherwise returns an array
     structured = project == OriginTokens.OETH or request.GET.get("structured") is not None
 
-    net_tvl = 0
+    net_tvl = Decimal(0)
     for (key, strat) in all_strats.items():
         holdings = {}
         for (asset, holding) in strat["holdings"]:
-            holdings[asset] = float(holding or 0)
-        strat["total"] = float(strat["total"] or 0)
-        strat["tvl"] = float(strat["tvl"] or 0)
+            holdings[asset] = Decimal(holding or 0)
+        strat["total"] = Decimal(strat["total"] or 0)
+        strat["tvl"] = Decimal(strat["tvl"] or 0)
         net_tvl += strat["tvl"]
         strat["holdings"] = holdings
 
@@ -749,7 +751,8 @@ def strategies(request, project=OriginTokens.OUSD):
 
     response = JsonResponse({
         "strategies": all_strats,
-        "net_tvl": net_tvl
+        "total_value": net_tvl,
+        "total_supply": Decimal(snapshot.reported_supply)
     })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)

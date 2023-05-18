@@ -671,7 +671,7 @@ def latest_snapshot(project=OriginTokens.OUSD):
 def snapshot_at_block(block, project=OriginTokens.OUSD):
     return SupplySnapshot.objects.filter(block_number__lte=block,project=project).order_by(
         "-block_number"
-    )[0]
+    ).first()
 
 
 def latest_snapshot_block_number(project=OriginTokens.OUSD):
