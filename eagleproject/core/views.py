@@ -187,6 +187,7 @@ def _get_strat_holdings(assets, project=OriginTokens.OUSD):
 
     for (strat_key, strat) in strat_config.items():
         total = 0
+        tvl = 0
         holdings = []
 
         for asset in assets:
@@ -195,12 +196,14 @@ def _get_strat_holdings(assets, project=OriginTokens.OUSD):
             balance = asset.get_strat_holdings(strat_key)
             holdings.append((asset.symbol, balance))
             total += balance
+            tvl += (balance * asset.redeem_price())
 
         all_strats[strat_key] = {
             "name": strat["NAME"],
             "address": strat["ADDRESS"],
             "icon_file": strat.get("ICON_NAME", "buffer-icon.svg"),
             "total": total,
+            "tvl": tvl,
             "holdings": holdings
         }
 
@@ -722,11 +725,14 @@ def strategies(request, project=OriginTokens.OUSD):
     # Returns an object with UUID as keys when set, otherwise returns an array
     structured = project == OriginTokens.OETH or request.GET.get("structured") is not None
 
+    net_tvl = 0
     for (key, strat) in all_strats.items():
         holdings = {}
         for (asset, holding) in strat["holdings"]:
             holdings[asset] = float(holding or 0)
         strat["total"] = float(strat["total"] or 0)
+        strat["tvl"] = float(strat["tvl"] or 0)
+        net_tvl =+ strat["tvl"]
         strat["holdings"] = holdings
 
     if structured is None:
@@ -742,7 +748,8 @@ def strategies(request, project=OriginTokens.OUSD):
         } for (strat_key, strat) in all_strats.items()]
 
     response = JsonResponse({
-        "strategies": all_strats
+        "strategies": all_strats,
+        "net_tvl": net_tvl
     })
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
