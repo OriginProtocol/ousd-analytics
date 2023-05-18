@@ -10,7 +10,7 @@ from core.models import OriginTokens, SupplySnapshot
 from core.blockchain.rpc import origin_token_rebasing_credits, totalSupply, origin_token_non_rebasing_supply, rebasing_credits_per_token
 
 def run(*script_args):
-    start_block = 17249890 # Block when Curve AMO strategy was deployed 
+    start_block = int(script_args[0]) if len(script_args) > 0 else START_OF_OETH
 
     snapshots = SupplySnapshot.objects.filter(
         block_number__gte=start_block,
@@ -25,12 +25,12 @@ def run(*script_args):
         # OETH is the only one we need to delete and recompute
         ensure_asset("OETH", s.block_number, OriginTokens.OETH).delete()
 
-        eth = ensure_asset("ETH", s.block_number, OriginTokens.OETH).total()
-        weth = ensure_asset("WETH", s.block_number, OriginTokens.OETH).total()
-        frxeth = ensure_asset("FRXETH", s.block_number, OriginTokens.OETH).total()
-        reth = ensure_asset("RETH", s.block_number, OriginTokens.OETH).total()
-        steth = ensure_asset("STETH", s.block_number, OriginTokens.OETH).total()
-        oeth = ensure_asset("OETH", s.block_number, OriginTokens.OETH).total()
+        eth = ensure_asset("ETH", s.block_number, OriginTokens.OETH).redeem_value()
+        weth = ensure_asset("WETH", s.block_number, OriginTokens.OETH).redeem_value()
+        frxeth = ensure_asset("FRXETH", s.block_number, OriginTokens.OETH).redeem_value()
+        reth = ensure_asset("RETH", s.block_number, OriginTokens.OETH).redeem_value()
+        steth = ensure_asset("STETH", s.block_number, OriginTokens.OETH).redeem_value()
+        oeth = ensure_asset("OETH", s.block_number, OriginTokens.OETH).redeem_value()
 
         s.credits = origin_token_rebasing_credits(s.block_number, contract=OETH) + s.non_rebasing_credits
 
