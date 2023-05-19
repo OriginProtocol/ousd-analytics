@@ -41,6 +41,7 @@ from core.blockchain.harvest.snapshots import (
     latest_snapshot_block_number,
     calculate_snapshot_data,
     snapshot_at_block,
+    ensure_oracle_snapshot,
 )
 from core.blockchain.apy import get_trailing_apr, get_trailing_apy, to_apy
 from core.blockchain.harvest.transactions import (
@@ -722,6 +723,8 @@ def strategies(request, project=OriginTokens.OUSD):
     assets = fetch_assets(block_number, project)
     snapshot = snapshot_at_block(block_number, project)
 
+    eth_snap = next(snap for snap in ensure_oracle_snapshot(block_number) if snap.ticker_left=="ETH" and snap.ticker_right=="USD")
+
     all_strats = _get_strat_holdings(assets, project=project)
 
     # Returns an object with UUID as keys when set, otherwise returns an array
@@ -752,6 +755,8 @@ def strategies(request, project=OriginTokens.OUSD):
     response = JsonResponse({
         "strategies": all_strats,
         "total_value": net_tvl,
+        "total_value_usd": net_tvl * eth_snap.price,
+        "eth_price": eth_snap.price,
         "total_supply": Decimal(snapshot.reported_supply)
     })
     response.setdefault("Access-Control-Allow-Origin", "*")
