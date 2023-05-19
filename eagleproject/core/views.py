@@ -83,6 +83,7 @@ from core.models import (
     OriginTokens
 )
 from core.forms import SubscriberForm
+from core.utils import DecimalEncoder
 from django.conf import settings
 import json
 
@@ -758,7 +759,7 @@ def strategies(request, project=OriginTokens.OUSD):
         "total_value_usd": net_tvl * eth_snap.price,
         "eth_price": eth_snap.price,
         "total_supply": Decimal(snapshot.reported_supply)
-    })
+    }, encoder=DecimalEncoder)
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
