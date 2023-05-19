@@ -363,6 +363,7 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
     s.non_rebasing_credits = Decimal(0)  # No longer used in contract
 
     if project == OriginTokens.OUSD:
+        # TODO: Should we use `redeem_value` for OUSD as well?
         dai = ensure_asset("DAI", block_number).total()
         usdt = ensure_asset("USDT", block_number).total()
         usdc = ensure_asset("USDC", block_number).total()
@@ -385,12 +386,12 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
         s.rebasing_credits_ratio = next_rebase_supply / s.credits
         s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
     else:
-        eth = ensure_asset("ETH", block_number, OriginTokens.OETH).total()
-        weth = ensure_asset("WETH", block_number, OriginTokens.OETH).total()
-        frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH).total()
-        reth = ensure_asset("RETH", block_number, OriginTokens.OETH).total()
-        steth = ensure_asset("STETH", block_number, OriginTokens.OETH).total()
-        oeth = ensure_asset("OETH", block_number, OriginTokens.OETH).total()
+        eth = ensure_asset("ETH", block_number, OriginTokens.OETH).redeem_value()
+        weth = ensure_asset("WETH", block_number, OriginTokens.OETH).redeem_value()
+        frxeth = ensure_asset("FRXETH", block_number, OriginTokens.OETH).redeem_value()
+        reth = ensure_asset("RETH", block_number, OriginTokens.OETH).redeem_value()
+        steth = ensure_asset("STETH", block_number, OriginTokens.OETH).redeem_value()
+        oeth = ensure_asset("OETH", block_number, OriginTokens.OETH).redeem_value()
 
         s.credits = origin_token_rebasing_credits(block_number, contract=OETH) + s.non_rebasing_credits
 
@@ -670,7 +671,7 @@ def latest_snapshot(project=OriginTokens.OUSD):
 def snapshot_at_block(block, project=OriginTokens.OUSD):
     return SupplySnapshot.objects.filter(block_number__lte=block,project=project).order_by(
         "-block_number"
-    )[0]
+    ).first()
 
 
 def latest_snapshot_block_number(project=OriginTokens.OUSD):
