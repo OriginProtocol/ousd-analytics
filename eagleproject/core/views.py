@@ -915,9 +915,10 @@ def generate_token():
 def subscribe(request):
     latest_report_url = request.build_absolute_uri('/reports/weekly')
 
-    project = request.POST['project'] or OriginTokens.OUSD
     
     if request.method == 'POST':
+        project = request.POST['project'] if "project" in request.POST else OriginTokens.OUSD
+
         sub = Subscriber.objects.filter(email=request.POST['email'],project=project).first()
         if sub and sub.confirmed is True and sub.unsubscribed is False:
             action = 'exists'
