@@ -419,7 +419,9 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
 
 def ensure_staking_snapshot(block_number):
     try:
-        return OgnStakingSnapshot.objects.get(block_number=block_number)
+        s = OgnStakingSnapshot.objects.get(block_number=block_number)
+        if s is not None:
+            return s
     except ObjectDoesNotExist:
         pass
 
@@ -446,7 +448,9 @@ def ensure_staking_snapshot(block_number):
 
 def ensure_story_staking_snapshot(block_number):
     try:
-        return StoryStakingSnapshot.objects.get(block_number=block_number)
+        s = StoryStakingSnapshot.objects.get(block_number=block_number)
+        if s is not None:
+            return s
     except ObjectDoesNotExist:
         pass
 
