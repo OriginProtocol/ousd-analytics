@@ -138,6 +138,7 @@ OUSD_CONTRACTS = [
 ]
 
 OETH_CONTRACTS = [
+    OETH,
     OETH_VAULT,
 ]
 
