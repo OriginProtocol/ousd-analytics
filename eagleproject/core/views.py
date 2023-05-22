@@ -32,6 +32,7 @@ from core.blockchain.const import (
     START_OF_OUSD_V2_TIME,
     report_stats,
     curve_report_stats,
+    oeth_report_stats,
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
 from core.blockchain.harvest.snapshots import (
@@ -691,7 +692,7 @@ def _my_assets(address, block_number):
 
 # def test_email(request):
 #     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-#     send_report_email("OUSD", 'Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
 #     return HttpResponse("ok")
     
 
@@ -786,7 +787,7 @@ def _get_previous_report(report, all_reports=None):
         all_reports = (
             all_reports
             if all_reports is not None
-            else AnalyticsReport.objects.filter(month__isnull=False, project=OriginTokens.OUSD).order_by(
+            else AnalyticsReport.objects.filter(month__isnull=False).order_by(
                 "-year", "-month"
             )
         )
@@ -804,7 +805,7 @@ def _get_previous_report(report, all_reports=None):
         all_reports = (
             all_reports
             if all_reports is not None
-            else AnalyticsReport.objects.filter(week__isnull=False, project=OriginTokens.OUSD).order_by(
+            else AnalyticsReport.objects.filter(week__isnull=False).order_by(
                 "-year", "-week"
             )
         )
@@ -821,12 +822,14 @@ def _get_previous_report(report, all_reports=None):
 
 
 def report_monthly(request, year, month):
-    report = AnalyticsReport.objects.filter(month=month, year=year, project=OriginTokens.OUSD)[0]
+    report = AnalyticsReport.objects.filter(month=month, year=year)[0]
     prev_report = _get_previous_report(report)
     stats = report_stats
     stat_keys = stats.keys()
     curve_stats = curve_report_stats
     curve_stat_keys = curve_stats.keys()
+    oeth_stats = oeth_report_stats
+    oeth_stat_keys = oeth_stats.keys()
     is_monthly = True
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
@@ -847,6 +850,8 @@ def report_weekly(request, year, week):
     stat_keys = stats.keys()
     curve_stats = curve_report_stats
     curve_stat_keys = curve_stats.keys()
+    oeth_stats = oeth_report_stats
+    oeth_stat_keys = oeth_stats.keys()
     is_monthly = False
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))

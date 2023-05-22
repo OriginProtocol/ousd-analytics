@@ -10,6 +10,7 @@ TICKER_TO_COINGECKO_ID = {
     "OGN": "origin-protocol",
     "OUSD": "origin-dollar",
     "OGV": "origin-dollar-governance",
+    "OETH": "origin-ether",
 }
 
 

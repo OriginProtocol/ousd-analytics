@@ -219,6 +219,13 @@ report_stats = {
     "average_ousd_volume": "Average daily trading volume"
 }
 
+oeth_report_stats = {
+    "oeth_fees_generated": "Fees generated",
+    "accounts_holding_more_than_dot1_oeth": "Accounts holding over 0.1 OETH",
+    "oeth_curve_supply": "Curve pool supply",
+    "average_oeth_volume": "Average daily trading volume"
+}
+
 curve_report_stats = {
     "accounts_holding_more_than_100_ousd_after_curve_start": "Accounts holding over 100 OUSD after campaign start",
     "new_accounts_after_curve_start": "New accounts after campaign start",

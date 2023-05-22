@@ -22,6 +22,7 @@ from core.blockchain.addresses import (
     OETH_VAULT,
     OETH,
     OETH_CURVE_AMO_STRATEGY,
+    OETH_ETH_AMO_METAPOOL,
 )
 from core.blockchain.const import (
     BLOCKS_PER_YEAR,
@@ -683,6 +684,7 @@ def latest_snapshot_block_number(project=OriginTokens.OUSD):
 
 
 def calculate_snapshot_data(block=None):
+    project = OriginTokens.OUSD
     pools_config = [
         ("Curve", CURVE_METAPOOL, False),
         ("Uniswap v3 OUSD/USDT", OUSD_USDT_UNISWAP_V3, False),
@@ -704,7 +706,44 @@ def calculate_snapshot_data(block=None):
         totals_by_rebasing[is_rebasing] += amount
     pools = sorted(pools, key=lambda pool: 0 - pool["amount"])
 
-    snapshot = latest_snapshot() if block is None else snapshot_at_block(block)
+    snapshot = latest_snapshot(project=project) if block is None else snapshot_at_block(block, project=project)
+    other_rebasing = (
+        snapshot.rebasing_reported_supply() - totals_by_rebasing[True]
+    )
+    other_non_rebasing = (
+        snapshot.non_rebasing_reported_supply() - totals_by_rebasing[False]
+    )
+
+    return [
+        pools,
+        totals_by_rebasing,
+        other_rebasing,
+        other_non_rebasing,
+        snapshot,
+    ]
+
+def calculate_oeth_snapshot_data(block=None):
+    project = OriginTokens.OETH
+    pools_config = [
+        ("Curve", OETH_ETH_AMO_METAPOOL),
+    ]
+    pools = []
+    totals_by_rebasing = {True: Decimal(0), False: Decimal(0)}
+    for name, address in pools_config:
+        amount = balanceOf(
+            OETH, address, 18, "latest" if block is None else block
+        )
+        pools.append(
+            {
+                "name": name,
+                "amount": amount,
+                "is_rebasing": False,
+            }
+        )
+        totals_by_rebasing[True] += amount
+    pools = sorted(pools, key=lambda pool: 0 - pool["amount"])
+
+    snapshot = latest_snapshot(project=project) if block is None else snapshot_at_block(block, project=project)
     other_rebasing = (
         snapshot.rebasing_reported_supply() - totals_by_rebasing[True]
     )
