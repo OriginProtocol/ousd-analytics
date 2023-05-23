@@ -840,7 +840,10 @@ def report_monthly(request, year, month):
     else:
         next_month = month + 1
         next_year = year
-    return render(request, "analytics_report.html", locals())
+    
+    view_template = "analytics_report_v2.html" if year > 2023 or (year == 2023 and month >= 5) else "analytics_report.html"
+
+    return render(request, view_template, locals())
 
 
 def report_weekly(request, year, week):
@@ -863,7 +866,9 @@ def report_weekly(request, year, week):
         next_week = week + 1
         next_year = year
 
-    return render(request, "analytics_report.html", locals())
+    view_template = "analytics_report_v2.html" if year > 2023 or (year == 2023 and week >= 20) else "analytics_report.html"
+
+    return render(request, view_template, locals())
 
 
 def report_latest_weekly(request):
@@ -910,7 +915,7 @@ def reports(request):
             )
         )
 
-    return render(request, "analytics_reports.html", locals())
+    return render(request, "analytics_reports_list.html", locals())
 
 
 def generate_token():
