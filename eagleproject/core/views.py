@@ -192,14 +192,18 @@ def _get_strat_holdings(assets, project=OriginTokens.OUSD):
         total = 0
         tvl = 0
         holdings = []
+        holdings_value = []
 
         for asset in assets:
             if not asset.symbol in strat.get("SUPPORTED_ASSETS", backing_assets):
                 continue
             balance = asset.get_strat_holdings(strat_key)
+            asset_tvl = balance * asset.redeem_price()
+
             holdings.append((asset.symbol, balance))
+            holdings_value.append((asset.symbol, asset_tvl))
             total += balance
-            tvl += (balance * asset.redeem_price())
+            tvl += asset_tvl
 
         all_strats[strat_key] = {
             "name": strat["NAME"],
@@ -207,7 +211,8 @@ def _get_strat_holdings(assets, project=OriginTokens.OUSD):
             "icon_file": strat.get("ICON_NAME", "buffer-icon.svg"),
             "total": total,
             "tvl": tvl,
-            "holdings": holdings
+            "holdings": holdings,
+            "holdings_value": holdings_value,
         }
 
     return all_strats
@@ -756,7 +761,7 @@ def strategies(request, project=OriginTokens.OUSD):
     response = JsonResponse({
         "strategies": all_strats,
         "total_value": net_tvl,
-        "total_value_usd": net_tvl * eth_snap.price,
+        "total_value_usd": net_tvl * (eth_snap.price if project == OriginTokens.OETH else 1),
         "eth_price": eth_snap.price,
         "total_supply": Decimal(snapshot.reported_supply)
     }, encoder=DecimalEncoder)
