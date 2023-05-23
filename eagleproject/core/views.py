@@ -139,8 +139,7 @@ def dashboard(request):
         logs_q = logs_q.filter(topic_0=topic)
     latest_logs = logs_q[:100]
     weekly_reports = AnalyticsReport.objects.filter(
-        week__isnull=False,
-        project=OriginTokens.OUSD
+        week__isnull=False
     ).order_by("-year", "-week")
     if (len(weekly_reports) > 0):
         token_holder_amount = weekly_reports[0].accounts_holding_ousd
@@ -319,7 +318,7 @@ def remove_specific_month_report(request, month):
         return HttpResponse("ok")
 
     year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(month=month, year=year, project=OriginTokens.OUSD)
+    report = AnalyticsReport.objects.get(month=month, year=year)
     report.delete()
     return HttpResponse("ok")
 
@@ -330,7 +329,7 @@ def remove_specific_week_report(request, week):
         return HttpResponse("ok")
 
     year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(week=week, year=year, project=OriginTokens.OUSD)
+    report = AnalyticsReport.objects.get(week=week, year=year)
     report.delete()
     return HttpResponse("ok")
 
@@ -880,11 +879,9 @@ def report_latest_weekly(request):
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(
         month__isnull=False,
-        project=OriginTokens.OUSD
     ).order_by("-year", "-month")
     weekly_reports = AnalyticsReport.objects.filter(
         week__isnull=False,
-        project=OriginTokens.OUSD
     ).order_by("-year", "-week")
     stats = report_stats
     stat_keys = stats.keys()

@@ -486,13 +486,11 @@ def upsert_report(
             analyticsReport = AnalyticsReport.objects.get(
                 week=week_option,
                 year=year,
-                # project=project
             )
         else:
             analyticsReport = AnalyticsReport.objects.get(
                 month=month_option,
                 year=year,
-                # project=project
             )
 
         if analyticsReport is None:
@@ -505,14 +503,12 @@ def upsert_report(
             analyticsReport, created = AnalyticsReport.objects.get_or_create(
                 week=week_option,
                 year=year,
-                # project=project,
                 defaults=params,
             )
         else:
             analyticsReport, created = AnalyticsReport.objects.get_or_create(
                 month=month_option,
                 year=year,
-                # project=project,
                 defaults=params,
             )
 
