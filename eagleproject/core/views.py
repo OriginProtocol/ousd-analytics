@@ -739,12 +739,16 @@ def strategies(request, project=OriginTokens.OUSD):
     net_tvl = Decimal(0)
     for (key, strat) in all_strats.items():
         holdings = {}
+        holdings_value = {}
         for (asset, holding) in strat["holdings"]:
             holdings[asset] = Decimal(holding or 0)
+        for (asset, holding) in strat["holdings_value"]:
+            holdings_value[asset] = Decimal(holding or 0)
         strat["total"] = Decimal(strat["total"] or 0)
         strat["tvl"] = Decimal(strat["tvl"] or 0)
         net_tvl += strat["tvl"]
         strat["holdings"] = holdings
+        strat["holdings_value"] = holdings_value
 
     if structured is None:
         # TODO: Backward compatibility, remove after making sure that every repo has been updated
