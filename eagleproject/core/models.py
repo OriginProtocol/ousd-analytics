@@ -439,19 +439,22 @@ class AnalyticsReport(models.Model):
             )
         elif name == "protocol_owned_oeth":
             return (
-                int(report_json.get("supply_data", {}).get("protocol_owned_oeth", 0))
+                int(report_json.get("oeth_supply_data", {}).get("protocol_owned_oeth", 0))
             )
         elif name == "stablecoin_market_share":
             return (
                 round(report_json.get("stablecoin_market_share", 0), 4)
             )
-        elif name == "fees_generated":
+        elif name in (
+            "fees_generated", 
+            "fees_distributed", 
+            "oeth_fees_generated", 
+            "oeth_fees_distributed", 
+            "average_ousd_volume",
+            "average_oeth_volume",
+        ):
             return (
-                int(report_json.get("fees_generated", 0))
-            )
-        elif name == "oeth_fees_generated":
-            return (
-                int(report_json.get("oeth_fees_generated", 0))
+                int(report_json.get(name, 0))
             )
         elif name == "curve_supply":
             pool = report_json.get("supply_data", {}).get("pools")
@@ -461,14 +464,6 @@ class AnalyticsReport(models.Model):
             pool = report_json.get("oeth_supply_data", {}).get("pools")
             amount = int(pool[0].get("amount", 0)) if pool is not None and len(pool) > 0 else None
             return amount
-        elif name == "average_ousd_volume":
-            return (
-                int(report_json.get("average_ousd_volume", 0))
-            )
-        elif name == "average_oeth_volume":
-            return (
-                int(report_json.get("average_oeth_volume", 0))
-            )
         elif name == "curve_metapool_total_supply":
             return (
                 report_json.get("curve_data", {}).get("total_supply")

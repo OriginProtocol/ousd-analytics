@@ -175,6 +175,7 @@ class analytics_report:
         apy,
         curve_data,
         fees_generated,
+        fees_distributed,
         average_ousd_volume,
         stablecoin_market_share,
 
@@ -192,6 +193,7 @@ class analytics_report:
         oeth_apy,
         oeth_curve_data,
         oeth_fees_generated,
+        oeth_fees_distributed,
         average_oeth_volume,
     ):
         self.accounts_analyzed = accounts_analyzed
@@ -206,6 +208,7 @@ class analytics_report:
         self.apy = apy
         self.curve_data = curve_data
         self.fees_generated = fees_generated
+        self.fees_distributed = fees_distributed
         self.average_ousd_volume = average_ousd_volume
         self.stablecoin_market_share = stablecoin_market_share
         self.ogv_data = ogv_data
@@ -220,6 +223,7 @@ class analytics_report:
         self.oeth_apy = oeth_apy
         self.oeth_curve_data = oeth_curve_data
         self.oeth_fees_generated = oeth_fees_generated
+        self.oeth_fees_distributed = oeth_fees_distributed
         self.average_oeth_volume = average_oeth_volume
 
     def __str__(self):
@@ -312,6 +316,7 @@ def calculate_report_change(current_report, previous_report):
         "curve_metapool_total_supply": 0,
         "share_earning_curve_ogn": 0,
         "fees_generated": 0,
+        "fees_distributed": 0,
         "curve_supply": 0,
         "average_ousd_volume": 0,
         "stablecoin_market_share": 0,
@@ -337,6 +342,7 @@ def calculate_report_change(current_report, previous_report):
         "oeth_other_non_rebasing": 0,
         "oeth_curve_metapool_total_supply": 0,
         "oeth_fees_generated": 0,
+        "oeth_fees_distributed": 0,
         "oeth_curve_supply": 0,
         "average_oeth_volume": 0,
     }
@@ -387,6 +393,7 @@ def calculate_report_change(current_report, previous_report):
     changes['accounts_with_non_rebase_balance_increase'] = calculate_difference(current_report.accounts_with_non_rebase_balance_increase, previous_report.accounts_with_non_rebase_balance_increase)
     changes['accounts_with_non_rebase_balance_decrease'] = calculate_difference(current_report.accounts_with_non_rebase_balance_decrease, previous_report.accounts_with_non_rebase_balance_decrease)
     changes['fees_generated'] = calculate_difference(current_report.fees_generated, previous_report.fees_generated)
+    changes['fees_distributed'] = calculate_difference(current_report.fees_distributed, previous_report.fees_distributed)
     changes['curve_supply'] = calculate_difference(current_report.curve_supply, previous_report.curve_supply)
     changes['average_ousd_volume'] = calculate_difference(current_report.average_ousd_volume, previous_report.average_ousd_volume)
     changes['stablecoin_market_share'] = calculate_difference_bp(current_report.stablecoin_market_share, previous_report.stablecoin_market_share)
@@ -402,6 +409,7 @@ def calculate_report_change(current_report, previous_report):
     changes['oeth_accounts_with_non_rebase_balance_increase'] = calculate_difference(current_report.oeth_accounts_with_non_rebase_balance_increase, previous_report.oeth_accounts_with_non_rebase_balance_increase)
     changes['oeth_accounts_with_non_rebase_balance_decrease'] = calculate_difference(current_report.oeth_accounts_with_non_rebase_balance_decrease, previous_report.oeth_accounts_with_non_rebase_balance_decrease)
     changes['oeth_fees_generated'] = calculate_difference(current_report.oeth_fees_generated, previous_report.oeth_fees_generated)
+    changes['oeth_fees_distributed'] = calculate_difference(current_report.oeth_fees_distributed, previous_report.oeth_fees_distributed)
     changes['oeth_curve_supply'] = calculate_difference(current_report.oeth_curve_supply, previous_report.oeth_curve_supply)
     changes['average_oeth_volume'] = calculate_difference(current_report.average_oeth_volume, previous_report.average_oeth_volume)
 
@@ -745,7 +753,7 @@ def fetch_supply_data(block_number, project=OriginTokens.OUSD):
         [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_oeth_snapshot_data(block_number)
 
         oeth = build_asset_block("OETH", block_number, project=project)
-        protocol_owned_oeth = 0 # TODO: float(oeth.strat_holdings["ousd_metastrat"])
+        protocol_owned_oeth = float(oeth.strat_holdings["oeth_curve_amo"])
         circulating_oeth = float(snapshot.reported_supply) - protocol_owned_oeth
 
         return {
@@ -830,21 +838,32 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
 
     # Fees
     ousd_fees_generated = 0
+    ousd_fees_distributed = 0
+    
     oeth_fees_generated = 0
+    oeth_fees_distributed = 0
+    
     days = (to_block_time - from_block_time).days + 1
     ousd_rows = _daily_rows_past(days, to_block_time, project=OriginTokens.OUSD)
     oeth_rows = _daily_rows_past(days, to_block_time, project=OriginTokens.OETH)
     
     for row in ousd_rows:
         if row.gain >= 0:
+            protocol_fee = 0
             if row.block_number > VAULT_FEE_UPGRADE_BLOCK:
-                ousd_fees_generated += row.gain / 5 # 20% fee == 20/100 == 1/5
+                protocol_fee = row.gain / 5 # 20% fee == 20/100 == 1/5
             else:
-                ousd_fees_generated += row.gain / 10 # 10% fee == 10/100 == 1/10
-    
+                protocol_fee = row.gain / 10 # 10% fee == 10/100 == 1/10
+
+            ousd_fees_generated += protocol_fee
+            ousd_fees_distributed += (row.gain - protocol_fee)
+
+            
     for row in oeth_rows:
         if row.gain >= 0:
-            oeth_fees_generated += row.gain / 5 # 20% fee == 20/100 == 1/5
+            protocol_fee = row.gain / 5 # 20% fee == 20/100 == 1/5
+            oeth_fees_generated += protocol_fee
+            oeth_fees_distributed += (row.gain - protocol_fee)
 
     # Average OUSD Volume
     ousd_volume_sum = 0
@@ -964,6 +983,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         ousd_apy,
         curve_data,
         ousd_fees_generated,
+        ousd_fees_distributed,
         average_ousd_volume,
         ousd_market_share,
 
@@ -979,6 +999,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         oeth_apy,
         oeth_curve_data,
         oeth_fees_generated,
+        oeth_fees_distributed,
         average_oeth_volume
     )
 
