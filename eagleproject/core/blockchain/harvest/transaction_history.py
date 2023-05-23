@@ -173,6 +173,7 @@ class analytics_report:
         accounts_with_non_rebase_balance_decrease,
         supply_data,
         apy,
+        apy_7d,
         curve_data,
         fees_generated,
         fees_distributed,
@@ -191,6 +192,7 @@ class analytics_report:
         oeth_accounts_with_non_rebase_balance_decrease,
         oeth_supply_data,
         oeth_apy,
+        oeth_apy_7d,
         oeth_curve_data,
         oeth_fees_generated,
         oeth_fees_distributed,
@@ -206,6 +208,7 @@ class analytics_report:
         self.accounts_with_non_rebase_balance_decrease = accounts_with_non_rebase_balance_decrease
         self.supply_data = supply_data
         self.apy = apy
+        self.apy_7d = apy_7d
         self.curve_data = curve_data
         self.fees_generated = fees_generated
         self.fees_distributed = fees_distributed
@@ -221,6 +224,7 @@ class analytics_report:
         self.oeth_accounts_with_non_rebase_balance_decrease = oeth_accounts_with_non_rebase_balance_decrease
         self.oeth_supply_data = oeth_supply_data
         self.oeth_apy = oeth_apy
+        self.oeth_apy_7d = oeth_apy_7d
         self.oeth_curve_data = oeth_curve_data
         self.oeth_fees_generated = oeth_fees_generated
         self.oeth_fees_distributed = oeth_fees_distributed
@@ -303,6 +307,7 @@ def calculate_report_change(current_report, previous_report):
         "circulating_ousd": 0,
         "protocol_owned_ousd": 0,
         "apy": 0,
+        "apy_7d": 0,
         "accounts_analyzed": 0,
         "accounts_holding_ousd": 0,
         "accounts_holding_more_than_100_ousd": 0,
@@ -332,6 +337,7 @@ def calculate_report_change(current_report, previous_report):
         "circulating_oeth": 0,
         "protocol_owned_oeth": 0,
         "oeth_apy": 0,
+        "oeth_apy_7d": 0,
         "oeth_accounts_analyzed": 0,
         "accounts_holding_oeth": 0,
         "accounts_holding_more_than_dot1_oeth": 0,
@@ -384,6 +390,7 @@ def calculate_report_change(current_report, previous_report):
     changes['circulating_ousd'] = calculate_difference(current_report.circulating_ousd, previous_report.circulating_ousd)
     changes['protocol_owned_ousd'] = calculate_difference(current_report.protocol_owned_ousd, previous_report.protocol_owned_ousd)
     changes['apy'] = calculate_difference_bp(current_report.apy, previous_report.apy)
+    changes['apy_7d'] = calculate_difference_bp(current_report.apy_7d, previous_report.apy_7d)
     changes['accounts_analyzed'] = calculate_difference(current_report.accounts_analyzed, previous_report.accounts_analyzed)
     changes['accounts_holding_ousd'] = calculate_difference(current_report.accounts_holding_ousd, previous_report.accounts_holding_ousd)
     changes['accounts_holding_more_than_100_ousd'] = calculate_difference(current_report.accounts_holding_more_than_100_ousd, previous_report.accounts_holding_more_than_100_ousd)
@@ -402,6 +409,7 @@ def calculate_report_change(current_report, previous_report):
     changes['circulating_oeth'] = calculate_difference(current_report.circulating_oeth, previous_report.circulating_oeth)
     changes['protocol_owned_oeth'] = calculate_difference(current_report.protocol_owned_oeth, previous_report.protocol_owned_oeth)
     changes['oeth_apy'] = calculate_difference_bp(current_report.oeth_apy, previous_report.oeth_apy)
+    changes['oeth_apy_7d'] = calculate_difference_bp(current_report.oeth_apy_7d, previous_report.oeth_apy_7d)
     changes['oeth_accounts_analyzed'] = calculate_difference(current_report.oeth_accounts_analyzed, previous_report.oeth_accounts_analyzed)
     changes['accounts_holding_oeth'] = calculate_difference(current_report.accounts_holding_oeth, previous_report.accounts_holding_oeth)
     changes['accounts_holding_more_than_dot1_oeth'] = calculate_difference(current_report.accounts_holding_more_than_dot1_oeth, previous_report.accounts_holding_more_than_dot1_oeth)
@@ -824,10 +832,12 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
 
     ousd_supply_data = fetch_supply_data(to_block, project=OriginTokens.OUSD)
     ousd_apy = get_trailing_apy(to_block, project=OriginTokens.OUSD)
+    ousd_apy_7d = get_trailing_apy(to_block, days=7, project=OriginTokens.OUSD)
     curve_data = get_curve_data(to_block, project=OriginTokens.OUSD)
 
     oeth_supply_data = fetch_supply_data(to_block, project=OriginTokens.OETH)
     oeth_apy = get_trailing_apy(to_block, project=OriginTokens.OETH)
+    oeth_apy_7d = get_trailing_apy(to_block, days=7, project=OriginTokens.OETH)
     oeth_curve_data = get_curve_data(to_block, project=OriginTokens.OETH)
 
     ogv_data = fetch_ogv_data(to_block, from_timestamp, to_timestamp)
@@ -918,6 +928,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         print('Analyzing account {} of {}'.format(counter, len(all_ousd_addresses)))
         counter += 1
 
+        # TODO: Remove before merging
         if counter > 10:
             break
 
@@ -977,6 +988,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         accounts_with_non_rebase_balance_decrease,
         ousd_supply_data,
         ousd_apy,
+        ousd_apy_7d,
         curve_data,
         ousd_fees_generated,
         ousd_fees_distributed,
@@ -993,6 +1005,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         oeth_accounts_with_non_rebase_balance_decrease,
         oeth_supply_data,
         oeth_apy,
+        oeth_apy_7d,
         oeth_curve_data,
         oeth_fees_generated,
         oeth_fees_distributed,

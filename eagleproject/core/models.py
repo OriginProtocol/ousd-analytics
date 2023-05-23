@@ -476,10 +476,8 @@ class AnalyticsReport(models.Model):
             return (
                 report_json.get("curve_data", {}).get("earning_ogn")
             )
-        elif name == "apy":
-            return report_json.get("apy")
-        elif name == "oeth_apy":
-            return report_json.get("oeth_apy")
+        elif name in ("apy", "apy_7d", "oeth_apy", "oeth_apy_7d"):
+            return report_json.get(name)
         elif name == "pools":
             return (
                 report_json.get("supply_data", {}).get("pools", [])
