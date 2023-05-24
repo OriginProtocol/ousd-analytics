@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% load blockchain %}
+{% load humanize %}
+
+{% block title %}Analytics Reports{% endblock %}
+
+
+{% block content %}
+<head>
+  <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<div class="report">
+  <div class="box">
+    <div class="stretch">
+      <img src="/static/core/img/origin-dollar.png" alt="origin dollar" style="width:50%;height:auto;align-self:flex-start;" />
+      <a class="subscribe" href="/reports/subscribe" target="_blank">Subscribe!</a>
+    </div>
+    <h1>Analytics Report</h1>
+    <h4>
+        {% if is_monthly == True %}
+          For the month ending {{report.end_time|date:"F d, Y"}} at {{report.end_time|date:"P"}}
+        {% else %}
+          For the week ending {{report.end_time|date:"F d, Y"}} at {{report.end_time|date:"P"}}
+        {% endif %}
+        UTC.
+    </h4>
+    
+    <h2>
+      <img src="/static/core/img/ousd.png" alt="ousd" style="width: 32px;height: 32px;margin-right:6px;" />
+      <div style="display:inline;padding-top:2px">OUSD</div>
+    </h2>
+
+    <table class='p-0' style="margin-top: 32px;text-align:right;border-collapse: collapse;">
+      <tr style="border-bottom: 1px solid #B5BECA;">
+        <td style="text-align:left;width:265px;font-weight:bold;"><div class="value">Top indicators</div></td>
+        <td style="width:100px;"><div class="cell value">{% if is_monthly == True %}m/e{% else %}w/e{% endif %} {{report.end_time|date:'d M'}}</div></td>
+        <td style="width:100px;"><div class="cell value">{% if is_monthly == True %}m/e{% else %}w/e{% endif %} {{prev_report.end_time|date:'d M'}}</div></td>
+        <td style="width:100px;"><div class="cell value">Change</div></td>
+      </tr>
+        <tr style="border-bottom: 1px solid #B5BECA;">
+          <td><div class="field" style="text-align:left;padding-top: 14px;padding-bottom: 14px;">Circulating OUSD</div></td>
+          <td style="font-weight:bold;"><div class="cell value">{{report|class_value:'circulating_ousd'}}</div></td>
+          <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">{{prev_report|class_value:'circulating_ousd'}}</div></td>
+          <td><span style="{{change|dict_color_style:'circulating_ousd'}}"><div class="cell change">({{change|dict_value:'circulating_ousd'|floatformat_rnd_down:2}}%)</div></span></td>
+        </tr>
+        <tr style="border-bottom: 1px solid #B5BECA;">
+          <td><div class="field" style="text-align:left;padding-top: 14px;padding-bottom: 14px;">Protocol-owned OUSD</div></td>
+          <td style="font-weight:bold;"><div class="cell value">{{report|class_value:'protocol_owned_ousd'}}</div></td>
+          <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">{{prev_report|class_value:'protocol_owned_ousd'}}</div></td>
+          <td><span style="{{change|dict_color_style:'protocol_owned_ousd'}}"><div class="cell change">({{change|dict_value:'protocol_owned_ousd'|floatformat_rnd_down:2}}%)</div></span></td>
+        </tr>
+        <tr style="border-bottom: 1px solid #B5BECA;">
+          <td><div class="field" style="text-align:left;padding-top: 14px;padding-bottom: 14px;">30-Day APY</div></td>
+          <td style="font-weight:bold;"><div class="cell value">{{report|class_value:'apy'}}%</div></td>
+          <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">{{prev_report|class_value:'apy'}}%</div></td>
+          <td><span style="{{change|dict_color_style:'apy'}}"><div class="cell change">({{change|dict_value:'apy'|floatformat_rnd_down:0}}bp)</div></span></td>
+        </tr>
+        <tr style="border-bottom: 1px solid #B5BECA;">
+          <td><div class="field" style="text-align:left;padding-top: 14px;padding-bottom: 14px;">Stablecoin market share</div></td>
+          <td style="font-weight:bold;"><div class="cell value">{{report|class_value:'stablecoin_market_share'}}%</div></td>
+          <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">{{prev_report|class_value:'stablecoin_market_share'}}%</div></td>
+          <td><span style="{{change|dict_color_style:'stablecoin_market_share'}}"><div class="cell change">({{change|dict_value:'stablecoin_market_share'|floatformat_rnd_down:2}}bp)</div></span></td>
+        </tr>
+    </table>
+
+    <table style="margin-top: 32px;text-align:right;border-collapse: collapse;">
+      <tr style="border-bottom: 1px solid #B5BECA;">
+        <td style="text-align:left;width:265px;font-weight:bold;"><div class="cell value">More details</div></td>
+        <td style="width:100px;"><div class="cell"></div></td>
+        <td style="width:100px;"><div class="cell"></div></td>
+        <td style="width:100px;"><div class="cell"></div></td>
+      </tr>
+        {% for statistic in stat_keys %}
+        <tr style="border-bottom: 1px solid #B5BECA;">
+            <td><div class="cell field" style="text-align:left;">{{stats|dict_value:statistic}}</div></td>
+              {%if statistic == "accounts_holding_more_than_100_ousd"%}
+                <td style="font-weight:bold;"><div class="cell value">{{report|class_value:statistic}}</div></td>
+                <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">{{prev_report|class_value:statistic}}</div></td>
+              {% else %}
+                <td style="font-weight:bold;"><div class="cell value">${{report|class_value:statistic}}</div></td>
+                <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">${{prev_report|class_value:statistic |default:"None"}}</div></td>
+              {% endif %}
+            <td><span style="{{change|dict_color_style:statistic}}"><div class="cell change">({{change|dict_value:statistic|floatformat_rnd_down:2}}%)</div></span></td>
+        </tr>
+        {% endfor %}
+        
+    </table>
+
+    <h2>
+      <img src="/static/core/img/ogv.png" alt="ogv" style="width: 32px;height: 32px;margin-right:6px;" />
+      <div style="display:inline;padding-top:2px">
+        OGV
+        <span style="font-weight:normal;">(Origin Dollar Governance)</span></div>
+    </h2>
+
+    <table style="margin-top: 32px;border-bottom: 1px solid #B5BECA;text-align:right;border-collapse: collapse;">
+      <tr style="border-bottom: 1px solid #B5BECA;">
+        <td style="text-align:left;width:265px;font-weight:bold;"><div class="cell value">Top indicators</div></td>
+        <td style="width:100px;"><div class="cell value">{% if is_monthly == True %}m/e{% else %}w/e{% endif %} {{report.end_time|date:'d M'}}</div></td>
+        <td style="width:100px;"><div class="cell value">{% if is_monthly == True %}m/e{% else %}w/e{% endif %} {{prev_report.end_time|date:'d M'}}</div></td>
+        <td style="width:100px;"><div class="cell change">Change</div></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #B5BECA;">
+        <td><div class="cell field" style="text-align:left;">Price</div></td>
+        <td style="font-weight:bold;"><div class="cell value">${{report|class_value:'ogv_price'}}</div></td>
+        <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">${{prev_report|class_value:'ogv_price'}}</div></td>
+        <td><span style="{{change|dict_color_style:'ogv_price'}}"><div class="cell change">({{change|dict_value:'ogv_price'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #B5BECA;">
+        <td><div class="cell field" style="text-align:left;">Market cap</div></td>
+        <td style="font-weight:bold;"><div class="cell value">${{report|class_value:'ogv_market_cap'}}</div></td>
+        <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">${{prev_report|class_value:'ogv_market_cap'}}</div></td>
+        <td><span style="{{change|dict_color_style:'ogv_market_cap'}}"><div class="cell change">({{change|dict_value:'ogv_market_cap'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #B5BECA;">
+        <td><div class="cell field" style="text-align:left;">Average daily trading volume</div></td>
+        <td style="font-weight:bold;"><div class="cell value">${{report|class_value:'average_ogv_volume'}}</div></td>
+        <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">${{prev_report|class_value:'average_ogv_volume'}}</div></td>
+        <td><span style="{{change|dict_color_style:'average_ogv_volume'}}"><div class="cell change">({{change|dict_value:'average_ogv_volume'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #B5BECA;">
+        <td><div class="cell field" style="text-align:left;">Amount staked</div></td>
+        <td style="font-weight:bold;"><div class="cell value">{{report|class_value:'amount_staked'}}</div></td>
+        <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">{{prev_report|class_value:'amount_staked'}}</div></td>
+        <td><span style="{{change|dict_color_style:'amount_staked'}}"><div class="cell change">({{change|dict_value:'amount_staked'|floatformat_rnd_down:2}}%)</div></span></td>
+      </tr>
+      <tr style="border-bottom: 1px solid #B5BECA;">
+        <td><div class="cell field" style="text-align:left;">Percentage staked</div></td>
+        <td style="font-weight:bold;"><div class="cell value">{{report|class_value:'percentage_staked'}}%</div></td>
+        <td style="font-weight:bold;"><div class="cell value" style="opacity:0.5">{{prev_report|class_value:'percentage_staked'}}%</div></td>
+        <td><span style="{{change|dict_color_style:'percentage_staked'}}"><div class="cell change">({{change|dict_value:'percentage_staked'|floatformat_rnd_down:0}}bp)</div></span></td>
+      </tr>
+    </table>
+  </div>
+  <div class="navigation">
+    <span>
+      {% if prev_report is not None %}
+        {% if is_monthly == True %}
+          <a class="route" href="/reports/monthly/{{prev_report.year|int_no_comma}}/{{prev_report.month|int_no_comma}}">
+            <img src="/static/core/img/arrow-left.svg" alt="arrow-left" style="margin-right:14px;" />
+            <div>Previous report</div>
+          </a>
+        {% else %}
+          <a class="route" href="/reports/weekly/{{prev_report.year|int_no_comma}}/{{prev_report.week|int_no_comma}}">
+            <img src="/static/core/img/arrow-left.svg" alt="arrow-left" style="margin-right:14px;" />
+            <div>Previous report</div>
+          </a>
+        {% endif %}
+      {% endif %}
+    </span>
+    {% if not latest %}
+      {% if is_monthly == True %}
+        <a class="route" href="/reports/monthly/{{next_year|int_no_comma}}/{{next_month|int_no_comma}}">
+          <div>Next report</div>
+          <img src="/static/core/img/arrow-right.svg" alt="arrow-right" style="margin-left:14px;" />
+        </a>
+      {% else %}
+        <a class="route" href="/reports/weekly/{{next_year|int_no_comma}}/{{next_week|int_no_comma}}">
+          <div>Next report</div>
+          <img src="/static/core/img/arrow-right.svg" alt="arrow-right" style="margin-left:14px;" />
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+<style>
+  h1 {
+    margin-top: 48px;font-size: 24px;line-height: 28px;font-weight: bold;
+  }
+  h2 {
+    display:flex;flex-direction:row;align-items:center;margin-top: 48px;font-size: 20px;line-height: 23px;font-weight:bold;
+  }
+  h4 {
+    margin-top:16px;font-size: 14px;line-height: 16px;
+  }
+  .report {
+    max-width: 640px;
+    margin: auto;
+  }
+  .box {
+    margin-bottom: 45px;
+    padding: 48px 40px;
+    border-radius: 8px;
+    font-family: Helvetica;
+    background-color:#F0F2F4;
+    font-size: 12px;
+    line-height: 13px;
+  }
+  .stretch {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  .value {
+    font-size: 12px;
+    line-height: 13px;
+  }
+  .cell {
+    margin-top: 14px;
+    margin-bottom: 14px;
+  }
+  .field {
+    font-size:14px;
+    line-height:16px;
+  }
+  .change {
+    font-size:11px;
+    line-height:13px;
+  }
+  .subscribe, .subscribe:hover {
+    display: inline-flex;
+    padding: 6px 24px;
+    font-size: 16px;
+    line-height: 28px;
+    text-decoration: none;
+    color: white;
+    background: linear-gradient(90deg, #8C66FC -28.99%, #0274F1 144.97%);
+    border-radius: 100px;
+  }
+  .navigation {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 40px;
+    margin-bottom: 120px;
+  }
+  .route, .route:hover {
+    display: inline-flex;
+
+    padding: 8px 16px;
+    font-size: 14px;
+    line-height: 23px;
+    text-decoration: none;
+    color: black;
+    border: 1px solid #B5BECA;
+    border-radius: 100px;
+  }
+  @media (max-width: 992px) {
+    .box {
+      width: 440px;
+      margin-bottom: 30px;
+      padding: 24px 20px;
+      font-size: 8px;
+      line-height: 10px;
+    }
+  }
+</style>
+
+
+{% endblock %}
