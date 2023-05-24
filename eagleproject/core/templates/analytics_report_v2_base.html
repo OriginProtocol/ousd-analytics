@@ -86,8 +86,13 @@
         {% for statistic in oeth_stat_keys %}
         <tr style="border-bottom: 1px solid #B5BECA;">
             <td><div class="cell field" style="text-align:left;">{{oeth_stats|dict_value:statistic}}</div></td>
-            <td style="font-weight:bold;"><div class="cell value color-prev">{{prev_report|class_value:statistic|default:"N/A"|floatformat_rnd_down:2}}</div></td>
-            <td style="font-weight:bold;"><div class="cell value">{{report|class_value:statistic|floatformat_rnd_down:2}}</div></td>
+            {%if statistic == "accounts_holding_more_than_dot1_oeth"%}
+              <td style="font-weight:bold;"><div class="cell value color-prev">{{prev_report|class_value:statistic|default:"N/A"}}</div></td>
+              <td style="font-weight:bold;"><div class="cell value">{{report|class_value:statistic}}</div></td>
+            {% else %}
+              <td style="font-weight:bold;"><div class="cell value color-prev">{{prev_report|class_value:statistic|default:"N/A"|floatformat_rnd_down:2}}</div></td>
+              <td style="font-weight:bold;"><div class="cell value">{{report|class_value:statistic|floatformat_rnd_down:2}}</div></td>
+            {% endif %}
             <td><span class="{{change|class_color_style:statistic}}"><div class="cell change">{{change|dict_value:statistic|change_in_value}}</div></span></td>
         </tr>
         {% endfor %}
