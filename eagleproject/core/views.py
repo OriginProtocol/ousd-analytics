@@ -192,14 +192,18 @@ def _get_strat_holdings(assets, project=OriginTokens.OUSD):
         total = 0
         tvl = 0
         holdings = []
+        holdings_value = []
 
         for asset in assets:
             if not asset.symbol in strat.get("SUPPORTED_ASSETS", backing_assets):
                 continue
             balance = asset.get_strat_holdings(strat_key)
+            asset_tvl = balance * asset.redeem_price()
+
             holdings.append((asset.symbol, balance))
+            holdings_value.append((asset.symbol, asset_tvl))
             total += balance
-            tvl += (balance * asset.redeem_price())
+            tvl += asset_tvl
 
         all_strats[strat_key] = {
             "name": strat["NAME"],
@@ -207,7 +211,8 @@ def _get_strat_holdings(assets, project=OriginTokens.OUSD):
             "icon_file": strat.get("ICON_NAME", "buffer-icon.svg"),
             "total": total,
             "tvl": tvl,
-            "holdings": holdings
+            "holdings": holdings,
+            "holdings_value": holdings_value,
         }
 
     return all_strats
@@ -734,12 +739,16 @@ def strategies(request, project=OriginTokens.OUSD):
     net_tvl = Decimal(0)
     for (key, strat) in all_strats.items():
         holdings = {}
+        holdings_value = {}
         for (asset, holding) in strat["holdings"]:
             holdings[asset] = Decimal(holding or 0)
+        for (asset, holding) in strat["holdings_value"]:
+            holdings_value[asset] = Decimal(holding or 0)
         strat["total"] = Decimal(strat["total"] or 0)
         strat["tvl"] = Decimal(strat["tvl"] or 0)
         net_tvl += strat["tvl"]
         strat["holdings"] = holdings
+        strat["holdings_value"] = holdings_value
 
     if structured is None:
         # TODO: Backward compatibility, remove after making sure that every repo has been updated
@@ -756,7 +765,7 @@ def strategies(request, project=OriginTokens.OUSD):
     response = JsonResponse({
         "strategies": all_strats,
         "total_value": net_tvl,
-        "total_value_usd": net_tvl * eth_snap.price,
+        "total_value_usd": net_tvl * (eth_snap.price if project == OriginTokens.OETH else 1),
         "eth_price": eth_snap.price,
         "total_supply": Decimal(snapshot.reported_supply)
     }, encoder=DecimalEncoder)
@@ -769,7 +778,12 @@ def collateral(request, project):
     assets = fetch_assets(block_number, project=project)
     collateral = []
     for asset in assets:
-        collateral.append({"name": asset.symbol.lower(), "total": asset.total()})
+        collateral.append({
+            "name": asset.symbol.lower(), 
+            "total": asset.total(),
+            "price": asset.redeem_price(),
+            "value": asset.total() * asset.redeem_price(),
+        })
     response = JsonResponse(
         {
             "collateral": collateral
