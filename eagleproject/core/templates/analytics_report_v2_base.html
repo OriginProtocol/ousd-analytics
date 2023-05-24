@@ -1,13 +1,130 @@
 {% load blockchain %}
 
 <head>
-  <link href="/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{assets_host}}/static/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    h1 {
+      margin-top: 48px;font-size: 24px;line-height: 28px;font-weight: bold;
+    }
+    h2 {
+      display:flex;flex-direction:row;align-items:center;margin-top: 48px;font-size: 20px;line-height: 23px;font-weight:bold;
+    }
+    h4 {
+      margin-top:16px;font-size: 14px;line-height: 16px;
+    }
+    .report {
+      max-width: 640px;
+      margin: auto;
+      color: #02080D;
+    }
+    .box {
+      margin-bottom: 45px;
+      padding: 48px 40px;
+      border-radius: 8px;
+      font-family: Helvetica;
+      background-color:#F0F2F4;
+      font-size: 12px;
+      line-height: 13px;
+    }
+    .stretch {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+    }
+    .value {
+      font-size: 12px;
+      line-height: 13px;
+    }
+    .cell {
+      margin-top: 14px;
+      margin-bottom: 14px;
+    }
+    .field {
+      font-size:14px;
+      line-height:16px;
+    }
+    .change {
+      font-size:11px;
+      line-height:13px;
+    }
+    .cell.value.usd {
+      font-weight: 400;
+      color: #02080D;
+      margin-top: -8px;
+      font-size: 11px;
+    }
+    .cell.value.usd::before {
+      content: '($';
+    }
+    .cell.value.usd::after {
+      content: ')';
+    }
+    .subscribe, .subscribe:hover {
+      display: inline-flex;
+      padding: 6px 24px;
+      font-size: 16px;
+      line-height: 28px;
+      text-decoration: none;
+      color: white;
+      background: linear-gradient(90deg, #8C66FC -28.99%, #0274F1 144.97%);
+      border-radius: 100px;
+    }
+    .navigation {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      margin-top: 40px;
+      margin-bottom: 120px;
+    }
+    .route, .route:hover {
+      display: inline-flex;
+  
+      padding: 8px 16px;
+      font-size: 14px;
+      line-height: 23px;
+      text-decoration: none;
+      color: black;
+      border: 1px solid #B5BECA;
+      border-radius: 100px;
+    }
+    .color-na, .color-prev {
+      color: #02080D;
+      opacity: 50%;
+    }
+    .color-green {
+      color: green;
+    }
+    .color-red {
+      color: red;
+    }
+    .cell.change.mt-0 {
+      margin-top: 0;
+    }
+    .color-origin-blue {
+      color: #0074F0
+    }
+    .footer {
+      margin-top: 32px !important;
+    }
+    .unsubscribe-cta {
+      margin-top: 48px !important;
+    }
+    @media (max-width: 992px) {
+      .box {
+        width: 440px;
+        margin-bottom: 30px;
+        padding: 24px 20px;
+        font-size: 8px;
+        line-height: 10px;
+      }
+    }
+  </style>  
 </head>
 
 <div class="report">
   <div class="box">
     <div class="stretch">
-      <img src="/static/core/img/origin-defi.png" alt="Origin DeFi" style="width:50%;max-width:230px;height:auto;align-self:flex-start;" />
+      <img src="{{assets_host}}/static/core/img/origin-defi.png" alt="Origin DeFi" style="width:50%;max-width:230px;height:auto;align-self:flex-start;" />
       {% if not is_email %}
       <a class="subscribe" href="/reports/subscribe" target="_blank">Subscribe!</a>
       {% endif %}
@@ -33,7 +150,7 @@
     {% endif %}
     
     <h2>
-      <img src="/static/core/img/oeth.png" alt="oeth" style="width: 32px;height: 32px;margin-right:6px;" />
+      <img src="{{assets_host}}/static/core/img/oeth.png" alt="oeth" style="width: 32px;height: 32px;margin-right:6px;" />
       <div style="display:inline;padding-top:2px">OETH</div>
     </h2>
 
@@ -100,7 +217,7 @@
     </table>
     
     <h2>
-      <img src="/static/core/img/ousd.png" alt="ousd" style="width: 32px;height: 32px;margin-right:6px;" />
+      <img src="{{assets_host}}/static/core/img/ousd.png" alt="ousd" style="width: 32px;height: 32px;margin-right:6px;" />
       <div style="display:inline;padding-top:2px">OUSD</div>
     </h2>
 
@@ -161,7 +278,7 @@
     </table>
 
     <h2>
-      <img src="/static/core/img/ogv.png" alt="ogv" style="width: 32px;height: 32px;margin-right:6px;" />
+      <img src="{{assets_host}}/static/core/img/ogv.png" alt="ogv" style="width: 32px;height: 32px;margin-right:6px;" />
       <div style="display:inline;padding-top:2px">
         OGV
         <span style="font-weight:normal;">(Origin Dollar Governance)</span></div>
@@ -219,12 +336,12 @@
       {% if prev_report is not None %}
         {% if is_monthly == True %}
           <a class="route" href="/reports/monthly/{{prev_report.year|int_no_comma}}/{{prev_report.month|int_no_comma}}">
-            <img src="/static/core/img/arrow-left.svg" alt="arrow-left" style="margin-right:14px;" />
+            <img src="{{assets_host}}/static/core/img/arrow-left.svg" alt="arrow-left" style="margin-right:14px;" />
             <div>Previous report</div>
           </a>
         {% else %}
           <a class="route" href="/reports/weekly/{{prev_report.year|int_no_comma}}/{{prev_report.week|int_no_comma}}">
-            <img src="/static/core/img/arrow-left.svg" alt="arrow-left" style="margin-right:14px;" />
+            <img src="{{assets_host}}/static/core/img/arrow-left.svg" alt="arrow-left" style="margin-right:14px;" />
             <div>Previous report</div>
           </a>
         {% endif %}
@@ -234,132 +351,15 @@
       {% if is_monthly == True %}
         <a class="route" href="/reports/monthly/{{next_year|int_no_comma}}/{{next_month|int_no_comma}}">
           <div>Next report</div>
-          <img src="/static/core/img/arrow-right.svg" alt="arrow-right" style="margin-left:14px;" />
+          <img src="{{assets_host}}/static/core/img/arrow-right.svg" alt="arrow-right" style="margin-left:14px;" />
         </a>
       {% else %}
         <a class="route" href="/reports/weekly/{{next_year|int_no_comma}}/{{next_week|int_no_comma}}">
           <div>Next report</div>
-          <img src="/static/core/img/arrow-right.svg" alt="arrow-right" style="margin-left:14px;" />
+          <img src="{{assets_host}}/static/core/img/arrow-right.svg" alt="arrow-right" style="margin-left:14px;" />
         </a>
       {% endif %}
     {% endif %}
   </div>
   {% endif %}
 </div>
-<style>
-  h1 {
-    margin-top: 48px;font-size: 24px;line-height: 28px;font-weight: bold;
-  }
-  h2 {
-    display:flex;flex-direction:row;align-items:center;margin-top: 48px;font-size: 20px;line-height: 23px;font-weight:bold;
-  }
-  h4 {
-    margin-top:16px;font-size: 14px;line-height: 16px;
-  }
-  .report {
-    max-width: 640px;
-    margin: auto;
-    color: #02080D;
-  }
-  .box {
-    margin-bottom: 45px;
-    padding: 48px 40px;
-    border-radius: 8px;
-    font-family: Helvetica;
-    background-color:#F0F2F4;
-    font-size: 12px;
-    line-height: 13px;
-  }
-  .stretch {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-  .value {
-    font-size: 12px;
-    line-height: 13px;
-  }
-  .cell {
-    margin-top: 14px;
-    margin-bottom: 14px;
-  }
-  .field {
-    font-size:14px;
-    line-height:16px;
-  }
-  .change {
-    font-size:11px;
-    line-height:13px;
-  }
-  .cell.value.usd {
-    font-weight: 400;
-    color: #02080D;
-    margin-top: -8px;
-    font-size: 11px;
-  }
-  .cell.value.usd::before {
-    content: '($';
-  }
-  .cell.value.usd::after {
-    content: ')';
-  }
-  .subscribe, .subscribe:hover {
-    display: inline-flex;
-    padding: 6px 24px;
-    font-size: 16px;
-    line-height: 28px;
-    text-decoration: none;
-    color: white;
-    background: linear-gradient(90deg, #8C66FC -28.99%, #0274F1 144.97%);
-    border-radius: 100px;
-  }
-  .navigation {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    margin-top: 40px;
-    margin-bottom: 120px;
-  }
-  .route, .route:hover {
-    display: inline-flex;
-
-    padding: 8px 16px;
-    font-size: 14px;
-    line-height: 23px;
-    text-decoration: none;
-    color: black;
-    border: 1px solid #B5BECA;
-    border-radius: 100px;
-  }
-  .color-na, .color-prev {
-    color: #02080D;
-    opacity: 50%;
-  }
-  .color-green {
-    color: green;
-  }
-  .color-red {
-    color: red;
-  }
-  .cell.change.mt-0 {
-    margin-top: 0;
-  }
-  .color-origin-blue {
-    color: #0074F0
-  }
-  .footer {
-    margin-top: 32px !important;
-  }
-  .unsubscribe-cta {
-    margin-top: 48px !important;
-  }
-  @media (max-width: 992px) {
-    .box {
-      width: 440px;
-      margin-bottom: 30px;
-      padding: 24px 20px;
-      font-size: 8px;
-      line-height: 10px;
-    }
-  }
-</style>

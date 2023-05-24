@@ -504,9 +504,6 @@ def oeth_circulating_supply_usd(report):
 def oeth_protocol_supply_usd(report):
     price = getattr(report, "average_oeth_price")
     supply = getattr(report, "protocol_owned_oeth")
-    print(price, supply, floatformat_rnd_down(
-        supply * price
-    ))
     return floatformat_rnd_down(
         supply * price
     )
