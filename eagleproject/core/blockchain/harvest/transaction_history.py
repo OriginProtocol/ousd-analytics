@@ -45,6 +45,7 @@ from core.blockchain.const import (
     START_OF_EVERYTHING_TIME,
     report_stats,
     curve_report_stats,
+    oeth_report_stats,
     E_18,
     START_OF_CURVE_CAMPAIGN_TIME,
     START_OF_OUSD_V2,
@@ -59,7 +60,8 @@ from core.blockchain.utils import (
 )
 from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
-    calculate_snapshot_data
+    calculate_ousd_snapshot_data,
+    calculate_oeth_snapshot_data,
 )
 
 from core.blockchain.harvest.blocks import ensure_block, ensure_day
@@ -80,12 +82,16 @@ from core.blockchain.addresses import (
     VEOGV,
     OUSD,
     OETH,
+    OETH_ETH_AMO_METAPOOL,
+    OETH_ETH_AMO_CURVE_GUAGE,
 )
 
 from core.coingecko import get_coin_history
 from core.defillama import get_stablecoin_market_cap
 
 import simplejson as json
+
+from django.core.exceptions import ObjectDoesNotExist
 
 ACCOUNT_ANALYZE_PARALLELISM=30
 
@@ -139,10 +145,24 @@ class address_analytics:
     def __str__(self):
         return 'address_analytics: is_holding_ousd: {self.is_holding_ousd} is_holding_more_than_100_ousd: {self.is_holding_more_than_100_ousd} is_new_account: {self.is_new_account} has_ousd_increased: {self.has_ousd_increased} has_ousd_decreased: {self.has_ousd_decreased} is_new_after_curve_start: {self.is_new_after_curve_start} new_after_curve_and_hold_more_than_100: {self.new_after_curve_and_hold_more_than_100}'.format(self=self)
 
+class oeth_address_analytics:
+    # OETH increasing/decreasing is ignoring rebase events
+    def __init__(self, is_holding_oeth, is_holding_more_than_dot1_oeth, is_new_account, has_oeth_increased, has_oeth_decreased):
+        self.is_holding_oeth = is_holding_oeth
+        self.is_holding_more_than_dot1_oeth = is_holding_more_than_dot1_oeth
+        self.is_new_account = is_new_account
+        self.has_oeth_increased = has_oeth_increased
+        self.has_oeth_decreased = has_oeth_decreased
+
+    def __str__(self):
+        return 'oeth_address_analytics: is_holding_oeth: {self.is_holding_oeth} is_holding_more_than_dot1_oeth: {self.is_holding_more_than_dot1_oeth} is_new_account: {self.is_new_account} has_oeth_increased: {self.has_oeth_increased} has_oeth_decreased: {self.has_oeth_decreased}'.format(self=self)
+
 
 class analytics_report:
     def __init__(
         self,
+
+        # OUSD
         accounts_analyzed,
         accounts_holding_ousd,
         accounts_holding_more_than_100_ousd,
@@ -153,11 +173,31 @@ class analytics_report:
         accounts_with_non_rebase_balance_decrease,
         supply_data,
         apy,
+        apy_7d,
         curve_data,
         fees_generated,
+        fees_distributed,
         average_ousd_volume,
         stablecoin_market_share,
-        ogv_data
+
+        # OGV
+        ogv_data,
+
+        # OETH data
+        oeth_accounts_analyzed,
+        accounts_holding_oeth,
+        accounts_holding_more_than_dot1_oeth,
+        oeth_new_accounts,
+        oeth_accounts_with_non_rebase_balance_increase,
+        oeth_accounts_with_non_rebase_balance_decrease,
+        oeth_supply_data,
+        oeth_apy,
+        oeth_apy_7d,
+        oeth_curve_data,
+        oeth_fees_generated,
+        oeth_fees_distributed,
+        average_oeth_volume,
+        average_oeth_price,
     ):
         self.accounts_analyzed = accounts_analyzed
         self.accounts_holding_ousd = accounts_holding_ousd
@@ -169,11 +209,28 @@ class analytics_report:
         self.accounts_with_non_rebase_balance_decrease = accounts_with_non_rebase_balance_decrease
         self.supply_data = supply_data
         self.apy = apy
+        self.apy_7d = apy_7d
         self.curve_data = curve_data
         self.fees_generated = fees_generated
+        self.fees_distributed = fees_distributed
         self.average_ousd_volume = average_ousd_volume
         self.stablecoin_market_share = stablecoin_market_share
         self.ogv_data = ogv_data
+
+        self.oeth_accounts_analyzed = oeth_accounts_analyzed
+        self.accounts_holding_oeth = accounts_holding_oeth
+        self.accounts_holding_more_than_dot1_oeth = accounts_holding_more_than_dot1_oeth
+        self.oeth_new_accounts = oeth_new_accounts
+        self.oeth_accounts_with_non_rebase_balance_increase = oeth_accounts_with_non_rebase_balance_increase
+        self.oeth_accounts_with_non_rebase_balance_decrease = oeth_accounts_with_non_rebase_balance_decrease
+        self.oeth_supply_data = oeth_supply_data
+        self.oeth_apy = oeth_apy
+        self.oeth_apy_7d = oeth_apy_7d
+        self.oeth_curve_data = oeth_curve_data
+        self.oeth_fees_generated = oeth_fees_generated
+        self.oeth_fees_distributed = oeth_fees_distributed
+        self.average_oeth_volume = average_oeth_volume
+        self.average_oeth_price = average_oeth_price
 
     def __str__(self):
         return 'Analytics report: accounts_analyzed: {} accounts_holding_ousd: {} accounts_holding_more_than_100_ousd: {} accounts_holding_more_than_100_ousd_after_curve_start: {} new_accounts: {} new_accounts_after_curve_start: {} accounts_with_non_rebase_balance_increase: {} accounts_with_non_rebase_balance_decrease: {} apy: {} supply_data: {} curve_data: {} fees_generated: {} average_ousd_volume: {} stablecoin_market_share: {} ogv_data: {}'.format(self.accounts_analyzed, self.accounts_holding_ousd, self.accounts_holding_more_than_100_ousd, self.accounts_holding_more_than_100_ousd_after_curve_start, self.new_accounts, self.new_accounts_after_curve_start, self.accounts_with_non_rebase_balance_increase, self.accounts_with_non_rebase_balance_decrease, self.apy, self.supply_data, self.curve_data, self.fees_generated, self.average_ousd_volume, self.stablecoin_market_share, self.ogv_data)
@@ -252,6 +309,7 @@ def calculate_report_change(current_report, previous_report):
         "circulating_ousd": 0,
         "protocol_owned_ousd": 0,
         "apy": 0,
+        "apy_7d": 0,
         "accounts_analyzed": 0,
         "accounts_holding_ousd": 0,
         "accounts_holding_more_than_100_ousd": 0,
@@ -265,14 +323,36 @@ def calculate_report_change(current_report, previous_report):
         "curve_metapool_total_supply": 0,
         "share_earning_curve_ogn": 0,
         "fees_generated": 0,
+        "fees_distributed": 0,
         "curve_supply": 0,
         "average_ousd_volume": 0,
         "stablecoin_market_share": 0,
+        
+        # OGV
         "ogv_price": 0,
         "ogv_market_cap": 0,
         "average_ogv_volume": 0,
         "amount_staked": 0,
         "percentage_staked": 0,
+
+        # OETH
+        "circulating_oeth": 0,
+        "protocol_owned_oeth": 0,
+        "oeth_apy": 0,
+        "oeth_apy_7d": 0,
+        "oeth_accounts_analyzed": 0,
+        "accounts_holding_oeth": 0,
+        "accounts_holding_more_than_dot1_oeth": 0,
+        "oeth_new_accounts": 0,
+        "oeth_accounts_with_non_rebase_balance_increase": 0,
+        "oeth_accounts_with_non_rebase_balance_decrease": 0,
+        "oeth_other_rebasing": 0,
+        "oeth_other_non_rebasing": 0,
+        "oeth_curve_metapool_total_supply": 0,
+        "oeth_fees_generated": 0,
+        "oeth_fees_distributed": 0,
+        "oeth_curve_supply": 0,
+        "average_oeth_volume": 0,
     }
 
     def calculate_difference(current_stat, previous_stat):
@@ -296,15 +376,23 @@ def calculate_report_change(current_report, previous_report):
     supply_data = json_report["supply_data"] if "supply_data" in json_report else None
     supply_data_previous = json_report_previous["supply_data"] if "supply_data" in json_report_previous else None
 
+    oeth_supply_data = json_report["oeth_supply_data"] if "oeth_supply_data" in json_report else None
+    oeth_supply_data_previous = json_report_previous["oeth_supply_data"] if "oeth_supply_data" in json_report_previous else None
+
     ogv_data = json_report["ogv_data"] if "ogv_data" in json_report else None
     ogv_data_previous = json_report_previous["ogv_data"] if "ogv_data" in json_report_previous else None
 
     curve_data = json_report["curve_data"] if "curve_data" in json_report else None
     curve_data_previous = json_report_previous["curve_data"] if "curve_data" in json_report_previous else None
 
+    oeth_curve_data = json_report["oeth_curve_data"] if "oeth_curve_data" in json_report else None
+    oeth_curve_data_previous = json_report_previous["oeth_curve_data"] if "oeth_curve_data" in json_report_previous else None
+
+    # OUSD
     changes['circulating_ousd'] = calculate_difference(current_report.circulating_ousd, previous_report.circulating_ousd)
     changes['protocol_owned_ousd'] = calculate_difference(current_report.protocol_owned_ousd, previous_report.protocol_owned_ousd)
     changes['apy'] = calculate_difference_bp(current_report.apy, previous_report.apy)
+    changes['apy_7d'] = calculate_difference_bp(current_report.apy_7d, previous_report.apy_7d)
     changes['accounts_analyzed'] = calculate_difference(current_report.accounts_analyzed, previous_report.accounts_analyzed)
     changes['accounts_holding_ousd'] = calculate_difference(current_report.accounts_holding_ousd, previous_report.accounts_holding_ousd)
     changes['accounts_holding_more_than_100_ousd'] = calculate_difference(current_report.accounts_holding_more_than_100_ousd, previous_report.accounts_holding_more_than_100_ousd)
@@ -314,9 +402,28 @@ def calculate_report_change(current_report, previous_report):
     changes['accounts_with_non_rebase_balance_increase'] = calculate_difference(current_report.accounts_with_non_rebase_balance_increase, previous_report.accounts_with_non_rebase_balance_increase)
     changes['accounts_with_non_rebase_balance_decrease'] = calculate_difference(current_report.accounts_with_non_rebase_balance_decrease, previous_report.accounts_with_non_rebase_balance_decrease)
     changes['fees_generated'] = calculate_difference(current_report.fees_generated, previous_report.fees_generated)
+    changes['fees_distributed'] = calculate_difference(current_report.fees_distributed, previous_report.fees_distributed)
     changes['curve_supply'] = calculate_difference(current_report.curve_supply, previous_report.curve_supply)
     changes['average_ousd_volume'] = calculate_difference(current_report.average_ousd_volume, previous_report.average_ousd_volume)
     changes['stablecoin_market_share'] = calculate_difference_bp(current_report.stablecoin_market_share, previous_report.stablecoin_market_share)
+
+    # OETH
+    changes['circulating_oeth'] = calculate_difference(current_report.circulating_oeth, previous_report.circulating_oeth)
+    changes['protocol_owned_oeth'] = calculate_difference(current_report.protocol_owned_oeth, previous_report.protocol_owned_oeth)
+    changes['oeth_apy'] = calculate_difference_bp(current_report.oeth_apy, previous_report.oeth_apy)
+    changes['oeth_apy_7d'] = calculate_difference_bp(current_report.oeth_apy_7d, previous_report.oeth_apy_7d)
+    changes['oeth_accounts_analyzed'] = calculate_difference(current_report.oeth_accounts_analyzed, previous_report.oeth_accounts_analyzed)
+    changes['accounts_holding_oeth'] = calculate_difference(current_report.accounts_holding_oeth, previous_report.accounts_holding_oeth)
+    changes['accounts_holding_more_than_dot1_oeth'] = calculate_difference(current_report.accounts_holding_more_than_dot1_oeth, previous_report.accounts_holding_more_than_dot1_oeth)
+    changes['oeth_new_accounts'] = calculate_difference(current_report.oeth_new_accounts, previous_report.oeth_new_accounts)
+    changes['oeth_accounts_with_non_rebase_balance_increase'] = calculate_difference(current_report.oeth_accounts_with_non_rebase_balance_increase, previous_report.oeth_accounts_with_non_rebase_balance_increase)
+    changes['oeth_accounts_with_non_rebase_balance_decrease'] = calculate_difference(current_report.oeth_accounts_with_non_rebase_balance_decrease, previous_report.oeth_accounts_with_non_rebase_balance_decrease)
+    changes['oeth_fees_generated'] = calculate_difference(current_report.oeth_fees_generated, previous_report.oeth_fees_generated)
+    changes['oeth_fees_distributed'] = calculate_difference(current_report.oeth_fees_distributed, previous_report.oeth_fees_distributed)
+    changes['oeth_curve_supply'] = calculate_difference(current_report.oeth_curve_supply, previous_report.oeth_curve_supply)
+    changes['average_oeth_volume'] = calculate_difference(current_report.average_oeth_volume, previous_report.average_oeth_volume)
+
+    # OGV
     changes['ogv_price'] = calculate_difference(current_report.ogv_price, previous_report.ogv_price)
     changes['ogv_market_cap'] = calculate_difference(current_report.ogv_market_cap, previous_report.ogv_market_cap)
     changes['average_ogv_volume'] = calculate_difference(current_report.average_ogv_volume, previous_report.average_ogv_volume)
@@ -326,15 +433,33 @@ def calculate_report_change(current_report, previous_report):
     if supply_data is not None and supply_data_previous is not None:
         changes['other_rebasing'] = calculate_difference(supply_data['other_rebasing'], supply_data_previous['other_rebasing'])
         changes['other_non_rebasing'] = calculate_difference(supply_data['other_non_rebasing'], supply_data_previous['other_non_rebasing'])
+    if oeth_supply_data is not None and oeth_supply_data_previous is not None:
+        changes['oeth_other_rebasing'] = calculate_difference(oeth_supply_data['other_rebasing'], oeth_supply_data_previous.get('other_rebasing', 0))
+        changes['oeth_other_non_rebasing'] = calculate_difference(oeth_supply_data['other_non_rebasing'], oeth_supply_data_previous.get('other_non_rebasing', 0))
 
     if curve_data is not None and curve_data_previous is not None:
         changes['curve_metapool_total_supply'] = calculate_difference(current_report.curve_metapool_total_supply, previous_report.curve_metapool_total_supply)
         changes['share_earning_curve_ogn'] = calculate_difference(current_report.share_earning_curve_ogn, previous_report.share_earning_curve_ogn)
 
+    if oeth_curve_data is not None and oeth_curve_data_previous is not None:
+        changes['oeth_curve_metapool_total_supply'] = calculate_difference(current_report.oeth_curve_metapool_total_supply, previous_report.oeth_curve_metapool_total_supply)
 
     return changes
 
-def upsert_report(week_option, month_option, year, status, report, block_start_number, block_end_number, start_time, end_time, do_only_transaction_analytics, transaction_report):
+def upsert_report(
+    week_option, 
+    month_option, 
+    year, 
+    status, 
+    report, 
+    block_start_number, 
+    block_end_number, 
+    start_time, 
+    end_time, 
+    do_only_transaction_analytics, 
+    transaction_report, 
+    oeth_transaction_report
+):
     analyticsReport = None
 
     params = {
@@ -345,6 +470,7 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
         "created_at": datetime.now(),
         "updated_at": datetime.now(),
         "status": status,
+        # OUSD
         "accounts_analyzed": report.accounts_analyzed if report is not None else 0,
         "accounts_holding_ousd": report.accounts_holding_ousd if report is not None else 0,
         "accounts_holding_more_than_100_ousd": report.accounts_holding_more_than_100_ousd if report is not None else 0,
@@ -354,7 +480,15 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
         "accounts_with_non_rebase_balance_increase": report.accounts_with_non_rebase_balance_increase if report is not None else 0,
         "accounts_with_non_rebase_balance_decrease": report.accounts_with_non_rebase_balance_decrease if report is not None else 0,
         "transaction_report": transaction_report,
-        "report": json.dumps(report.__dict__) if report is not None else '[]'
+        "report": json.dumps(report.__dict__) if report is not None else '[]',
+        # OETH
+        "oeth_accounts_analyzed": report.oeth_accounts_analyzed if report is not None else 0,
+        "accounts_holding_oeth": report.accounts_holding_oeth if report is not None else 0,
+        "accounts_holding_more_than_dot1_oeth": report.accounts_holding_more_than_dot1_oeth if report is not None else 0,
+        "oeth_new_accounts": report.oeth_new_accounts if report is not None else 0,
+        "oeth_accounts_with_non_rebase_balance_increase": report.accounts_with_non_rebase_balance_increase if report is not None else 0,
+        "oeth_accounts_with_non_rebase_balance_decrease": report.accounts_with_non_rebase_balance_decrease if report is not None else 0,
+        "oeth_transaction_report": oeth_transaction_report,
     }
 
     if do_only_transaction_analytics:
@@ -362,13 +496,11 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
             analyticsReport = AnalyticsReport.objects.get(
                 week=week_option,
                 year=year,
-                project=OriginTokens.OUSD
             )
         else:
             analyticsReport = AnalyticsReport.objects.get(
                 month=month_option,
                 year=year,
-                project=OriginTokens.OUSD
             )
 
         if analyticsReport is None:
@@ -381,14 +513,12 @@ def upsert_report(week_option, month_option, year, status, report, block_start_n
             analyticsReport, created = AnalyticsReport.objects.get_or_create(
                 week=week_option,
                 year=year,
-                project=OriginTokens.OUSD,
                 defaults=params,
             )
         else:
             analyticsReport, created = AnalyticsReport.objects.get_or_create(
                 month=month_option,
                 year=year,
-                project=OriginTokens.OUSD,
                 defaults=params,
             )
 
@@ -426,7 +556,8 @@ def create_time_interval_report_for_previous_week(year_override, week_override, 
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
 
-    transaction_report = do_transaction_analytics(block_start_number, block_end_number, start_time, end_time)
+    transaction_report = do_transaction_analytics(block_start_number, block_end_number, start_time, end_time, project=OriginTokens.OUSD)
+    oeth_transaction_report = do_transaction_analytics(block_start_number, block_end_number, start_time, end_time, project=OriginTokens.OETH)
 
     upsert_report(
         week_number,
@@ -439,7 +570,8 @@ def create_time_interval_report_for_previous_week(year_override, week_override, 
         start_time,
         end_time,
         do_only_transaction_analytics,
-        transaction_report
+        transaction_report,
+        oeth_transaction_report
     )
 
     # don't do the general report if not needed
@@ -450,7 +582,7 @@ def create_time_interval_report_for_previous_week(year_override, week_override, 
         block_start_number,
         block_end_number,
         start_time,
-        end_time
+        end_time,
     )
 
     db_report = upsert_report(
@@ -464,7 +596,8 @@ def create_time_interval_report_for_previous_week(year_override, week_override, 
         start_time,
         end_time,
         do_only_transaction_analytics,
-        transaction_report
+        transaction_report,
+        oeth_transaction_report
     )
 
     # if it is a cron job report
@@ -476,16 +609,16 @@ def create_time_interval_report_for_previous_week(year_override, week_override, 
         else :
             week_number -= 1
 
-        week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number) & Q(project=OriginTokens.OUSD))
+        week_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(week=week_number))
         preb_db_report = week_before_report[0] if len(week_before_report) != 0 else None
-        send_report_email(OriginTokens.OUSD, 'OUSD Analytics Weekly Report', db_report, preb_db_report, "Weekly")
+        send_report_email('Origin DeFi Analytics Weekly Report', db_report, preb_db_report, "Weekly")
 
 def should_create_new_report(year, month_option, week_option):
     try:
         if month_option is not None:
-            existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option) & Q(project=OriginTokens.OUSD)).first()
+            existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(month=month_option)).first()
         elif week_option is not None:
-            existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option) & Q(project=OriginTokens.OUSD)).first()
+            existing_report = AnalyticsReport.objects.filter(Q(year=year) & Q(week=week_option)).first()
         if existing_report is None:
             return True
     except ObjectDoesNotExist:
@@ -530,7 +663,8 @@ def create_time_interval_report_for_previous_month(year_override, month_override
     block_start_number = get_block_number_from_block_time(start_time, True)
     block_end_number = get_block_number_from_block_time(end_time, False)
 
-    transaction_report = do_transaction_analytics(block_start_number, block_end_number, start_time, end_time)
+    transaction_report = do_transaction_analytics(block_start_number, block_end_number, start_time, end_time, project=OriginTokens.OUSD)
+    oeth_transaction_report = do_transaction_analytics(block_start_number, block_end_number, start_time, end_time, project=OriginTokens.OETH)
 
     upsert_report(
         None,
@@ -543,7 +677,8 @@ def create_time_interval_report_for_previous_month(year_override, month_override
         start_time,
         end_time,
         do_only_transaction_analytics,
-        transaction_report
+        transaction_report,
+        oeth_transaction_report
     )
 
     # don't do the general report if not needed
@@ -554,7 +689,7 @@ def create_time_interval_report_for_previous_month(year_override, month_override
         block_start_number,
         block_end_number,
         start_time,
-        end_time
+        end_time,
     )
 
     db_report = upsert_report(
@@ -568,7 +703,8 @@ def create_time_interval_report_for_previous_month(year_override, month_override
         start_time,
         end_time,
         do_only_transaction_analytics,
-        transaction_report
+        transaction_report,
+        oeth_transaction_report
     )
 
     # if it is a cron job report
@@ -580,9 +716,9 @@ def create_time_interval_report_for_previous_month(year_override, month_override
         else :
             month_number -= 1
 
-        month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number) & Q(project=OriginTokens.OUSD))
+        month_before_report = AnalyticsReport.objects.filter(Q(year=year_number) & Q(month=month_number))
         preb_db_report = month_before_report[0] if len(month_before_report) != 0 else None
-        send_report_email(OriginTokens.OUSD, 'OUSD Analytics Monthly Report', db_report, preb_db_report, "Monthly")
+        send_report_email('Origin DeFi Analytics Monthly Report', db_report, preb_db_report, "Monthly")
 
 
 def backfill_subscribers():
@@ -602,19 +738,37 @@ def fetch_all_holders(project=OriginTokens.OUSD):
 
 def fetch_supply_data(block_number, project=OriginTokens.OUSD):
     ensure_supply_snapshot(block_number, project=project)
-    [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
-    ousd = build_asset_block("OUSD", block_number, project=project)
-    protocol_owned_ousd = float(ousd.strat_holdings["ousd_metastrat"])
-    circulating_ousd = float(snapshot.reported_supply) - protocol_owned_ousd
+    
+    if project == OriginTokens.OUSD:
+        [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_ousd_snapshot_data(block_number)
+        
+        ousd = build_asset_block("OUSD", block_number, project=project)
+        protocol_owned_ousd = float(ousd.strat_holdings["ousd_metastrat"])
+        circulating_ousd = float(snapshot.reported_supply) - protocol_owned_ousd
 
-    return {
-        'circulating_ousd': circulating_ousd,
-        'protocol_owned_ousd': protocol_owned_ousd,
-        'pools': pools,
-        'totals_by_rebasing': totals_by_rebasing,
-        'other_rebasing': other_rebasing,
-        'other_non_rebasing': other_non_rebasing,
-    }
+        return {
+            'circulating_ousd': circulating_ousd,
+            'protocol_owned_ousd': protocol_owned_ousd,
+            'pools': pools,
+            'totals_by_rebasing': totals_by_rebasing,
+            'other_rebasing': other_rebasing,
+            'other_non_rebasing': other_non_rebasing,
+        }
+    else:
+        [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_oeth_snapshot_data(block_number)
+
+        oeth = build_asset_block("OETH", block_number, project=project)
+        protocol_owned_oeth = float(oeth.strat_holdings["oeth_curve_amo"])
+        circulating_oeth = float(snapshot.reported_supply) - protocol_owned_oeth
+
+        return {
+            'circulating_oeth': circulating_oeth,
+            'protocol_owned_oeth': protocol_owned_oeth,
+            'pools': pools,
+            'totals_by_rebasing': totals_by_rebasing,
+            'other_rebasing': other_rebasing,
+            'other_non_rebasing': other_non_rebasing,
+        }
 
 def fetch_ogv_data(to_block, from_timestamp, to_timestamp):
     try:
@@ -641,18 +795,21 @@ def fetch_ogv_data(to_block, from_timestamp, to_timestamp):
         'percentage_staked': percentage_staked,
     }
 
-def get_curve_data(to_block):
-    balance = balanceOf(CURVE_METAPOOL, CURVE_METAPOOL_GAUGE, 18, to_block)
-    supply = totalSupply(CURVE_METAPOOL, 18, to_block)
-    return {
-        "total_supply": supply,
-        "earning_ogn": balance/supply,
-    }
+def get_curve_data(to_block, project=OriginTokens.OUSD):
+    if project == OriginTokens.OUSD:
+        balance = balanceOf(CURVE_METAPOOL, CURVE_METAPOOL_GAUGE, 18, to_block)
+        supply = totalSupply(CURVE_METAPOOL, 18, to_block)
+        return {
+            "total_supply": supply,
+            "earning_ogn": balance/supply,
+        }
+    else:
+        supply = totalSupply(OETH_ETH_AMO_METAPOOL, 18, to_block)
+        return {
+            "total_supply": supply
+        }
 
-def create_time_interval_report(from_block, to_block, from_block_time, to_block_time, project=OriginTokens.OUSD):
-    if project == OriginTokens.OETH:
-        raise Exception("Unimplemented for OETH")
-
+def create_time_interval_report(from_block, to_block, from_block_time, to_block_time):
     decimal_context = getcontext()
     decimal_prec = decimal_context.prec
     decimal_rounding = decimal_context.rounding
@@ -661,19 +818,82 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     decimal_context.prec = 18
     decimal_context.rounding = 'ROUND_DOWN'
 
-    all_addresses = fetch_all_holders(project=project)
+    all_ousd_addresses = fetch_all_holders(project=OriginTokens.OUSD)
+    all_oeth_addresses = fetch_all_holders(project=OriginTokens.OETH)
 
-    rebase_logs = get_rebase_logs(from_block, to_block, project=project)
-    analysis_list = []
+    ousd_rebase_logs = get_rebase_logs(from_block, to_block, project=OriginTokens.OUSD)
+    oeth_rebase_logs = get_rebase_logs(from_block, to_block, project=OriginTokens.OETH)
+    ousd_analysis_list = []
+    oeth_analysis_list = []
 
     from_timestamp = int(from_block_time.strftime('%s'))
     to_timestamp = int(to_block_time.strftime('%s'))
 
-    supply_data = fetch_supply_data(to_block, project=project)
-    apy = get_trailing_apy(to_block, project=project)
-    curve_data = get_curve_data(to_block)
+    ousd_supply_data = fetch_supply_data(to_block, project=OriginTokens.OUSD)
+    ousd_apy = get_trailing_apy(to_block, project=OriginTokens.OUSD)
+    ousd_apy_7d = get_trailing_apy(to_block, days=7, project=OriginTokens.OUSD)
+    curve_data = get_curve_data(to_block, project=OriginTokens.OUSD)
+
+    oeth_supply_data = fetch_supply_data(to_block, project=OriginTokens.OETH)
+    oeth_apy = get_trailing_apy(to_block, project=OriginTokens.OETH)
+    oeth_apy_7d = get_trailing_apy(to_block, days=7, project=OriginTokens.OETH)
+    oeth_curve_data = get_curve_data(to_block, project=OriginTokens.OETH)
+
     ogv_data = fetch_ogv_data(to_block, from_timestamp, to_timestamp)
 
+    # Fees
+    ousd_fees_generated = 0
+    ousd_fees_distributed = 0
+    
+    oeth_fees_generated = 0
+    oeth_fees_distributed = 0
+    
+    days = (to_block_time - from_block_time).days + 1
+    ousd_rows = _daily_rows_past(days, to_block_time, project=OriginTokens.OUSD)
+    oeth_rows = _daily_rows_past(days, to_block_time, project=OriginTokens.OETH)
+    
+    for row in ousd_rows:
+        if row.gain >= 0:
+            protocol_fee = 0
+            if row.block_number > VAULT_FEE_UPGRADE_BLOCK:
+                protocol_fee = row.gain / 5 # 20% fee == 20/100 == 1/5
+            else:
+                protocol_fee = row.gain / 10 # 10% fee == 10/100 == 1/10
+
+            ousd_fees_generated += protocol_fee
+            ousd_fees_distributed += (row.gain - protocol_fee)
+
+            
+    for row in oeth_rows:
+        if row.gain >= 0:
+            protocol_fee = row.gain / 5 # 20% fee == 20/100 == 1/5
+            oeth_fees_generated += protocol_fee
+            oeth_fees_distributed += (row.gain - protocol_fee)
+
+    # Average OUSD Volume
+    ousd_volume_sum = 0
+    ousd_history = get_coin_history(OriginTokens.OUSD, from_timestamp, to_timestamp)
+    ousd_volume_history = ousd_history['total_volumes']
+    for x in ousd_volume_history:
+        ousd_volume_sum += x[1]
+    average_ousd_volume = ousd_volume_sum / len(ousd_volume_history)
+
+    # Average OETH Volume
+    oeth_volume_sum = 0
+    oeth_price_sum = 0
+    oeth_history = get_coin_history(OriginTokens.OETH, from_timestamp, to_timestamp)
+    oeth_volume_history = oeth_history['total_volumes']
+    oeth_price_history = oeth_history['prices']
+    for x in oeth_volume_history:
+        oeth_volume_sum += x[1]
+    for x in oeth_price_history:
+        oeth_price_sum += x[1]
+    average_oeth_price = oeth_price_sum / len(oeth_price_history)
+    average_oeth_volume = (oeth_volume_sum / average_oeth_price) / len(oeth_volume_history)
+
+    oeth_market_share = 0 # TODO
+
+    # OUSD Market share
     stablecoin_market_cap_history = get_stablecoin_market_cap()
 
     stablecoin_market_cap = 0
@@ -682,19 +902,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
             stablecoin_market_cap = x['totalCirculatingUSD']['peggedUSD']
             break
 
-    days = (to_block_time - from_block_time).days + 1
-    rows = _daily_rows_past(days, to_block_time, project=project)
-    fees_generated = 0
-    for row in rows:
-        if row.gain >= 0:
-            if row.block_number > VAULT_FEE_UPGRADE_BLOCK:
-                fees_generated += row.gain / 5 # 20% fee == 20/100 == 1/5
-            else:
-                fees_generated += row.gain / 10 # 10% fee == 10/100 == 1/10
-
-    ousd_history = get_coin_history('OUSD', from_timestamp, to_timestamp)
     ousd_market_cap_history = ousd_history['market_caps']
-    ousd_volume_history = ousd_history['total_volumes']
     index = len(ousd_market_cap_history) - 1
 
     ousd_market_cap = ousd_market_cap_history[index][1]
@@ -705,32 +913,36 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
             ousd_market_cap = x[1]
             break
 
-    stablecoin_market_share = (ousd_market_cap / stablecoin_market_cap) * 100
+    ousd_market_share = (ousd_market_cap / stablecoin_market_cap) * 100
 
-    volume_sum = 0
-    for x in ousd_volume_history:
-        volume_sum += x[1]
-
-    average_ousd_volume = volume_sum / len(ousd_volume_history)
 
     # Uncomment this to enable parallelism
     # manager = Manager()
-    # analysis_list = manager.list()
+    # ousd_analysis_list = manager.list()
     # counter = 0
 
-    # all_chunks = chunks(all_addresses, ACCOUNT_ANALYZE_PARALLELISM)
+    # all_chunks = chunks(all_ousd_addresses, ACCOUNT_ANALYZE_PARALLELISM)
     # for chunk in all_chunks:
-    #     analyze_account_in_parallel(analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+    #     analyze_account_in_parallel(ousd_analysis_list, counter * ACCOUNT_ANALYZE_PARALLELISM, len(all_ousd_addresses), chunk, rebase_logs, from_block, to_block, from_block_time, to_block_time)
     #     counter += 1
 
     counter = 0
-    for account in all_addresses:
-        analyze_account(analysis_list, account, rebase_logs, from_block, to_block, from_block_time, to_block_time)
-        print('Analyzing account {} of {}'.format(counter, len(all_addresses)))
+    for account in all_ousd_addresses:
+        analyze_account(ousd_analysis_list, account, ousd_rebase_logs, from_block, to_block, from_block_time, to_block_time, project=OriginTokens.OUSD)
+        print('Analyzing account {} of {}'.format(counter, len(all_ousd_addresses)))
         counter += 1
 
+    accounts_analyzed = len(ousd_analysis_list)
 
-    accounts_analyzed = len(analysis_list)
+    counter = 0
+    for account in all_oeth_addresses:
+        analyze_account(oeth_analysis_list, account, oeth_rebase_logs, from_block, to_block, from_block_time, to_block_time, project=OriginTokens.OETH)
+        print('Analyzing account {} of {}'.format(counter, len(all_oeth_addresses)))
+        counter += 1
+
+    oeth_accounts_analyzed = len(oeth_analysis_list)
+
+    # OUSD-specific data
     accounts_holding_ousd = 0
     accounts_holding_more_than_100_ousd = 0
     accounts_holding_more_than_100_ousd_after_curve_start = 0
@@ -739,15 +951,30 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
     accounts_with_non_rebase_balance_increase = 0
     accounts_with_non_rebase_balance_decrease = 0
 
-    for analysis in analysis_list:
+    # OETH-specific data
+    accounts_holding_oeth = 0
+    accounts_holding_more_than_dot1_oeth = 0
+    oeth_new_accounts = 0
+    oeth_accounts_with_non_rebase_balance_increase = 0
+    oeth_accounts_with_non_rebase_balance_decrease = 0
+
+    for analysis in ousd_analysis_list:
+        new_accounts += 1 if analysis.is_new_account else 0
         accounts_holding_ousd += 1 if analysis.is_holding_ousd else 0
         accounts_holding_more_than_100_ousd += 1 if analysis.is_holding_more_than_100_ousd else 0
         accounts_holding_more_than_100_ousd_after_curve_start += 1 if analysis.new_after_curve_and_hold_more_than_100 else 0
-        new_accounts += 1 if analysis.is_new_account else 0
         new_accounts_after_curve_start += 1 if analysis.is_new_after_curve_start else 0
         accounts_with_non_rebase_balance_increase += 1 if analysis.has_ousd_increased else 0
         accounts_with_non_rebase_balance_decrease += 1 if analysis.has_ousd_decreased else 0
 
+
+    for analysis in oeth_analysis_list:
+        oeth_new_accounts += 1 if analysis.is_new_account else 0
+
+        accounts_holding_oeth += 1 if analysis.is_holding_oeth else 0
+        accounts_holding_more_than_dot1_oeth += 1 if analysis.is_holding_more_than_dot1_oeth else 0
+        oeth_accounts_with_non_rebase_balance_increase += 1 if analysis.has_oeth_increased else 0
+        oeth_accounts_with_non_rebase_balance_decrease += 1 if analysis.has_oeth_decreased else 0
 
 
     report = analytics_report(
@@ -759,13 +986,29 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         new_accounts_after_curve_start,
         accounts_with_non_rebase_balance_increase,
         accounts_with_non_rebase_balance_decrease,
-        supply_data,
-        apy,
+        ousd_supply_data,
+        ousd_apy,
+        ousd_apy_7d,
         curve_data,
-        fees_generated,
+        ousd_fees_generated,
+        ousd_fees_distributed,
         average_ousd_volume,
-        stablecoin_market_share,
-        ogv_data
+        ousd_market_share,
+        ogv_data,
+        oeth_accounts_analyzed,
+        accounts_holding_oeth,
+        accounts_holding_more_than_dot1_oeth,
+        oeth_new_accounts,
+        oeth_accounts_with_non_rebase_balance_increase,
+        oeth_accounts_with_non_rebase_balance_decrease,
+        oeth_supply_data,
+        oeth_apy,
+        oeth_apy_7d,
+        oeth_curve_data,
+        oeth_fees_generated,
+        oeth_fees_distributed,
+        average_oeth_volume,
+        average_oeth_price
     )
 
     # set the values back again
@@ -793,22 +1036,36 @@ def analyze_account_in_parallel(analysis_list, accounts_already_analyzed, total_
     for p in processes:
         p.join()
 
-def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, from_block_time, to_block_time):
-    (transaction_history, previous_transfer_logs, ousd_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs) = ensure_transaction_history(address, rebase_logs, from_block, to_block, from_block_time, to_block_time)
+def analyze_account(analysis_list, address, rebase_logs, from_block, to_block, from_block_time, to_block_time, project=OriginTokens.OUSD):
+    (transaction_history, previous_transfer_logs, token_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs) = ensure_transaction_history(address, rebase_logs, from_block, to_block, from_block_time, to_block_time, project=project)
 
-    is_holding_ousd = ousd_balance > 0.1
-    is_holding_more_than_100_ousd = ousd_balance > 100
-    is_new_account = len(previous_transfer_logs) == 0
-    is_new_after_curve_start = len(pre_curve_campaign_transfer_logs) == 0
-    new_after_curve_and_hold_more_than_100 = is_holding_more_than_100_ousd and is_new_after_curve_start
-    non_rebase_balance_diff = 0
+    if project == OriginTokens.OUSD:
+        is_holding_ousd = token_balance > 0.1
+        is_holding_more_than_100_ousd = token_balance > 100
+        is_new_account = len(previous_transfer_logs) == 0
+        is_new_after_curve_start = len(pre_curve_campaign_transfer_logs) == 0
+        new_after_curve_and_hold_more_than_100 = is_holding_more_than_100_ousd and is_new_after_curve_start
+        non_rebase_balance_diff = 0
 
-    for tansfer_log in filter(lambda log: isinstance(log, transfer_log), transaction_history):
-        non_rebase_balance_diff += tansfer_log.amount
+        for tansfer_log in filter(lambda log: isinstance(log, transfer_log), transaction_history):
+            non_rebase_balance_diff += tansfer_log.amount
 
-    analysis_list.append(
-        address_analytics(is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, non_rebase_balance_diff > 0, non_rebase_balance_diff < 0, is_new_after_curve_start, new_after_curve_and_hold_more_than_100)
-    )
+        analysis_list.append(
+            address_analytics(is_holding_ousd, is_holding_more_than_100_ousd, is_new_account, non_rebase_balance_diff > 0, non_rebase_balance_diff < 0, is_new_after_curve_start, new_after_curve_and_hold_more_than_100)
+        )
+    else:
+        is_holding_oeth = token_balance > 0.0001 # 0.0001 OETH or more
+        is_holding_more_than_dot1_oeth = token_balance > 0.1 # 0.1 OETH or more
+        is_new_account = len(previous_transfer_logs) == 0
+        non_rebase_balance_diff = 0
+
+        for tansfer_log in filter(lambda log: isinstance(log, transfer_log), transaction_history):
+            non_rebase_balance_diff += tansfer_log.amount
+
+        analysis_list.append(
+            oeth_address_analytics(is_holding_oeth, is_holding_more_than_dot1_oeth, is_new_account, non_rebase_balance_diff > 0, non_rebase_balance_diff < 0)
+        )
+
 
 # start_time and end_time might seem redundant, but are needed so we can query the transfer logs
 def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account='all', project=OriginTokens.OUSD):
@@ -920,47 +1177,48 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
 
     return analyzed_transactions
 
-def do_transaction_analytics(from_block, to_block, start_time, end_time, account='all'):
-    # TODO: Come back to this function later
+def do_transaction_analytics(from_block, to_block, start_time, end_time, account='all', project=OriginTokens.OUSD):
     report = {
         'contracts_swaps': {},
         'contracts_other': {}
     }
-    analyzed_transactions = ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account)
+    analyzed_transactions = ensure_analyzed_transactions(from_block, to_block, start_time, end_time, account, project=project)
 
     for analyzed_tx in analyzed_transactions:
 
         tx_hash, contract_address, received_eth, sent_eth, transfer_origin_token_out, transfer_origin_token_in, transfer_coin_out, transfer_coin_in, origin_token_transfer_from, origin_token_transfer_amount, transfer_log_count, classification, project = attrgetter('tx_hash', 'contract_address', 'received_eth', 'sent_eth', 'transfer_origin_token_out', 'transfer_origin_token_in', 'transfer_coin_out', 'transfer_coin_in', 'origin_token_transfer_from', 'origin_token_transfer_amount', 'transfer_log_count', 'classification', 'project')(analyzed_tx)
 
-        if (transfer_log_count > 1 or sent_eth or received_eth) and (classification != 'swap_gain_ousd' or classification != 'swap_give_ousd'):
-            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} ousd in: {} ousd out: {}".format(tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_origin_token_in, transfer_origin_token_out))
+        is_swap_tx = classification in ('swap_gain_ousd', 'swap_give_ousd', 'swap_gain_oeth', 'swap_give_oeth')
 
-        report_key = "contracts_swaps" if (classification == 'swap_gain_ousd' or classification == 'swap_give_ousd') else "contracts_other"
+        if (transfer_log_count > 1 or sent_eth or received_eth) and (not is_swap_tx):
+            print("Transaction needing further investigating hash: {}, transfer log count: {}, sent eth: {} received eth: {} coin in: {} coin out: {} origin_token in: {} origin_token out: {}".format(tx_hash, transfer_log_count, sent_eth, received_eth, transfer_coin_out, transfer_coin_out, transfer_origin_token_in, transfer_origin_token_out))
+
+        report_key = "contracts_swaps" if is_swap_tx else "contracts_other"
         contract_data = report[report_key][contract_address] if contract_address in report[report_key] else {
             "address": contract_address,
             "name": CONTRACT_ADDR_TO_NAME[contract_address] if contract_address in CONTRACT_ADDR_TO_NAME else "N/A",
             "total_swaps": 0,
-            "total_ousd_swapped": 0,
+            "total_origin_token_swapped": 0,
             "total_transactions": 0
         }
 
         contract_data["total_transactions"] += 1
         if origin_token_transfer_amount is not None:
             contract_data["total_swaps"] += 1
-            contract_data["total_ousd_swapped"] += origin_token_transfer_amount
+            contract_data["total_origin_token_swapped"] += origin_token_transfer_amount
 
         report[report_key][contract_address] = contract_data
 
     for report_key in ["contracts_swaps", "contracts_other"]:
         report_data = report[report_key]
-        sort_key = "total_ousd_swapped" if report_key == "contracts_swaps" else "total_swaps"
+        sort_key = "total_origin_token_swapped" if report_key == "contracts_swaps" else "total_swaps"
 
-        sum_total_ousd_swapped = 0
-        for ousd_swapped in map(lambda report_item: report_item[1]["total_ousd_swapped"], report_data.items()):
-            sum_total_ousd_swapped += ousd_swapped
+        sum_total_origin_token_swapped = 0
+        for origin_token_swapped in map(lambda report_item: report_item[1]["total_origin_token_swapped"], report_data.items()):
+            sum_total_origin_token_swapped += origin_token_swapped
 
         for contract_address, contract_data in report_data.items():
-            contract_data["total_swapped_ousd_share"] = contract_data["total_ousd_swapped"] / sum_total_ousd_swapped if sum_total_ousd_swapped > 0 else 0
+            contract_data["total_swapped_origin_token_share"] = contract_data["total_origin_token_swapped"] / sum_total_origin_token_swapped if sum_total_origin_token_swapped > 0 else 0
 
         report_data = {k: v for k, v in sorted(report_data.items(), key=lambda item: -item[1][sort_key])}
         report[report_key] = report_data
@@ -1154,12 +1412,10 @@ def ensure_origin_token_balance(credit_balance, logs):
     return logs
 
 
-def send_report_email(project, summary, report, prev_report, report_type):
+def send_report_email(summary, report, prev_report, report_type, recipient_override=None):
     report.transaction_report = json.loads(str(report.transaction_report))
-    send_report_email_core(summary, report, prev_report, report_type)
-    subscribers = Subscriber.objects.filter(project=project, confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
-    for subscriber in subscribers:
-        e = Email(summary, render_to_string('analytics_report_email.html', {
+    if recipient_override is not None:
+        e = Email(summary, render_to_string('analytics_report_v2_email.html', {
             'type': report_type,
             'report': report,
             'prev_report': prev_report,
@@ -1168,15 +1424,37 @@ def send_report_email(project, summary, report, prev_report, report_type):
             'stat_keys': report_stats.keys(),
             'curve_stats': curve_report_stats,
             'curve_stat_keys': curve_report_stats.keys(),
+            'oeth_stats': oeth_report_stats,
+            'oeth_stat_keys': oeth_report_stats.keys(),
+            'email': recipient_override,
+            'conf_num': ''
+        }))
+        e.execute([recipient_override])
+        return
+    send_report_email_core(summary, report, prev_report, report_type)
+    subscribers = Subscriber.objects.filter(confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
+    for subscriber in subscribers:
+        e = Email(summary, render_to_string('analytics_report_v2_email.html', {
+            'type': report_type,
+            'report': report,
+            'prev_report': prev_report,
+            'change': calculate_report_change(report, prev_report),
+            'stats': report_stats,
+            'stat_keys': report_stats.keys(),
+            'curve_stats': curve_report_stats,
+            'curve_stat_keys': curve_report_stats.keys(),
+            'oeth_stats': oeth_report_stats,
+            'oeth_stat_keys': oeth_report_stats.keys(),
             'email': subscriber.email,
             'conf_num': subscriber.conf_num
         }))
-        e.execute([subscriber.email])
+        if subscriber.email is not None:
+            e.execute([subscriber.email])
 
 
 def send_report_email_core(summary, report, prev_report, report_type):
     core = settings.CORE_TEAM_EMAIL
-    e = Email(summary, render_to_string('analytics_report_email.html', {
+    e = Email(summary, render_to_string('analytics_report_v2_email.html', {
         'type': report_type,
         'report': report,
         'prev_report': prev_report,
@@ -1185,21 +1463,23 @@ def send_report_email_core(summary, report, prev_report, report_type):
         'stat_keys': report_stats.keys(),
         'curve_stats': curve_report_stats,
         'curve_stat_keys': curve_report_stats.keys(),
+        'oeth_stats': oeth_report_stats,
+        'oeth_stat_keys': oeth_report_stats.keys(),
         'email': core,
         'conf_num': 0
     }))
     e.execute([core])
 
 
-def send_weekly_email():
-    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False, project=OriginTokens.OUSD).order_by("-year", "-week")
-    send_report_email(OriginTokens.OUSD, 'OUSD Analytics Weekly Report', weekly_reports[0], weekly_reports[1], "Weekly")
+def send_weekly_email(recipient_override=None):
+    weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
+    subject = 'Origin DeFi Analytics Weekly Report'
+    send_report_email(subject, weekly_reports[0], weekly_reports[1], "Weekly", recipient_override=recipient_override)
 
-
-def send_monthly_email():
-    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False, project=OriginTokens.OUSD).order_by("-year", "-month")
-    send_report_email(OriginTokens.OUSD, 'OUSD Analytics Monthly Report', monthly_reports[0], monthly_reports[1], "Monthly")
-
+def send_monthly_email(recipient_override=None):
+    monthly_reports = AnalyticsReport.objects.filter(month__isnull=False).order_by("-year", "-month")
+    subject = 'Origin DeFi Analytics Monthly Report'
+    send_report_email(subject, monthly_reports[0], monthly_reports[1], "Monthly", recipient_override=recipient_override)
 
 def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_block_time, to_block_time, ignore_curve_data=False, project=OriginTokens.OUSD):
     if rebase_logs is None:

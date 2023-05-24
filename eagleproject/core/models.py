@@ -379,7 +379,11 @@ class AnalyticsReport(models.Model):
     # OUSD Swaps. (Uniswap Router, Metamask router....)
     transaction_report = models.JSONField(default=list)
 
-    # Total number of accounts analyzed - number of accounts that have ever held OUSD
+    # Contains info regarding which contracts have been called that have resulted in
+    # OETH Swaps. (Uniswap Router, Metamask router....)
+    oeth_transaction_report = models.JSONField(default=list)
+
+    # Total number of accounts analyzed - number of accounts that have ever held OUSD/OETH
     accounts_analyzed = models.IntegerField()
     # Number of accounts holding OUSD in a given time period
     accounts_holding_ousd = models.IntegerField()
@@ -389,6 +393,14 @@ class AnalyticsReport(models.Model):
     accounts_holding_more_than_100_ousd_after_curve_start = models.IntegerField(
         default=0
     )
+
+    # Total number of accounts analyzed - number of accounts that have ever held OUSD/OETH
+    oeth_accounts_analyzed = models.IntegerField(default=0)
+    # Number of accounts holding OETH in a given time period
+    accounts_holding_oeth = models.IntegerField(default=0)
+    # Number of accounts holding more than 0.1 OETH in a given time period
+    accounts_holding_more_than_dot1_oeth = models.IntegerField(default=0)
+
     # Number of new accounts holding OUSD in a given time period
     new_accounts = models.IntegerField()
     # Number of new accounts after Curve campaign start
@@ -398,13 +410,15 @@ class AnalyticsReport(models.Model):
     # Number of accounts that have decreased their OUSD holdings ignoring rebases
     accounts_with_non_rebase_balance_decrease = models.IntegerField() 
 
+    # Number of new accounts holding OETH in a given time period
+    oeth_new_accounts = models.IntegerField(default=0)
+    # Number of accounts that have increased their OETH holdings ignoring rebases
+    oeth_accounts_with_non_rebase_balance_increase = models.IntegerField(default=0)
+    # Number of accounts that have decreased their OETH holdings ignoring rebases
+    oeth_accounts_with_non_rebase_balance_decrease = models.IntegerField(default=0) 
+
     # Contains any info that didn't fit into other reporting stats
     report = models.JSONField(default=list)
-
-    project = models.TextField(
-        choices=OriginTokens.choices,
-        default=OriginTokens.OUSD
-    )
 
     def __getattr__(self, name):
         if not self.report or self.report == "[]":
@@ -415,39 +429,68 @@ class AnalyticsReport(models.Model):
             return (
                 int(report_json.get("supply_data", {}).get("circulating_ousd", 0))
             )
+        if name == "circulating_oeth":
+            return (
+                float(report_json.get("oeth_supply_data", {}).get("circulating_oeth", 0))
+            )
         elif name == "protocol_owned_ousd":
             return (
                 int(report_json.get("supply_data", {}).get("protocol_owned_ousd", 0))
+            )
+        elif name == "protocol_owned_oeth":
+            return (
+                float(report_json.get("oeth_supply_data", {}).get("protocol_owned_oeth", 0))
             )
         elif name == "stablecoin_market_share":
             return (
                 round(report_json.get("stablecoin_market_share", 0), 4)
             )
-        elif name == "fees_generated":
+        elif name in (
+            "fees_generated", 
+            "fees_distributed", 
+            "average_ousd_volume",
+        ):
             return (
-                int(report_json.get("fees_generated", 0))
+                int(report_json.get(name, 0))
+            )
+        elif name in (
+            "oeth_fees_generated", 
+            "oeth_fees_distributed", 
+            "average_oeth_volume",
+            "average_oeth_price",
+        ):
+            return (
+                float(report_json.get(name, 0))
             )
         elif name == "curve_supply":
             pool = report_json.get("supply_data", {}).get("pools")
             amount = int(pool[0].get("amount", 0)) if pool is not None and len(pool) > 0 else None
             return amount
-        elif name == "average_ousd_volume":
-            return (
-                int(report_json.get("average_ousd_volume", 0))
-            )
+        elif name == "oeth_curve_supply":
+            pool = report_json.get("oeth_supply_data", {}).get("pools")
+            amount = float(pool[0].get("amount", 0)) if pool is not None and len(pool) > 0 else None
+            return amount
         elif name == "curve_metapool_total_supply":
             return (
                 report_json.get("curve_data", {}).get("total_supply")
+            )
+        elif name == "oeth_curve_metapool_total_supply":
+            return (
+                report_json.get("oeth_curve_data", {}).get("total_supply")
             )
         elif name == "share_earning_curve_ogn":
             return (
                 report_json.get("curve_data", {}).get("earning_ogn")
             )
-        elif name == "apy":
-            return report_json.get("apy")
+        elif name in ("apy", "apy_7d", "oeth_apy", "oeth_apy_7d"):
+            return report_json.get(name)
         elif name == "pools":
             return (
                 report_json.get("supply_data", {}).get("pools", [])
+            )
+        elif name == "oeth_pools":
+            return (
+                report_json.get("oeth_supply_data", {}).get("pools", [])
             )
         elif name == "other_rebasing":
             return (
@@ -456,6 +499,14 @@ class AnalyticsReport(models.Model):
         elif name == "other_non_rebasing":
             return (
                 report_json.get("supply_data", {}).get("other_non_rebasing", [])
+            )
+        elif name == "oeth_other_rebasing":
+            return (
+                report_json.get("oeth_supply_data", {}).get("other_rebasing", [])
+            )
+        elif name == "oeth_other_non_rebasing":
+            return (
+                report_json.get("oeth_supply_data", {}).get("other_non_rebasing", [])
             )
         elif name == "ogv_price":
             return (
