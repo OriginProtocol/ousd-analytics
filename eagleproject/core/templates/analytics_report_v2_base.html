@@ -50,14 +50,8 @@
     .cell.value.usd {
       font-weight: 400;
       color: #02080D;
-      margin-top: -8px;
+      margin-top: 0px;
       font-size: 11px;
-    }
-    .cell.value.usd::before {
-      content: '($';
-    }
-    .cell.value.usd::after {
-      content: ')';
     }
     .subscribe, .subscribe:hover {
       display: inline-flex;
@@ -97,7 +91,7 @@
     .color-red {
       color: red;
     }
-    .cell.change.mt-0 {
+    .cell.change.top-aligned {
       margin-top: 0;
     }
     .color-origin-blue {
@@ -108,6 +102,9 @@
     }
     .unsubscribe-cta {
       margin-top: 48px !important;
+    }
+    .low-bottom-margin {
+      margin-bottom: 4px !important;
     }
     @media (max-width: 992px) {
       .box {
@@ -164,26 +161,26 @@
         <tr style="border-bottom: 1px solid #B5BECA;">
           <td><div class="field" style="text-align:left;padding-top: 14px;padding-bottom: 14px;">Circulating supply</div></td>
           <td style="font-weight:bold;">
-            <div class="cell value color-prev">{{prev_report|class_value:'circulating_oeth'|floatformat_rnd_down:2}}</div>
-            <div class="cell value usd color-na">{{prev_report|oeth_circulating_supply_usd}}</div>
+            <div class="cell value low-bottom-margin color-prev">{{prev_report|class_value:'circulating_oeth'|floatformat_rnd_down:2}}</div>
+            <div class="cell value usd color-na">(${{prev_report|oeth_circulating_supply_usd}})</div>
           </td>
           <td style="font-weight:bold;">
-            <div class="cell value">{{report|class_value:'circulating_oeth'|floatformat_rnd_down:2}}</div>
-            <div class="cell value usd color-na">{{report|oeth_circulating_supply_usd}}</div>
+            <div class="cell value low-bottom-margin">{{report|class_value:'circulating_oeth'|floatformat_rnd_down:2}}</div>
+            <div class="cell value usd color-na">(${{report|oeth_circulating_supply_usd}})</div>
           </td>
-          <td><span class="{{change|class_color_style:'circulating_oeth'}}"><div class="cell change mt-0">{{change|dict_value:'circulating_oeth'|change_in_value}}</div></span></td>
+          <td><span class="{{change|class_color_style:'circulating_oeth'}}"><div class="cell change top-aligned">{{change|dict_value:'circulating_oeth'|change_in_value}}</div></span></td>
         </tr>
         <tr style="border-bottom: 1px solid #B5BECA;">
           <td><div class="field" style="text-align:left;padding-top: 14px;padding-bottom: 14px;">Protocol-owned supply</div></td>
           <td style="font-weight:bold;">
-            <div class="cell value color-prev">{{prev_report|class_value:'protocol_owned_oeth'|floatformat_rnd_down:2}}</div>
-            <div class="cell value usd color-na">{{prev_report|oeth_protocol_supply_usd}}</div>
+            <div class="cell value low-bottom-margin color-prev">{{prev_report|class_value:'protocol_owned_oeth'|floatformat_rnd_down:2}}</div>
+            <div class="cell value usd color-na">(${{prev_report|oeth_protocol_supply_usd}})</div>
           </td>
           <td style="font-weight:bold;">
-            <div class="cell value">{{report|class_value:'protocol_owned_oeth'|floatformat_rnd_down:2}}</div>
-            <div class="cell value usd color-na">{{report|oeth_protocol_supply_usd}}</div>
+            <div class="cell value low-bottom-margin">{{report|class_value:'protocol_owned_oeth'|floatformat_rnd_down:2}}</div>
+            <div class="cell value usd color-na">(${{report|oeth_protocol_supply_usd}})</div>
           </td>
-          <td><span class="{{change|class_color_style:'protocol_owned_oeth'}}"><div class="cell change mt-0">{{change|dict_value:'protocol_owned_oeth'|change_in_value}}</div></span></td>
+          <td><span class="{{change|class_color_style:'protocol_owned_oeth'}}"><div class="cell change top-aligned">{{change|dict_value:'protocol_owned_oeth'|change_in_value}}</div></span></td>
         </tr>
         <tr style="border-bottom: 1px solid #B5BECA;">
           <td><div class="field" style="text-align:left;padding-top: 14px;padding-bottom: 14px;">7-Day APY</div></td>

@@ -932,10 +932,6 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         print('Analyzing account {} of {}'.format(counter, len(all_ousd_addresses)))
         counter += 1
 
-        # TODO: Remove before merging
-        if counter > 10:
-            break
-
     accounts_analyzed = len(ousd_analysis_list)
 
     counter = 0
@@ -1182,7 +1178,6 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
     return analyzed_transactions
 
 def do_transaction_analytics(from_block, to_block, start_time, end_time, account='all', project=OriginTokens.OUSD):
-    # TODO: Come back to this function later
     report = {
         'contracts_swaps': {},
         'contracts_other': {}
