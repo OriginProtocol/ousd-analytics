@@ -3,7 +3,7 @@
 {% block title %}{{report.end_time|date:"F d, Y"}} | Analytics Reports{% endblock %}
 
 {% block content %}
-{% with is_email=True %}
+{% with is_email=False %}
 {% with assets_host="" %}
 {% include 'analytics_report_v2_base.html' %}
 {% endwith %}
