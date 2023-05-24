@@ -683,7 +683,7 @@ def latest_snapshot_block_number(project=OriginTokens.OUSD):
     return latest_snapshot(project=project).block_number
 
 
-def calculate_snapshot_data(block=None):
+def calculate_ousd_snapshot_data(block=None):
     project = OriginTokens.OUSD
     pools_config = [
         ("Curve", CURVE_METAPOOL, False),

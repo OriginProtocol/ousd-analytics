@@ -40,7 +40,7 @@ from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
     latest_snapshot,
     latest_snapshot_block_number,
-    calculate_snapshot_data,
+    calculate_ousd_snapshot_data,
     snapshot_at_block,
     ensure_oracle_snapshot,
 )
@@ -374,7 +374,7 @@ def supply(request):
         other_rebasing,
         other_non_rebasing,
         s,
-    ] = calculate_snapshot_data()
+    ] = calculate_ousd_snapshot_data()
     rebasing_pools = [x for x in pools if x["is_rebasing"]]
     non_rebasing_pools = [x for x in pools if x["is_rebasing"] == False]
     # return _cache(30, render(request, "supply.html", locals()))
@@ -840,7 +840,7 @@ def report_monthly(request, year, month):
         next_month = month + 1
         next_year = year
     
-    view_template = "analytics_report_v2.html" if year > 2023 or (year == 2023 and month >= 5) else "analytics_report.html"
+    view_template = "analytics_report_v2_web.html" if year > 2023 or (year == 2023 and month >= 5) else "analytics_report.html"
 
     return render(request, view_template, locals())
 
@@ -865,7 +865,7 @@ def report_weekly(request, year, week):
         next_week = week + 1
         next_year = year
 
-    view_template = "analytics_report_v2.html" if year > 2023 or (year == 2023 and week >= 20) else "analytics_report.html"
+    view_template = "analytics_report_v2_web.html" if year > 2023 or (year == 2023 and week >= 20) else "analytics_report.html"
 
     return render(request, view_template, locals())
 

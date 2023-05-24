@@ -431,7 +431,7 @@ class AnalyticsReport(models.Model):
             )
         if name == "circulating_oeth":
             return (
-                int(report_json.get("oeth_supply_data", {}).get("circulating_oeth", 0))
+                float(report_json.get("oeth_supply_data", {}).get("circulating_oeth", 0))
             )
         elif name == "protocol_owned_ousd":
             return (
@@ -439,7 +439,7 @@ class AnalyticsReport(models.Model):
             )
         elif name == "protocol_owned_oeth":
             return (
-                int(report_json.get("oeth_supply_data", {}).get("protocol_owned_oeth", 0))
+                float(report_json.get("oeth_supply_data", {}).get("protocol_owned_oeth", 0))
             )
         elif name == "stablecoin_market_share":
             return (
@@ -448,13 +448,19 @@ class AnalyticsReport(models.Model):
         elif name in (
             "fees_generated", 
             "fees_distributed", 
-            "oeth_fees_generated", 
-            "oeth_fees_distributed", 
             "average_ousd_volume",
-            "average_oeth_volume",
         ):
             return (
                 int(report_json.get(name, 0))
+            )
+        elif name in (
+            "oeth_fees_generated", 
+            "oeth_fees_distributed", 
+            "average_oeth_volume",
+            "average_oeth_price",
+        ):
+            return (
+                float(report_json.get(name, 0))
             )
         elif name == "curve_supply":
             pool = report_json.get("supply_data", {}).get("pools")
@@ -462,7 +468,7 @@ class AnalyticsReport(models.Model):
             return amount
         elif name == "oeth_curve_supply":
             pool = report_json.get("oeth_supply_data", {}).get("pools")
-            amount = int(pool[0].get("amount", 0)) if pool is not None and len(pool) > 0 else None
+            amount = float(pool[0].get("amount", 0)) if pool is not None and len(pool) > 0 else None
             return amount
         elif name == "curve_metapool_total_supply":
             return (

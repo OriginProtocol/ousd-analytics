@@ -60,7 +60,7 @@ from core.blockchain.utils import (
 )
 from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
-    calculate_snapshot_data,
+    calculate_ousd_snapshot_data,
     calculate_oeth_snapshot_data,
 )
 
@@ -197,6 +197,7 @@ class analytics_report:
         oeth_fees_generated,
         oeth_fees_distributed,
         average_oeth_volume,
+        average_oeth_price,
     ):
         self.accounts_analyzed = accounts_analyzed
         self.accounts_holding_ousd = accounts_holding_ousd
@@ -229,6 +230,7 @@ class analytics_report:
         self.oeth_fees_generated = oeth_fees_generated
         self.oeth_fees_distributed = oeth_fees_distributed
         self.average_oeth_volume = average_oeth_volume
+        self.average_oeth_price = average_oeth_price
 
     def __str__(self):
         return 'Analytics report: accounts_analyzed: {} accounts_holding_ousd: {} accounts_holding_more_than_100_ousd: {} accounts_holding_more_than_100_ousd_after_curve_start: {} new_accounts: {} new_accounts_after_curve_start: {} accounts_with_non_rebase_balance_increase: {} accounts_with_non_rebase_balance_decrease: {} apy: {} supply_data: {} curve_data: {} fees_generated: {} average_ousd_volume: {} stablecoin_market_share: {} ogv_data: {}'.format(self.accounts_analyzed, self.accounts_holding_ousd, self.accounts_holding_more_than_100_ousd, self.accounts_holding_more_than_100_ousd_after_curve_start, self.new_accounts, self.new_accounts_after_curve_start, self.accounts_with_non_rebase_balance_increase, self.accounts_with_non_rebase_balance_decrease, self.apy, self.supply_data, self.curve_data, self.fees_generated, self.average_ousd_volume, self.stablecoin_market_share, self.ogv_data)
@@ -738,7 +740,7 @@ def fetch_supply_data(block_number, project=OriginTokens.OUSD):
     ensure_supply_snapshot(block_number, project=project)
     
     if project == OriginTokens.OUSD:
-        [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_snapshot_data(block_number)
+        [pools, totals_by_rebasing, other_rebasing, other_non_rebasing, snapshot] = calculate_ousd_snapshot_data(block_number)
         
         ousd = build_asset_block("OUSD", block_number, project=project)
         protocol_owned_ousd = float(ousd.strat_holdings["ousd_metastrat"])
@@ -747,7 +749,6 @@ def fetch_supply_data(block_number, project=OriginTokens.OUSD):
         return {
             'circulating_ousd': circulating_ousd,
             'protocol_owned_ousd': protocol_owned_ousd,
-
             'pools': pools,
             'totals_by_rebasing': totals_by_rebasing,
             'other_rebasing': other_rebasing,
@@ -763,7 +764,6 @@ def fetch_supply_data(block_number, project=OriginTokens.OUSD):
         return {
             'circulating_oeth': circulating_oeth,
             'protocol_owned_oeth': protocol_owned_oeth,
-
             'pools': pools,
             'totals_by_rebasing': totals_by_rebasing,
             'other_rebasing': other_rebasing,
@@ -804,7 +804,6 @@ def get_curve_data(to_block, project=OriginTokens.OUSD):
             "earning_ogn": balance/supply,
         }
     else:
-        # balance = balanceOf(OETH_ETH_AMO_METAPOOL, OETH_ETH_AMO_CURVE_GUAGE, 18, to_block)
         supply = totalSupply(OETH_ETH_AMO_METAPOOL, 18, to_block)
         return {
             "total_supply": supply
@@ -873,7 +872,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
 
     # Average OUSD Volume
     ousd_volume_sum = 0
-    ousd_history = get_coin_history('OUSD', from_timestamp, to_timestamp)
+    ousd_history = get_coin_history(OriginTokens.OUSD, from_timestamp, to_timestamp)
     ousd_volume_history = ousd_history['total_volumes']
     for x in ousd_volume_history:
         ousd_volume_sum += x[1]
@@ -881,11 +880,16 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
 
     # Average OETH Volume
     oeth_volume_sum = 0
-    oeth_history = get_coin_history('OETH', from_timestamp, to_timestamp)
+    oeth_price_sum = 0
+    oeth_history = get_coin_history(OriginTokens.OETH, from_timestamp, to_timestamp)
     oeth_volume_history = oeth_history['total_volumes']
+    oeth_price_history = oeth_history['prices']
     for x in oeth_volume_history:
         oeth_volume_sum += x[1]
-    average_oeth_volume = oeth_volume_sum / len(oeth_volume_history)
+    for x in oeth_price_history:
+        oeth_price_sum += x[1]
+    average_oeth_price = oeth_price_sum / len(oeth_price_history)
+    average_oeth_volume = (oeth_volume_sum / average_oeth_price) / len(oeth_volume_history)
 
     oeth_market_share = 0 # TODO
 
@@ -994,9 +998,7 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         ousd_fees_distributed,
         average_ousd_volume,
         ousd_market_share,
-
         ogv_data,
-
         oeth_accounts_analyzed,
         accounts_holding_oeth,
         accounts_holding_more_than_dot1_oeth,
@@ -1009,7 +1011,8 @@ def create_time_interval_report(from_block, to_block, from_block_time, to_block_
         oeth_curve_data,
         oeth_fees_generated,
         oeth_fees_distributed,
-        average_oeth_volume
+        average_oeth_volume,
+        average_oeth_price
     )
 
     # set the values back again
@@ -1417,7 +1420,7 @@ def ensure_origin_token_balance(credit_balance, logs):
 def send_report_email(summary, report, prev_report, report_type, recipient_override=None):
     report.transaction_report = json.loads(str(report.transaction_report))
     if recipient_override is not None:
-        e = Email(summary, render_to_string('analytics_report_email.html', {
+        e = Email(summary, render_to_string('analytics_report_v2_email.html', {
             'type': report_type,
             'report': report,
             'prev_report': prev_report,
@@ -1436,7 +1439,7 @@ def send_report_email(summary, report, prev_report, report_type, recipient_overr
     send_report_email_core(summary, report, prev_report, report_type)
     subscribers = Subscriber.objects.filter(confirmed=True, unsubscribed=False).exclude(email=settings.CORE_TEAM_EMAIL)
     for subscriber in subscribers:
-        e = Email(summary, render_to_string('analytics_report_email.html', {
+        e = Email(summary, render_to_string('analytics_report_v2_email.html', {
             'type': report_type,
             'report': report,
             'prev_report': prev_report,
@@ -1456,7 +1459,7 @@ def send_report_email(summary, report, prev_report, report_type, recipient_overr
 
 def send_report_email_core(summary, report, prev_report, report_type):
     core = settings.CORE_TEAM_EMAIL
-    e = Email(summary, render_to_string('analytics_report_email.html', {
+    e = Email(summary, render_to_string('analytics_report_v2_email.html', {
         'type': report_type,
         'report': report,
         'prev_report': prev_report,
