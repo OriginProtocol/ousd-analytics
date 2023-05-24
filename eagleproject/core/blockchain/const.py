@@ -213,10 +213,19 @@ TRUE_256BIT = (
 )
 
 report_stats = {
-    "fees_generated": "Fees generated",
-    "accounts_holding_more_than_100_ousd": "Accounts holding over 100 OUSD",
+    "fees_distributed": "Yield distributed",
+    "fees_generated": "Protocol fees earned",
+    "accounts_holding_more_than_100_ousd": "Accounts holding 100 OUSD or more",
     "curve_supply": "Curve pool supply",
     "average_ousd_volume": "Average daily trading volume"
+}
+
+oeth_report_stats = {
+    "oeth_fees_distributed": "Yield distributed (OETH)",
+    "oeth_fees_generated": "Protocol fees earned (OETH)",
+    "accounts_holding_more_than_dot1_oeth": "Accounts holding 0.1 OETH or more",
+    "oeth_curve_supply": "Curve pool supply (ETH)",
+    "average_oeth_volume": "Average daily trading volume (ETH)"
 }
 
 curve_report_stats = {

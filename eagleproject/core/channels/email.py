@@ -20,6 +20,9 @@ class Email():
         )
 
     def execute(self, recipients):
+        if recipients[0] is None: 
+            print("No recipient")
+            return
         if self._is_configured():
             from_email = settings.DEFAULT_FROM_EMAIL
             reply_email = settings.REPLY_TO_EMAIL.split(",")
@@ -39,7 +42,7 @@ class Email():
             #   from_email=settings.DEFAULT_FROM_EMAIL,
             #   to=['grabec@gmail.com'],
             # )
-            # msg.template_id = "analytics_report_email.html"
+            # msg.template_id = "analytics_report_v2_email.html"
             # msg.dynamic_template_data = {
             #   "title": "title"
             # }
