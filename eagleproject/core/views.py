@@ -778,7 +778,12 @@ def collateral(request, project):
     assets = fetch_assets(block_number, project=project)
     collateral = []
     for asset in assets:
-        collateral.append({"name": asset.symbol.lower(), "total": asset.total()})
+        collateral.append({
+            "name": asset.symbol.lower(), 
+            "total": asset.total(),
+            "price": asset.redeem_price(),
+            "value": asset.total() * asset.redeem_price(),
+        })
     response = JsonResponse(
         {
             "collateral": collateral
