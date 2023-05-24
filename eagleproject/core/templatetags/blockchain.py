@@ -330,29 +330,33 @@ def dict_color_style(dictionary, stat):
     else:
         value = dictionary[stat]
 
-    if value > 0:
+    if value == 0:
+        return 'color-na'
+    elif value > 0:
          return 'color:green'
     else:
         return 'color:red'
 
 @register.filter
-def class_color_style(object, stat):
+def class_color_style(value_dict, stat):
     value = 0
     if "." in stat:
         keys = stat.split(".")
-        value = object
+        value = value_dict
         for sub_key in keys:
             if sub_key in value:
                 value = getattr(value, sub_key)
             else:
                 return 'color:green'
     else:
-        value = getattr(object, stat)
+        value = value_dict[stat]
 
-    if value > 0:
-         return 'color:green'
+    if value == 0:
+        return 'color-na'
+    elif value > 0:
+         return 'color-green'
     else:
-        return 'color:red'
+        return 'color-red'
 
 @register.filter
 def class_value(object, key):
@@ -396,6 +400,9 @@ def floatformat_rnd_down(value, decimals=2):
         raise ValueError("decimal places has to be 0 or more")
     elif decimals == 0:
         return math.floor(value)
+
+    if isinstance(value, str):
+        return value
 
     factor = 10 ** decimals
     return math.floor(value * factor) / factor
@@ -472,3 +479,31 @@ def get_icon_file(strat, symbol):
         return strat.get("icons").get(symbol, "buffer-icon.svg")
 
     return symbol.lower() + "-icon.svg"
+
+
+@register.filter
+def change_in_value(value, display_type="percentage"):
+    if value == None:
+        return "N/A"
+
+    sign = "-" if value < 0 else ""
+
+    if display_type == "bps":
+        return "{}{:.2f}bp".format(sign, value)
+
+    return "{}{:.2f}%".format(sign, value)
+
+@register.filter
+def oeth_circulating_supply_usd(report):
+    price = getattr(report, "average_oeth_price")
+    supply = getattr(report, "circulating_oeth")
+    return floatformat_rnd_down (
+        supply * price
+    )
+@register.filter
+def oeth_protocol_supply_usd(report):
+    price = getattr(report, "average_oeth_price")
+    supply = getattr(report, "protocol_owned_oeth")
+    return floatformat_rnd_down(
+        supply * price
+    )

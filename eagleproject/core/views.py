@@ -32,6 +32,7 @@ from core.blockchain.const import (
     START_OF_OUSD_V2_TIME,
     report_stats,
     curve_report_stats,
+    oeth_report_stats,
 )
 from core.blockchain.harvest import reload_all, refresh_transactions, snap
 from core.blockchain.harvest.snapshots import (
@@ -39,7 +40,7 @@ from core.blockchain.harvest.snapshots import (
     ensure_supply_snapshot,
     latest_snapshot,
     latest_snapshot_block_number,
-    calculate_snapshot_data,
+    calculate_ousd_snapshot_data,
     snapshot_at_block,
     ensure_oracle_snapshot,
 )
@@ -138,8 +139,7 @@ def dashboard(request):
         logs_q = logs_q.filter(topic_0=topic)
     latest_logs = logs_q[:100]
     weekly_reports = AnalyticsReport.objects.filter(
-        week__isnull=False,
-        project=OriginTokens.OUSD
+        week__isnull=False
     ).order_by("-year", "-week")
     if (len(weekly_reports) > 0):
         token_holder_amount = weekly_reports[0].accounts_holding_ousd
@@ -323,7 +323,7 @@ def remove_specific_month_report(request, month):
         return HttpResponse("ok")
 
     year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(month=month, year=year, project=OriginTokens.OUSD)
+    report = AnalyticsReport.objects.get(month=month, year=year)
     report.delete()
     return HttpResponse("ok")
 
@@ -334,7 +334,7 @@ def remove_specific_week_report(request, week):
         return HttpResponse("ok")
 
     year = datetime.datetime.now().year
-    report = AnalyticsReport.objects.get(week=week, year=year, project=OriginTokens.OUSD)
+    report = AnalyticsReport.objects.get(week=week, year=year)
     report.delete()
     return HttpResponse("ok")
 
@@ -379,7 +379,7 @@ def supply(request):
         other_rebasing,
         other_non_rebasing,
         s,
-    ] = calculate_snapshot_data()
+    ] = calculate_ousd_snapshot_data()
     rebasing_pools = [x for x in pools if x["is_rebasing"]]
     non_rebasing_pools = [x for x in pools if x["is_rebasing"] == False]
     # return _cache(30, render(request, "supply.html", locals()))
@@ -696,7 +696,7 @@ def _my_assets(address, block_number):
 
 # def test_email(request):
 #     weekly_reports = AnalyticsReport.objects.filter(week__isnull=False).order_by("-year", "-week")
-#     send_report_email("OUSD", 'Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
+#     send_report_email('Weekly report', weekly_reports[0], weekly_reports[1], "Weekly")
 #     return HttpResponse("ok")
     
 
@@ -800,7 +800,7 @@ def _get_previous_report(report, all_reports=None):
         all_reports = (
             all_reports
             if all_reports is not None
-            else AnalyticsReport.objects.filter(month__isnull=False, project=OriginTokens.OUSD).order_by(
+            else AnalyticsReport.objects.filter(month__isnull=False).order_by(
                 "-year", "-month"
             )
         )
@@ -818,7 +818,7 @@ def _get_previous_report(report, all_reports=None):
         all_reports = (
             all_reports
             if all_reports is not None
-            else AnalyticsReport.objects.filter(week__isnull=False, project=OriginTokens.OUSD).order_by(
+            else AnalyticsReport.objects.filter(week__isnull=False).order_by(
                 "-year", "-week"
             )
         )
@@ -835,12 +835,14 @@ def _get_previous_report(report, all_reports=None):
 
 
 def report_monthly(request, year, month):
-    report = AnalyticsReport.objects.filter(month=month, year=year, project=OriginTokens.OUSD)[0]
+    report = AnalyticsReport.objects.filter(month=month, year=year)[0]
     prev_report = _get_previous_report(report)
     stats = report_stats
     stat_keys = stats.keys()
     curve_stats = curve_report_stats
     curve_stat_keys = curve_stats.keys()
+    oeth_stats = oeth_report_stats
+    oeth_stat_keys = oeth_stats.keys()
     is_monthly = True
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
@@ -851,7 +853,10 @@ def report_monthly(request, year, month):
     else:
         next_month = month + 1
         next_year = year
-    return render(request, "analytics_report.html", locals())
+    
+    view_template = "analytics_report_v2_web.html" if year > 2023 or (year == 2023 and month >= 5) else "analytics_report.html"
+
+    return render(request, view_template, locals())
 
 
 def report_weekly(request, year, week):
@@ -861,6 +866,8 @@ def report_weekly(request, year, week):
     stat_keys = stats.keys()
     curve_stats = curve_report_stats
     curve_stat_keys = curve_stats.keys()
+    oeth_stats = oeth_report_stats
+    oeth_stat_keys = oeth_stats.keys()
     is_monthly = False
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
@@ -872,7 +879,9 @@ def report_weekly(request, year, week):
         next_week = week + 1
         next_year = year
 
-    return render(request, "analytics_report.html", locals())
+    view_template = "analytics_report_v2_web.html" if year > 2023 or (year == 2023 and week >= 20) else "analytics_report.html"
+
+    return render(request, view_template, locals())
 
 
 def report_latest_weekly(request):
@@ -884,11 +893,9 @@ def report_latest_weekly(request):
 def reports(request):
     monthly_reports = AnalyticsReport.objects.filter(
         month__isnull=False,
-        project=OriginTokens.OUSD
     ).order_by("-year", "-month")
     weekly_reports = AnalyticsReport.objects.filter(
         week__isnull=False,
-        project=OriginTokens.OUSD
     ).order_by("-year", "-week")
     stats = report_stats
     stat_keys = stats.keys()
@@ -919,7 +926,7 @@ def reports(request):
             )
         )
 
-    return render(request, "analytics_reports.html", locals())
+    return render(request, "analytics_reports_list.html", locals())
 
 
 def generate_token():

@@ -1,6 +1,7 @@
 import requests
 
 from core.logging import get_logger
+from core.models import OriginTokens
 
 log = get_logger(__name__)
 
@@ -10,6 +11,9 @@ TICKER_TO_COINGECKO_ID = {
     "OGN": "origin-protocol",
     "OUSD": "origin-dollar",
     "OGV": "origin-dollar-governance",
+    "OETH": "origin-ether",
+    OriginTokens.OUSD: "origin-dollar",
+    OriginTokens.OETH: "origin-ether",
 }
 
 
