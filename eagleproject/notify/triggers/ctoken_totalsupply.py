@@ -55,12 +55,12 @@ def create_message(action, ctoken_name, diff, diff_underlying, symbol,
             round(pct_threshold * Decimal(100)),
             symbol,
             dir_symbol,
-            format_decimal(diff, max_decimals=CTOKEN_DECIMALS),
+            format_decimal(diff, places=CTOKEN_DECIMALS),
             symbol,
             dir_symbol,
             format_decimal(
                 diff_underlying,
-                max_decimals=DECIMALS_FOR_SYMBOL.get(symbol, 4)
+                places=DECIMALS_FOR_SYMBOL.get(symbol, 4)
             ),
         )
     )
