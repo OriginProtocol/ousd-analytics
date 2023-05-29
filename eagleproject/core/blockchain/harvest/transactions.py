@@ -171,7 +171,6 @@ def get_earliest_rebase_block_number(block_number, project):
 # get rebasing credits per token log at block number
 def get_rebasing_credits_per_token(block_number, project):
     rebase_log = get_rebase_log(block_number, project)
-    explode_log_data(rebase_log.data)
 
     credits_per_token = explode_log_data(rebase_log.data)[2] * 1e18
     # we have increased the accuracy from 1e18 to 1e27 for rebasing credits per token
