@@ -17,7 +17,10 @@ from core.models import OriginTokens
 from django.core.exceptions import ObjectDoesNotExist
 
 
-PREV_APR = None
+PREV_APR = {
+    OriginTokens.OUSD: None,
+    OriginTokens.OETH: None,
+}
 
 # if block is None, the latest block shall be considered
 def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
@@ -34,8 +37,9 @@ def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
 
     # Check cache first
     global PREV_APR
-    if PREV_APR and block is None:
-        good_to, apr = PREV_APR
+    last_project_apr = PREV_APR.get(project)
+    if last_project_apr is not None and block is None:
+        good_to, apr = last_project_apr
         if good_to > datetime.datetime.today():
             return apr
 
@@ -67,7 +71,7 @@ def get_trailing_apr(block=None, days=30.00, project=OriginTokens.OUSD):
     # Save to cache
     if block is None:
         good_to = datetime.datetime.today() + datetime.timedelta(minutes=5)
-        PREV_APR = [good_to, apr]
+        PREV_APR[project] = [good_to, apr]
     return (apr, days)
 
 # if block is None, the latest block shall be considered
