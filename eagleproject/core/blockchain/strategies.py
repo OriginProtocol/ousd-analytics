@@ -4,7 +4,7 @@ Example Strategy Config:
   "compstrat_holding": {
 
     # Shown in the Dashboard
-    "NAME": "Compound Strategy", 
+    "NAME": "Compound Strategy",
 
     # Contract address
     "ADDRESS": "0x89eb88fedc50fc77ae8a18aad1ca0ac27f777a90",
@@ -45,6 +45,7 @@ LUSD_METASTRAT = "0x7a192dd9cc4ea9bdedec9992df74f1da55e60a19"
 OETH_VAULT = "0x39254033945aa2e4809cc2977e7087bee48bd7ab"
 FRAX_ETH_STRATEGY = "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5"
 OETH_CURVE_AMO_STRATEGY = "0x1827f9ea98e0bf96550b2fc20f7233277fcd7e63"
+OETH_MORPHO_AAVE_STRATEGY = "0xc1fc9E5eC3058921eA5025D703CBE31764756319"
 
 # OUSD Strategies
 OUSD_STRATEGIES = {
@@ -133,4 +134,11 @@ OETH_STRATEGIES = {
     "SUPPORTED_ASSETS": ["ETH", "OETH"],
     "ICON_NAME": "oeth-icon.svg",
   },
+  "morpho_aave_strat": {
+      "NAME": "Morpho Aave",
+      "ADDRESS": OETH_MORPHO_AAVE_STRATEGY,
+      "FROM_BLOCK": 17367105,
+      "SUPPORTED_ASSETS": ["WETH"],
+      "ICON_NAME": "morpho.png",
+    },
 }
