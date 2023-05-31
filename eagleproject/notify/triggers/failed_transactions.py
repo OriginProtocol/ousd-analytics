@@ -4,7 +4,7 @@ from core.blockchain.const import ETHERSCAN_CONTRACTS
 from core.blockchain.harvest.transactions import (
     ensure_transaction_and_downstream,
 )
-from notify.events import event_normal
+from notify.events import event_high
 
 
 def tx_error_event(tx_hash, contract_name, block_number=0, transaction_index=0):
@@ -12,7 +12,7 @@ def tx_error_event(tx_hash, contract_name, block_number=0, transaction_index=0):
 
     TODO: Make this more intelligent and informative
     """
-    return event_normal(
+    return event_high(
         "Transaction Error   🛑",
         "A transaction error has occurred on the {} contract\n\n"
         "https://etherscan.io/tx/{}".format(
