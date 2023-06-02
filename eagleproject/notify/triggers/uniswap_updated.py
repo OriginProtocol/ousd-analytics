@@ -18,7 +18,7 @@ def run_trigger(new_logs):
 
     for ev in get_events(new_logs):
         uniswap_address = decode_single('(address)', decode_hex(ev.data))[0]
-        uniswap_version = "V3" if ev.address == OGV_BUYBACK_LEGACY or ev.address == OGV_BUYBACK_PROXY else "V2"
+        uniswap_version = "V3" if ev.address in [OGV_BUYBACK_LEGACY, OGV_BUYBACK_PROXY] else "V2"
         contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
         events.append(event_normal(
             "{} Uniswap {} Router Address Changed   🦄".format(contract_name, uniswap_version),
