@@ -1427,7 +1427,8 @@ def send_report_email(summary, report, prev_report, report_type, recipient_overr
             'oeth_stats': oeth_report_stats,
             'oeth_stat_keys': oeth_report_stats.keys(),
             'email': recipient_override,
-            'conf_num': ''
+            'conf_num': '',
+            'is_monthly': report.month is not None
         }))
         e.execute([recipient_override])
         return
@@ -1446,7 +1447,8 @@ def send_report_email(summary, report, prev_report, report_type, recipient_overr
             'oeth_stats': oeth_report_stats,
             'oeth_stat_keys': oeth_report_stats.keys(),
             'email': subscriber.email,
-            'conf_num': subscriber.conf_num
+            'conf_num': subscriber.conf_num,
+            'is_monthly': report.month is not None
         }))
         if subscriber.email is not None:
             e.execute([subscriber.email])
@@ -1466,7 +1468,8 @@ def send_report_email_core(summary, report, prev_report, report_type):
         'oeth_stats': oeth_report_stats,
         'oeth_stat_keys': oeth_report_stats.keys(),
         'email': core,
-        'conf_num': 0
+        'conf_num': 0,
+        'is_monthly': report.month is not None,
     }))
     e.execute([core])
 
