@@ -474,6 +474,16 @@ def api_apr_history(request, project):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
+# Endpoint provides daily apy, vault value, and approximate daily rewards
+def api_daily_stats(request, project, days, start=0):
+    rows = _daily_rows(int(days), latest_snapshot_block_number(project), project=project, start_at=int(start))
+    response = JsonResponse(
+        {
+            "daily": [{"date": x.effective_day, "apy": x.apy, "backing_supply" : x.computed_supply, "yield": x.gain} for x in rows],
+        }
+    )
+    return _cache(120, response)
+    
 
 def api_apr_trailing_history(request, days, project):
     rows = _daily_rows(90, latest_snapshot_block_number(project), project=project)
