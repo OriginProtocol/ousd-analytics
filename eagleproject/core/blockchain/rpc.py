@@ -12,6 +12,7 @@ from core.blockchain.addresses import (
     AAVE_LENDING_POOL_CORE_V1,
     CHAINLINK_ORACLE,
     CURVE_3POOL,
+    OETH_DRIPPER,
     DRIPPER,
     OGN_STAKING,
     OPEN_ORACLE,
@@ -463,10 +464,15 @@ def staking_durationRewardRate(address, duration, block="latest"):
     return Decimal(int(data["result"], 16))
 
 
-def dripper_available(block="latest"):
+def dripper_available(block="latest", project=OriginTokens.OUSD):
     signature = SIG_DRIPPER_AVAILABLE_FUNDS[:10]
-    data = call(DRIPPER, signature, "", block)
-    return Decimal(int(data["result"], 16)) / E_6
+
+    if project == OriginTokens.OETH:
+        data = call(OETH_DRIPPER, signature, "", block)
+        return Decimal(int(data["result"], 16)) / E_18
+    else:
+        data = call(DRIPPER, signature, "", block)
+        return Decimal(int(data["result"], 16)) / E_6
 
 
 def dripper_drip_rate(block="latest"):

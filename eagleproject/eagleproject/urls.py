@@ -67,6 +67,8 @@ urlpatterns = [
     # v2 API endpoints
     # TODO: Validate `project` param
     path("api/v2/<slug:project>/apr/trailing", core_views.api_apr_trailing),
+    re_path(r'^api/v2/(?P<project>[\w-]+)/daily_stats/(?P<days>[0-9]{1,3})/$', core_views.api_daily_stats),
+    re_path(r'^api/v2/(?P<project>[\w-]+)/daily_stats/(?P<days>[0-9]{1,3})/(?P<start>[0-9]{1,3})', core_views.api_daily_stats),
     re_path(r'^api/v2/(?P<project>[\w-]+)/apr/trailing/(?P<days>[0-9]{1,3})', core_views.api_apr_trailing_days),
     path("api/v2/<slug:project>/apr/history", core_views.api_apr_history),
     path("api/v2/<slug:project>/ratios", core_views.api_ratios),

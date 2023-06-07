@@ -1513,7 +1513,7 @@ def ensure_transaction_history(account, rebase_logs, from_block, to_block, from_
     balance_logs = enrich_transfer_logs(balance_logs)
     return (ensure_origin_token_balance(credit_balance, balance_logs), previous_transfer_logs, token_balance, pre_curve_campaign_transfer_logs, post_curve_campaign_transfer_logs)
     
-def _daily_rows(steps, latest_block_number, project):
+def _daily_rows(steps, latest_block_number, project, start_at=0):
     # Blocks to display
     # ...this could be a bit more efficient if we pre-loaded the days and blocks in
     # on transaction, then only ensured the missing ones.
@@ -1527,7 +1527,14 @@ def _daily_rows(steps, latest_block_number, project):
     selected = datetime(today.year, today.month, today.day).replace(
         tzinfo=timezone.utc
     )
-    for i in range(0, steps + 1):
+
+    if start_at != 0:
+        block_numbers = []
+        selected = (
+            selected - timedelta(seconds=24 * 60 * 60 * start_at)
+        ).replace(tzinfo=timezone.utc)
+
+    for i in range(start_at, steps + 1):
         day = ensure_day(selected)
         if day is not None:
             block_numbers.append(day.block_number)
@@ -1587,9 +1594,9 @@ def _daily_rows(steps, latest_block_number, project):
     rows.reverse()
     # drop last row with incomplete information
     rows = rows[:-1]
-    if len(rows) > 0:
+    if len(rows) > 0 and start_at == 0:
         # Add dripper funds to today so far
-        rows[0].gain += dripper_available()
+        rows[0].gain += dripper_available(project=project)
     return rows
 
 
