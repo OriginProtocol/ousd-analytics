@@ -16,8 +16,14 @@ from core.models import (
     OriginTokens
 )
 
+from core.blockchain.strategies import (
+    OETH_VAULT,
+    OUSD_VAULT,
+)
+
 from core.blockchain.sigs import (
     TRANSFER,
+    SIG_EVENT_YIELD_DISTRIBUTION
 )
 
 from django.db.models import Q
@@ -54,6 +60,8 @@ from core.blockchain.const import (
     OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
     VAULT_FEE_UPGRADE_BLOCK
 )
+
+from typing import List
 
 from core.blockchain.utils import (
     chunks,
@@ -92,6 +100,9 @@ from core.defillama import get_stablecoin_market_cap
 import simplejson as json
 
 from django.core.exceptions import ObjectDoesNotExist
+
+from eth_abi import decode_single
+from eth_utils import decode_hex
 
 ACCOUNT_ANALYZE_PARALLELISM=30
 
@@ -1225,7 +1236,7 @@ def do_transaction_analytics(from_block, to_block, start_time, end_time, account
 
     return json.dumps(report)
 
-def get_rebase_logs(from_block, to_block, project=OriginTokens.OUSD):
+def get_rebase_logs(from_block, to_block, project=OriginTokens.OUSD) -> List[Log]:
     contract_address = OUSD if project == OriginTokens.OUSD else OETH
     # we use distinct to mitigate the problem of possibly having double logs in database
     if from_block is None and to_block is None:
@@ -1563,17 +1574,42 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
             block.block_time - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)
         if last_snapshot:
+
+            contract_address = OUSD_VAULT if project == OriginTokens.OUSD else OETH_VAULT
+
+            rebase_logs = get_rebase_logs(last_snapshot.block_number, block_number, project)
+            s.rebase_events = []
+            for event in rebase_logs:
+                rebase_amount = 0
+                rebase_fee = 0
+
+                yield_distribution_event = Log.objects.filter(
+                    topic_0=SIG_EVENT_YIELD_DISTRIBUTION,
+                    address=contract_address,
+                    transaction_hash=event.tx_hash
+                ).order_by('transaction_hash').distinct('transaction_hash').first() # There should only be one yield distribution event per rebase event
+
+                if yield_distribution_event is not None:  
+                    _, rebase_amount, rebase_fee = decode_single(
+                        "(address,uint256,uint256)",
+                        decode_hex(yield_distribution_event.data)
+                    )              
+                
+                s.rebase_events.append({
+                    'amount': rebase_amount - rebase_fee,
+                    'fee': rebase_fee,
+                    'tx_hash': event.tx_hash,
+                    'block_number': event.block_number,
+                    'block_time': event.block_time,
+                })
+
             blocks = s.block_number - last_snapshot.block_number
             if last_snapshot.rebasing_credits_per_token == 0:
                 change = Decimal(0)
             else:
-                change = (
-                    (
-                        s.rebasing_credits_per_token
-                        / last_snapshot.rebasing_credits_per_token
-                    )
-                    - Decimal(1)
-                ) * -1
+                # change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
+                change = Decimal(sum(event['amount'] for event in s.rebase_events) / 1e18) / (s.computed_supply - s.non_rebasing_supply)
+                
             s.apr = (
                 Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
             )
