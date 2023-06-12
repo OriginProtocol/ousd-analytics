@@ -1583,12 +1583,6 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
                 rebase_amount = 0
                 rebase_fee = 0
 
-                print(len(Log.objects.filter(
-                    topic_0=SIG_EVENT_YIELD_DISTRIBUTION,
-                    address=contract_address,
-                    transaction_hash=event.tx_hash
-                )))
-
                 yield_distribution_events = Log.objects.filter(
                     topic_0=SIG_EVENT_YIELD_DISTRIBUTION,
                     address=contract_address,
