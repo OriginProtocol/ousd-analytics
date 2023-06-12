@@ -1583,32 +1583,39 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
                 rebase_amount = 0
                 rebase_fee = 0
 
-                yield_distribution_event = Log.objects.filter(
+                print(len(Log.objects.filter(
                     topic_0=SIG_EVENT_YIELD_DISTRIBUTION,
                     address=contract_address,
                     transaction_hash=event.tx_hash
-                ).order_by('transaction_hash').distinct('transaction_hash').first() # There should only be one yield distribution event per rebase event
+                )))
 
-                if yield_distribution_event is not None:  
+                yield_distribution_events = Log.objects.filter(
+                    topic_0=SIG_EVENT_YIELD_DISTRIBUTION,
+                    address=contract_address,
+                    transaction_hash=event.tx_hash
+                )
+
+                for yield_distribution_event in yield_distribution_events:
                     _, rebase_amount, rebase_fee = decode_single(
                         "(address,uint256,uint256)",
                         decode_hex(yield_distribution_event.data)
                     )              
-                
-                s.rebase_events.append({
-                    'amount': rebase_amount - rebase_fee,
-                    'fee': rebase_fee,
-                    'tx_hash': event.tx_hash,
-                    'block_number': event.block_number,
-                    'block_time': event.block_time,
-                })
+                    
+                    s.rebase_events.append({
+                        'amount': rebase_amount - rebase_fee,
+                        'fee': rebase_fee,
+                        'tx_hash': event.tx_hash,
+                        'block_number': event.block_number,
+                        'block_time': event.block_time,
+                    })
 
             blocks = s.block_number - last_snapshot.block_number
             if last_snapshot.rebasing_credits_per_token == 0:
                 change = Decimal(0)
             else:
-                # change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
+                other_change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
                 change = Decimal(sum(event['amount'] for event in s.rebase_events) / 1e18) / (s.computed_supply - s.non_rebasing_supply)
+
                 
             s.apr = (
                 Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
