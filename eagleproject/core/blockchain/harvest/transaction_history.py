@@ -55,6 +55,7 @@ from core.blockchain.const import (
     E_18,
     START_OF_CURVE_CAMPAIGN_TIME,
     START_OF_OUSD_V2,
+    START_OF_OETH,
     BLOCKS_PER_DAY,
     OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
     OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
@@ -1552,17 +1553,20 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
         selected = (
             selected - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)
+
+    START_OF_PROJECT = START_OF_OUSD_V2 if project == OriginTokens.OUSD else START_OF_OETH
+
     # Deduplicate list and preserving order.
     # Sometimes latest_block_number supplied to the function and latest day block_number are the same block
     # Triggering division by 0 in the code below
-    block_numbers = list(dict.fromkeys(block_numbers))
+    block_numbers = list(filter(lambda x: x >= START_OF_PROJECT, dict.fromkeys(block_numbers)))
     block_numbers.reverse()
 
     # Snapshots for each block
     rows = []
     last_snapshot = None
     for block_number in block_numbers:
-        if block_number < START_OF_OUSD_V2:
+        if block_number < START_OF_PROJECT:
             continue
         block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number, project)
@@ -1607,7 +1611,7 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
             if last_snapshot.rebasing_credits_per_token == 0:
                 change = Decimal(0)
             else:
-                other_change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
+                # other_change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
                 change = Decimal(sum(event['amount'] for event in s.rebase_events) / 1e18) / (s.computed_supply - s.non_rebasing_supply)
 
                 
