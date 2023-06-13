@@ -482,6 +482,7 @@ def api_daily_stats(request, project, days, start=0):
             "daily": [{
                 "date": x.effective_day,
                 "yield": x.gain, 
+                "fees": x.fees,
                 "backing_supply" : x.computed_supply, 
                 "rebasing_supply": x.rebasing_computed_supply(),
                 "non_rebasing_supply": x.non_rebasing_supply,

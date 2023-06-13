@@ -1600,8 +1600,8 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
                     )              
                     
                     s.rebase_events.append({
-                        'amount': rebase_amount - rebase_fee,
-                        'fee': rebase_fee,
+                        'amount': (rebase_amount - rebase_fee) / 1e18,
+                        'fee': rebase_fee / 1e18,
                         'tx_hash': event.tx_hash,
                         'block_number': event.block_number,
                         'block_time': event.block_time,
@@ -1612,7 +1612,7 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
                 change = Decimal(0)
             else:
                 # other_change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
-                change = Decimal(sum(event['amount'] for event in s.rebase_events) / 1e18) / (s.computed_supply - s.non_rebasing_supply)
+                change = Decimal(sum(event['amount'] for event in s.rebase_events)) / (s.computed_supply - s.non_rebasing_supply)
 
                 
             s.apr = (
@@ -1630,6 +1630,8 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
             except (DivisionByZero, InvalidOperation):
                 s.unboosted = Decimal(0)
             s.gain = change * (s.computed_supply - s.non_rebasing_supply)
+            s.fees = Decimal(sum(event['fee'] for event in s.rebase_events))
+
         rows.append(s)
         last_snapshot = s
     rows.reverse()
