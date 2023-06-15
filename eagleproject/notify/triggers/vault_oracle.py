@@ -8,6 +8,8 @@ from notify.events import event_high
 
 from core.blockchain.strategies import OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS
 
+from time import sleep
+
 # USD-pegged stable coins drift thresholds
 MAX_USD_PRICE = Decimal("1.05")
 MIN_USD_PRICE = Decimal("0.95")
@@ -58,13 +60,21 @@ def run_trigger(transfers, new_transfers):
 
     for assets in [OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS]:
         for symbol in assets:
-            try:
-                assert_price_in_bounds(symbol)
-            except AssertionError as e:
-                events.append(
-                    event_high("Exceptional Oracle Price    🧙‍♀️", str(e))
-                )
-            except RPCError as e:
-                events.append(event_high("Oracle Price Revert for {}    🔴".format(symbol), str(e)))
+            retries = 3
+            while retries > 0:
+                retries = retries - 1
+                try:
+                    assert_price_in_bounds(symbol)
+                    continue
+                except AssertionError as e:
+                    events.append(
+                        event_high("Exceptional Oracle Price    🧙‍♀️", str(e))
+                    )
+                    continue
+                except RPCError as e:
+                    print("RPC Error when reading price for {}".format(symbol), e)
+                    sleep(3)
+                    if retries <= 0:
+                        events.append(event_high("RPC Error when reading price for {}    🔴".format(symbol), str(e)))
 
     return events
