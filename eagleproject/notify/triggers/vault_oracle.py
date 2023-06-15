@@ -65,12 +65,12 @@ def run_trigger(transfers, new_transfers):
                 retries = retries - 1
                 try:
                     assert_price_in_bounds(symbol)
-                    break
+                    continue
                 except AssertionError as e:
                     events.append(
                         event_high("Exceptional Oracle Price    🧙‍♀️", str(e))
                     )
-                    break
+                    continue
                 except RPCError as e:
                     print("RPC Error when reading price for {}".format(symbol), e)
                     sleep(3)
