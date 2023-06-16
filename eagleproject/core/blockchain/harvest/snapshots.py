@@ -349,7 +349,7 @@ def ensure_asset(symbol, block_number, project=OriginTokens.OUSD):
     return ab
 
 
-def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD):
+def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD) -> SupplySnapshot:
     try:
         s = SupplySnapshot.objects.filter(block_number=block_number,project=project).first()
         if s is not None:
