@@ -479,7 +479,18 @@ def api_daily_stats(request, project, days, start=0):
     rows = _daily_rows(int(days), latest_snapshot_block_number(project), project=project, start_at=int(start))
     response = JsonResponse(
         {
-            "daily": [{"date": x.effective_day, "apy": x.apy, "backing_supply" : x.computed_supply, "yield": x.gain} for x in rows],
+            "daily": [{
+                "date": x.effective_day,
+                "yield": x.gain, 
+                "fees": x.fees,
+                "backing_supply" : x.computed_supply, 
+                "rebasing_supply": x.rebasing_computed_supply(),
+                "non_rebasing_supply": x.non_rebasing_supply,
+                "apy": x.apy, 
+                "raw_apy": x.unboosted,
+                "apy_boost": x.non_rebasing_boost_multiplier(),
+                "rebase_events": x.rebase_events
+            } for x in rows],
         }
     )
     return _cache(120, response)

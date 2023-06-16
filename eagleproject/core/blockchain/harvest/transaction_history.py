@@ -16,8 +16,14 @@ from core.models import (
     OriginTokens
 )
 
+from core.blockchain.strategies import (
+    OETH_VAULT,
+    OUSD_VAULT,
+)
+
 from core.blockchain.sigs import (
     TRANSFER,
+    SIG_EVENT_YIELD_DISTRIBUTION
 )
 
 from django.db.models import Q
@@ -49,11 +55,14 @@ from core.blockchain.const import (
     E_18,
     START_OF_CURVE_CAMPAIGN_TIME,
     START_OF_OUSD_V2,
+    START_OF_OETH,
     BLOCKS_PER_DAY,
     OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
     OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
     VAULT_FEE_UPGRADE_BLOCK
 )
+
+from typing import List
 
 from core.blockchain.utils import (
     chunks,
@@ -92,6 +101,9 @@ from core.defillama import get_stablecoin_market_cap
 import simplejson as json
 
 from django.core.exceptions import ObjectDoesNotExist
+
+from eth_abi import decode_single
+from eth_utils import decode_hex
 
 ACCOUNT_ANALYZE_PARALLELISM=30
 
@@ -1225,7 +1237,7 @@ def do_transaction_analytics(from_block, to_block, start_time, end_time, account
 
     return json.dumps(report)
 
-def get_rebase_logs(from_block, to_block, project=OriginTokens.OUSD):
+def get_rebase_logs(from_block, to_block, project=OriginTokens.OUSD) -> List[Log]:
     contract_address = OUSD if project == OriginTokens.OUSD else OETH
     # we use distinct to mitigate the problem of possibly having double logs in database
     if from_block is None and to_block is None:
@@ -1541,17 +1553,20 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
         selected = (
             selected - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)
+
+    START_OF_PROJECT = START_OF_OUSD_V2 if project == OriginTokens.OUSD else START_OF_OETH
+
     # Deduplicate list and preserving order.
     # Sometimes latest_block_number supplied to the function and latest day block_number are the same block
     # Triggering division by 0 in the code below
-    block_numbers = list(dict.fromkeys(block_numbers))
+    block_numbers = list(filter(lambda x: x >= START_OF_PROJECT, dict.fromkeys(block_numbers)))
     block_numbers.reverse()
 
     # Snapshots for each block
     rows = []
     last_snapshot = None
     for block_number in block_numbers:
-        if block_number < START_OF_OUSD_V2:
+        if block_number < START_OF_PROJECT:
             continue
         block = ensure_block(block_number)
         s = ensure_supply_snapshot(block_number, project)
@@ -1563,17 +1578,43 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
             block.block_time - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)
         if last_snapshot:
+
+            contract_address = OUSD_VAULT if project == OriginTokens.OUSD else OETH_VAULT
+
+            rebase_logs = get_rebase_logs(last_snapshot.block_number, block_number, project)
+            s.rebase_events = []
+            for event in rebase_logs:
+                rebase_amount = 0
+                rebase_fee = 0
+
+                yield_distribution_events = Log.objects.filter(
+                    topic_0=SIG_EVENT_YIELD_DISTRIBUTION,
+                    address=contract_address,
+                    transaction_hash=event.tx_hash
+                )
+
+                for yield_distribution_event in yield_distribution_events:
+                    _, rebase_amount, rebase_fee = decode_single(
+                        "(address,uint256,uint256)",
+                        decode_hex(yield_distribution_event.data)
+                    )              
+                    
+                    s.rebase_events.append({
+                        'amount': (rebase_amount - rebase_fee) / 1e18,
+                        'fee': rebase_fee / 1e18,
+                        'tx_hash': event.tx_hash,
+                        'block_number': event.block_number,
+                        'block_time': event.block_time,
+                    })
+
             blocks = s.block_number - last_snapshot.block_number
             if last_snapshot.rebasing_credits_per_token == 0:
                 change = Decimal(0)
             else:
-                change = (
-                    (
-                        s.rebasing_credits_per_token
-                        / last_snapshot.rebasing_credits_per_token
-                    )
-                    - Decimal(1)
-                ) * -1
+                # other_change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
+                change = Decimal(sum(event['amount'] for event in s.rebase_events)) / (s.computed_supply - s.non_rebasing_supply)
+
+                
             s.apr = (
                 Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
             )
@@ -1589,6 +1630,8 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
             except (DivisionByZero, InvalidOperation):
                 s.unboosted = Decimal(0)
             s.gain = change * (s.computed_supply - s.non_rebasing_supply)
+            s.fees = Decimal(sum(event['fee'] for event in s.rebase_events))
+
         rows.append(s)
         last_snapshot = s
     rows.reverse()
