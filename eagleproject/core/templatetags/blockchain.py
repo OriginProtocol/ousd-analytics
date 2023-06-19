@@ -486,12 +486,10 @@ def change_in_value(value, display_type="percentage"):
     if value == None:
         return "N/A"
 
-    sign = "-" if value < 0 else ""
-
     if display_type == "bps":
-        return "{}{:.2f}bp".format(sign, value)
+        return "{:.2f}bp".format(value)
 
-    return "{}{:.2f}%".format(sign, value)
+    return "{:.2f}%".format(value)
 
 @register.filter
 def oeth_circulating_supply_usd(report):
