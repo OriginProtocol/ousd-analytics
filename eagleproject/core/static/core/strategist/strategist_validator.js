@@ -1,6 +1,7 @@
 const strategistValidator = (function () {
   const ethers = window.ethers;
   const iVault = new ethers.utils.Interface(abiVault.abi);
+  const iBuyback = new ethers.utils.Interface(abiBuyback.abi);
   const iVaultValueChecker = new ethers.utils.Interface(
     abiVaultValueChecker.abi
   );
@@ -32,6 +33,7 @@ const strategistValidator = (function () {
   const MULTI_SEND_ADDRESS = "0x40a2accbd92bca938b02010e17a5b8929b49130d";
   const VAULT = "0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70";
   const CHECKER = "0xEEcD72c99749A1FC977704AB900a05e8300F4318";
+  const BUYBACK = "0xD7B28d06365b85933c64E11e639EA0d3bC0e3BaB";
 
   // App hooks up to events
   function app(opts) {
@@ -69,6 +71,11 @@ const strategistValidator = (function () {
         const innerEl = parseAndDisplayTx(innerTx.to, innerTx.data);
         masterEl.appendChild(innerEl);
       }
+    // buyback
+    } else if (data.startsWith("0xcf68c9b")) {
+      masterEl.appendChild(element("h3", "💰 Buyback"));
+
+      masterEl.appendChild(parseAndDisplayTx(BUYBACK, data));
     } else {
       try {
         iVault.parseTransaction({ data: data });
@@ -86,7 +93,10 @@ const strategistValidator = (function () {
       iface = iVault;
     } else if (to == CHECKER.toLowerCase()) {
       iface = iVaultValueChecker;
-    } else {
+    } else if (to == BUYBACK.toLowerCase()) {
+      iface = iBuyback;
+    } 
+    else {
       return div(data);
     }
 
@@ -226,6 +236,9 @@ const strategistValidator = (function () {
     if (parsed.sighash == "0x2cd47c23") {
       // reallocate amounts use currency decimals
       return 18;
+    }
+    if (parsed.sighash == "0xcf68c9b0") {
+      return 18; // OUSD & OETH & OGV are all 18 decimals
     }
     return 0; // Default
   }
