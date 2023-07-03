@@ -496,12 +496,14 @@ def oeth_circulating_supply_usd(report):
     price = getattr(report, "average_oeth_price")
     supply = getattr(report, "circulating_oeth")
     return floatformat_rnd_down (
-        supply * price
+        supply * price,
+        0
     )
 @register.filter
 def oeth_protocol_supply_usd(report):
     price = getattr(report, "average_oeth_price")
     supply = getattr(report, "protocol_owned_oeth")
     return floatformat_rnd_down(
-        supply * price
+        supply * price,
+        0
     )
