@@ -395,6 +395,7 @@ def dripper(request):
     dripper_drip_rate_per_day = dripper_drip_rate() * 24 * 60 * 60
     return _cache(10, render(request, "dripper.html", locals()))
 
+
 def public_dashboards(request):
     embed_panel_width = '100%'
     embed_panel_height = '100%'
@@ -1127,3 +1128,9 @@ def coingecko_pools(request, project):
             safe=False,
         ),
     )
+
+
+def yield_proof(request):
+    return JsonResponse({
+        "success": True,
+    })

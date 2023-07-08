@@ -50,7 +50,7 @@ urlpatterns = [
 
     ## NOTE: These endpoints are deprecated in favor of scripts.
     ## Check `eagleproject/scripts` for the relevant scripts
-    # path("reload", core_views.reload),
+    path("reload", core_views.reload),
     # path("snap", core_views.take_snapshot),
     # path("fetch", core_views.fetch_transactions),
     # path("runtriggers", notify_views.run_triggers),

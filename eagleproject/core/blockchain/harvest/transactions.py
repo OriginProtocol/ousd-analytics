@@ -27,7 +27,6 @@ from core.blockchain.const import (
     START_OF_OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES,
     OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
     OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
-    SUSHISWAP_USDT_WETH_POOL
 )
 from core.blockchain.conversion import human_duration_yield
 from core.blockchain.decode import decode_args, slot

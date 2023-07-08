@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db.models import Q
 import numpy as np
 from core.models import (
@@ -11,8 +12,18 @@ from core.blockchain.harvest.yield_proof.strategy import (
     YieldUnitList
 )
 
+from core.templatetags.blockchain import (
+    EVENT_NAMES
+)
+
+from datetime import ( datetime, timedelta, timezone )
+
+from core.blockchain.harvest.blocks import (
+    ensure_day,
+)
+
 from core.blockchain.rpc import (
-    checkBalance,
+    latest_block,
 )
 
 from core.blockchain.const import (
@@ -26,18 +37,26 @@ from core.blockchain.const import (
     YIELD_UNIT_REASON_DEPOSIT,
     YIELD_UNIT_REASON_WITHDRAWAL,
     YIELD_UNIT_REASON_CUSTOM_BLOCK_BREAK,
+    YIELD_UNIT_REASON_LOGS_OPTION_END
 )
 
-def create_yield_strategy(name, strategy_address, asset_name_list, start_day_block, end_day_block):
-    # these are all the relevant logs. Potentially even before start block and after
-    # end block. Each of these logs is a breaking point that ends one yield unit and
-    # starts another.
-    logs = get_relevant_logs(start_day_block, end_day_block, strategy_address)
-    bare_yield_units = build_yield_units(logs, [start_day_block, end_day_block], strategy_address, asset_name_list)
-    yield_units_with_reward = bare_yield_units.to_yield_units_with_reward()
+# TODO: remove
+token_balance_cache = {
+    0: [Decimal('911_267.337728'), Decimal('1_049_311.747656'), Decimal('864_561.454497888872632797')],
+    1: [Decimal('11_406_453.984592'), Decimal('4_320_758.494423'), Decimal('732.755576785005363906')],
+    2: [Decimal('4_908_258.970037'), Decimal('1_322_108.028627'), Decimal('732.859382098336821929')],
+    3: [Decimal('4_359_788.833714'), Decimal('1_322_855.168741'), Decimal('3_800_733.043666619403158576')],
+    4: [Decimal('4_359_906.175533'), Decimal('1_322_906.481429'), Decimal('3_800_812.091266134161563937')],
+    5: [Decimal('4_359_942.453749'), Decimal('1_322_921.566498'), Decimal('3_800_836.30961475086546941')],
+    6: [Decimal('4_360_123.013314'), Decimal('1_322_997.507131'), Decimal('3_800_959.008187685960286518')],
+    7: [Decimal('1_561_039.89638'), Decimal('4_123_537.048162'), Decimal('1_566_685.216107667421881155')],
+    8: [Decimal('3_592_000.097296'), Decimal('4_125_204.843341'), Decimal('1_567_083.328943436448118717')],
+}
 
-    #average_token_balances, average_total = bare_yield_units.average_token_balances()
-    #print("bare_yield_units", bare_yield_units, average_token_balances, average_total)
+def create_yield_strategy(name, strategy_address, asset_name_list, day, project):
+
+    bare_yield_units: YieldUnitList = build_yield_units(day, strategy_address, asset_name_list, project=project)
+    yield_units_with_reward = bare_yield_units.to_yield_units_with_reward()
 
     return BaseStrategyYield(name, strategy_address, start_day_block, end_day_block)
 
@@ -83,7 +102,20 @@ def __build_start_reason_dict(logs, blocks):
 
 # create build units out of logs. Blocks play as additional breaking points that split yield
 # unit into 2.
-def build_yield_units(logs, blocks, strategy_address, asset_name_list):
+def build_yield_units(day, strategy_address, asset_name_list, project) -> YieldUnitList:
+    start_day_block, end_day_block = __get_day_block_range(day)
+
+    # these are all the relevant logs. Potentially even before start block and after
+    # end block. Each of these logs is a breaking point that ends one yield unit and
+    # starts another.
+    logs = get_relevant_logs(start_day_block, end_day_block, strategy_address)
+    
+    for i in range(len(logs)):
+        print(EVENT_NAMES.get(logs[i].topic_0))
+        print("\n")
+
+    # The boundaries for each yield unit in block numbers. 
+    blocks = [start_day_block, end_day_block]
     all_blocks = list(np.unique(list(map(lambda log: log.block_number, logs)))) + blocks
     all_blocks.sort()
     
@@ -91,37 +123,42 @@ def build_yield_units(logs, blocks, strategy_address, asset_name_list):
 
     yield_units = []
     for index, block_number in enumerate(all_blocks):
+        print(index + 1, "/", len(all_blocks))
         # last block_number in all_blocks is the end interval of previous for loop
         # created BareYieldUnit
-        if (index >= len(all_blocks) - 2):
-            break;
 
         token_balances = []
-        for asset_name in asset_name_list:
+        for index_inner, asset_name in enumerate(asset_name_list):
             asset_address = CONTRACT_FOR_SYMBOL[asset_name]
             decimals = DECIMALS_FOR_SYMBOL[asset_name]
-            balance = checkBalance(strategy_address, asset_address, decimals, block_number)
-            token_balances.append(TokenBalance(asset_address, balance))
+            # balance = checkBalance(strategy_address, asset_address, decimals, block_number)
+            token_balances.append(TokenBalance(asset_address, token_balance_cache[index][index_inner])
+            # balance
+            )
+        print(list(map(lambda a: a.balance, token_balances)))
 
+        # I don't believe this is quite true... seeing some blocks with, for example, 3 withdraw logs when all 3 tokens are being withdrawn from Morpho Compound strategy.
         reasons_info = start_reasons[block_number]
-        if (len(reasons_info) > 1):
-            # reward token harvest can instantiate multiple logs, that is acceptable
-            if not all(map(lambda reason_info: reason_info['reason'] == YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST, reasons_info)):
-                raise Exception("Unexpected reason length: {} block_number: {} strategy_address: {} reasons_info: {}".format(len(reasons_info), block_number, strategy_address, reasons_info))
+        # if (len(reasons_info) > 1):
+        #     # reward token harvest can instantiate multiple logs, that is acceptable
+        #     if not all(map(lambda reason_info: reason_info['reason'] == YIELD_UNIT_REASON_REWARD_TOKEN_HARVEST, reasons_info)):
+        #         raise Exception("Unexpected reason length: {} block_number: {} strategy_address: {} reasons_info: {}".format(len(reasons_info), block_number, strategy_address, reasons_info))
 
         # the [index + 1] is to fetch the next block in the list. -1 to set end block number
         # of this yield unit to 1 less than the stating block number of the next yield unit
-        yield_units.append(
-            BareYieldUnit(
-                token_balances,
-                block_number,
-                all_blocks[index + 1] - 1,
-                strategy_address,
-                reasons_info[0]['reason'],
-                list(map(lambda reason_info: reason_info['log'], reasons_info))
-            )
+        curr_yield_unit = BareYieldUnit(
+            token_balances,
+            block_number,
+            all_blocks[index + 1] - 1 if index + 1 < len(all_blocks) else YIELD_UNIT_REASON_LOGS_OPTION_END,
+            strategy_address,
+            list(map(lambda reason_info: reason_info['reason'], reasons_info)),
+            list(map(lambda reason_info: reason_info['log'], reasons_info))
         )
-    return YieldUnitList(yield_units)
+
+        yield_units.append(
+            curr_yield_unit
+        )
+    return YieldUnitList(yield_units, project=project)
 
 
 # To be able to calculate the exact yield of any strategy between 2 block numbers we need 
@@ -192,3 +229,16 @@ def load_logs(start_block, end_block, strategy_address):
     ))
 
     return logs + swap_logs
+
+# get block range for a given day. If the day is:
+#   - today -> end block range is current block time
+#   - not today -> end block is the starting block of the next day - 1
+def __get_day_block_range(day):
+    day_is_today = datetime.utcnow().date() == day.date
+    if day_is_today:
+        return [day.block_number, latest_block()]
+    else:
+
+        date_after = datetime(day.date.year, day.date.month, day.date.day + 1)
+        day_after = ensure_day(date_after)
+        return [day.block_number, day_after.block_number - 1]

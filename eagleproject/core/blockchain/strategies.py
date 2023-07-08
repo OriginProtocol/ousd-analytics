@@ -64,7 +64,6 @@ OUSD_STRATEGIES = {
     "HARDCODED": True,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
     "POY_PROCESS": "compound",
-    "POY_ASSETS": DEFAULT_ASSETS,
     "ICON_NAME": "comp-icon.svg",
   },
   "threepoolstrat_holding": {
@@ -74,7 +73,7 @@ OUSD_STRATEGIES = {
     "HIDDEN": True,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "POY_PROCESS": "convex",
-    "POY_ASSETS": DEFAULT_ASSETS,
+    "POY_ASSETS": [],
     "ICON_NAME": "convex.png",
   },
   "aavestrat_holding": {
@@ -83,17 +82,17 @@ OUSD_STRATEGIES = {
     "HARDCODED": True,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "POY_PROCESS": "aave",
-    "POY_ASSETS": DEFAULT_ASSETS,
+    "POY_ASSETS": [],
     "ICON_NAME": "aave-icon.svg",
   },
-  "morpho_strat": {
+  "morpho_comp_strat": {
     "NAME": "Morpho Compound",
     "ADDRESS": MORPHO,
     "FROM_BLOCK": 15949661,
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "COMP"),
     "IS_COMPOUND_COMPATIBLE": True,
     "POY_PROCESS": "morpho",
-    "POY_ASSETS": DEFAULT_ASSETS,
+    "POY_ASSETS": [],
     "ICON_NAME": "morpho.png",
   },
   "ousd_metastrat": {
@@ -103,16 +102,15 @@ OUSD_STRATEGIES = {
     "SUPPORTED_ASSETS": ("USDC", "USDT", "DAI", "OUSD"),
     "IS_OUSD_META": True,
     "POY_PROCESS": "convex",
-    "POY_ASSETS": DEFAULT_ASSETS,
+    "POY_ASSETS": [],
     "ICON_NAME": "buffer-icon.svg",
   },
   "lusd_metastrat": {
     "NAME": "Convex LUSD+3Crv",
     "ADDRESS": LUSD_METASTRAT,
     "FROM_BLOCK": 16226329,
-    "SUPPORTED_ASSETS": DEFAULT_ASSETS,
     "POY_PROCESS": "convex",
-    "POY_ASSETS": DEFAULT_ASSETS,
+    "POY_ASSETS": [],
     "ICON_NAME": "convex.png",
   },
   "morpho_aave_strat": {
@@ -121,7 +119,7 @@ OUSD_STRATEGIES = {
     "FROM_BLOCK": 16331904,
     "SUPPORTED_ASSETS": OUSD_BACKING_ASSETS,
     "POY_PROCESS": "morpho",
-    "POY_ASSETS": DEFAULT_ASSETS,
+    "POY_ASSETS": [],
     "ICON_NAME": "morpho.png",
   },
 }
@@ -134,6 +132,7 @@ OETH_STRATEGIES = {
     "ADDRESS": OETH_VAULT,
     "FROM_BLOCK": 17067001,
     "SUPPORTED_ASSETS": OETH_BACKING_ASSETS,
+    "POY_PROCESS": False,
     "ICON_NAME": "oeth-icon.svg",
   },
   "frax_eth_strat": {
@@ -141,6 +140,8 @@ OETH_STRATEGIES = {
     "ADDRESS": FRAX_ETH_STRATEGY,
     "FROM_BLOCK": 17067224,
     "SUPPORTED_ASSETS": ["FRXETH"],
+    "POY_PROCESS": True,
+    "POY_ASSETS": ["FRXETH"],
     "ICON_NAME": "frxeth-icon.svg",
   },
   "oeth_curve_amo": {
@@ -148,6 +149,8 @@ OETH_STRATEGIES = {
     "ADDRESS": OETH_CURVE_AMO_STRATEGY,
     "FROM_BLOCK": 17249902,
     "SUPPORTED_ASSETS": ["ETH", "OETH"],
+    "POY_PROCESS": True,
+    "POY_ASSETS": ["ETH"],
     "ICON_NAME": "oeth-icon.svg",
   },
   "oeth_morpho_aave_strat": {
@@ -155,6 +158,8 @@ OETH_STRATEGIES = {
       "ADDRESS": OETH_MORPHO_AAVE_STRATEGY,
       "FROM_BLOCK": 17367105,
       "SUPPORTED_ASSETS": ["WETH"],
+      "POY_PROCESS": True,
+    "POY_ASSETS": ["WETH"],
       "ICON_NAME": "morpho.png",
     },
 }

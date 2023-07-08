@@ -9,11 +9,15 @@ from core.blockchain.rpc import (
     latest_block,
 )
 
-from core.blockchain.strategies import STRATEGIES
+from core.blockchain.strategies import (
+    OUSD_STRATEGIES, OETH_STRATEGIES
+)
 
 from core.blockchain.harvest.yield_proof.strategy_process import (
     create_yield_strategy,
 )
+
+from core.models import OriginTokens
 
 # all yield snapshots since block_number to present
 def ensure_yield_snapshots_since_block(block_number):
@@ -24,36 +28,45 @@ def ensure_yield_snapshots_since_block(block_number):
         date = date + timedelta(days=1)
 
 # yield snapshot at block number
-def ensure_yield_snapshot_at_block(block_number):
+def ensure_yield_snapshot_at_block(block_number, project):
     day = ensure_day_by_block(block_number)
-    ensure_yield_snapshot(day)
+    ensure_yield_snapshot(day, project=project)
 
-def ensure_yield_snapshot(day):
-    start_day_block, end_day_block = __get_day_block_range(day)
+def ensure_yield_snapshot(day, project):
 
-    for strategy_key in STRATEGIES.keys():
-        strategyInfo = STRATEGIES[strategy_key]
-        if (strategyInfo['POY_PROCESS']):
-            # TODO: remove IF statement
-            if strategy_key == 'ousd_metastrat':
-                strategy = create_yield_strategy(
-                    strategy_key,
-                    strategyInfo['ADDRESS'],
-                    strategyInfo['POY_ASSETS'],
-                    start_day_block,
-                    end_day_block
-                )
+    if project == OriginTokens.OUSD:
+        for strategy_key in OUSD_STRATEGIES.keys():
+            strategyInfo = OUSD_STRATEGIES[strategy_key]
+            if (strategyInfo['POY_PROCESS']):
+                # TODO: remove IF statement
+                if strategy_key == 'morpho_comp_strat':
+                    strategy = create_yield_strategy(
+                        strategy_key,
+                        strategyInfo['ADDRESS'],
+                        strategyInfo['POY_ASSETS'],
+                        day,
+                        project=project
+                    )
+
+                    print("strat", strategy)
+    else:
+        for strategy_key in OETH_STRATEGIES.keys():
+            strategyInfo = OETH_STRATEGIES[strategy_key]
+            if (strategyInfo['POY_PROCESS']):
+                # TODO: remove IF statement
+                if strategy_key == 'oeth_curve_amo':
+                    strategy = create_yield_strategy(
+                        strategy_key,
+                        strategyInfo['ADDRESS'],
+                        strategyInfo['POY_ASSETS'],
+                        day,
+                        project=project
+                    )
+
+                    print("strat", strategy)
+
+
+    
     
 
-# get block range for a given day. If the day is:
-#   - today -> end block range is current block time
-#   - not today -> end block is the starting block of the next day - 1
-def __get_day_block_range(day):
-    day_is_today = datetime.utcnow().date() == day.date
-    if day_is_today:
-        return [day.block_number, latest_block()]
-    else:
 
-        date_after = datetime(day.date.year, day.date.month, day.date.day + 1)
-        day_after = ensure_day(date_after)
-        return [day.block_number, day_after.block_number - 1]
