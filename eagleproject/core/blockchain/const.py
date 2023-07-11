@@ -40,6 +40,7 @@ from core.blockchain.addresses import (
     OGV_BUYBACK_LEGACY,
     OGV_BUYBACK_PROXY,
     THREEPOOL,
+    OETH_ZAPPER,
     OETH_VAULT,
     OETH,
     FRXETH,
@@ -192,7 +193,8 @@ ETHERSCAN_CONTRACTS = [
     OGV_BUYBACK_LEGACY,
     OGV_BUYBACK_PROXY,
     OETH,
-    OETH_VAULT
+    OETH_VAULT,
+    OETH_ZAPPER
 ]
 
 ASSET_TICKERS = ["DAI", "USDC", "USDT"]
