@@ -1159,23 +1159,27 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
                     classification = 'unknown_transfer'
 
             if swap_receive_origin_token:
-                if project == OriginTokens.WOUSD:
+                if project == OriginTokens.OUSD:
+                    classification = 'swap_gain_ousd'
+                elif project == OriginTokens.OETH:
+                    classification = 'swap_gain_oeth'
+                elif project == OriginTokens.WOUSD:
                     classification = 'swap_gain_wousd'
                 elif project == OriginTokens.WOETH:
                     classification = 'swap_gain_woeth'
-                elif project == OriginTokens.OUSD:
-                    classification = 'swap_gain_ousd'
                 else:
-                    classification = 'swap_gain_oeth'
+                    raise Exception('Unexpected project id', project)
             elif swap_send_origin_token:
-                if project == OriginTokens.WOUSD:
+                if project == OriginTokens.OUSD:
+                    classification = 'swap_give_ousd'
+                elif project == OriginTokens.OETH:
+                    classification = 'swap_give_oeth'
+                elif project == OriginTokens.WOUSD:
                     classification = 'swap_give_wousd'
                 elif project == OriginTokens.WOETH:
                     classification = 'swap_give_woeth'
-                elif project == OriginTokens.OUSD:
-                    classification = 'swap_give_ousd'
                 else:
-                    classification = 'swap_give_oeth'
+                    raise Exception('Unexpected project id', project)
 
         analyzed_transaction_hashes.append(transaction.tx_hash)
         analyzed_transactions.append(transaction_analysis(
@@ -1346,7 +1350,7 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
 
     for i in range(0, (last_non_yield_tx_idx + 1) if last_non_yield_tx_idx != -1 else 1, 1):
         if isinstance(tx_history[i], rebase_log):
-            if project != 'wousd' and project != 'woeth':
+            if project != OriginTokens.WOUSD and project != OriginTokens.WOETH:
                 if transaction_filter == None or 'yield' in transaction_filter:
                     tx_history_filtered.append({
                         'block_number': tx_history[i].block_number,
