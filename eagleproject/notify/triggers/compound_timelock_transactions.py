@@ -4,7 +4,11 @@ from eth_utils import decode_hex
 from eth_abi import decode_single
 from django.db.models import Q
 
-from core.blockchain.addresses import CONTRACT_ADDR_TO_NAME, COMPOUND_TIMELOCK
+from core.blockchain.addresses import (
+    CONTRACT_ADDR_TO_NAME,
+    COMPOUND_TIMELOCK,
+    FLUX_TIMELOCK,
+)
 from core.blockchain.decode import decode_call
 from core.blockchain.sigs import (
     SIG_EVENT_CANCEL_TRANSACTION,
@@ -16,7 +20,7 @@ from notify.events import event_high
 
 def get_events(logs):
     """ Get events """
-    return logs.filter(address=COMPOUND_TIMELOCK).filter(
+    return logs.filter(address__in=[COMPOUND_TIMELOCK, FLUX_TIMELOCK]).filter(
         Q(topic_0=SIG_EVENT_CANCEL_TRANSACTION)
         | Q(topic_0=SIG_EVENT_EXECUTE_TRANSACTION)
         | Q(topic_0=SIG_EVENT_QUEUE_TRANSACTION)
@@ -24,21 +28,23 @@ def get_events(logs):
 
 
 def run_trigger(new_logs):
-    """ Trigger events on Compound Timelock transaction events """
+    """ Trigger events on Compound and Flux Timelock transaction events """
     events = []
 
     for ev in get_events(new_logs):
         summary = "ERROR"
         action = "ERROR"
 
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
+
         if ev.topic_0 == SIG_EVENT_QUEUE_TRANSACTION:
-            summary = "Compound Timelock transaction queued   ⏲️ 📥"
+            summary = "{} transaction queued   ⏲️ 📥".format(contract_name)
             action = "queued"
         elif ev.topic_0 == SIG_EVENT_CANCEL_TRANSACTION:
-            summary = "Compound Timelock transaction canceled   ⏲️ ❌"
+            summary = "{} transaction canceled   ⏲️ ❌".format(contract_name)
             action = "canceled"
         elif ev.topic_0 == SIG_EVENT_EXECUTE_TRANSACTION:
-            summary = "Compound Timelock transaction executed   ⏲️ 🏃‍♀️"
+            summary = "{} transaction executed   ⏲️ 🏃‍♀️".format(contract_name)
             action = "executed"
 
         # They all have the same args so most of thise can be reused
@@ -54,10 +60,11 @@ def run_trigger(new_logs):
 
         events.append(event_high(
             summary,
-            "Compound Timelock transaction has been {}\n\n"
+            "{} transaction has been {}\n\n"
             "**Target**: {}\n"
             "**ETA**: {} UTC\n"
             "**Call**: {}".format(
+                contract_name,
                 action,
                 CONTRACT_ADDR_TO_NAME.get(target, target),
                 eta,

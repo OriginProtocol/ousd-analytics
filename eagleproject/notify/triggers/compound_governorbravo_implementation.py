@@ -2,16 +2,19 @@
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.blockchain.addresses import COMPOUND_GOVERNOR_BRAVO
+from core.blockchain.addresses import (
+    COMPOUND_GOVERNOR_BRAVO, 
+    FLUX_DAO,
+    CONTRACT_ADDR_TO_NAME,
+)
 from core.blockchain.sigs import SIG_EVENT_NEW_IMPLEMENTATION_BRAVO
 from notify.events import event_high
 
 DISCORD_EMBED_DESCRIPTION_LIMIT = 2048
 
-
 def get_events(logs):
     """ Get Mint/Redeem events """
-    return logs.filter(address=COMPOUND_GOVERNOR_BRAVO).filter(
+    return logs.filter(address__in=[COMPOUND_GOVERNOR_BRAVO, FLUX_DAO]).filter(
         topic_0=SIG_EVENT_NEW_IMPLEMENTATION_BRAVO
     ).order_by('block_number')
 
@@ -27,10 +30,12 @@ def run_trigger(new_logs):
         )
         new_link = 'https://etherscan.io/address/{}'.format(new_address)
 
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
+
         events.append(event_high(
-            "Compound GovernorBravo implementation upgraded   🗳️ ⏫",
-            "Compound GovernorBravo implementation changed from {} to [{}]({})".format(
-                old_address, new_address, new_link
+            "{} implementation upgraded   🗳️ ⏫".format(contract_name),
+            "{} implementation changed from {} to [{}]({})".format(
+                contract_name, old_address, new_address, new_link
             ),
             log_model=ev
         ))
