@@ -33,10 +33,10 @@ def run_trigger(new_logs):
     """ Compound Timelock changes """
     events = []
 
-    contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
-    token_name = "ONDO" if ev.address == FLUX_DAO else "COMP"
-
     for ev in get_events(new_logs):
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
+        token_name = "ONDO" if ev.address == FLUX_DAO else "COMP"
+        
         if ev.topic_0 == SIG_EVENT_VOTING_DELAY_SET:
             old_delay, new_delay = decode_single(
                 "(uint256,uint256)",
