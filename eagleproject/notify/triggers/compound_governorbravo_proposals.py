@@ -7,6 +7,7 @@ from eth_abi import decode_single
 from core.blockchain.addresses import (
     CONTRACT_ADDR_TO_NAME,
     COMPOUND_GOVERNOR_BRAVO,
+    FLUX_DAO,
 )
 from core.blockchain.decode import decode_calls
 from core.blockchain.sigs import (
@@ -24,7 +25,7 @@ DISCORD_EMBED_DESCRIPTION_LIMIT = 2048
 
 def get_events(logs):
     """ Get Mint/Redeem events """
-    return logs.filter(address=COMPOUND_GOVERNOR_BRAVO).filter(
+    return logs.filter(address__in=[COMPOUND_GOVERNOR_BRAVO,FLUX_DAO]).filter(
         Q(topic_0=SIG_EVENT_PROPOSAL_CREATED)
         | Q(topic_0=SIG_EVENT_PROPOSAL_CANCELED)
         | Q(topic_0=SIG_EVENT_PROPOSAL_QUEUED)
@@ -33,10 +34,10 @@ def get_events(logs):
     ).order_by('block_number')
 
 
-def create_prop_details(proposal_id, description, proposer, targets,
+def create_prop_details(contract_name, proposal_id, description, proposer, targets,
                         signatures, calldatas, start_block, end_block):
     return (
-        "A new proposal ({}) has been submitted for Compound Governor"
+        "A new proposal ({}) has been submitted for {}"
         "\n\n"
         "**Description**: \n\n{}\n\n"
         "**Proposer**: {}\n"
@@ -44,6 +45,7 @@ def create_prop_details(proposal_id, description, proposer, targets,
         "**Calls**: \n - {}\n"
         "**Block Range**: {}".format(
             proposal_id,
+            contract_name,
             description,
             proposer,
             ', '.join([
@@ -61,6 +63,7 @@ def run_trigger(new_logs):
     events = []
 
     for ev in get_events(new_logs):
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
 
         if ev.topic_0 == SIG_EVENT_PROPOSAL_CREATED:
             # ProposalCreated(uint id, address proposer, address[] targets, uint[] values, string[] signatures, bytes[] calldatas, uint startBlock, uint endBlock, string description)
@@ -80,6 +83,7 @@ def run_trigger(new_logs):
             )
 
             details = create_prop_details(
+                contract_name,
                 proposal_id,
                 description,
                 proposer,
@@ -94,6 +98,7 @@ def run_trigger(new_logs):
             if len(details) > DISCORD_EMBED_DESCRIPTION_LIMIT:
                 diff = len(details) - DISCORD_EMBED_DESCRIPTION_LIMIT
                 details = create_prop_details(
+                    contract_name,
                     proposal_id,
                     truncate_elipsis(
                         description,
@@ -108,7 +113,8 @@ def run_trigger(new_logs):
                 )
 
             events.append(event_high(
-                "Compound Governor Proposal Created ({})   🗳️ 🆕".format(
+                "{} Proposal Created ({})   🗳️ 🆕".format(
+                    contract_name,
                     proposal_id
                 ),
                 details,
@@ -119,8 +125,9 @@ def run_trigger(new_logs):
             proposal_id = decode_single("(uint256)", decode_hex(ev.data))[0]
 
             events.append(event_high(
-                "Compound GovernorBravo proposed cancelled   🗳️ ❌",
-                "Compound GovernorBravo proposal #{} has been canceled".format(
+                "{} proposed cancelled   🗳️ ❌".format(contract_name),
+                "{} proposal #{} has been canceled".format(
+                    contract_name,
                     proposal_id
                 ),
                 log_model=ev
@@ -135,9 +142,10 @@ def run_trigger(new_logs):
             eta = datetime.utcfromtimestamp(eta_stamp)
 
             events.append(event_high(
-                "Compound GovernorBravo proposed queued   🗳️ 📥",
-                "Compound GovernorBravo proposal #{} has been queued "
+                "{} proposed queued   🗳️ 📥".format(contract_name),
+                "{} proposal #{} has been queued "
                 "for {} UTC".format(
+                    contract_name,
                     proposal_id,
                     eta,
                 ),
@@ -148,8 +156,9 @@ def run_trigger(new_logs):
             proposal_id = decode_single("(uint256)", decode_hex(ev.data))[0]
 
             events.append(event_high(
-                "Compound GovernorBravo proposed executed   🗳️ ⚙️",
-                "Compound GovernorBravo proposal #{} has been executed".format(
+                "{} proposed executed   🗳️ ⚙️".format(contract_name),
+                "{} proposal #{} has been executed".format(
+                    contract_name,
                     proposal_id,
                 ),
                 log_model=ev

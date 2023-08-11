@@ -47,7 +47,9 @@ from core.blockchain.addresses import (
     RETH,
     STETH,
     WETH,
-    ETH
+    ETH,
+    FLUX_DAO,
+    FLUX_TIMELOCK
 )
 
 from core.blockchain.strategies import OUSD_STRATEGIES, OETH_STRATEGIES
@@ -177,6 +179,8 @@ if os.environ.get("SKIP_THIRD_PARTY") != "true":
         CURVE_ARAGON_51,
         CURVE_ARAGON_60,
         CHAINLINK_KEEPER_REGISTRY,
+        FLUX_DAO,
+        FLUX_TIMELOCK
     ]
 
 ETHERSCAN_CONTRACTS = [
