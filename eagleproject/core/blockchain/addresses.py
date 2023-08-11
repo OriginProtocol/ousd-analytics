@@ -166,6 +166,10 @@ CURVE_ARAGON_51 = "0xe478de485ad2fe566d49342cbd03e49ed7db3356"
 # This contract needs 60% support to pass
 CURVE_ARAGON_60 = "0xbcff8b0b9419b9a88c44546519b1e909cf330399"
 
+# Flux Finance Governance
+FLUX_TIMELOCK = "0x2c5898da4df1d45eab2b7b192a361c3b9eb18d9c"
+FLUX_DAO = "0x336505ec1bcc1a020eede459f57581725d23465a"
+
 # Name resolution
 CONTRACT_ADDR_TO_NAME = {
     OUSD: "OUSD Token",
@@ -222,7 +226,8 @@ CONTRACT_ADDR_TO_NAME = {
     OGV_BUYBACK_LEGACY: "OGV BuyBack (Legacy)",
     OGV_BUYBACK_PROXY: "OGV BuyBack",
     REWARDS_SOURCE: "RewardsSource",
-
+    FLUX_DAO: "Flux DAO",
+    FLUX_TIMELOCK: "Flux Timelock",
 
     # OETH Contracts
     OETH: "OETH Token",

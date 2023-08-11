@@ -4,7 +4,11 @@ from django.db.models import Q
 from eth_utils import decode_hex
 from eth_abi import decode_single
 
-from core.blockchain.addresses import COMPOUND_GOVERNOR_BRAVO
+from core.blockchain.addresses import (
+    COMPOUND_GOVERNOR_BRAVO, 
+    FLUX_DAO,
+    CONTRACT_ADDR_TO_NAME,
+)
 from core.blockchain.const import E_18
 from core.blockchain.sigs import (
     SIG_EVENT_VOTING_DELAY_SET,
@@ -18,7 +22,7 @@ DISCORD_EMBED_DESCRIPTION_LIMIT = 2048
 
 def get_events(logs):
     """ Get Mint/Redeem events """
-    return logs.filter(address=COMPOUND_GOVERNOR_BRAVO).filter(
+    return logs.filter(address__in=[COMPOUND_GOVERNOR_BRAVO, FLUX_DAO]).filter(
         Q(topic_0=SIG_EVENT_VOTING_DELAY_SET)
         | Q(topic_0=SIG_EVENT_VOTING_PERIOD_SET)
         | Q(topic_0=SIG_EVENT_PROPOSAL_THRESHOLD_SET)
@@ -30,6 +34,9 @@ def run_trigger(new_logs):
     events = []
 
     for ev in get_events(new_logs):
+        contract_name = CONTRACT_ADDR_TO_NAME.get(ev.address, ev.address)
+        token_name = "ONDO" if ev.address == FLUX_DAO else "COMP"
+        
         if ev.topic_0 == SIG_EVENT_VOTING_DELAY_SET:
             old_delay, new_delay = decode_single(
                 "(uint256,uint256)",
@@ -37,9 +44,9 @@ def run_trigger(new_logs):
             )
 
             events.append(event_normal(
-                "Compound GovernorBravo voting delay changed   🗳️ 🕖",
-                "Compound GovernorBravo voting delay changed from {} blocks to {} blocks".format(
-                    old_delay, new_delay
+                "{} voting delay changed   🗳️ 🕖".format(contract_name),
+                "{} voting delay changed from {} blocks to {} blocks".format(
+                    contract_name, old_delay, new_delay
                 ),
                 log_model=ev
             ))
@@ -51,9 +58,9 @@ def run_trigger(new_logs):
             )
 
             events.append(event_normal(
-                "Compound GovernorBravo voting delay changed   🗳️ 🕗",
-                "Compound GovernorBravo voting period changed from {} blocks to {} blocks".format(
-                    old_period, new_period
+                "{} voting delay changed   🗳️ 🕗".format(contract_name),
+                "{} voting period changed from {} blocks to {} blocks".format(
+                    contract_name, old_period, new_period
                 ),
                 log_model=ev
             ))
@@ -68,9 +75,9 @@ def run_trigger(new_logs):
             new_human = Decimal(new_threshold) / E_18
 
             events.append(event_normal(
-                "Compound GovernorBravo voting threshold changed   🗳️ 🪙",
-                "Compound GovernorBravo voting threshold changed from {} COMP to {} COMP".format(
-                    old_human, new_human
+                "{} voting threshold changed   🗳️ 🪙".format(contract_name),
+                "{} voting threshold changed from {} {} to {} {}".format(
+                    contract_name, old_human, token_name, new_human, token_name
                 ),
                 log_model=ev
             ))
