@@ -66,7 +66,7 @@ from core.blockchain.rpc import (
     latest_block,
     rebasing_credits_per_token,
     totalSupply,
-    OUSDMetaStrategy
+    OUSDMetaStrategy,
 )
 
 from core.channels.email import Email
@@ -483,12 +483,12 @@ def api_daily_stats(request, project, days, start=0):
                 "date": x.effective_day,
                 "yield": x.gain, 
                 "fees": x.fees,
-                "backing_supply" : x.computed_supply, 
+                "backing_supply" : x.computed_supply,
                 "rebasing_supply": x.rebasing_computed_supply(),
                 "non_rebasing_supply": x.non_rebasing_supply,
                 "apy": x.apy, 
                 "raw_apy": x.unboosted,
-                "apy_boost": x.non_rebasing_boost_multiplier(),
+                "apy_boost": x.non_rebasing_boost_multiplier,
                 "rebase_events": x.rebase_events
             } for x in rows],
         }
