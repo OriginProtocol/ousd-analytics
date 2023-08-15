@@ -38,6 +38,7 @@ from core.blockchain.rpc import (
     balanceOf,
     totalSupply,
     dripper_available,
+    OUSDMetaStrategy,
     OETHCurveAMOStrategy
 )
 from core.blockchain.apy import (
