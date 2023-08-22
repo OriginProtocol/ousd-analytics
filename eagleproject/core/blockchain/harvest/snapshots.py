@@ -53,8 +53,6 @@ from core.blockchain.rpc import (
     origin_token_non_rebasing_supply,
     priceUnitMint,
     priceUnitRedeem,
-    priceUSDMint,
-    priceUSDRedeem,
     rebasing_credits_per_token,
     strategyCheckBalance,
     story_staking_total_supply,
@@ -267,7 +265,7 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
     if ora_tok_usd_min < 0:
         try:
             ora_tok_usd_min = (
-                priceUSDMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                priceUnitMint(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
                 if symbol in OUSD_BACKING_ASSETS
                 else 0
             )
@@ -277,7 +275,7 @@ def build_asset_block(symbol, block_number, project = OriginTokens.OUSD):
     if ora_tok_usd_max < 0:
         try:
             ora_tok_usd_max = (
-                priceUSDRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
+                priceUnitRedeem(OUSD_VAULT, CONTRACT_FOR_SYMBOL[symbol], block_number)
                 if symbol in OUSD_BACKING_ASSETS
                 else 0
             )
