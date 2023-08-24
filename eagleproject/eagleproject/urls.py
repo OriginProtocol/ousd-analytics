@@ -78,6 +78,7 @@ urlpatterns = [
     path("api/v2/<slug:project>/address/<slug:address>/yield", core_views.api_address_yield, name="api_address_yield"),
     path("api/v2/<slug:project>/address/", core_views.api_address),
     path("api/v2/<slug:project>/address/<slug:address>/history", core_views.api_address_history, name="api_address_history"),
+    path("api/v2/<slug:project>/tvl_history/<int:days>", core_views.tvl_history),
     path("api/v2/<slug:project>/strategies", core_views.strategies),
     path("api/v2/<slug:project>/collateral", core_views.collateral),
     path("api/v2/<slug:project>/apr/trailing_history/<int:days>", core_views.api_apr_trailing_history),
