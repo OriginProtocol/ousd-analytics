@@ -9,15 +9,19 @@ from core.models import (
 )
 
 from django.db.utils import IntegrityError
+from django.core.exceptions import ObjectDoesNotExist
 
 logger = get_logger(__name__)
 
 
 def ensure_block(block_number):
-    stored_block = Block.objects.filter(block_number=block_number).first()
-    if stored_block is not None:
-        return stored_block
-    
+    try:
+        stored_block = Block.objects.get(block_number=block_number)
+        if stored_block is not None:
+            return stored_block
+    except ObjectDoesNotExist:
+        pass
+
     raw_block = get_block(block_number)
     block_time = datetime.fromtimestamp(
         int(raw_block["timestamp"], 16),
@@ -43,9 +47,13 @@ def ensure_day(d):
         Requires there to be a block stored in the system before and after the target.
             ... More code could easily remove this restriction.
     """
-    stored_day = Day.objects.filter(date=d.date()).first()
-    if stored_day is not None:
-        return stored_day
+    try:
+        stored_day = Day.objects.get(date=d.date())
+        if stored_day is not None:
+            return stored_day
+    except ObjectDoesNotExist:
+        pass
+
     d = datetime(d.year, d.month, d.day) # Zero seconds, keep timezone
     # Offset for the window on the next day
     target = (d + timedelta(seconds=26100)).replace(tzinfo=timezone.utc)

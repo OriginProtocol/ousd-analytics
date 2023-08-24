@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
@@ -90,6 +90,8 @@ import json
 
 from core.blockchain.strategies import OUSD_STRATEGIES, OUSD_BACKING_ASSETS
 from core.blockchain.strategies import OETH_STRATEGIES, OETH_BACKING_ASSETS
+
+from core.blockchain.harvest.blocks import ensure_block, ensure_day
 
 log = get_logger(__name__)
 
@@ -322,7 +324,7 @@ def remove_specific_month_report(request, month):
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
-    year = datetime.datetime.now().year
+    year = datetime.now().year
     report = AnalyticsReport.objects.get(month=month, year=year)
     report.delete()
     return HttpResponse("ok")
@@ -333,7 +335,7 @@ def remove_specific_week_report(request, week):
         print("Reports disabled on this instance")
         return HttpResponse("ok")
 
-    year = datetime.datetime.now().year
+    year = datetime.now().year
     report = AnalyticsReport.objects.get(week=week, year=year)
     report.delete()
     return HttpResponse("ok")
@@ -555,7 +557,7 @@ def api_address(request, project):
 
 def active_stake_stats():
     """ Get stats of the active stakes grouped by duration """
-    utc_now = datetime.datetime.now(tz=datetime.timezone.utc)
+    utc_now = datetime.now(tz=timezone.utc)
 
     """ Trying to do aggregate math and Withdraw inferences here.  This data is
     a dict of OgnStaked with user_address as key.  We should be able to filter
@@ -621,11 +623,11 @@ def active_stake_stats():
     # Now we need to bucket all active stakes
     for user_address in unique_addresses:
         for stake in user_aggreate[user_address]:
-            if stake.staked_duration == datetime.timedelta(days=30):
+            if stake.staked_duration == timedelta(days=30):
                 total_30 += stake.amount
-            elif stake.staked_duration == datetime.timedelta(days=90):
+            elif stake.staked_duration == timedelta(days=90):
                 total_90 += stake.amount
-            elif stake.staked_duration == datetime.timedelta(days=365):
+            elif stake.staked_duration == timedelta(days=365):
                 total_365 += stake.amount
             else:
                 log.error(
@@ -744,25 +746,23 @@ def api_address_history(request, address, project=OriginTokens.OUSD):
     response.setdefault("Access-Control-Allow-Origin", "*")
     return response
 
-
-def strategies(request, project=OriginTokens.OUSD):
-    block_number = latest_snapshot_block_number(project)
+def _get_allocations_on_block(block_number, project):
+    block = ensure_block(block_number)
     assets = fetch_assets(block_number, project)
     snapshot = snapshot_at_block(block_number, project)
 
     eth_snap = next(snap for snap in ensure_oracle_snapshot(block_number) if snap.ticker_left=="ETH" and snap.ticker_right=="USD")
 
     all_strats = _get_strat_holdings(assets, project=project)
-
-    # Returns an object with UUID as keys when set, otherwise returns an array
-    structured = project == OriginTokens.OETH or request.GET.get("structured") is not None
-
     net_tvl = Decimal(0)
+    protocol_owned_supply = Decimal(0)
     for (key, strat) in all_strats.items():
         holdings = {}
         holdings_value = {}
         for (asset, holding) in strat["holdings"]:
             holdings[asset] = Decimal(holding or 0)
+            if asset == "OUSD" or asset == "OETH":
+                protocol_owned_supply += holdings[asset]
         for (asset, holding) in strat["holdings_value"]:
             holdings_value[asset] = Decimal(holding or 0)
         strat["total"] = Decimal(strat["total"] or 0)
@@ -771,28 +771,81 @@ def strategies(request, project=OriginTokens.OUSD):
         strat["holdings"] = holdings
         strat["holdings_value"] = holdings_value
 
-    if structured is None:
-        # TODO: Backward compatibility, remove after making sure that every repo has been updated
-        all_strats = [{
-            "name": strat["name"],
-            "total": strat["total"],
-            "dai": strat["holdings"].get("DAI"),
-            "usdt": strat["holdings"].get("USDT"),
-            "usdc": strat["holdings"].get("USDC"),
-            "ousd": strat["holdings"].get("OUSD"),
-            "lusd": strat["holdings"].get("LUSD"),
-        } for (strat_key, strat) in all_strats.items()]
+    circulating_supply = Decimal(snapshot.reported_supply) - protocol_owned_supply
 
-    response = JsonResponse({
+    return {
+        "block_time": block.block_time.replace(tzinfo=timezone.utc).timestamp(),
+        "block_number": block_number,
         "strategies": all_strats,
         "total_value": net_tvl,
         "total_value_usd": net_tvl * (eth_snap.price if project == OriginTokens.OETH else 1),
         "eth_price": eth_snap.price,
-        "total_supply": Decimal(snapshot.reported_supply)
-    }, encoder=DecimalEncoder)
+        "total_supply": Decimal(snapshot.reported_supply),
+        "circulating_supply": circulating_supply,
+        "protocol_owned_supply": protocol_owned_supply
+    }
+
+def strategies(request, project=OriginTokens.OUSD):
+    block_number = latest_snapshot_block_number(project)
+
+    allocations = _get_allocations_on_block(
+        block_number,
+        project,
+    )
+    
+    # Returns an object with UUID as keys when set, otherwise returns an array
+    structured = (project == OriginTokens.OETH or request.GET.get("structured") is not None)
+    if not structured:
+        # TODO: Backward compatibility, remove after making sure that every repo has been updated
+        allocations["strategies"] = [{
+            "name": strat["name"],
+            "total": strat["total"],
+            "dai": strat["holdings"].get("DAI", Decimal(0)),
+            "usdt": strat["holdings"].get("USDT", Decimal(0)),
+            "usdc": strat["holdings"].get("USDC", Decimal(0)),
+            "ousd": strat["holdings"].get("OUSD", Decimal(0)),
+            "lusd": strat["holdings"].get("LUSD", Decimal(0)),
+        } for (strat_key, strat) in allocations["strategies"].items()]
+
+
+    response = JsonResponse(allocations, encoder=DecimalEncoder)
     response.setdefault("Access-Control-Allow-Origin", "*")
     return _cache(120, response)
 
+def tvl_history(request, project=OriginTokens.OUSD, days=30):
+    block_numbers = []
+
+    today = datetime.utcnow()
+    day_pointer = datetime(today.year, today.month, today.day).replace(
+        tzinfo=timezone.utc
+    )
+
+    for i in range(0, days):
+        day = ensure_day(day_pointer)
+        if day is not None:
+            block_numbers.append(day.block_number)
+        day_pointer = (
+            day_pointer - timedelta(seconds=24 * 60 * 60)
+        ).replace(tzinfo=timezone.utc)
+
+    START_OF_PROJECT = START_OF_OUSD_V2 if project == OriginTokens.OUSD else START_OF_OETH
+    block_numbers = list(filter(lambda x: x >= START_OF_PROJECT, dict.fromkeys(block_numbers)))
+    block_numbers.reverse()
+
+    tvl_data = []
+
+    for block_number in block_numbers:
+        allocations = _get_allocations_on_block(
+            block_number,
+            project
+        )
+        tvl_data.append(allocations)
+
+    response = JsonResponse({
+        "data": tvl_data
+    },  encoder=DecimalEncoder)
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return _cache(120, response)
 
 def collateral(request, project):
     block_number = latest_snapshot_block_number(project=project)
@@ -867,7 +920,7 @@ def report_monthly(request, year, month):
     is_monthly = True
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
-    latest = year == datetime.datetime.now().year and month == int(datetime.datetime.now().strftime("%m")) - 1
+    latest = year == datetime.now().year and month == int(datetime.now().strftime("%m")) - 1
     if month == 12:
         next_month = 0
         next_year = year + 1
@@ -892,7 +945,7 @@ def report_weekly(request, year, week):
     is_monthly = False
     change = calculate_report_change(report, prev_report)
     report.transaction_report = json.loads(str(report.transaction_report))
-    latest = year == datetime.datetime.now().year and week == int(datetime.datetime.now().strftime("%W")) - 1
+    latest = year == datetime.now().year and week == int(datetime.now().strftime("%W")) - 1
     if week == 51:
         next_week = 0
         next_year = year + 1
@@ -906,8 +959,8 @@ def report_weekly(request, year, week):
 
 
 def report_latest_weekly(request):
-    year = datetime.datetime.now().year
-    week = int(datetime.datetime.now().strftime("%W")) - 1
+    year = datetime.now().year
+    week = int(datetime.now().strftime("%W")) - 1
     return redirect("weekly", year, week)
 
 
