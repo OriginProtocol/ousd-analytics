@@ -156,6 +156,7 @@ class SupplySnapshot(models.Model):
     rebasing_credits_per_token = models.DecimalField(
         max_digits=64, decimal_places=18, default=0
     )
+    non_rebasing_boost_multiplier = models.DecimalField(max_digits=64, decimal_places=18, default=0)
     apr = Decimal(0)  # Not persisted
     apy = Decimal(0)  # Not persisted
     gain = Decimal(0)  # Not persisted
@@ -188,14 +189,6 @@ class SupplySnapshot(models.Model):
             )
             - 1
         ) * 100
-
-    def non_rebasing_boost_multiplier(self):
-        number = self.computed_supply - self.non_rebasing_supply
-        if number == 0:
-            return 0
-        return self.computed_supply / (
-            number
-        )
 
     class Meta:
         ordering = ["-block_number"]
