@@ -35,11 +35,11 @@ from core.blockchain.harvest.snapshots import (
 )
 from core.blockchain.rpc import (
     creditsBalanceOf,
-)
-from core.blockchain.rpc import (
     balanceOf,
     totalSupply,
-    dripper_available
+    dripper_available,
+    OUSDMetaStrategy,
+    OETHCurveAMOStrategy
 )
 from core.blockchain.apy import (
     get_trailing_apy,
@@ -1619,10 +1619,11 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
                 Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
             )
             s.apy = to_apy(s.apr, 1)
+            amo_supply = OUSDMetaStrategy.get_underlying_balance().get("OUSD", Decimal(0)) if project == OriginTokens.OUSD else OETHCurveAMOStrategy.get_underlying_balance().get("OETH", Decimal(0))
             try:
                 s.unboosted = to_apy(
                     (s.computed_supply - s.non_rebasing_supply)
-                    / s.computed_supply
+                    / (s.computed_supply - amo_supply)
                     * s.apr,
                     1,
                 )

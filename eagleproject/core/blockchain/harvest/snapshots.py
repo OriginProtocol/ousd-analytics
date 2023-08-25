@@ -386,6 +386,8 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD) -> SupplySna
         )
         s.rebasing_credits_ratio = next_rebase_supply / s.credits
         s.rebasing_credits_per_token = rebasing_credits_per_token(block_number)
+        ousd_amo_supply = OUSDMetaStrategy.get_underlying_balance().get("OUSD", Decimal(0))
+        s.non_rebasing_boost_multiplier = (s.computed_supply - ousd_amo_supply) / (s.computed_supply - s.non_rebasing_supply)
     else:
         eth = ensure_asset("ETH", block_number, OriginTokens.OETH).redeem_value()
         weth = ensure_asset("WETH", block_number, OriginTokens.OETH).redeem_value()
@@ -413,6 +415,8 @@ def ensure_supply_snapshot(block_number, project=OriginTokens.OUSD) -> SupplySna
         else:
             s.rebasing_credits_ratio = next_rebase_supply / s.credits
         s.rebasing_credits_per_token = rebasing_credits_per_token(block_number, contract=OETH)
+        oeth_amo_supply = OETHCurveAMOStrategy.get_underlying_balance().get("OETH", Decimal(0))
+        s.non_rebasing_boost_multiplier = (s.computed_supply - oeth_amo_supply) / (s.computed_supply - s.non_rebasing_supply)
 
     s.save()
     return s
