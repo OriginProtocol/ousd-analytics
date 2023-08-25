@@ -1619,8 +1619,11 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
             s.apr = (
                 Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
             )
+            s.apy = to_apy(s.apr, 1)
+
             otoken = ensure_asset("OUSD" if project == OriginTokens.OUSD else "OETH", s.block_number, project)
             amo_supply = otoken.get_strat_holdings("ousd_metastrat" if project == OriginTokens.OUSD else "oeth_curve_amo")
+
             try:
                 s.unboosted = to_apy(
                     (s.computed_supply - s.non_rebasing_supply)
