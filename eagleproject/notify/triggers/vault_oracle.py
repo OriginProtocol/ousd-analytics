@@ -25,11 +25,6 @@ locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
 def get_oracle_prices(symbol, vault=OUSD_VAULT):
     """ Get min/max price for a token """
     address = CONTRACT_FOR_SYMBOL[symbol]
-
-    if vault == OUSD_VAULT:
-        # Rel: https://github.com/OriginProtocol/origin-dollar/issues/1368
-        return (priceUSDRedeem(vault, address), priceUSDMint(vault, address))
-
     return (priceUnitRedeem(vault, address), priceUnitMint(vault, address))
 
 
