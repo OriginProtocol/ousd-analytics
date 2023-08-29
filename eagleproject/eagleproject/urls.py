@@ -82,6 +82,7 @@ urlpatterns = [
     path("api/v2/<slug:project>/strategies", core_views.strategies),
     path("api/v2/<slug:project>/collateral", core_views.collateral),
     path("api/v2/<slug:project>/apr/trailing_history/<int:days>", core_views.api_apr_trailing_history),
+    path("api/v2/<slug:project>/dripper", core_views.api_dripper),
 
     # Deprecated v1 API endpoints (exists for backward compatibility)
     path("api/v1/apr/trailing", RedirectView.as_view(url="/api/v2/ousd/apr/trailing", permanent=True)),

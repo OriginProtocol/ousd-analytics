@@ -15,6 +15,7 @@ from django.db import connection
 from django.db.models import Q
 from core.blockchain.addresses import (
     DRIPPER,
+    OETH_DRIPPER,
     OUSD,
     OETH,
     USDT,
@@ -67,6 +68,10 @@ from core.blockchain.rpc import (
     rebasing_credits_per_token,
     totalSupply,
     OUSDMetaStrategy,
+)
+
+from core.blockchain.dripper import (
+    get_dripper_stats
 )
 
 from core.channels.email import Email
@@ -1180,3 +1185,9 @@ def coingecko_pools(request, project):
             safe=False,
         ),
     )
+
+def api_dripper(request, project):
+    response = JsonResponse(get_dripper_stats(project))
+
+    response.setdefault("Access-Control-Allow-Origin", "*")
+    return _cache(60 * 30, response)
