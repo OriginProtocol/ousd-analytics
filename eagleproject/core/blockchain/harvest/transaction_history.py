@@ -92,6 +92,8 @@ from core.blockchain.addresses import (
     VEOGV,
     OUSD,
     OETH,
+    WOUSD,
+    WOETH,
     OETH_ETH_AMO_METAPOOL,
     OETH_ETH_AMO_CURVE_GUAGE,
 )
@@ -1123,7 +1125,7 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
         for log in logs:
             if log.topic_0 == TRANSFER:
                 transfer_log_count += 1
-                is_origin_token = (log.address == OUSD and project == OriginTokens.OUSD) or (log.address == OETH and project == OriginTokens.OETH)
+                is_origin_token = (log.address == OUSD and project == OriginTokens.OUSD) or (log.address == OETH and project == OriginTokens.OETH) or (log.address == WOUSD and project == OriginTokens.WOUSD) or (log.address == WOETH and project == OriginTokens.WOETH)
                 from_address = "0x" + log.topic_1[-40:]
                 to_address = "0x" + log.topic_2[-40:]
 
@@ -1158,9 +1160,27 @@ def ensure_analyzed_transactions(from_block, to_block, start_time, end_time, acc
                     classification = 'unknown_transfer'
 
             if swap_receive_origin_token:
-                classification = 'swap_gain_ousd' if project == OriginTokens.OUSD else 'swap_gain_oeth'
+                if project == OriginTokens.OUSD:
+                    classification = 'swap_gain_ousd'
+                elif project == OriginTokens.OETH:
+                    classification = 'swap_gain_oeth'
+                elif project == OriginTokens.WOUSD:
+                    classification = 'swap_gain_wousd'
+                elif project == OriginTokens.WOETH:
+                    classification = 'swap_gain_woeth'
+                else:
+                    raise Exception('Unexpected project id', project)
             elif swap_send_origin_token:
-                classification = 'swap_give_ousd' if project == OriginTokens.OUSD else 'swap_give_oeth'
+                if project == OriginTokens.OUSD:
+                    classification = 'swap_give_ousd'
+                elif project == OriginTokens.OETH:
+                    classification = 'swap_give_oeth'
+                elif project == OriginTokens.WOUSD:
+                    classification = 'swap_give_wousd'
+                elif project == OriginTokens.WOETH:
+                    classification = 'swap_give_woeth'
+                else:
+                    raise Exception('Unexpected project id', project)
 
         analyzed_transaction_hashes.append(transaction.tx_hash)
         analyzed_transactions.append(transaction_analysis(
@@ -1318,6 +1338,8 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
     if transaction_filter != None:
         transaction_filter = transaction_filter.replace('swap_ousd', 'swap_gain_ousd swap_give_ousd')
         transaction_filter = transaction_filter.replace('swap_oeth', 'swap_gain_oeth swap_give_oeth')
+        transaction_filter = transaction_filter.replace('swap_wousd', 'swap_gain_wousd swap_give_wousd')
+        transaction_filter = transaction_filter.replace('swap_woeth', 'swap_gain_woeth swap_give_woeth')
     tx_history_filtered = []
 
     # find last non rebase transaction, and remove later transactions
@@ -1329,15 +1351,16 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
 
     for i in range(0, (last_non_yield_tx_idx + 1) if last_non_yield_tx_idx != -1 else 1, 1):
         if isinstance(tx_history[i], rebase_log):
-            if transaction_filter == None or 'yield' in transaction_filter:
-                tx_history_filtered.append({
-                    'block_number': tx_history[i].block_number,
-                    'time': tx_history[i].block_time,
-                    'balance': "{:.18f}".format(float(tx_history[i].balance)),
-                    'tx_hash': tx_history[i].tx_hash,
-                    'amount': "{:.18f}".format(float(tx_history[i].amount)),
-                    'type': 'yield'
-                })
+            if project != OriginTokens.WOUSD and project != OriginTokens.WOETH:
+                if transaction_filter == None or 'yield' in transaction_filter:
+                    tx_history_filtered.append({
+                        'block_number': tx_history[i].block_number,
+                        'time': tx_history[i].block_time,
+                        'balance': "{:.18f}".format(float(tx_history[i].balance)),
+                        'tx_hash': tx_history[i].tx_hash,
+                        'amount': "{:.18f}".format(float(tx_history[i].amount)),
+                        'type': 'yield'
+                    })
         else:
             tx_hash = tx_history[i].tx_hash.tx_hash
             tx_classification = hash_to_classification[tx_hash] if tx_hash in hash_to_classification else 'unknown_transaction_not_found'
