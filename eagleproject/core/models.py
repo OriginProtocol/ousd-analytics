@@ -16,6 +16,8 @@ log = get_logger(__name__)
 class OriginTokens(models.TextChoices):
     OUSD = "ousd", "ousd"
     OETH = "oeth", "oeth"
+    WOUSD = "wousd", "wousd"
+    WOETH = "woeth", "woeth"
     
 class AssetBlock(models.Model):
     symbol = models.CharField(max_length=8, db_index=True)
