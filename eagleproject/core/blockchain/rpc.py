@@ -466,20 +466,19 @@ def staking_durationRewardRate(address, duration, block="latest"):
 
 def dripper_available(block="latest", project=OriginTokens.OUSD):
     signature = SIG_DRIPPER_AVAILABLE_FUNDS[:10]
+    dripper_addr = OETH_DRIPPER if project == OriginTokens.OETH else DRIPPER
+    decimals = E_18 if project == OriginTokens.OETH else E_6
 
-    if project == OriginTokens.OETH:
-        data = call(OETH_DRIPPER, signature, "", block)
-        return Decimal(int(data["result"], 16)) / E_18
-    else:
-        data = call(DRIPPER, signature, "", block)
-        return Decimal(int(data["result"], 16)) / E_6
+    data = call(dripper_addr, signature, "", block)
+    return Decimal(int(data["result"], 16)) / decimals
 
-
-def dripper_drip_rate(block="latest"):
+def dripper_drip_rate(block="latest", project=OriginTokens.OUSD):
     signature = SIG_DRIPPER_CONFIG[:10]
-    data = call(DRIPPER, signature, "", block)
-    return Decimal(int(data["result"][64 + 2 :], 16)) / E_6
+    dripper_addr = OETH_DRIPPER if project == OriginTokens.OETH else DRIPPER
+    decimals = E_18 if project == OriginTokens.OETH else E_6
 
+    data = call(dripper_addr, signature, "", block)
+    return Decimal(int(data["result"][64 + 2 :], 16)) / decimals
 
 class AaveLendingPoolCore:
     """ LendingPoolCore calls """
