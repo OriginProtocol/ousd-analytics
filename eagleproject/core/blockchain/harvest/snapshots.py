@@ -542,7 +542,8 @@ def ensure_oracle_snapshot(block_number):
                     price=usd_price,
                 )
             )
-
+    
+    return snaps
 
 def ensure_ctoken_snapshot(underlying_symbol, block_number):
     ctoken_address = COMPOUND_FOR_SYMBOL.get(underlying_symbol)
