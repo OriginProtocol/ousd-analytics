@@ -7,7 +7,6 @@ from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.core.validators import validate_email
 
-from django.views.decorators.csrf import csrf_exempt
 import random
 from django.template.loader import render_to_string
 
@@ -1012,7 +1011,6 @@ def generate_token():
     return "%0.12d" % random.randint(0, 999999999999)
 
 
-@csrf_exempt
 def subscribe(request):
     latest_report_url = request.build_absolute_uri('/reports/weekly')
 
