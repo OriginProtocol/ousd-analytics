@@ -335,6 +335,10 @@ def download_logs_from_contract(contract, start_block, end_block):
     ensure_transaction_and_downsteam_hashes(list(tx_hashes))
 
 
+def backfill_transaction_history(contract, start_block, end_block):
+    download_logs_from_contract(contract, start_block, end_block)
+
+
 def ensure_latest_logs(upto):
     pointers = {x.contract: x for x in LogPointer.objects.all()}
     # Keep in mind that GAE isn't best suited for parallelism. And if we were to go for it
