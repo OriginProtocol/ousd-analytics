@@ -1353,6 +1353,7 @@ def get_history_for_address(address, transaction_filter, project=OriginTokens.OU
         if isinstance(tx_history[i], rebase_log):
             if project != OriginTokens.WOUSD and project != OriginTokens.WOETH:
                 if transaction_filter == None or 'yield' in transaction_filter:
+                  if float(tx_history[i].amount) != 0:
                     tx_history_filtered.append({
                         'block_number': tx_history[i].block_number,
                         'time': tx_history[i].block_time,
