@@ -11,7 +11,7 @@ def run():
     # event_seen is time sensitive and old entries are irrelevant
     try:
         EventSeen.objects.filter(
-            last_seen__gt=datetime.utcnow() - timedelta(hours=24)
+            last_seen__lt=datetime.utcnow() - timedelta(hours=24)
         ).delete()
     except Exception:
         log.exception(
