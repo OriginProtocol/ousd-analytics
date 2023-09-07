@@ -4,6 +4,7 @@ from Crypto.Hash import SHA3_256
 from core.common import Severity
 from notify.models import EventSeen
 
+EVENT_DUPE_WINDOW_SECONDS = timedelta(seconds=3600)  # 1hr
 
 def event_order_comp(a, b) -> int:
     """ Compare to Events for ordering """
@@ -33,7 +34,10 @@ class Event:
     """ An event worthy of an action """
     def __init__(self, title, details, severity=Severity.NORMAL,
                  stamp=datetime.utcnow(), tags=['default'], block_number=0,
-                 transaction_index=0, log_index=0):
+                 transaction_index=0, log_index=0, deduplicate_time_window=EVENT_DUPE_WINDOW_SECONDS):
+        
+        assert isinstance(deduplicate_time_window, timedelta), "since is not a timedelta object"
+
         self._severity = severity or Severity.NORMAL
         self._title = title
         self._details = details
@@ -43,6 +47,7 @@ class Event:
         self._transaction_index = transaction_index
         self._log_index = log_index
         self.vague_hash = False
+        self.deduplicate_time_window = deduplicate_time_window
 
     def __str__(self):
         return "{} [{}] {}: {}".format(
@@ -109,7 +114,7 @@ class Event:
 
 def event_critical(title, details, stamp=datetime.utcnow(), tags=None,
                    block_number=0, transaction_index=0, log_index=0,
-                   log_model=None):
+                   log_model=None, deduplicate_time_window=EVENT_DUPE_WINDOW_SECONDS):
     """ Create a critical severity event """
 
     if log_model is not None:
@@ -126,12 +131,13 @@ def event_critical(title, details, stamp=datetime.utcnow(), tags=None,
         block_number=block_number,
         transaction_index=transaction_index,
         log_index=log_index,
+        deduplicate_time_window=deduplicate_time_window,
     )
 
 
 def event_high(title, details, stamp=datetime.utcnow(), tags=None,
                block_number=0, transaction_index=0, log_index=0,
-               log_model=None):
+               log_model=None, deduplicate_time_window=EVENT_DUPE_WINDOW_SECONDS):
     """ Create a high severity event """
 
     if log_model is not None:
@@ -148,12 +154,13 @@ def event_high(title, details, stamp=datetime.utcnow(), tags=None,
         block_number=block_number,
         transaction_index=transaction_index,
         log_index=log_index,
+        deduplicate_time_window=deduplicate_time_window,
     )
 
 
 def event_normal(title, details, stamp=datetime.utcnow(), tags=None,
                  block_number=0, transaction_index=0, log_index=0,
-                 log_model=None):
+                 log_model=None, deduplicate_time_window=EVENT_DUPE_WINDOW_SECONDS):
     """ Create a normal severity event """
 
     if log_model is not None:
@@ -170,12 +177,13 @@ def event_normal(title, details, stamp=datetime.utcnow(), tags=None,
         block_number=block_number,
         transaction_index=transaction_index,
         log_index=log_index,
+        deduplicate_time_window=deduplicate_time_window,
     )
 
 
 def event_low(title, details, stamp=datetime.utcnow(), tags=None,
               block_number=0, transaction_index=0, log_index=0,
-              log_model=None):
+              log_model=None, deduplicate_time_window=EVENT_DUPE_WINDOW_SECONDS):
     """ Create a low severity event """
 
     if log_model is not None:
@@ -192,21 +200,13 @@ def event_low(title, details, stamp=datetime.utcnow(), tags=None,
         block_number=block_number,
         transaction_index=transaction_index,
         log_index=log_index,
+        deduplicate_time_window=deduplicate_time_window,
     )
 
 
-def seen_filter(events, since):
-    """ Filter out any events seen since `since` and add newly discovered hashes
-    to the DB """
-    assert isinstance(since, timedelta), "since is not a timedelta object"
-
-    hashes_since = [
-        x.event_hash
-        for x in EventSeen.objects.filter(
-            last_seen__gt=datetime.now(tz=timezone.utc) - since
-        ).only('event_hash')
-    ]
-
+def seen_filter(events):
+    """ Filter out any events seen since `event.deduplicate_time_window` and 
+    add newly discovered hashes to the DB """
     filtered = []
     events_parsed = []
 
@@ -216,13 +216,22 @@ def seen_filter(events, since):
         # Deduplicate unprocessed events
         if event_hash in events_parsed:
             continue
-        events_parsed.append(event_hash)
-        
-        if event_hash not in hashes_since:
-            filtered.append(ev)
 
-            EventSeen.objects.update_or_create(event_hash=event_hash, defaults={
+        events_parsed.append(event_hash)
+
+        _, created = EventSeen.objects.get_or_create(
+            event_hash=event_hash,
+            last_seen__gt=datetime.now(tz=timezone.utc) - ev.deduplicate_time_window,
+            defaults={
+                'event_hash': event_hash,
                 'last_seen': datetime.now(tz=timezone.utc)
-            })
+            }
+        )
+
+        if not created:
+            # Do not send duplicate alert within the defined time window
+            continue
+
+        filtered.append(ev)
 
     return filtered
