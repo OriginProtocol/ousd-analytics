@@ -75,7 +75,7 @@ def run_trigger(transfers, new_transfers):
                     continue
                 except RPCError as e:
                     print("RPC Error when reading price for {}".format(symbol), e)
-                    if "below peg" in e.message or retries <= 0:
+                    if "Asset price" in e.message or retries <= 0:
                         events.append(
                             event_high(
                                 "RPC Error when reading price for {}    🔴".format(symbol), 
