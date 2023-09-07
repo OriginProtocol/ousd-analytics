@@ -67,19 +67,24 @@ def run_trigger(transfers, new_transfers):
                 except AssertionError as e:
                     events.append(
                         event_high(
-                            "Exceptional Oracle Price    🧙‍♀️", str(e),
+                            "Exceptional Oracle Price    🧙‍♀️", 
+                            str(e),
                             deduplicate_time_window=DEDUPE_WINDOW_SECONDS,
                         )
                     )
                     continue
                 except RPCError as e:
                     print("RPC Error when reading price for {}".format(symbol), e)
-                    sleep(3)
-                    if retries <= 0:
+                    if "below peg" in e.message or retries <= 0:
                         events.append(
                             event_high(
-                                "RPC Error when reading price for {}    🔴".format(symbol), str(e)),
+                                "RPC Error when reading price for {}    🔴".format(symbol), 
+                                str(e),
                                 deduplicate_time_window=DEDUPE_WINDOW_SECONDS,
-                            )
+                            ),
+                        )
+                        break
+                    elif retries > 0:
+                        sleep(3)
 
     return events

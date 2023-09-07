@@ -205,8 +205,8 @@ def event_low(title, details, stamp=datetime.utcnow(), tags=None,
 
 
 def seen_filter(events):
-    """ Filter out any events seen since `since` and add newly discovered hashes
-    to the DB """
+    """ Filter out any events seen since `event.deduplicate_time_window` and 
+    add newly discovered hashes to the DB """
     filtered = []
     events_parsed = []
 
@@ -221,7 +221,7 @@ def seen_filter(events):
 
         _, created = EventSeen.objects.get_or_create(
             event_hash=event_hash,
-            last_seen__gt=datetime.now(tz=timezone) - ev.deduplicate_time_window,
+            last_seen__gt=datetime.now(tz=timezone.utc) - ev.deduplicate_time_window,
             defaults={
                 'event_hash': event_hash,
                 'last_seen': datetime.now(tz=timezone.utc)
