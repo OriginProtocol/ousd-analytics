@@ -31,7 +31,8 @@ from core.blockchain.harvest.transactions import (
     explode_log_data
 )
 from core.blockchain.harvest.snapshots import (
-    build_asset_block
+    build_asset_block,
+    latest_snapshot_block_number
 )
 from core.blockchain.rpc import (
     creditsBalanceOf,
@@ -742,6 +743,24 @@ def backfill_subscribers():
         if Subscriber.objects.filter(email=email).first() is None:
             sub = Subscriber(email=email, conf_num=generate_token(), confirmed=True)
             sub.save()
+
+
+def get_block_time_from_block_number(number):
+    result = Block.objects.filter(block_number__gte=number).order_by('block_time')[:1]
+
+    if len(result) != 1:
+        raise Exception('Can not find block time for block number', START_OF_PROJECT)
+
+    return result[0].block_time
+
+
+def backfill_daily_stats(project=OriginTokens.OUSD):
+    START_OF_PROJECT = START_OF_OUSD_V2 if project == OriginTokens.OUSD else START_OF_OETH
+    start_time = get_block_time_from_block_number(START_OF_PROJECT)
+    latest_time = get_block_time_from_block_number(latest_snapshot_block_number(project))
+    days = (latest_time - start_time).days
+    _daily_rows(int(days), latest_snapshot_block_number(project), project=project)
+    return
 
 
 # get all accounts that at some point held OUSD
@@ -1640,7 +1659,7 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
 
                 
             s.apr = (
-                Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
+                Decimal(100) * change * Decimal(365)
             )
             s.apy = to_apy(s.apr, 1)
 
