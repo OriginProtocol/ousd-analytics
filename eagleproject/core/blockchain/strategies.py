@@ -49,6 +49,7 @@ OETH_VAULT = "0x39254033945aa2e4809cc2977e7087bee48bd7ab"
 FRAX_ETH_STRATEGY = "0x3ff8654d633d4ea0fae24c52aec73b4a20d0d0e5"
 OETH_CURVE_AMO_STRATEGY = "0x1827f9ea98e0bf96550b2fc20f7233277fcd7e63"
 OETH_MORPHO_AAVE_STRATEGY = "0xc1fc9e5ec3058921ea5025d703cbe31764756319"
+OETH_BALANCER_RETH_STRATEGY = "0x49109629ac1deb03f2e9b2fe2ac4a623e0e7dfdc"
 
 # OUSD Strategies
 OUSD_STRATEGIES = {
@@ -152,10 +153,17 @@ OETH_STRATEGIES = {
     "ICON_NAME": "oeth-icon.svg",
   },
   "oeth_morpho_aave_strat": {
-      "NAME": "Morpho Aave",
-      "ADDRESS": OETH_MORPHO_AAVE_STRATEGY,
-      "FROM_BLOCK": 17367105,
-      "SUPPORTED_ASSETS": ["WETH"],
-      "ICON_NAME": "morpho.png",
-    },
+    "NAME": "Morpho Aave",
+    "ADDRESS": OETH_MORPHO_AAVE_STRATEGY,
+    "FROM_BLOCK": 17367105,
+    "SUPPORTED_ASSETS": ["WETH"],
+    "ICON_NAME": "morpho.png",
+  },
+  "oeth_balancer_reth_strat": {
+    "NAME": "Balancer rETH/WETH Pool Strategy",
+    "ADDRESS": OETH_BALANCER_RETH_STRATEGY,
+    "FROM_BLOCK": 18156220,
+    "SUPPORTED_ASSETS": ["WETH", "RETH"],
+    "ICON_NAME": "buffer-icon.svg",
+  }
 }
