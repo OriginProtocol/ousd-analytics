@@ -21,7 +21,6 @@ from core.blockchain.addresses import (
     OUSD_VAULT,
     OETH_VAULT,
     OETH,
-    OETH_CURVE_AMO_STRATEGY,
     OETH_ETH_AMO_METAPOOL,
 )
 from core.blockchain.const import (
