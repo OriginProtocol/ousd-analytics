@@ -102,12 +102,16 @@ from core.blockchain.addresses import (
 from core.coingecko import get_coin_history
 from core.defillama import get_stablecoin_market_cap
 
+from core.logging import get_logger
+
 import simplejson as json
 
 from django.core.exceptions import ObjectDoesNotExist
 
 from eth_abi import decode_single
 from eth_utils import decode_hex
+
+log = get_logger(__name__)
 
 ACCOUNT_ANALYZE_PARALLELISM=30
 
@@ -1621,7 +1625,6 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
             block.block_time - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)
         if last_snapshot:
-
             contract_address = OUSD_VAULT if project == OriginTokens.OUSD else OETH_VAULT
 
             rebase_logs = get_rebase_logs(last_snapshot.block_number, block_number, project)
@@ -1657,7 +1660,15 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
                 # other_change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
                 change = Decimal(sum(event['amount'] for event in s.rebase_events)) / (s.computed_supply - s.non_rebasing_supply)
 
-                
+            if change:
+              interval = block.block_time - last_snapshot.block_time
+              if (interval.total_seconds() > 90000):
+                log.warning("{}: daily stats interval too long ({})".format(last_snapshot.block_time, interval))
+              elif (interval.total_seconds() < 82800):
+                log.warning("{}: daily stats interval too short ({})".format(last_snapshot.block_time, interval))
+            
+            # apr based on cumulative yield from yield events taken after block.block_time, and before next snapshot
+            # the number of blocks in this period doesn't matter, as calculation includes all yield events in 24h period
             s.apr = (
                 Decimal(100) * change * Decimal(365)
             )
