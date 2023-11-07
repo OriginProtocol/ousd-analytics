@@ -344,3 +344,12 @@ SIG_EVENT_CLAIMED_TOKENS = encode_hex(
 SIG_EVENT_NEW_CLONE_TOKEN = encode_hex(
     keccak(b"NewCloneToken(address,uint256)")
 )
+
+
+# Buyback events
+SIG_EVENT_OTOKEN_BUYBACK = encode_hex(
+    keccak(b"OTokenBuyback(address,address,uint256,uint256)")
+)
+SIG_EVENT_UNISVERSAL_UNISWAP_UPDATED = encode_hex(
+    keccak(b"UniswapUniversalRouterUpdated(address)")
+)
