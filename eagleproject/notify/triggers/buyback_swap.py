@@ -6,11 +6,10 @@ from core.models import Log
 
 from core.blockchain.const import OETH_BUYBACK_BLOCK
 
-from core.blockchain.addresses import OGV, OGV_BUYBACK_LEGACY, OUSD_BUYBACK_PROXY, OETH_BUYBACK_PROXY, REWARDS_SOURCE, OUSD, CONTRACT_ADDR_TO_NAME
-from core.blockchain.sigs import TRANSFER
+from core.blockchain.addresses import OGV, OETH, OUSD, CVX, OGV_BUYBACK_LEGACY, OUSD_BUYBACK_PROXY, OETH_BUYBACK_PROXY, REWARDS_SOURCE, OUSD, CONTRACT_ADDR_TO_NAME
+from core.blockchain.sigs import TRANSFER, SIG_EVENT_OTOKEN_BUYBACK
 from core.common import format_token_human
 from notify.events import event_low
-
 
 def get_legacy_events(logs):
     """ Get events """
@@ -31,12 +30,19 @@ def get_swap_events(logs):
 
 def run_trigger(new_logs):
     """ Template trigger """
-    events = []
 
-    if ev.block_number > OETH_BUYBACK_BLOCK:
+    if len(new_logs) <= 0:
+        return []
+
+    events = []
+    block_number = new_logs[0].block_number
+
+    if block_number > OETH_BUYBACK_BLOCK:
         for ev in get_swap_events(new_logs):
-            (otoken, dest_token, amount_in, amount_out) = decode_single(
-                "(address,address,uint256,uint256)",
+            otoken = decode_single("(address)", decode_hex(ev.topic_1))[0]
+            dest_token = decode_single("(address)", decode_hex(ev.topic_2))[0]
+            (amount_in, amount_out) = decode_single(
+                "(uint256,uint256)",
                 decode_hex(ev.data)
             )
 
