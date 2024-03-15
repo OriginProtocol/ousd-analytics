@@ -219,18 +219,22 @@ def seen_filter(events):
 
         events_parsed.append(event_hash)
 
-        _, created = EventSeen.objects.get_or_create(
-            event_hash=event_hash,
-            last_seen__gt=datetime.now(tz=timezone.utc) - ev.deduplicate_time_window,
-            defaults={
-                'event_hash': event_hash,
-                'last_seen': datetime.now(tz=timezone.utc)
-            }
-        )
+        try:
+            _, created = EventSeen.objects.get_or_create(
+                event_hash=event_hash,
+                last_seen__gt=datetime.now(tz=timezone.utc) - ev.deduplicate_time_window,
+                defaults={
+                    'event_hash': event_hash,
+                    'last_seen': datetime.now(tz=timezone.utc)
+                }
+            )
 
-        if not created:
-            # Do not send duplicate alert within the defined time window
-            continue
+            if not created:
+                # Do not send duplicate alert within the defined time window
+                continue
+
+        except:
+            print("Failed to apply seen filter")
 
         filtered.append(ev)
 
