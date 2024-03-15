@@ -233,9 +233,8 @@ def seen_filter(events):
                 # Do not send duplicate alert within the defined time window
                 continue
 
+            filtered.append(ev)
         except:
             print("Failed to apply seen filter")
-
-        filtered.append(ev)
 
     return filtered
