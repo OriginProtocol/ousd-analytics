@@ -58,6 +58,8 @@ def run_trigger(transfers, new_transfers):
 
     for assets in [OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS]:
         for symbol in assets:
+            if symbol == "FRXETH":
+                continue
             retries = 3
             while retries > 0:
                 retries = retries - 1
