@@ -31,7 +31,8 @@ from core.blockchain.harvest.transactions import (
     explode_log_data
 )
 from core.blockchain.harvest.snapshots import (
-    build_asset_block
+    build_asset_block,
+    latest_snapshot_block_number
 )
 from core.blockchain.rpc import (
     creditsBalanceOf,
@@ -101,12 +102,16 @@ from core.blockchain.addresses import (
 from core.coingecko import get_coin_history
 from core.defillama import get_stablecoin_market_cap
 
+from core.logging import get_logger
+
 import simplejson as json
 
 from django.core.exceptions import ObjectDoesNotExist
 
 from eth_abi import decode_single
 from eth_utils import decode_hex
+
+log = get_logger(__name__)
 
 ACCOUNT_ANALYZE_PARALLELISM=30
 
@@ -742,6 +747,24 @@ def backfill_subscribers():
         if Subscriber.objects.filter(email=email).first() is None:
             sub = Subscriber(email=email, conf_num=generate_token(), confirmed=True)
             sub.save()
+
+
+def get_block_time_from_block_number(number):
+    result = Block.objects.filter(block_number__gte=number).order_by('block_time')[:1]
+
+    if len(result) != 1:
+        raise Exception('Can not find block time for block number', START_OF_PROJECT)
+
+    return result[0].block_time
+
+
+def backfill_daily_stats(project=OriginTokens.OUSD):
+    START_OF_PROJECT = START_OF_OUSD_V2 if project == OriginTokens.OUSD else START_OF_OETH
+    start_time = get_block_time_from_block_number(START_OF_PROJECT)
+    latest_time = get_block_time_from_block_number(latest_snapshot_block_number(project))
+    days = (latest_time - start_time).days
+    _daily_rows(int(days), latest_snapshot_block_number(project), project=project)
+    return
 
 
 # get all accounts that at some point held OUSD
@@ -1602,7 +1625,6 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
             block.block_time - timedelta(seconds=24 * 60 * 60)
         ).replace(tzinfo=timezone.utc)
         if last_snapshot:
-
             contract_address = OUSD_VAULT if project == OriginTokens.OUSD else OETH_VAULT
 
             rebase_logs = get_rebase_logs(last_snapshot.block_number, block_number, project)
@@ -1638,9 +1660,17 @@ def _daily_rows(steps, latest_block_number, project, start_at=0):
                 # other_change = 1 - (s.rebasing_credits_per_token / last_snapshot.rebasing_credits_per_token)
                 change = Decimal(sum(event['amount'] for event in s.rebase_events)) / (s.computed_supply - s.non_rebasing_supply)
 
-                
+            if change:
+              interval = block.block_time - last_snapshot.block_time
+              if (interval.total_seconds() > 90000):
+                log.warning("{}: daily stats interval too long ({})".format(last_snapshot.block_time, interval))
+              elif (interval.total_seconds() < 82800):
+                log.warning("{}: daily stats interval too short ({})".format(last_snapshot.block_time, interval))
+            
+            # apr based on cumulative yield from yield events taken after block.block_time, and before next snapshot
+            # the number of blocks in this period doesn't matter, as calculation includes all yield events in 24h period
             s.apr = (
-                Decimal(100) * change * (Decimal(365) * BLOCKS_PER_DAY) / blocks
+                Decimal(100) * change * Decimal(365)
             )
             s.apy = to_apy(s.apr, 1)
 
