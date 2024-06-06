@@ -72,6 +72,18 @@ def run_trigger(new_logs):
                         log_model=ev
                     )
                 )
+            elif dest_token == OGN:
+                events.append(
+                    event_low(
+                        "{} BuyBack        🔄".format(otoken_symbol),
+                        "Swapped {} {} for {} OGN and depositted it to the RewardsSource contract".format(
+                            format_token_human(otoken_symbol, amount_in), 
+                            otoken_symbol,
+                            format_token_human('OGN', amount_out),
+                        ),
+                        log_model=ev
+                    )
+                )
             else:
                 events.append(
                     event_low(
