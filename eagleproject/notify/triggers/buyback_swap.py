@@ -6,7 +6,7 @@ from core.models import Log
 
 from core.blockchain.const import OETH_BUYBACK_BLOCK
 
-from core.blockchain.addresses import OGV, OETH, OUSD, CVX, OGV_BUYBACK_LEGACY, OUSD_BUYBACK_PROXY, OETH_BUYBACK_PROXY, REWARDS_SOURCE, OUSD, CONTRACT_ADDR_TO_NAME
+from core.blockchain.addresses import OGV, OGN, OETH, OUSD, CVX, OGV_BUYBACK_LEGACY, OUSD_BUYBACK_PROXY, OETH_BUYBACK_PROXY, REWARDS_SOURCE, OUSD, CONTRACT_ADDR_TO_NAME
 from core.blockchain.sigs import TRANSFER, SIG_EVENT_OTOKEN_BUYBACK
 from core.common import format_token_human
 from notify.events import event_low
