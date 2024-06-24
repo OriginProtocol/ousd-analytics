@@ -64,6 +64,11 @@ SKIP_TRIGGERS = [
     # NOTE: Removing this since for some reason they seem to spam Discord notifications.
     # Also, with the new Prometheus monitoring system, this is redundant
     "assetblock_holdings",
+
+    "ctoken_totalsupply",
+    "ctoken_supplyrates",
+    "ctoken_totalborrows",
+
 ]
 log = logging.getLogger("notify.triggers")
 
