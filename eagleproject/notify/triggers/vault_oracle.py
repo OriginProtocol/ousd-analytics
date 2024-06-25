@@ -52,11 +52,11 @@ def assert_price_in_bounds(symbol):
     )
 
 
-def run_trigger(transfers, new_transfers):
+def run_trigger():
     """ Template trigger """
     events = []
 
-    for assets in [OETH_BACKING_ASSETS]:
+    for assets in [OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS]:
         for symbol in assets:
             if symbol == "FRXETH":
                 continue
