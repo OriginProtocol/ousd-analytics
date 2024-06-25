@@ -56,7 +56,7 @@ def run_trigger(transfers, new_transfers):
     """ Template trigger """
     events = []
 
-    for assets in [OUSD_BACKING_ASSETS, OETH_BACKING_ASSETS]:
+    for assets in [OETH_BACKING_ASSETS]:
         for symbol in assets:
             if symbol == "FRXETH":
                 continue
