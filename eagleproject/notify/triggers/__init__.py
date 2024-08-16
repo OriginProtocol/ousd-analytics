@@ -69,6 +69,9 @@ SKIP_TRIGGERS = [
     "ctoken_supplyrates",
     "ctoken_totalborrows",
 
+    # Failing for some reason, but Squid already covers this
+    "ousd_burns",
+    "vault_oracle",
 ]
 log = logging.getLogger("notify.triggers")
 
