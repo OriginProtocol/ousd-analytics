@@ -98,7 +98,7 @@ def ensure_all_transactions(block_number):
             for tx in get_contract_transactions(
                 address, pointers[address].last_block, block_number
             ):
-                if tx.get("hash") is None:
+                if type(tx) == str or tx.get("hash") is None:
                     logger.error("No transaction hash found from Etherscan")
                     continue
                 tx_hashes.append(tx["hash"])
