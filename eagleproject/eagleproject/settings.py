@@ -60,6 +60,8 @@ USE_THOUSAND_SEPARATOR = True
 
 ALLOWED_HOSTS = [env("ALLOWED_HOST"), "analytics.ousd.com"]
 
+CSRF_TRUSTED_ORIGINS = ["https://analytics.ousd.com"]
+
 
 # Application definition
 
