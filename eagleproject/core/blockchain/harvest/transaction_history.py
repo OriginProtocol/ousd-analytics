@@ -28,7 +28,8 @@ from core.blockchain.sigs import (
 
 from django.db.models import Q
 from core.blockchain.harvest.transactions import (
-    explode_log_data
+    explode_log_data,
+    backfill_transaction_history,
 )
 from core.blockchain.harvest.snapshots import (
     build_asset_block
@@ -39,7 +40,8 @@ from core.blockchain.rpc import (
     totalSupply,
     dripper_available,
     OUSDMetaStrategy,
-    OETHCurveAMOStrategy
+    OETHCurveAMOStrategy,
+    latest_block,
 )
 from core.blockchain.apy import (
     get_trailing_apy,
@@ -56,6 +58,8 @@ from core.blockchain.const import (
     START_OF_CURVE_CAMPAIGN_TIME,
     START_OF_OUSD_V2,
     START_OF_OETH,
+    START_OF_WOUSD,
+    START_OF_WOETH,
     BLOCKS_PER_DAY,
     OUSD_TOTAL_SUPPLY_UPDATED_TOPIC,
     OUSD_TOTAL_SUPPLY_UPDATED_HIGHRES_TOPIC,
@@ -742,6 +746,26 @@ def backfill_subscribers():
         if Subscriber.objects.filter(email=email).first() is None:
             sub = Subscriber(email=email, conf_num=generate_token(), confirmed=True)
             sub.save()
+
+
+def backfill_transactions(project=OriginTokens.OUSD):
+    if project == OriginTokens.OUSD:
+      start_block = START_OF_OUSD_V2
+      contract = OUSD
+    elif project == OriginTokens.OETH:
+      start_block = START_OF_OETH
+      contract = OETH
+    elif project == OriginTokens.WOUSD:
+      start_block = START_OF_WOUSD
+      contract = WOUSD
+    elif project == OriginTokens.WOETH:
+      start_block = START_OF_WOETH
+      contract = WOETH
+    else:
+      raise Exception('Unexpected project id', project)
+
+    end_block = latest_block()
+    backfill_transaction_history(contract, start_block, end_block)
 
 
 # get all accounts that at some point held OUSD
